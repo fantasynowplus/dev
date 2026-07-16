@@ -39,7 +39,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.01em; }
 }
 
 /* Header */
-header { position: fixed; top: 0; width: 100%; height: 80px; background: rgba(0, 0, 0, 0.97); border-bottom: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; padding: 0 40px; z-index: 100; box-shadow: 0 2px 0 var(--bright-orange); }
+header { position: fixed; top: 0; width: 100%; height: 80px; background: var(--bg-dark); border-bottom: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; padding: 0 40px; z-index: 100; box-shadow: 0 2px 0 var(--bright-orange); }
 .logo img { height: 40px; }
 nav { display: flex; align-items: center; gap: 28px; }
 nav a { position: relative; text-decoration: none; color: var(--text-light); font-family: var(--font-display); font-weight: 600; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 6px 0; }
