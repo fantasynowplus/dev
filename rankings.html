@@ -1,0 +1,18 @@
+<link rel="stylesheet" href="rankings.css">
+
+<div class="fn-plus-container">
+  <div class="fnp-nav">
+    <div class="bubble active" onclick="switchTab('draft', 0, this)">Draft</div>
+    <div class="bubble" onclick="switchTab('dynasty', 0, this)">Dynasty</div>
+    <div class="bubble" onclick="switchTab('rookie', 0, this)">Rookie</div>
+  </div>
+  <div class="fnp-nav">
+    <div class="bubble active" onclick="switchTab(state.type, 0, this)">QB</div>
+    <div class="bubble" onclick="switchTab(state.type, 3, this)">RB</div>
+    <div class="bubble" onclick="switchTab(state.type, 6, this)">WR</div>
+    <div class="bubble" onclick="switchTab(state.type, 9, this)">TE</div>
+  </div>
+  <div id="rank-list"></div>
+</div>
+
+<script src="rankings.js"></script>

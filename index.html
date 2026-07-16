@@ -1,0 +1,84 @@
+---
+layout: null
+---
+{% include header.html %}
+    
+   <section class="hero-banner">
+        <div class="hero-content">
+            <img src="assets/images/PlayerOverlay.png" alt="Featured Players" class="hero-graphic">
+        </div>
+    </section>
+    
+    <main class="dashboard-container" style="max-width: 1400px; margin: 15px auto 40px auto; display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; padding: 0 20px;">
+        
+        <!-- Left Sidebar: Trending -->
+        <aside class="sidebar">
+            <div id="trending-adds" class="sleeper-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>
+                <div class="sleeper-body" id="adds-list">Loading...</div>
+            </div>
+            <div id="trending-drops" class="sleeper-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Trending Drops</div><div class="badge-drop">VIA SLEEPER</div></div>
+                <div class="sleeper-body" id="drops-list">Loading...</div>
+            </div>
+            <h2 class="sidebar-motto">
+                <span class="highlight">WIN</span> YOUR LEAGUE
+            </h2>
+        </aside>
+
+        <!-- Middle Content -->
+        <section class="main-content">
+            <div class="youtube-feed-container">
+        <!-- Category Navigation -->
+                <div class="feed-nav">
+                    <button id="all-btn" class="nav-btn active" onclick="loadFeed('UCCW6qFFB7ezwJk1cLPjPHDg', this)">ALL</button>
+                    <button class="nav-btn" onclick="loadFeed('PLX9LyZ57O4HC-uG3s0k7udo9vTY8RunU9', this)">OFFSEASON</button>
+                    <button class="nav-btn" onclick="loadFeed('PLX9LyZ57O4HAPJ-s1PVL8YsYvhuhC079o', this)">2025 TEAM RECAPS</button>
+                    <button class="nav-btn" onclick="loadFeed('PLX9LyZ57O4HBPdMYkX72ETD9uD5ZbVCoi', this)">2025 SEASON</button>
+                </div>
+        
+                <!-- Video Grid -->
+                <div id="youtube-feed" class="video-grid">
+                    <!-- Videos injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Sidebar: Rankings Widget -->
+        <aside class="sidebar" id="rankings-widget">
+            <div class="social-links">
+                <span class="social-text">FOLLOW US</span>
+                <a href="https://youtube.com/@fantasynowplus" target="_blank" class="social-icon youtube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://bsky.app/profile/fantasynowplus.com" target="_blank" class="social-icon bluesky"><i class="fa-brands fa-bluesky"></i></a>
+                <a href="https://www.tiktok.com/@fantasynowplus" target="_blank" class="social-icon tiktok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://discord.gg/EgZcDynavK" target="_blank" class="social-icon discord"><i class="fa-brands fa-discord"></i></a>
+            </div>
+            <a href="https://play.underdogfantasy.com/p-fnplus" target="_blank" class="partner-banner-link">
+                <img src="assets/images/UD_P5G50.png" alt="Underdog Fantasy Partner Banner" class="partner-img">
+            </a>
+            <div class="fn-plus-container">
+                <div class="fn-plus-header">
+                    FANTASYNOW+ RANKINGS
+                </div>
+
+                <div class="fnp-nav">
+                    <div id="draft-tab" class="bubble cat-bubble active" onclick="switchTab('format', 'draft', this)">Draft</div>
+                    <div class="bubble cat-bubble" onclick="switchTab('format', 'dynasty', this)">Dynasty</div>
+                </div>
+                <div class="fnp-nav">
+                    <div class="bubble pos-bubble active" onclick="switchTab('position', 'QB', this)">QB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'RB', this)">RB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'WR', this)">WR</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'TE', this)">TE</div>
+                </div>
+                
+                <div id="rank-list">Loading...</div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="javascript/sleeper-data.js"></script>
+    <script src="javascript/youtube-feed.js"></script>
+    <script src="javascript/rankings-widget.js"></script>
+
+{% include footer.html %}

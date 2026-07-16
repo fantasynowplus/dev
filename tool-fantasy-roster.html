@@ -1,0 +1,31 @@
+---
+layout: null
+---
+{% include header.html %}
+
+<main class="page-container" style="padding: 40px 20px; max-width: 1100px; margin: 40px auto;">
+    {% include tools-subnav.html %}
+    <h1 style="text-align: center;">Fantasy Roster Graphic</h1>
+    
+    <div class="form-content" style="text-align: center; padding: 20px;">
+        <div class="input-group">
+            <input type="text" id="username" class="tool-input" placeholder="Sleeper Username">
+            <button onclick="loadLeagues()" class="tool-btn btn-find">FIND MY LEAGUES</button>
+        </div>
+        
+        <div id="step2" style="display:none; margin-top: 10px;">
+            <select id="leagueSelect" onchange="generate()" class="tool-select"></select>
+        </div>
+
+        <div id="loader" class="loader">SYNCING DATA...</div>
+
+        <div class="roster-canvas-container" style="margin-top: 20px; display: none;">
+            <canvas id="canvas"></canvas>
+        </div>
+        <img id="finalImage" style="margin-top: 30px; max-width: 100%; display: none; border-radius: 8px; border: 1px solid #FFA515;">
+        <br>
+        <button id="dlBtn" class="tool-btn btn-dl" style="display:none;" onclick="downloadImg()">DOWNLOAD ROSTER IMAGE</button>
+    </div>
+</main>
+<script src="/javascript/fantasy-roster.js"></script>
+{% include footer.html %}
