@@ -125,6 +125,7 @@
   .main-content        { order: 1; }
   .fn-plus-container   { order: 2; width: 100%; max-width: 400px; margin: 0 auto; }
   .partner-banner-link { order: 3; }
+  .sidebar > .section-eyebrow { order: 4; }
   #trending-adds       { order: 4; }
   #trending-drops      { order: 5; }
   .social-links        { order: 6; justify-content: center; }
