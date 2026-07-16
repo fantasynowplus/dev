@@ -32,7 +32,7 @@
 
 /* Darken the background container for the navigation */
 #fp-widget .pills-wrap.feature-bg {
-    background-color: #000000 !important; /* Brand black */
+    background-color: #0a0f1a !important;
     border-top: 1px solid #14294d !important; 
     border-bottom: 1px solid #14294d !important;
 }
