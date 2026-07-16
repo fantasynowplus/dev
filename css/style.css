@@ -18,7 +18,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-dark);
+    background-color: var(--brand-black);
     background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
     color: var(--text-light);
     padding-top: 120px;
