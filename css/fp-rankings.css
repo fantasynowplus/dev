@@ -69,7 +69,7 @@
 
 /* Darken the Scoring and Download bar */
 #fp-widget #fp-widget-subDiv {
-    background-color: #000000 !important; /* Matches your main dark theme */
+    background-color: #0a0f1a !important; 
     color: #ffffff !important;
     border: none !important;
 }
