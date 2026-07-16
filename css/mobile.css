@@ -89,6 +89,14 @@
     display: none;
   }
 
+  .ticker-wrap {
+    display: none;
+  }
+
+  body {
+    padding-top: 80px;
+  }
+
   .story-grid {
     flex-direction: column;
     text-align: center;
