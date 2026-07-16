@@ -1,14 +1,14 @@
 /* Global Font Control */
 #fp-widget, #fp-widget table {
-    font-family: 'Inter', sans-serif !important; /* Matches your site font */
+    font-family: 'Inter', sans-serif !important;
     font-size: 14px !important;
 }
 
 /* Header Customization (The white headers) */
 #fp-widget table thead tr th {
-    background-color: #002863 !important; /* Brand Navy Header */
-    color: #ffffff !important;           /* White Text */
-    text-transform: uppercase;           /* Optional: Makes it look cleaner */
+    background-color: #002863 !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
 }
 
 /* Row and Cell Backgrounds */
@@ -26,7 +26,7 @@
 
 /* Link Color (The player names) */
 #fp-widget a {
-    color: #ffa515 !important; /* Brand orange */
+    color: #ffa515 !important;
     text-decoration: none;
 }
 
@@ -45,15 +45,15 @@
 
 /* Target the active pill to ensure it has a rounded pill shape */
 #fp-widget ul.pills li.active {
-    background-color: #ffa515 !important; /* Brand orange */
-    color: #000000 !important;            /* Dark text */
+    background-color: #ffa515 !important;
+    color: #000000 !important;
     border: none !important;
-    background-image: none !important;    /* Removes any default widget patterns */
+    background-image: none !important;
 }
 
 /* Ensure inactive pills also follow the rounded theme */
 #fp-widget ul.pills li {
-    border-radius: 50px !important;       /* Matches the rounded look */
+    border-radius: 50px !important;
     background-color: #071a3d !important;
     color: #ffffff !important;
     border: none !important;
@@ -67,7 +67,7 @@
     display: inline-block !important;
     border: 1px solid #ffa515 !important;
 }
-    
+
 /* Ensure the text inside the pills is readable */
 #fp-widget ul.pills li a {
     color: #ffffff !important;
@@ -84,6 +84,5 @@
 #fp-widget #fp-widget-subDiv, 
 #fp-widget #fp-widget-subDiv label, 
 #fp-widget #fp-widget-subDiv a {
-    color: #0a0f1a !important;
+    color: #ffffff !important;
 }
-
