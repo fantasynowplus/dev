@@ -1,8 +1,14 @@
 /* Main container to match trending widget */
 .fn-plus-container { 
-    background: var(--bg-card); 
-    border: 1px solid var(--border-dark); 
-    border-radius: 12px; 
+    background-color: var(--bg-card);
+    background-image:
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
+    background-repeat: no-repeat;
+    background-size: 18px 2px, 2px 18px, 18px 2px, 2px 18px;
+    background-position: bottom left, bottom left, bottom right, bottom right;
+    border: 1px solid var(--border-dark);
+    border-radius: 0;
     padding: 0; /* Remove padding here, handle it in children */
     color: var(--text-light); 
     width: 300px;

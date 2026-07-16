@@ -13,9 +13,16 @@
 }
 
 .video-card { 
-    background: var(--bg-card);
+    background-color: var(--bg-card);
+    background-image:
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
+    background-repeat: no-repeat;
+    background-size: 16px 2px, 2px 16px, 16px 2px, 2px 16px;
+    background-position: bottom left, bottom left, bottom right, bottom right;
     border: 1px solid var(--border-dark);
-    border-radius: 8px; 
+    border-top: 3px solid var(--bright-orange);
+    border-radius: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;

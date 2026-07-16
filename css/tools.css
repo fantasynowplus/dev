@@ -4,13 +4,19 @@
     max-width: 400px;
     padding: 15px;
     margin: 10px 0;
-    border-radius: 5px;
+    border-radius: 0;
     border: 1px solid var(--border-dark);
     background: var(--bg-card);
     color: #ffffff;
     font-size: 16px;
     text-align: center;
     box-sizing: border-box; /* Ensures padding doesn't break width */
+    transition: border-color 0.2s ease;
+}
+
+.tool-input:focus, .tool-select:focus {
+    outline: none;
+    border-color: var(--bright-orange);
 }
 
 /* Primary Buttons */
@@ -19,12 +25,16 @@
     max-width: 400px;
     padding: 15px;
     margin: 10px 0;
-    border-radius: 5px;
+    border-radius: 0;
     border: none;
-    font-weight: bold;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     cursor: pointer;
     transition: 0.3s;
-    font-size: 16px;
+    font-size: 17px;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
 }
 
 .btn-find { background: var(--bright-orange); color: #000; }
@@ -40,7 +50,46 @@
     margin: 15px; 
     font-weight: bold; 
     font-family: var(--font-display);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Tools index cards */
+.tool-card {
+    background-color: var(--bg-card);
+    background-image:
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
+    background-repeat: no-repeat;
+    background-size: 20px 2px, 2px 20px, 20px 2px, 2px 20px;
+    background-position: bottom left, bottom left, bottom right, bottom right;
+    border: 1px solid var(--border-dark);
+    border-top: 3px solid var(--bright-orange);
+    padding: 30px 25px;
+    text-align: center;
+}
+
+.tool-card h3 {
+    color: var(--bright-orange);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.tool-card p { color: var(--light-gray); margin-bottom: 15px; }
+
+.tool-card-link {
+    display: inline-block;
+    background: var(--bright-orange);
+    color: #000;
+    padding: 12px 28px;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
 }
 
 .input-group {

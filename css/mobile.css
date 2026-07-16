@@ -73,7 +73,7 @@
   background-color: var(--bright-orange);
   color: var(--deep-blue) !important;
   text-align: center;
-  border-radius: 4px;
+  border-radius: 0;
   border-bottom: none;
   font-weight: 700;
 }
@@ -103,6 +103,14 @@
     grid-template-columns: 1fr !important;
     padding: 0 15px !important;
   }
+
+  .hero-text {
+    left: 24px;
+    bottom: 24px;
+    max-width: 80%;
+  }
+
+  .hero-corner { width: 18px; height: 18px; }
 
   /* Makes both <aside class="sidebar"> wrappers "disappear" from layout
      so their individual children can be freely reordered below, as if

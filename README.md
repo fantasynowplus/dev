@@ -1,29 +1,26 @@
-# fantasynowplus.com — Redesign (A/B candidate) B
+# fantasynowplus.com — Redesign v2 (A/B candidate)
 
-Full visual redesign of the FantasyNow+ site, rebuilt on the official brand palette:
+A real visual departure from the current site, not just a recolor — built around the site's own broadcast/media identity (live video feed, ticker, stat widgets) on the official brand palette:
 
-- Bright Orange `#FFA515`
-- Deep Blue `#002863`
-- Pure White `#FFFFFF`
-- Solid Black `#000000`
-- Vibrant Red-Orange `#EA4E3D`
-- Light Gray `#F4F4F4`
-- Charcoal Gray `#606060`
-- Aqua Green `#42F4B0`
+- Bright Orange `#FFA515` · Deep Blue `#002863` · Pure White `#FFFFFF` · Solid Black `#000000`
+- Vibrant Red-Orange `#EA4E3D` · Light Gray `#F4F4F4` · Charcoal Gray `#606060` · Aqua Green `#42F4B0`
 
-## What changed
+## What actually changed this pass
 
-- **Color system**: every hardcoded color across all 10 CSS files and inline page styles now traces back to the 8 official brand hex values (see `css/style.css` `:root` block).
-- **Typography**: added Barlow Condensed as a display face for headlines, nav, and card headers — Inter stays as the body font, unchanged.
-- **Signature look**: sports-broadcast "notched tag" corners on card headers (trending, rankings, footer), and a pulsing "LIVE" dot on the news ticker — nods to the site's broadcast/lower-third content.
-- **Structure, functionality, and every page's content are untouched.** All JS-driven widgets (Sleeper trending, YouTube feed, rankings widget, the three roster/recap tools, mobile nav) still hook into the exact same element IDs and classes — nothing there was renamed or restructured.
+- **New hero**: real headline + eyebrow ("ON THE CLOCK") + subhead over a dark gradient scrim, framed with camera-viewfinder corner brackets — replaces the old bare image banner.
+- **Hard-edged "broadcast tag" card system**: every card (trending, rankings, video, tools, staff) dropped its soft rounded corners for sharp edges + orange corner-bracket framing, done via layered CSS backgrounds — no HTML restructuring, so zero risk to the JS that targets these elements.
+- **Condensed display type**: Barlow Condensed, bold, uppercase, tracked — used for all headings, nav, buttons, card headers. Big scale jump on page titles (`h1`/`h2`).
+- **Animated nav underline** + a subtle scanline texture across the whole site for a "broadcast monitor" feel.
+- **Section eyebrows** ("Trending Now," "Live Feed") added above key content blocks.
+- **Live-pulse dot** on the ticker.
+- Full color system carried through from v1 — all inline/hardcoded hex swapped for brand values.
 
-## Still Jekyll — on purpose
+## Still untouched
 
-This keeps the `_includes/header.html` and `_includes/footer.html` pattern. GitHub Pages builds Jekyll automatically server-side, so there's no local build step for you — it's the right tool for keeping header/footer in sync across 10 pages, and ditching it would mean either copy-pasting the header everywhere or a client-side include that flashes unstyled content on load.
+Every JS-driven widget (Sleeper trends, YouTube feed, rankings widget, the 3 roster/recap tools, mobile nav, the Join Our Team Formspree form) hooks into the exact same IDs, classes, and form field names as the live site. Nothing there was renamed.
 
 ## Testing this as an A/B candidate
 
-1. Push this to its own repo (or a branch) so it doesn't touch the live `fantasynowplus.github.io` site.
-2. Enable GitHub Pages on it the same way as before (Settings → Pages → Deploy from branch → `main` / root).
-3. You'll get a separate preview URL to show staff side-by-side with the current live site.
+1. Push this to its own repo (or overwrite the previous `redesign` repo/branch).
+2. Enable GitHub Pages the same way as before (Settings → Pages → Deploy from branch → `main` / root).
+3. Compare side-by-side with the live site for staff feedback.

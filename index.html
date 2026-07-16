@@ -4,6 +4,16 @@ layout: null
 {% include header.html %}
     
    <section class="hero-banner">
+        <div class="hero-scrim"></div>
+        <span class="hero-corner tl"></span>
+        <span class="hero-corner tr"></span>
+        <span class="hero-corner bl"></span>
+        <span class="hero-corner br"></span>
+        <div class="hero-text">
+            <span class="hero-eyebrow"><span class="dot"></span>ON THE CLOCK</span>
+            <h1 class="hero-headline">Your fantasy <span>war room.</span></h1>
+            <p class="hero-sub">Rankings, trends, and tools — updated live, no fluff.</p>
+        </div>
         <div class="hero-content">
             <img src="assets/images/PlayerOverlay.png" alt="Featured Players" class="hero-graphic">
         </div>
@@ -13,6 +23,7 @@ layout: null
         
         <!-- Left Sidebar: Trending -->
         <aside class="sidebar">
+            <div class="section-eyebrow">Trending Now</div>
             <div id="trending-adds" class="sleeper-card">
                 <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>
                 <div class="sleeper-body" id="adds-list">Loading...</div>
@@ -30,6 +41,7 @@ layout: null
         <section class="main-content">
             <div class="youtube-feed-container">
         <!-- Category Navigation -->
+                <div class="section-eyebrow">Live Feed</div>
                 <div class="feed-nav">
                     <button id="all-btn" class="nav-btn active" onclick="loadFeed('UCCW6qFFB7ezwJk1cLPjPHDg', this)">ALL</button>
                     <button class="nav-btn" onclick="loadFeed('PLX9LyZ57O4HC-uG3s0k7udo9vTY8RunU9', this)">OFFSEASON</button>
