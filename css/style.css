@@ -55,7 +55,9 @@ nav a:hover::after { width: 100%; }
 .ticker-wrap .ticker-move { padding-left: calc(100% + 30px); }
 @keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(234, 78, 61, 0.55); } 70% { box-shadow: 0 0 0 7px rgba(234, 78, 61, 0); } 100% { box-shadow: 0 0 0 0 rgba(234, 78, 61, 0); } }
 .ticker-move { display: inline-block; white-space: nowrap; animation: ticker 90s linear infinite; }
-.ticker-wrap:hover .ticker-move { animation-play-state: paused; }
+@media (hover: hover) and (pointer: fine) {
+    .ticker-wrap:hover .ticker-move { animation-play-state: paused; }
+}
 @keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 .ticker-move a { color: var(--bright-orange); text-decoration: none; margin: 0 30px; font-weight: bold; }
 
