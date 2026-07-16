@@ -1,4 +1,4 @@
-# fantasynowplus.com — Redesign (A/B candidate)
+# fantasynowplus.com — Redesign (A/B candidate) B
 
 Full visual redesign of the FantasyNow+ site, rebuilt on the official brand palette:
 
