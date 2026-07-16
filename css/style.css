@@ -174,7 +174,9 @@ header nav {
 /* Ensure the dropdown container is positioned relatively so the content can be absolute */
 .dropdown {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 28px;
 }
 
 /* Ensure the dropdown content is hidden by default and sits on top of everything */
