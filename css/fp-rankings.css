@@ -18,6 +18,12 @@
     color: #ffffff !important;
 }
 
+/* Alternating Row Colors */
+#fp-widget table.table-striped tbody tr:nth-child(even),
+#fp-widget table.table-striped tbody tr:nth-child(even) td {
+    background-color: #0a2654 !important;
+}
+
 /* Link Color (The player names) */
 #fp-widget a {
     color: #ffa515 !important; /* Brand orange */
