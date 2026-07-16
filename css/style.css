@@ -7,7 +7,7 @@
     --light-gray: #F4F4F4;
     --charcoal: #606060;
     --aqua: #42F4B0;
-    --bg-dark: #000000;
+    --bg-dark: #151d2e;
     --bg-card: #071a3d;
     --bg-panel: #041530;
     --text-light: #F4F4F4;
@@ -18,7 +18,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--brand-black);
+    background-color: var(--bg-dark);
     background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
     color: var(--text-light);
     padding-top: 120px;
