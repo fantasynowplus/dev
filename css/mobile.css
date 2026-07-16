@@ -1,0 +1,203 @@
+
+
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 150;
+}
+
+.mobile-nav-overlay.open {
+  display: block;
+}
+
+.mobile-nav {
+  display: block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border-dark);
+  z-index: 200;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  padding: 100px 24px 24px 24px;
+}
+
+.mobile-nav.open {
+  transform: translateX(0);
+}
+
+.mobile-nav-section-label {
+  color: var(--bright-orange);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 20px 0 10px 0;
+}
+
+.mobile-nav-section-label:first-child {
+  margin-top: 0;
+}
+
+.mobile-nav a {
+  display: block;
+  color: var(--text-light);
+  text-decoration: none;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-dark);
+  font-weight: 500;
+}
+
+.mobile-nav a.btn-login {
+  margin-top: 20px;
+  background-color: var(--bright-orange);
+  color: var(--deep-blue) !important;
+  text-align: center;
+  border-radius: 4px;
+  border-bottom: none;
+  font-weight: 700;
+}
+
+/* ============ 900px — tablet ============ */
+@media (max-width: 900px) {
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  nav.desktop-nav {
+    display: none;
+  }
+
+  .story-grid {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+
+  .section-padding {
+    padding: 30px 20px !important;
+  }
+
+  .dashboard-container {
+    grid-template-columns: 1fr !important;
+    padding: 0 15px !important;
+  }
+
+  /* Makes both <aside class="sidebar"> wrappers "disappear" from layout
+     so their individual children can be freely reordered below, as if
+     everything were one flat list inside dashboard-container. */
+  .sidebar {
+    display: contents;
+  }
+
+  /* Custom mobile stacking order, per your spec:
+     YouTube feed > Rankings > Underdog Graphic > Trending Adds/Drops > WIN YOUR LEAGUE
+     (Social icons tucked in last — move the number below if you want them elsewhere) */
+  .main-content        { order: 1; }
+  .fn-plus-container   { order: 2; width: 100%; max-width: 400px; margin: 0 auto; }
+  .partner-banner-link { order: 3; }
+  #trending-adds       { order: 4; }
+  #trending-drops      { order: 5; }
+  .social-links        { order: 6; justify-content: center; }
+  .sidebar-motto        { order: 7; }
+}
+
+/* ============ 600px — phone ============ */
+@media (max-width: 600px) {
+
+  header {
+    padding: 0 15px !important;
+  }
+
+  /* Hero graphic is a wide, desktop-shaped banner — rather than crush it
+     into an awkward sliver, just skip it on phones. */
+  .hero-banner {
+    display: none;
+  }
+
+  /* Video grid: 2 columns gets cramped under ~600px, drop to 1 */
+  .video-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .feed-nav {
+    gap: 8px;
+    margin: 15px;
+  }
+
+  .nav-btn {
+    padding: 8px 14px;
+    font-size: 0.75rem;
+  }
+
+  /* Tool pages: stack input + button instead of forcing them
+     side-by-side on a narrow screen */
+  .input-group,
+  .sfb-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-group .tool-btn,
+  .sfb-input-group .tool-btn {
+    width: 100%;
+    max-width: none;
+  }
+
+  .sfb-input-group .tool-select,
+  .sfb-input-group .tool-input {
+    flex: 1 1 auto;
+  }
+
+  /* The stretched motto text can look extreme at narrow widths —
+     dial back the vertical stretch a bit */
+  .sidebar-motto {
+    font-size: 1.4rem;
+    transform: scaleY(2);
+  }
+
+  /* About page team slider — shrink cards so they fit comfortably
+     on a 320-375px screen with room to spare */
+  .staff-card {
+    padding: 20px;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .reviews-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .story-text {
+    font-size: 1.05rem !important;
+  }
+
+  .story-image {
+    display: none;
+  }
+
+  .page-container {
+    padding: 0 15px;
+  }
+}

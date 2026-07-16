@@ -1,0 +1,38 @@
+<style>
+.rankings-subnav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.rankings-subnav a {
+    padding: 10px 20px;
+    border-radius: 6px;
+    background: #1f2937;
+    color: #9ca3af;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.rankings-subnav a:hover {
+    background: #002863;
+    color: #fff;
+}
+.rankings-subnav a.active {
+    background: #002863;
+    color: #fff;
+    border: 1px solid #ffa515;
+}
+.fpw-footer a {
+    color: #ffa515;
+}
+.fpw-footer a:hover {
+    color: #fff;
+}   
+</style>
+<div class="rankings-subnav">
+    <a href="page-rankings.html" class="{% if page.url == '/page-rankings.html' %}active{% endif %}">Redraft Rankings</a>
+    <a href="subpage-rankings-dynasty.html" class="{% if page.url == '/subpage-rankings-dynasty.html' %}active{% endif %}">Dynasty Rankings</a>
+    <a href="subpage-rankings-rookie.html" class="{% if page.url == '/subpage-rankings-rookie.html' %}active{% endif %}">Rookie Rankings</a>
+</div>

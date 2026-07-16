@@ -1,0 +1,82 @@
+/* Container to keep it centered in the middle section */
+.video-feed-container {
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+/* Two-column grid */
+.video-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; /* Exactly 2 columns */
+    gap: 20px; 
+    width: 100%;
+}
+
+.video-card { 
+    background: var(--bg-card);
+    border: 1px solid var(--border-dark);
+    border-radius: 8px; 
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.thumbnail { 
+    width: 100%; 
+    aspect-ratio: 16 / 9; 
+    object-fit: cover; 
+    display: block;
+}
+
+.video-info { padding: 15px; }
+
+.video-title { 
+    font-size: 1rem; 
+    font-family: var(--font-display);
+    font-weight: 600; 
+    letter-spacing: 0.01em;
+    color: var(--text-light);
+    margin-bottom: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Keeps title to 2 lines max */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.video-date { font-size: 0.8rem; color: var(--charcoal); }
+
+/* Category Buttons */
+.feed-nav { 
+    display: flex; 
+    justify-content: center;
+    gap: 15px; 
+    margin-bottom: 20px; 
+    flex-wrap: wrap; 
+}
+
+.nav-btn { 
+    background: var(--bg-panel); 
+    color: var(--pure-white); 
+    border: 2px solid transparent;
+    padding: 8px 20px; 
+    border-radius: 50px; 
+    cursor: pointer; 
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+/* Default state: brand-color tabs, distinguishable at a glance */
+.nav-btn:nth-child(1) { background: var(--bright-orange); color: #1a0f00; }
+.nav-btn:nth-child(2) { background: var(--red-orange); color: #1a0503; }
+.nav-btn:nth-child(3) { background: var(--aqua); color: #00110a; }
+.nav-btn:nth-child(4) { background: var(--light-gray); color: #000000; }
+
+/* The active state overrides all of the above with brand navy */
+.nav-btn.active { 
+    background: var(--deep-blue) !important; 
+    border-color: var(--bright-orange) !important; 
+    color: #ffffff;
+}
+
+.nav-btn:hover { opacity: 0.9; }

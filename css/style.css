@@ -1,0 +1,173 @@
+:root {
+    --bright-orange: #FFA515;
+    --deep-blue: #002863;
+    --pure-white: #FFFFFF;
+    --brand-black: #000000;
+    --red-orange: #EA4E3D;
+    --light-gray: #F4F4F4;
+    --charcoal: #606060;
+    --aqua: #42F4B0;
+    --bg-dark: #000000;
+    --bg-card: #071a3d;
+    --bg-panel: #041530;
+    --text-light: #F4F4F4;
+    --border-dark: #14294d;
+    --font-display: 'Barlow Condensed', 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: var(--text-light); padding-top: 120px; }
+
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.01em; }
+
+/* Header */
+header { position: fixed; top: 0; width: 100%; height: 80px; background: rgba(0, 0, 0, 0.97); border-bottom: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; padding: 0 40px; z-index: 100; box-shadow: 0 2px 0 var(--bright-orange); }
+.logo img { height: 40px; }
+nav { display: flex; align-items: center; gap: 25px; }
+nav a { text-decoration: none; color: var(--text-light); font-weight: 500; }
+nav a:hover { color: var(--bright-orange); }
+.btn-login { background-color: var(--bright-orange); color: var(--deep-blue) !important; padding: 10px 20px; border-radius: 4px; font-weight: 700; clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); }
+
+/* Robust Ticker */
+.ticker-wrap { position: fixed; top: 80px; width: 100%; height: 40px; background: var(--bg-panel); overflow: hidden; border-bottom: 1px solid var(--bright-orange); z-index: 99; display: flex; align-items: center; line-height: 40px; }
+.ticker-wrap::before { content: ""; position: absolute; left: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--red-orange); box-shadow: 0 0 0 0 rgba(234, 78, 61, 0.7); animation: livePulse 1.8s infinite; z-index: 2; }
+.ticker-wrap .ticker-move { padding-left: calc(100% + 30px); }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(234, 78, 61, 0.55); } 70% { box-shadow: 0 0 0 7px rgba(234, 78, 61, 0); } 100% { box-shadow: 0 0 0 0 rgba(234, 78, 61, 0); } }
+.ticker-move { display: inline-block; white-space: nowrap; animation: ticker 90s linear infinite; }
+.ticker-wrap:hover .ticker-move { animation-play-state: paused; }
+@keyframes ticker { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+.ticker-move a { color: var(--bright-orange); text-decoration: none; margin: 0 30px; font-weight: bold; }
+
+/* Action Grid */
+.action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; padding: 40px 20px; max-width: 1200px; margin: 0 auto; }
+.action-card { background: var(--bg-card); padding: 40px; border-left: 4px solid var(--bright-orange); text-decoration: none; color: var(--text-light); transition: 0.3s; }
+.action-card:hover { border-left: 4px solid var(--pure-white); transform: translateY(-5px); }
+.action-card h3 { margin-bottom: 10px; color: var(--bright-orange); }
+
+.social-links { 
+    display: flex; 
+    gap: 12px; 
+    justify-content: flex-end; 
+    align-items: center; /* Ensures text and icons are vertically centered */
+    margin: 0 0 15px 0; 
+    padding-right: 5px; 
+}
+
+.social-text {
+    font-size: 0.75rem; /* Small, clean font size */
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: 0.05rem;
+    margin-right: 5px; /* Adds space between text and the first icon */
+    opacity: 0.8;
+}
+
+/* Icons stay as defined previously */
+.social-icon { 
+    width: 35px; 
+    height: 35px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background-color: var(--bg-card);
+    border-radius: 50%;
+    color: var(--text-light); 
+    font-size: 1rem; 
+    transition: all 0.3s ease; 
+    text-decoration: none;
+    border: 1px solid var(--border-dark);
+}
+
+.social-icon.youtube:hover { background-color: #FF0000; color: white; border-color: #FF0000; }
+.social-icon.bluesky:hover { background-color: #0085FF; color: white; border-color: #0085FF; }
+.social-icon.discord:hover { background-color: #5865F2; color: white; border-color: #5865F2; }
+.social-icon.tiktok:hover { background-color: #fe2858; color: white; border-color: #fe2858; }
+
+/* Underdog CSS */
+.partner-banner-link {
+    display: block;
+    margin-bottom: 15px; /* Separates it from the rankings */
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.partner-banner-link:hover {
+    transform: translateY(-2px);
+}
+
+.partner-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+}
+
+.sidebar-motto {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 2.6rem;
+    color: var(--text-light);
+    text-align: center;
+    margin: 10px 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.sidebar-motto .highlight {
+    color: var(--bright-orange);
+}    
+
+.page-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+    min-height: 60vh; /* Keeps footer pushed to bottom */
+}
+
+.page-container h1 {
+    color: #ffffff;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--bright-orange);
+    padding-bottom: 10px;
+}
+
+/* Ensure the navigation bar is a flex container so items sit side-by-side */
+header nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Ensure the dropdown container is positioned relatively so the content can be absolute */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Ensure the dropdown content is hidden by default and sits on top of everything */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-panel);
+    min-width: 180px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1000; /* Keeps it above other elements */
+    top: 100%; /* Places it directly below the 'Rankings' link */
+    left: 0;
+    border-top: 2px solid var(--bright-orange);
+}
+
+/* Show the dropdown when the user hovers over the dropdown div */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    display: block;
+    text-decoration: none;
+}

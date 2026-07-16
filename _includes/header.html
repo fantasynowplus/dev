@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FantasyNow+ | Content & Tools Hub</title>
+    <link rel="shortcut icon" href="assets/images/social-logo.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sleeper-trends.css">
+    <link rel="stylesheet" href="css/rankings.css">
+    <link rel="stylesheet" href="css/youtube.css">
+    <link rel="stylesheet" href="css/hero.css">
+    <link rel="stylesheet" href="css/fp-rankings.css">
+    <link rel="stylesheet" href="css/tools.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body onload="if (typeof loadFeed === 'function') loadFeed('UCCW6qFFB7ezwJk1cLPjPHDg', document.getElementById('all-btn'));">
+
+    <header>
+        <a href="index.html" class="logo"><img src="assets/images/fantasy_logo-3.png" alt="FantasyNow+ Logo"></a>
+        <nav class="desktop-nav">
+            <div class="dropdown">
+                <a href="index.html">Home</a>
+                <a href="page-rankings.html">Rankings</a>
+                <div class="dropdown-content">
+                    <a href="page-rankings.html">Redraft Rankings</a>
+                    <a href="subpage-rankings-dynasty.html">Dynasty Rankings</a>
+                    <a href="subpage-rankings-rookie.html">Rookie Rankings</a>
+                </div>
+            </div>    
+            <a href="page-tools.html">Tools & Graphics</a>
+            <a href="page-about.html">About Us</a>
+            <a href="https://superleagueff.org" target="_blank">Super League ↗</a>
+            <a href="page-login.html" class="btn-login">Dashboard Login</a>
+        </nav>
+        <button id="hamburgerBtn" class="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </header>
+<div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
+    <nav id="mobileNav" class="mobile-nav">
+        <a href="index.html">Home</a>
+        <div class="mobile-nav-section-label">Rankings</div>
+        <a href="page-rankings.html">Redraft Rankings</a>
+        <a href="subpage-rankings-dynasty.html">Dynasty Rankings</a>
+        <a href="subpage-rankings-rookie.html">Rookie Rankings</a>
+
+        <div class="mobile-nav-section-label">More</div>
+        <a href="page-tools.html">Tools & Graphics</a>
+        <a href="page-about.html">About Us</a>
+        <a href="https://superleagueff.org" target="_blank">Super League ↗</a>
+        <a href="page-login.html" class="btn-login">Dashboard Login</a>
+    </nav>
+    <div class="ticker-wrap">
+        <div id="news-container" class="ticker-move"></div>
+    </div>

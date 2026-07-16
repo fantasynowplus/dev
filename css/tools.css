@@ -1,0 +1,86 @@
+/* Input & Select Fields */
+.tool-input, .tool-select {
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid var(--border-dark);
+    background: var(--bg-card);
+    color: #ffffff;
+    font-size: 16px;
+    text-align: center;
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+
+/* Primary Buttons */
+.tool-btn {
+    width: 100%;
+    max-width: 400px;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 16px;
+}
+
+.btn-find { background: var(--bright-orange); color: #000; }
+.btn-find:hover { background: #e89410; }
+
+.btn-dl { background: var(--deep-blue); color: #fff; border: 1px solid var(--bright-orange); }
+.btn-dl:hover { background: #001C45; }
+
+/* Global loader for tools */
+.loader { 
+    color: var(--bright-orange); 
+    display: none; 
+    margin: 15px; 
+    font-weight: bold; 
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 10px auto;
+}
+
+.tool-select {
+    margin-top: 0; /* Ensures no extra gap above the dropdown */
+    width: 100%;
+    max-width: 600px; /* Aligned with input-group max-width */
+}
+
+.tool-input { 
+    margin: 0; 
+    flex: 1; /* Allows the input to grow and take up remaining space */
+}
+
+.tool-btn { 
+    margin: 0; 
+    width: auto; /* Shrinks the button to fit its text */
+    flex: 0 0 auto; /* Prevents the button from stretching */
+    white-space: nowrap; /* Keeps the button text on one line */
+}
+/* SFB Tool */
+.sfb-input-group .tool-select, 
+.sfb-input-group .tool-input {
+    flex: 1;           
+    height: 50px;      /* Force them to be the exact same height */
+    padding: 0 15px;   /* Consistent internal padding */
+    margin: 0;
+    box-sizing: border-box; /* Ensures padding doesn't add to the height */
+    vertical-align: middle;
+}
+
+/* Force the 1/3 and 2/3 ratio */
+.sfb-input-group .tool-select { flex: 1; }
+.sfb-input-group .tool-input { flex: 2; }

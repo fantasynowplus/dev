@@ -1,0 +1,45 @@
+/* Main container to match trending widget */
+.fn-plus-container { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-dark); 
+    border-radius: 12px; 
+    padding: 0; /* Remove padding here, handle it in children */
+    color: var(--text-light); 
+    width: 300px;
+    overflow: hidden; /* Important for rounding */
+}
+
+.fn-plus-header { 
+    background: var(--deep-blue); 
+    color: var(--pure-white);
+    padding: 12px 16px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--bright-orange);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.fnp-nav { display: flex; gap: 6px; padding: 12px 16px 4px 16px; }
+.bubble { padding: 4px 8px; border-radius: 4px; background: var(--bg-panel); color: var(--charcoal); font-size: 0.75rem; cursor: pointer; }
+.bubble.active { background: var(--deep-blue); color: #fff; border: 1px solid var(--bright-orange); }
+
+/* List: No border, just sits inside the container */
+#rank-list { background: var(--bg-card); padding-bottom: 8px; }
+
+.fnp-row { display: flex; align-items: center; padding: 10px 16px; text-decoration: none; color: var(--text-light); border-bottom: 1px solid var(--border-dark); transition: 0.2s; }
+.fnp-row:hover { background-color: var(--bg-panel); }
+.fnp-row:last-of-type { border-bottom: none; }
+
+.fnp-rank { width: 25px; font-weight: 800; color: var(--bright-orange); font-size: 0.9rem; }
+.photo-box { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; margin-right: 12px; }
+.player-photo { width: 100%; height: 100%; object-fit: cover; }
+.fnp-name { font-weight: 600; font-size: 0.85rem; display: block; }
+.fnp-meta { font-size: 0.7rem; color: var(--charcoal); }
+
+.footer-link { display: block; padding: 10px; text-align: center; color: var(--bright-orange); font-weight: 600; font-size: 0.8rem; text-decoration: none; border-top: 1px solid var(--border-dark); }

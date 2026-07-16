@@ -1,0 +1,36 @@
+/* hero.css */
+.hero-banner {
+    width: 100%;
+    height: 400px; /* Keep this tall so the players can be large */
+    background: url('assets/images/Background_Banner.png') center/cover no-repeat fixed;
+    display: flex;
+    align-items: flex-end; /* This anchors the players to the bottom of the banner if you want them flush */
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--bright-orange);
+}
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%; 
+    z-index: 1;
+}
+
+.hero-graphic {
+    height: 100%;
+    width: auto; /* Maintains the correct aspect ratio */
+    max-width: 100%; /* Prevents it from breaking the screen on mobile */
+    object-fit: contain;
+    animation: slideUp 1s ease-out;
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(50px); }
+    to { opacity: 1; transform: translateY(0); }
+}

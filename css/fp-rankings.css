@@ -1,0 +1,83 @@
+/* Global Font Control */
+#fp-widget, #fp-widget table {
+    font-family: 'Inter', sans-serif !important; /* Matches your site font */
+    font-size: 14px !important;
+}
+
+/* Header Customization (The white headers) */
+#fp-widget table thead tr th {
+    background-color: #002863 !important; /* Brand Navy Header */
+    color: #ffffff !important;           /* White Text */
+    text-transform: uppercase;           /* Optional: Makes it look cleaner */
+}
+
+/* Row and Cell Backgrounds */
+#fp-widget table.table-striped tbody tr,
+#fp-widget table.table-striped tbody tr td {
+    background-color: #071a3d !important;
+    color: #ffffff !important;
+}
+
+/* Link Color (The player names) */
+#fp-widget a {
+    color: #ffa515 !important; /* Brand orange */
+    text-decoration: none;
+}
+
+/* Clean Borders */
+#fp-widget table td, 
+#fp-widget table th {
+    border-color: #14294d !important;
+}
+
+/* Darken the background container for the navigation */
+#fp-widget .pills-wrap.feature-bg {
+    background-color: #000000 !important; /* Brand black */
+    border-top: 1px solid #14294d !important; 
+    border-bottom: 1px solid #14294d !important;
+}
+
+/* Target the active pill to ensure it has a rounded pill shape */
+#fp-widget ul.pills li.active {
+    background-color: #ffa515 !important; /* Brand orange */
+    color: #000000 !important;            /* Dark text */
+    border: none !important;
+    background-image: none !important;    /* Removes any default widget patterns */
+}
+
+/* Ensure inactive pills also follow the rounded theme */
+#fp-widget ul.pills li {
+    border-radius: 50px !important;       /* Matches the rounded look */
+    background-color: #071a3d !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+#fp-widget ul.pills li.active a {
+    background-color: #ffa515 !important; 
+    color: #071a3d !important;         
+    border-radius: 50px !important;    
+    padding: 5px 15px !important;
+    display: inline-block !important;
+    border: 1px solid #ffa515 !important;
+}
+    
+/* Ensure the text inside the pills is readable */
+#fp-widget ul.pills li a {
+    color: #ffffff !important;
+}
+
+/* Darken the Scoring and Download bar */
+#fp-widget #fp-widget-subDiv {
+    background-color: #000000 !important; /* Matches your main dark theme */
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Ensure the text inside that bar is readable */
+#fp-widget #fp-widget-subDiv, 
+#fp-widget #fp-widget-subDiv label, 
+#fp-widget #fp-widget-subDiv a {
+    color: #ffffff !important;
+}
+
