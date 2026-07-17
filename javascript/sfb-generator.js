@@ -52,14 +52,7 @@ function draw(picks, managerName, leagueName) {
     const imgTag = document.getElementById('finalImage');
 
     canvas.width = 1000;
-    
-    const headerHeight = 100;
-    const pickRowHeight = 50;
-    const footerHeight = 80;
-    const picksPerColumn = 10;
-    const picksAreaHeight = picksPerColumn * pickRowHeight;
-    
-    canvas.height = headerHeight + picksAreaHeight + footerHeight; 
+    canvas.height = 700; 
 
     const sfbLogo = new Image();
     const secondLogo = new Image();
@@ -79,7 +72,7 @@ function draw(picks, managerName, leagueName) {
     sfbLogo.onload = imageLoadedCallback;
     sfbLogo.onerror = () => { sfbLogo.failed = true; imageLoadedCallback(); };
 
-    secondLogo.src = "assets/images/fantasycares.org.png";
+    secondLogo.src = "assets/images/fantasycares.png";
     secondLogo.onload = imageLoadedCallback;
     secondLogo.onerror = () => { secondLogo.failed = true; imageLoadedCallback(); };
 }
