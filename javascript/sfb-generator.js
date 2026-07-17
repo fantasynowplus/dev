@@ -52,7 +52,7 @@ function draw(picks, managerName, leagueName) {
     const imgTag = document.getElementById('finalImage');
 
     canvas.width = 1000;
-    canvas.height = 700; 
+    canvas.height = 620; 
 
     const sfbLogo = new Image();
     const secondLogo = new Image();
@@ -150,9 +150,9 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo) {
 function drawFooter(ctx) {
     const footerHeightPx = 50;
     ctx.fillStyle = "#0a0f1a"; 
-    ctx.fillRect(0, 650, 1000, footerHeightPx);
+    ctx.fillRect(0, 570, 1000, footerHeightPx);
     
-    const footerY = 682;
+    const footerY = 602;
     const mainText = "SFB16 Roster powered by ";
     const brandText = "FantasyNow";
     const plusText = "+";
