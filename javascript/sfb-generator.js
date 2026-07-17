@@ -55,7 +55,7 @@ function draw(picks, managerName, leagueName) {
     
     const headerHeight = 100;
     const pickRowHeight = 50;
-    const footerHeight = 50;
+    const footerHeight = 80;
     const picksPerColumn = 10;
     const picksAreaHeight = picksPerColumn * pickRowHeight;
     
@@ -155,7 +155,7 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo, canvasHei
 
 // 5. Stylized Footer (Matches your Fantasy Roster footer)
 function drawFooter(ctx, canvasHeight) {
-    const footerHeightPx = 50;
+    const footerHeightPx = 80;
     const footerStartY = canvasHeight - footerHeightPx;
     const footerTextY = footerStartY + 32;
     
