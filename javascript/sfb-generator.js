@@ -52,7 +52,7 @@ function draw(picks, managerName, leagueName) {
     const imgTag = document.getElementById('finalImage');
 
     canvas.width = 1000;
-    canvas.height = 875; 
+    canvas.height = 650; 
 
     const sfbLogo = new Image();
     const secondLogo = new Image();
