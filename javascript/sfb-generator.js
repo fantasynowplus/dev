@@ -150,9 +150,9 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo) {
 function drawFooter(ctx) {
     const footerHeightPx = 50;
     ctx.fillStyle = "#0a0f1a"; 
-    ctx.fillRect(0, 570, 1000, footerHeightPx);
+    ctx.fillRect(0, 600, 1000, footerHeightPx);
     
-    const footerY = 602;
+    const footerY = 632;
     const mainText = "SFB16 Roster powered by ";
     const brandText = "FantasyNow";
     const plusText = "+";
@@ -181,7 +181,7 @@ function drawFooter(ctx) {
 
 function downloadImg() {
     const link = document.createElement('a');
-    link.download = 'DraftRecap.png';
+    link.download = 'SFBDraftRecap.png';
     link.href = document.getElementById('finalImage').src;
     link.click();
 }
