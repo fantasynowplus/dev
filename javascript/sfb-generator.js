@@ -1,33 +1,24 @@
 const MFL_YEAR = '2026';
-const CORS_PROXY = "https://corsproxy.io/?";
 
-// 1. Main trigger function (Updated for tools.css classes)
 async function generateGraphic() {
-    const platform = document.getElementById('platformSelect').value;
     const username = document.getElementById('username').value;
-    const loader = document.getElementById('loader'); // Added missing declaration
+    const loader = document.getElementById('loader');
 
-    if (!platform) return alert("-- Select Platform --");
-    if (!username) return alert("Enter username or ID");
+    if (!username) return alert("Enter your Sleeper username");
 
     loader.style.display = 'block';
     loader.innerText = "Syncing draft data...";
 
     try {
-        if (platform === 'sleeper') {
-            await handleSleeper(username);
-        } else {
-            alert("MFL requires a League ID. Please update input to League ID.");
-        }
+        await handleSleeper(username);
     } catch (e) {
-        console.error("Detailed Error:", e); // This will show the actual API error in your browser console (F12)
+        console.error("Detailed Error:", e);
         alert("Error fetching data: " + e.message); 
     } finally {
         loader.style.display = 'none';
     }
 }
 
-// 2. Fetch Logic
 async function handleSleeper(username) {
     const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
     const user = await userRes.json();
@@ -38,14 +29,20 @@ async function handleSleeper(username) {
     const sfbLeague = leagues.find(l => l.name && l.name.startsWith("#SFB16"));
     if (!sfbLeague) return alert("No #SFB16 league found for this user.");
     
-    const picksRes = await fetch(`https://api.sleeper.app/v1/draft/${sfbLeague.draft_id}/picks`);
+    const leagueRes = await fetch(`https://api.sleeper.app/v1/league/${sfbLeague.league_id}`);
+    const leagueData = await leagueRes.json();
+    
+    if (!leagueData.draft_id) return alert("No draft found for this league");
+    
+    const picksRes = await fetch(`https://api.sleeper.app/v1/draft/${leagueData.draft_id}/picks`);
     const allPicks = await picksRes.json();
     const myPicks = allPicks.filter(p => p.picked_by === user.user_id);
+    
+    if (myPicks.length === 0) return alert("No picks found for this user");
     
     draw(myPicks, user.display_name, sfbLeague.name);
 }
 
-// 3. Drawing Controller
 function draw(picks, managerName, leagueName) {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -72,12 +69,11 @@ function draw(picks, managerName, leagueName) {
     sfbLogo.onload = imageLoadedCallback;
     sfbLogo.onerror = () => { sfbLogo.failed = true; imageLoadedCallback(); };
 
-    secondLogo.src = "assets/images/fantasycares.org.png";
+    secondLogo.src = "assets/images/fantasycares.png";
     secondLogo.onload = imageLoadedCallback;
     secondLogo.onerror = () => { secondLogo.failed = true; imageLoadedCallback(); };
 }
 
-// 4. Board Rendering
 function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo, canvasHeight) {
     ctx.fillStyle = "#0f172a"; 
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -146,7 +142,6 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo, canvasHei
     drawFooter(ctx, canvasHeight);
 }
 
-// 5. Stylized Footer (Matches your Fantasy Roster footer)
 function drawFooter(ctx, canvasHeight) {
     const footerHeightPx = 50;
     const footerStartY = canvasHeight - footerHeightPx;
