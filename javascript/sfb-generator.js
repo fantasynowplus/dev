@@ -57,8 +57,7 @@ function draw(picks, managerName, leagueName) {
     const pickRowHeight = 50;
     const footerHeight = 50;
     const picksPerColumn = 10;
-    const rowsNeeded = Math.ceil(picks.length / picksPerColumn);
-    const picksAreaHeight = rowsNeeded * pickRowHeight;
+    const picksAreaHeight = picksPerColumn * pickRowHeight;
     
     canvas.height = headerHeight + picksAreaHeight + footerHeight; 
 
