@@ -148,7 +148,7 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo, canvasHei
 
 // 5. Stylized Footer (Matches your Fantasy Roster footer)
 function drawFooter(ctx, canvasHeight) {
-    const footerHeightPx = 80;
+    const footerHeightPx = 50;
     const footerStartY = canvasHeight - footerHeightPx;
     const footerTextY = footerStartY + 32;
     
