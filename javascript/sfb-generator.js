@@ -52,7 +52,15 @@ function draw(picks, managerName, leagueName) {
     const imgTag = document.getElementById('finalImage');
 
     canvas.width = 1000;
-    canvas.height = 650; 
+    
+    const headerHeight = 100;
+    const pickRowHeight = 50;
+    const footerHeight = 50;
+    const picksPerColumn = 10;
+    const rowsNeeded = Math.ceil(picks.length / picksPerColumn);
+    const picksAreaHeight = rowsNeeded * pickRowHeight;
+    
+    canvas.height = headerHeight + picksAreaHeight + footerHeight; 
 
     const sfbLogo = new Image();
     const secondLogo = new Image();
@@ -61,7 +69,7 @@ function draw(picks, managerName, leagueName) {
     function imageLoadedCallback() {
         imagesLoaded++;
         if (imagesLoaded === 2) {
-            renderBoard(ctx, picks, managerName, leagueName, sfbLogo, secondLogo);
+            renderBoard(ctx, picks, managerName, leagueName, sfbLogo, secondLogo, canvas.height);
             imgTag.src = canvas.toDataURL("image/png");
             imgTag.style.display = 'block';
             document.getElementById('downloadBtn').style.display = 'block';
@@ -72,13 +80,13 @@ function draw(picks, managerName, leagueName) {
     sfbLogo.onload = imageLoadedCallback;
     sfbLogo.onerror = () => { sfbLogo.failed = true; imageLoadedCallback(); };
 
-    secondLogo.src = "assets/images/fantasycares.png";
+    secondLogo.src = "assets/images/fantasycares.org.png";
     secondLogo.onload = imageLoadedCallback;
     secondLogo.onerror = () => { secondLogo.failed = true; imageLoadedCallback(); };
 }
 
 // 4. Board Rendering
-function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo) {
+function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo, canvasHeight) {
     ctx.fillStyle = "#0f172a"; 
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -143,16 +151,18 @@ function renderBoard(ctx, picks, manager, league, sfbLogo, secondLogo) {
         });
     }
 
-    drawFooter(ctx);
+    drawFooter(ctx, canvasHeight);
 }
 
 // 5. Stylized Footer (Matches your Fantasy Roster footer)
-function drawFooter(ctx) {
+function drawFooter(ctx, canvasHeight) {
     const footerHeightPx = 50;
-    ctx.fillStyle = "#0a0f1a"; 
-    ctx.fillRect(0, 600, 1000, footerHeightPx);
+    const footerStartY = canvasHeight - footerHeightPx;
+    const footerTextY = footerStartY + 32;
     
-    const footerY = 632;
+    ctx.fillStyle = "#0a0f1a"; 
+    ctx.fillRect(0, footerStartY, 1000, footerHeightPx);
+    
     const mainText = "SFB16 Roster powered by ";
     const brandText = "FantasyNow";
     const plusText = "+";
@@ -168,20 +178,20 @@ function drawFooter(ctx) {
     let currentX = (1000 - totalWidth) / 2;
     
     ctx.fillStyle = "#94a3b8"; 
-    ctx.fillText(mainText, currentX, footerY);
+    ctx.fillText(mainText, currentX, footerTextY);
     currentX += widthMain;
     
     ctx.fillStyle = "#FFFFFF"; 
-    ctx.fillText(brandText, currentX, footerY);
+    ctx.fillText(brandText, currentX, footerTextY);
     currentX += widthBrand;
     
     ctx.fillStyle = "#FFA515"; 
-    ctx.fillText(plusText, currentX, footerY);
+    ctx.fillText(plusText, currentX, footerTextY);
 }
 
 function downloadImg() {
     const link = document.createElement('a');
-    link.download = 'SFBDraftRecap.png';
+    link.download = 'DraftRecap.png';
     link.href = document.getElementById('finalImage').src;
     link.click();
 }
