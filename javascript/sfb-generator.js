@@ -1,5 +1,25 @@
 const MFL_YEAR = '2026';
 
+const SFB16_LEAGUES = [
+    { id: '42801', name: '#SFB16 - Baseball Stars' },
+    { id: '46308', name: '#SFB16 - Crazy Taxi' },
+    { id: '23484', name: '#SFB16 - Double dragon' },
+    { id: '39518', name: '#SFB16 - Double dribble' },
+    { id: '54792', name: '#SFB16 - Duck Hunt' },
+    { id: '73136', name: '#SFB16 - Excitebike' },
+    { id: '14494', name: '#SFB16 - Frogger' },
+    { id: '61959', name: '#SFB16 - Ice Hockey' },
+    { id: '43844', name: '#SFB16 - Metroid' },
+    { id: '41323', name: '#SFB16 - Mutant League Football' },
+    { id: '65583', name: '#SFB16 - NBA Jam (Berry)' },
+    { id: '15797', name: '#SFB16 - NHL 2021' },
+    { id: '72117', name: '#SFB16 - Pitfall' },
+    { id: '55743', name: '#SFB16 - Pong' },
+    { id: '25949', name: '#SFB16 - Rampage' },
+    { id: '44962', name: '#SFB16 - Tetris' },
+    { id: '38735', name: '#SFB16 - Zelda' }
+];
+
 function handlePlatformChange() {
     const platform = document.getElementById('platform').value;
     const sleeperInputs = document.getElementById('sleeperInputs');
@@ -15,7 +35,7 @@ function handlePlatformChange() {
 }
 
 async function handleMFLLeagueChange() {
-    const leagueId = document.getElementById('mflLeagueId').value;
+    const leagueId = document.getElementById('mflLeague').value;
     const franchiseSelect = document.getElementById('mflFranchise');
     
     if (!leagueId) {
@@ -23,12 +43,15 @@ async function handleMFLLeagueChange() {
         return;
     }
 
+    franchiseSelect.innerHTML = '<option value="">Loading franchises...</option>';
+
     try {
         const res = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=league&LEAGUE_ID=${leagueId}&JSON=1`);
         const data = await res.json();
         
         if (!data.league || !data.league.franchise) {
             alert("Could not load franchises for this league");
+            franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
             return;
         }
 
@@ -46,6 +69,7 @@ async function handleMFLLeagueChange() {
     } catch (e) {
         console.error("Error loading franchises:", e);
         alert("Error loading franchises: " + e.message);
+        franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
     }
 }
 
@@ -62,7 +86,7 @@ async function generateGraphic() {
             if (!username) return alert("Enter your Sleeper username");
             await handleSleeper(username);
         } else {
-            const leagueId = document.getElementById('mflLeagueId').value;
+            const leagueId = document.getElementById('mflLeague').value;
             const franchiseId = document.getElementById('mflFranchise').value;
             if (!leagueId || !franchiseId) return alert("Select both league and franchise");
             await handleMFL(leagueId, franchiseId);
