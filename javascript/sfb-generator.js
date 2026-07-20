@@ -1,5 +1,9 @@
 const MFL_YEAR = '2026';
 
+function getMFLProxyUrl(type, leagueId) {
+    return `/.netlify/functions/mfl-proxy?TYPE=${type}&LEAGUE_ID=${leagueId}`;
+}
+
 const SFB16_LEAGUES = [
     { id: '42801', name: '#SFB16 - Baseball Stars' },
     { id: '46308', name: '#SFB16 - Crazy Taxi' },
@@ -46,7 +50,7 @@ async function handleMFLLeagueChange() {
     franchiseSelect.innerHTML = '<option value="">Loading franchises...</option>';
 
     try {
-        const res = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=league&LEAGUE_ID=${leagueId}&JSON=1`);
+        const res = await fetch(getMFLProxyUrl('league', leagueId));
         const data = await res.json();
         
         if (!data.league || !data.league.franchise) {
@@ -127,13 +131,13 @@ async function handleSleeper(username) {
 }
 
 async function handleMFL(leagueId, franchiseId) {
-    const leagueRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=league&LEAGUE_ID=${leagueId}&JSON=1`);
+    const leagueRes = await fetch(getMFLProxyUrl('league', leagueId));
     const leagueData = await leagueRes.json();
     
-    const draftRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=draftResults&LEAGUE_ID=${leagueId}&JSON=1`);
+    const draftRes = await fetch(getMFLProxyUrl('draftResults', leagueId));
     const draftData = await draftRes.json();
     
-    const playersRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=players&LEAGUE_ID=${leagueId}&JSON=1`);
+    const playersRes = await fetch(getMFLProxyUrl('players', leagueId));
     const playersData = await playersRes.json();
     
     if (!leagueData.league || !leagueData.league.franchise) return alert("Could not load league data");
