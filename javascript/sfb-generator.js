@@ -141,8 +141,8 @@ async function handleMFL(leagueId, franchiseId) {
     const playersRes = await fetch(getMFLProxyUrl('players', leagueId));
     const playersData = await playersRes.json();
     
-    if (!leagueData.league || !leagueData.league.franchise) return alert("Could not load league data");
-    if (!draftData.draftResults || !draftData.draftResults.draftPick) return alert("No draft results found");
+    if (!leagueData.league || !leagueData.league.franchises || !leagueData.league.franchises.franchise) return alert("Could not load league data");
+    if (!draftData.draftResults) return alert("No draft results found");
     if (!playersData.players || !playersData.players.player) return alert("Could not load player data");
     
     const franchises = Array.isArray(leagueData.league.franchises.franchise) 
@@ -155,9 +155,13 @@ async function handleMFL(leagueId, franchiseId) {
     const managerName = managerFranchise.name;
     const leagueName = leagueData.league.name;
     
-    const draftPicks = Array.isArray(draftData.draftResults.draftPick)
-        ? draftData.draftResults.draftPick
-        : [draftData.draftResults.draftPick];
+    // Handle both draftPick (completed draft) and draftUnit (in-progress draft)
+    const draftPicksRaw = draftData.draftResults.draftPick || draftData.draftResults.draftUnit;
+    if (!draftPicksRaw) return alert("No draft data found");
+    
+    const draftPicks = Array.isArray(draftPicksRaw)
+        ? draftPicksRaw
+        : [draftPicksRaw];
     
     const players = Array.isArray(playersData.players.player)
         ? playersData.players.player
