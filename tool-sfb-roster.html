@@ -16,29 +16,29 @@ layout: null
         </select>
     </div>
 
-    <div id="sleeperInputs" style="display: block; width: 100%;">
+    <div id="sleeperInputs" style="width: 100%; display: block;">
         <label for="username" style="display: block; margin-bottom: 8px; color: #ffffff; font-weight: bold;">Sleeper Username:</label>
-        <input type="text" id="username" class="tool-input" placeholder="Enter your Sleeper username">
+        <input type="text" id="username" class="tool-input" placeholder="Enter your Sleeper username" style="width: 100%; max-width: 600px;">
     </div>
 
-    <div id="mflInputs" style="display: none; width: 100%;">
+    <div id="mflInputs" style="width: 100%; display: none;">
         <label for="mflLeague" style="display: block; margin-bottom: 8px; color: #ffffff; font-weight: bold;">Select SFB16 League:</label>
-        <select id="mflLeague" class="tool-select" onchange="handleMFLLeagueChange()">
+        <select id="mflLeague" class="tool-select" onchange="handleMFLLeagueChange()" style="width: 100%; max-width: 600px;">
             <option value="">Select a league</option>
         </select>
 
         <label for="mflFranchise" style="display: block; margin-bottom: 8px; color: #ffffff; font-weight: bold; margin-top: 15px;">Select Your Franchise:</label>
-        <select id="mflFranchise" class="tool-select">
+        <select id="mflFranchise" class="tool-select" style="width: 100%; max-width: 600px;">
             <option value="">Select a franchise</option>
         </select>
     </div>
 
-    <button onclick="generateGraphic()" class="tool-btn btn-find" style="margin-top: 20px;">Generate Graphic</button>
+    <button onclick="generateGraphic()" class="tool-btn btn-find" style="margin-top: 20px; width: 100%; max-width: 600px;">Generate Graphic</button>
     <div id="loader" class="loader" style="display: none; margin-top: 10px;"></div>
 </div>
 
 <img id="finalImage" style="display: none; margin-top: 30px; max-width: 100%;">
-<button id="downloadBtn" class="tool-btn btn-dl" style="display: none; margin-top: 20px;">Download Image</button>
+<button id="downloadBtn" class="tool-btn btn-dl" style="display: none; margin-top: 20px; width: 100%; max-width: 600px;">Download Image</button>
 
 <canvas id="canvas" style="display: none;"></canvas>
 
