@@ -156,7 +156,8 @@ async function handleMFL(leagueId, franchiseId) {
     const leagueName = leagueData.league.name;
     
     // Handle both draftPick (completed draft) and draftUnit (in-progress draft)
-    const draftPicksRaw = draftData.draftResults.draftPick || draftData.draftResults.draftUnit;
+    // For draftUnit, the picks are at draftUnit.draftPick
+    const draftPicksRaw = draftData.draftResults.draftPick || draftData.draftResults.draftUnit.draftPick;
     if (!draftPicksRaw) return alert("No draft data found");
     
     const draftPicks = Array.isArray(draftPicksRaw)
