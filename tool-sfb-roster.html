@@ -43,35 +43,18 @@ layout: null
 <canvas id="canvas" style="display: none;"></canvas>
 
 <script>
-const MFL_YEAR = '2026';
-const SFB16_LEAGUES = [
-    { id: '42801', name: '#SFB16 - Baseball Stars' },
-    { id: '46308', name: '#SFB16 - Crazy Taxi' },
-    { id: '23484', name: '#SFB16 - Double dragon' },
-    { id: '39518', name: '#SFB16 - Double dribble' },
-    { id: '54792', name: '#SFB16 - Duck Hunt' },
-    { id: '73136', name: '#SFB16 - Excitebike' },
-    { id: '14494', name: '#SFB16 - Frogger' },
-    { id: '61959', name: '#SFB16 - Ice Hockey' },
-    { id: '43844', name: '#SFB16 - Metroid' },
-    { id: '41323', name: '#SFB16 - Mutant League Football' },
-    { id: '65583', name: '#SFB16 - NBA Jam (Berry)' },
-    { id: '15797', name: '#SFB16 - NHL 2021' },
-    { id: '72117', name: '#SFB16 - Pitfall' },
-    { id: '55743', name: '#SFB16 - Pong' },
-    { id: '25949', name: '#SFB16 - Rampage' },
-    { id: '44962', name: '#SFB16 - Tetris' },
-    { id: '38735', name: '#SFB16 - Zelda' }
-];
-
+// Initialize the MFL league dropdown when page loads
+// (Constants MFL_YEAR and SFB16_LEAGUES are defined in sfb-generator.js)
 document.addEventListener('DOMContentLoaded', () => {
     const leagueSelect = document.getElementById('mflLeague');
-    SFB16_LEAGUES.forEach(league => {
-        const option = document.createElement('option');
-        option.value = league.id;
-        option.textContent = league.name;
-        leagueSelect.appendChild(option);
-    });
+    if (leagueSelect && typeof SFB16_LEAGUES !== 'undefined') {
+        SFB16_LEAGUES.forEach(league => {
+            const option = document.createElement('option');
+            option.value = league.id;
+            option.textContent = league.name;
+            leagueSelect.appendChild(option);
+        });
+    }
 });
 </script>
 </main>
