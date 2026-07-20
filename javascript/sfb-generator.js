@@ -1,16 +1,72 @@
 const MFL_YEAR = '2026';
 
-async function generateGraphic() {
-    const username = document.getElementById('username').value;
-    const loader = document.getElementById('loader');
+function handlePlatformChange() {
+    const platform = document.getElementById('platform').value;
+    const sleeperInputs = document.getElementById('sleeperInputs');
+    const mflInputs = document.getElementById('mflInputs');
 
-    if (!username) return alert("Enter your Sleeper username");
+    if (platform === 'sleeper') {
+        sleeperInputs.style.display = 'block';
+        mflInputs.style.display = 'none';
+    } else {
+        sleeperInputs.style.display = 'none';
+        mflInputs.style.display = 'block';
+    }
+}
+
+async function handleMFLLeagueChange() {
+    const leagueId = document.getElementById('mflLeagueId').value;
+    const franchiseSelect = document.getElementById('mflFranchise');
+    
+    if (!leagueId) {
+        franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
+        return;
+    }
+
+    try {
+        const res = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=league&LEAGUE_ID=${leagueId}&JSON=1`);
+        const data = await res.json();
+        
+        if (!data.league || !data.league.franchise) {
+            alert("Could not load franchises for this league");
+            return;
+        }
+
+        const franchises = Array.isArray(data.league.franchise) 
+            ? data.league.franchise 
+            : [data.league.franchise];
+
+        franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
+        franchises.forEach(f => {
+            const option = document.createElement('option');
+            option.value = f.id;
+            option.textContent = `${f.name} (${f.id})`;
+            franchiseSelect.appendChild(option);
+        });
+    } catch (e) {
+        console.error("Error loading franchises:", e);
+        alert("Error loading franchises: " + e.message);
+    }
+}
+
+async function generateGraphic() {
+    const platform = document.getElementById('platform').value;
+    const loader = document.getElementById('loader');
 
     loader.style.display = 'block';
     loader.innerText = "Syncing draft data...";
 
     try {
-        await handleSleeper(username);
+        if (platform === 'sleeper') {
+            const username = document.getElementById('username').value;
+            if (!username) return alert("Enter your Sleeper username");
+            await handleSleeper(username);
+        } else {
+            const leagueId = document.getElementById('mflLeagueId').value;
+            const franchiseId = document.getElementById('mflFranchise').value;
+            if (!leagueId || !franchiseId) return alert("Select both league and franchise");
+            await handleMFL(leagueId, franchiseId);
+        }
     } catch (e) {
         console.error("Detailed Error:", e);
         alert("Error fetching data: " + e.message); 
@@ -44,6 +100,64 @@ async function handleSleeper(username) {
     if (myPicks.length === 0) return alert("No picks found for this user");
     
     draw(myPicks, user.display_name, sfbLeague.name, allPicks);
+}
+
+async function handleMFL(leagueId, franchiseId) {
+    const leagueRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=league&LEAGUE_ID=${leagueId}&JSON=1`);
+    const leagueData = await leagueRes.json();
+    
+    const draftRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=draftResults&LEAGUE_ID=${leagueId}&JSON=1`);
+    const draftData = await draftRes.json();
+    
+    const playersRes = await fetch(`https://api.myfantasyleague.com/${MFL_YEAR}/export?TYPE=players&LEAGUE_ID=${leagueId}&JSON=1`);
+    const playersData = await playersRes.json();
+    
+    if (!leagueData.league || !leagueData.league.franchise) return alert("Could not load league data");
+    if (!draftData.draftResults || !draftData.draftResults.draftPick) return alert("No draft results found");
+    if (!playersData.players || !playersData.players.player) return alert("Could not load player data");
+    
+    const franchises = Array.isArray(leagueData.league.franchise) 
+        ? leagueData.league.franchise 
+        : [leagueData.league.franchise];
+    
+    const managerFranchise = franchises.find(f => f.id === franchiseId);
+    if (!managerFranchise) return alert("Franchise not found");
+    
+    const managerName = managerFranchise.name;
+    const leagueName = leagueData.league.name;
+    
+    const draftPicks = Array.isArray(draftData.draftResults.draftPick)
+        ? draftData.draftResults.draftPick
+        : [draftData.draftResults.draftPick];
+    
+    const players = Array.isArray(playersData.players.player)
+        ? playersData.players.player
+        : [playersData.players.player];
+    
+    const playerMap = {};
+    players.forEach(p => {
+        playerMap[p.id] = p;
+    });
+    
+    const myPicks = draftPicks
+        .filter(p => p.franchise === franchiseId)
+        .sort((a, b) => a.pickOverallNumber - b.pickOverallNumber)
+        .map((p, index) => {
+            const player = playerMap[p.player];
+            return {
+                pick_no: p.pickOverallNumber,
+                metadata: {
+                    position: player?.position || "UNK",
+                    team: player?.nfl_team || "",
+                    first_name: player?.name?.split(/\s+/)[0] || "Unknown",
+                    last_name: player?.name?.split(/\s+/).slice(1).join(" ") || ""
+                }
+            };
+        });
+    
+    if (myPicks.length === 0) return alert("No picks found for this franchise");
+    
+    draw(myPicks, managerName, leagueName, draftPicks);
 }
 
 function draw(picks, managerName, leagueName, allPicks) {
@@ -86,14 +200,15 @@ function getSnakeDraftPosition(pickNo) {
 }
 
 function getPositionDraftNumber(allPicks, playerPickNo) {
-    const targetPick = allPicks.find(p => p.pick_no === playerPickNo);
+    const targetPick = allPicks.find(p => (p.pick_no || p.pickOverallNumber) === playerPickNo);
     if (!targetPick || !targetPick.metadata) return 1;
     
     const position = targetPick.metadata.position;
     let count = 0;
     
     for (let pick of allPicks) {
-        if (pick.pick_no < playerPickNo && pick.metadata && pick.metadata.position === position) {
+        const pickNum = pick.pick_no || pick.pickOverallNumber;
+        if (pickNum < playerPickNo && pick.metadata && pick.metadata.position === position) {
             count++;
         }
     }
