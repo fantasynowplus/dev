@@ -175,8 +175,20 @@ async function handleMFL(leagueId, franchiseId) {
     
     const myPicks = draftPicks
         .filter(p => p.franchise === franchiseId)
+        .map(p => {
+            // Calculate pickOverallNumber from round and pick for draftUnit format
+            const round = parseInt(p.round);
+            const pick = parseInt(p.pick);
+            const LEAGUE_SIZE = 12; // SFB16 is 12 teams
+            const pickOverallNumber = (round - 1) * LEAGUE_SIZE + pick;
+            
+            return {
+                ...p,
+                pickOverallNumber: pickOverallNumber
+            };
+        })
         .sort((a, b) => a.pickOverallNumber - b.pickOverallNumber)
-        .map((p, index) => {
+        .map((p) => {
             const player = playerMap[p.player];
             return {
                 pick_no: p.pickOverallNumber,
