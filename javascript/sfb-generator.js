@@ -190,20 +190,72 @@ async function handleMFL(leagueId, franchiseId) {
         .sort((a, b) => a.pickOverallNumber - b.pickOverallNumber)
         .map((p) => {
             const player = playerMap[p.player];
+            
+            // Parse name - MFL format is "LastName, FirstName"
+            let firstName = "Unknown";
+            let lastName = "";
+            if (player?.name) {
+                if (player.name.includes(",")) {
+                    // Format: "LastName, FirstName"
+                    const parts = player.name.split(",").map(s => s.trim());
+                    lastName = parts[0];
+                    firstName = parts[1] || "Unknown";
+                } else {
+                    // Format: "FirstName LastName"
+                    const parts = player.name.split(/\s+/);
+                    firstName = parts[0];
+                    lastName = parts.slice(1).join(" ");
+                }
+            }
+            
             return {
                 pick_no: p.pickOverallNumber,
                 metadata: {
                     position: player?.position || "UNK",
                     team: player?.nfl_team || "",
-                    first_name: player?.name?.split(/\s+/)[0] || "Unknown",
-                    last_name: player?.name?.split(/\s+/).slice(1).join(" ") || ""
+                    first_name: firstName,
+                    last_name: lastName
+                }
+            };
+        });
+    
+    // Create all picks with metadata for position counting
+    const allPicksWithMetadata = draftPicks
+        .map(p => {
+            const round = parseInt(p.round);
+            const pick = parseInt(p.pick);
+            const LEAGUE_SIZE = 12;
+            const pickOverallNumber = (round - 1) * LEAGUE_SIZE + pick;
+            const player = playerMap[p.player];
+            
+            let firstName = "Unknown";
+            let lastName = "";
+            if (player?.name) {
+                if (player.name.includes(",")) {
+                    const parts = player.name.split(",").map(s => s.trim());
+                    lastName = parts[0];
+                    firstName = parts[1] || "Unknown";
+                } else {
+                    const parts = player.name.split(/\s+/);
+                    firstName = parts[0];
+                    lastName = parts.slice(1).join(" ");
+                }
+            }
+            
+            return {
+                pick_no: pickOverallNumber,
+                metadata: {
+                    position: player?.position || "UNK",
+                    team: player?.nfl_team || "",
+                    first_name: firstName,
+                    last_name: lastName
                 }
             };
         });
     
     if (myPicks.length === 0) return alert("No picks found for this franchise");
     
-    draw(myPicks, managerName, leagueName, draftPicks);
+    draw(myPicks, managerName, leagueName, allPicksWithMetadata);
 }
 
 function draw(picks, managerName, leagueName, allPicks) {
