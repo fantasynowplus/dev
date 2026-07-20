@@ -7,32 +7,43 @@ layout: null
     {% include tools-subnav.html %}
     <h1 style="text-align: center; color: white;">#SFB16 Drafted Roster</h1>
     
-    <div class="form-content" style="padding: 20px;">
-
-    <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 20px;">
-        <strong>Note:</strong> Currently supports Sleeper leagues only.
-    </p>
-
-    <div class="input-group sfb-input-group" style="display: flex; justify-content: center; align-items: center; max-width: 410px; margin: 0 auto; gap: 10px;">
-        <input type="text" id="username" class="tool-input" placeholder="Sleeper Username">
+<div id="inputContainer">
+    <div>
+        <label for="platform">Select Platform:</label>
+        <select id="platform" onchange="handlePlatformChange()">
+            <option value="sleeper">Sleeper</option>
+            <option value="mfl">MyFantasyLeague</option>
+        </select>
     </div>
 
-        <button class="tool-btn btn-find" style="margin: 15px auto; display: block; max-width: 410px;" onclick="generateGraphic()">
-            GENERATE #SFB16 GRAPHIC
-        </button>
+    <div id="sleeperInputs" style="display: block;">
+        <label for="username">Sleeper Username:</label>
+        <input type="text" id="username" placeholder="Enter your Sleeper username">
+    </div>
 
-        <div id="loader" class="loader">SYNCING DRAFT DATA...</div>
+    <div id="mflInputs" style="display: none;">
+        <label for="mflLeagueId">MFL League ID:</label>
+        <input 
+            type="text" 
+            id="mflLeagueId" 
+            placeholder="Enter league ID"
+            onchange="handleMFLLeagueChange()"
+        >
 
-        <canvas id="canvas" style="display:none;"></canvas>
+        <label for="mflFranchise">Select Your Franchise:</label>
+        <select id="mflFranchise">
+            <option value="">Select a franchise</option>
+        </select>
+    </div>
 
-        <div id="resultContainer" style="margin-top: 30px;">
-            <img id="finalImage" style="max-width: 100%; display: none; border-radius: 8px; border: 1px solid #334155;" alt="Draft Recap Output">
-        </div>
-        
-        <button id="downloadBtn" class="tool-btn btn-dl" style="display:none; margin: 20px auto; max-width: 410px;" onclick="downloadImg()">
-            DOWNLOAD DRAFT IMAGE
-        </button>
-    </div> 
+    <button onclick="generateGraphic()">Generate Graphic</button>
+    <div id="loader" style="display: none; margin-top: 10px;"></div>
+</div>
+
+<img id="finalImage" style="display: none; margin-top: 20px; max-width: 100%;">
+<button id="downloadBtn" style="display: none; margin-top: 10px;" onclick="downloadImg()">Download Image</button>
+
+<canvas id="canvas" style="display: none;"></canvas>
 </main>
 
 <script src="javascript/sfb-generator.js"></script>
