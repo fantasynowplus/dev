@@ -212,7 +212,7 @@ async function handleMFL(leagueId, franchiseId) {
                 pick_no: p.pickOverallNumber,
                 metadata: {
                     position: player?.position || "UNK",
-                    team: player?.nfl_team || "",
+                    team: player?.team || "",
                     first_name: firstName,
                     last_name: lastName
                 }
@@ -246,7 +246,7 @@ async function handleMFL(leagueId, franchiseId) {
                 pick_no: pickOverallNumber,
                 metadata: {
                     position: player?.position || "UNK",
-                    team: player?.nfl_team || "",
+                    team: player?.team || "",
                     first_name: firstName,
                     last_name: lastName
                 }
@@ -396,7 +396,7 @@ function drawFooter(ctx, canvasHeight) {
     ctx.fillStyle = "#0a0f1a"; 
     ctx.fillRect(0, footerStartY, 1000, footerHeightPx);
     
-    const mainText = "SFB16 Roster powered by ";
+    const mainText = "#SFB16 Roster powered by ";
     const brandText = "FantasyNow";
     const plusText = "+";
     
