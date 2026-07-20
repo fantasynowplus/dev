@@ -1,7 +1,8 @@
 const MFL_YEAR = '2026';
+const CLOUDFLARE_WORKER_URL = 'https://sfb.fantasynowplus.workers.dev';
 
 function getMFLProxyUrl(type, leagueId) {
-    return `/.netlify/functions/mfl-proxy?TYPE=${type}&LEAGUE_ID=${leagueId}`;
+    return `${CLOUDFLARE_WORKER_URL}?TYPE=${type}&LEAGUE_ID=${leagueId}`;
 }
 
 const SFB16_LEAGUES = [
