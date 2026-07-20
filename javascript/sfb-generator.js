@@ -54,15 +54,15 @@ async function handleMFLLeagueChange() {
         const res = await fetch(getMFLProxyUrl('league', leagueId));
         const data = await res.json();
         
-        if (!data.league || !data.league.franchise) {
+        if (!data.league || !data.league.franchises || !data.league.franchises.franchise) {
             alert("Could not load franchises for this league");
             franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
             return;
         }
 
-        const franchises = Array.isArray(data.league.franchise) 
-            ? data.league.franchise 
-            : [data.league.franchise];
+        const franchises = Array.isArray(data.league.franchises.franchise) 
+            ? data.league.franchises.franchise 
+            : [data.league.franchises.franchise];
 
         franchiseSelect.innerHTML = '<option value="">Select a franchise</option>';
         franchises.forEach(f => {
@@ -145,9 +145,9 @@ async function handleMFL(leagueId, franchiseId) {
     if (!draftData.draftResults || !draftData.draftResults.draftPick) return alert("No draft results found");
     if (!playersData.players || !playersData.players.player) return alert("Could not load player data");
     
-    const franchises = Array.isArray(leagueData.league.franchise) 
-        ? leagueData.league.franchise 
-        : [leagueData.league.franchise];
+    const franchises = Array.isArray(leagueData.league.franchises.franchise) 
+        ? leagueData.league.franchises.franchise 
+        : [leagueData.league.franchises.franchise];
     
     const managerFranchise = franchises.find(f => f.id === franchiseId);
     if (!managerFranchise) return alert("Franchise not found");
