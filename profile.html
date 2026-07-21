@@ -3,231 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile — FantasyNow+</title>
+  <title>My Profile - FantasyNow+</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     .profile-container {
       max-width: 600px;
       margin: 40px auto;
       padding: 40px;
-      border: 1px solid #e26f0f;
+      border: 1px solid #FFA515;
       border-radius: 8px;
-      background: #f9f7f4;
+      background: #FFFFFF;
     }
-    .profile-container h1 {
-      color: #06192b;
-      margin-bottom: 10px;
-    }
-    .user-email {
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 30px;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #06192b;
-      font-size: 14px;
-    }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-      box-sizing: border-box;
-      font-family: inherit;
-    }
-    input:focus {
-      outline: none;
-      border-color: #e26f0f;
-      box-shadow: 0 0 0 2px rgba(226, 111, 15, 0.1);
-    }
-    .form-section {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #ddd;
-    }
-    .form-section h3 {
-      color: #06192b;
-      font-size: 16px;
-      margin-bottom: 15px;
-      margin-top: 0;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #002863;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #000;
-    }
-    button:active {
-      background: #002863;
-    }
-    .logout-btn {
-      background: #FFA515;
-      margin-top: 20px;
-    }
-    .logout-btn:hover {
-      background: #000;
-    }
-    .success {
-      color: #16a34a;
-      margin-top: 10px;
-      padding: 8px;
-      background: #dcfce7;
-      border-radius: 4px;
-      display: none;
-    }
-    .success.show {
-      display: block;
-    }
-    .error {
-      color: #dc2626;
-      margin-top: 10px;
-      padding: 8px;
-      background: #fee2e2;
-      border-radius: 4px;
-    }
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    .loading::after {
-      content: ' (saving...)';
-    }
+    h1 { color: #002863; display: inline; margin: 0; }
+    .edit-link { color: #FFA515; cursor: pointer; font-weight: 600; margin-left: 15px; text-decoration: none; }
+    .edit-link:hover { color: #FF8C00; }
+    .user-email { color: #666; font-size: 14px; margin-top: 10px; display: block; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; color: #002863; font-size: 14px; margin-bottom: 6px; }
+    .view-value { padding: 10px 12px; background: #f0f0f0; border-radius: 4px; color: #333; }
+    .edit-input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; display: none; }
+    .edit-input.active { display: block; }
+    .section-title { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 16px; color: #002863; font-weight: 600; }
+    .button-row { display: none; gap: 10px; margin-top: 30px; }
+    .button-row.active { display: flex; }
+    button { flex: 1; padding: 12px; background: #FFA515; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #FF8C00; }
+    .cancel-btn { background: #999; }
+    .cancel-btn:hover { background: #777; }
+    .logout-btn { width: 100%; background: #002863; margin-top: 20px; }
+    .logout-btn:hover { background: #000000; }
+    .message { margin-top: 10px; padding: 8px; border-radius: 4px; display: none; }
+    .message.show { display: block; }
+    .success { background: #dcfce7; color: #16a34a; }
+    .error { background: #fee2e2; color: #dc2626; }
   </style>
 </head>
 <body>
   <div class="profile-container">
     <h1>My Profile</h1>
-    <p class="user-email" id="user-email"></p>
+    <a class="edit-link" id="editLink">Edit</a>
+    <p class="user-email" id="userEmail"></p>
 
-    <form id="profile-form">
+    <form id="profileForm">
       <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name">
-      </div>
-
-      <div class="form-group">
-        <label for="cell_phone">Cell Phone</label>
-        <input type="tel" id="cell_phone">
+        <label>Full Name</label>
+        <div class="view-value" id="nameView"></div>
+        <input class="edit-input" id="nameInput" type="text">
       </div>
 
       <div class="form-group">
-        <label for="location">Location</label>
-        <input type="text" id="location">
+        <label>Cell Phone</label>
+        <div class="view-value" id="phoneView"></div>
+        <input class="edit-input" id="phoneInput" type="tel">
       </div>
 
-      <div class="form-section">
-        <h3>Social Media</h3>
-        <div class="form-group">
-          <label for="x_handle">X (Twitter)</label>
-          <input type="text" id="x_handle" placeholder="@username">
-        </div>
-        <div class="form-group">
-          <label for="bluesky_handle">Bluesky</label>
-          <input type="text" id="bluesky_handle" placeholder="username.bsky.social">
-        </div>
-        <div class="form-group">
-          <label for="discord_handle">Discord</label>
-          <input type="text" id="discord_handle" placeholder="username#0000">
-        </div>
+      <div class="form-group">
+        <label>Location</label>
+        <div class="view-value" id="locationView"></div>
+        <input class="edit-input" id="locationInput" type="text">
       </div>
 
-      <div class="form-section">
-        <h3>Fantasy Football</h3>
-        <div class="form-group">
-          <label for="sleeper_handle">Sleeper Handle</label>
-          <input type="text" id="sleeper_handle">
-        </div>
-        <div class="form-group">
-          <label for="mfl_handle">MFL Handle</label>
-          <input type="text" id="mfl_handle">
-        </div>
+      <div class="section-title">Social Media</div>
+      <div class="form-group">
+        <label>X (Twitter)</label>
+        <div class="view-value" id="xView"></div>
+        <input class="edit-input" id="xInput" type="text" placeholder="@username">
+      </div>
+      <div class="form-group">
+        <label>Bluesky</label>
+        <div class="view-value" id="bskyView"></div>
+        <input class="edit-input" id="bskyInput" type="text" placeholder="username.bsky.social">
+      </div>
+      <div class="form-group">
+        <label>Discord</label>
+        <div class="view-value" id="discordView"></div>
+        <input class="edit-input" id="discordInput" type="text" placeholder="username#0000">
       </div>
 
-      <button type="submit">Save Changes</button>
-      <div id="message" class="success"></div>
-      <div id="error" class="error" style="display: none;"></div>
+      <div class="section-title">Fantasy Football</div>
+      <div class="form-group">
+        <label>Sleeper Handle</label>
+        <div class="view-value" id="sleeperView"></div>
+        <input class="edit-input" id="sleeperInput" type="text">
+      </div>
+      <div class="form-group">
+        <label>MFL Handle</label>
+        <div class="view-value" id="mflView"></div>
+        <input class="edit-input" id="mflInput" type="text">
+      </div>
 
-      <button type="button" id="logout-btn" class="logout-btn">Logout</button>
+      <div class="message" id="messageBox"></div>
+
+      <div class="button-row" id="buttonRow">
+        <button type="submit">Save</button>
+        <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
+      </div>
     </form>
+
+    <button class="logout-btn" id="logoutBtn">Logout</button>
   </div>
 
-  <script src="javascript/auth.js"></script>
+<script src="./javascript/auth.js"></script>
   <script>
-    const profileForm = document.getElementById('profile-form');
-    const messageEl = document.getElementById('message');
-    const errorEl = document.getElementById('error');
-    const logoutBtn = document.getElementById('logout-btn');
-    const submitBtn = profileForm.querySelector('button[type="submit"]');
+    const fields = {
+      name: { view: 'nameView', input: 'nameInput' },
+      cell_phone: { view: 'phoneView', input: 'phoneInput' },
+      location: { view: 'locationView', input: 'locationInput' },
+      x_handle: { view: 'xView', input: 'xInput' },
+      bluesky_handle: { view: 'bskyView', input: 'bskyInput' },
+      discord_handle: { view: 'discordView', input: 'discordInput' },
+      sleeper_handle: { view: 'sleeperView', input: 'sleeperInput' },
+      mfl_handle: { view: 'mflView', input: 'mflInput' }
+    };
 
-    async function loadProfile() {
+    function displayProfile() {
       if (!auth.isAuthenticated()) {
         window.location.href = './login.html';
         return;
       }
-
-      document.getElementById('user-email').textContent = `Email: ${auth.user.email}`;
-
-      const profile = auth.profile;
-      document.getElementById('name').value = profile.name || '';
-      document.getElementById('cell_phone').value = profile.cell_phone || '';
-      document.getElementById('location').value = profile.location || '';
-      document.getElementById('x_handle').value = profile.x_handle || '';
-      document.getElementById('bluesky_handle').value = profile.bluesky_handle || '';
-      document.getElementById('discord_handle').value = profile.discord_handle || '';
-      document.getElementById('sleeper_handle').value = profile.sleeper_handle || '';
-      document.getElementById('mfl_handle').value = profile.mfl_handle || '';
+      document.getElementById('userEmail').textContent = 'Email: ' + auth.user.email;
+      Object.entries(fields).forEach(([key, ids]) => {
+        const value = auth.profile[key] || '';
+        document.getElementById(ids.view).textContent = value || '(not set)';
+        document.getElementById(ids.input).value = value;
+      });
     }
 
-    profileForm.addEventListener('submit', async (e) => {
+    function toggleEdit(show) {
+      Object.values(fields).forEach(ids => {
+        document.getElementById(ids.input).classList.toggle('active', show);
+        document.getElementById(ids.view).style.display = show ? 'none' : 'block';
+      });
+      document.getElementById('editLink').style.display = show ? 'none' : 'inline';
+      document.getElementById('buttonRow').classList.toggle('active', show);
+    }
+
+    document.getElementById('editLink').onclick = () => toggleEdit(true);
+    document.getElementById('cancelBtn').onclick = () => { toggleEdit(false); displayProfile(); };
+    
+    document.getElementById('profileForm').onsubmit = async (e) => {
       e.preventDefault();
-      errorEl.style.display = 'none';
-      messageEl.classList.remove('show');
-      submitBtn.classList.add('loading');
-
+      const updates = {};
+      Object.entries(fields).forEach(([key, ids]) => {
+        updates[key] = document.getElementById(ids.input).value;
+      });
       try {
-        await auth.updateProfile({
-          name: document.getElementById('name').value,
-          cell_phone: document.getElementById('cell_phone').value,
-          location: document.getElementById('location').value,
-          x_handle: document.getElementById('x_handle').value,
-          bluesky_handle: document.getElementById('bluesky_handle').value,
-          discord_handle: document.getElementById('discord_handle').value,
-          sleeper_handle: document.getElementById('sleeper_handle').value,
-          mfl_handle: document.getElementById('mfl_handle').value,
-        });
-        messageEl.textContent = 'Profile saved!';
-        messageEl.classList.add('show');
-        submitBtn.classList.remove('loading');
+        await auth.updateProfile(updates);
+        document.getElementById('messageBox').textContent = 'Saved!';
+        document.getElementById('messageBox').className = 'message success show';
+        setTimeout(() => { toggleEdit(false); displayProfile(); }, 1500);
       } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.style.display = 'block';
-        submitBtn.classList.remove('loading');
+        document.getElementById('messageBox').textContent = err.message;
+        document.getElementById('messageBox').className = 'message error show';
       }
-    });
+    };
 
-    logoutBtn.addEventListener('click', async () => {
+    document.getElementById('logoutBtn').onclick = async () => {
       await auth.logout();
       window.location.href = './login.html';
-    });
+    };
 
-    loadProfile();
+    async function initProfile() {
+      let attempts = 0;
+      while (!auth.profile && attempts < 50) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+      displayProfile();
+    }
+
+    initProfile();
   </script>
 </body>
 </html>
