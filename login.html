@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — FantasyNow+</title>
+  <title>Login — Super League FF</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     .login-container {
@@ -46,7 +46,7 @@
     button {
       width: 100%;
       padding: 12px;
-      background: #FFA515;
+      background: #e26f0f;
       color: white;
       border: none;
       border-radius: 4px;
@@ -56,10 +56,10 @@
       transition: background 0.2s;
     }
     button:hover {
-      background: #ED9405;
+      background: #c95d0a;
     }
     button:active {
-      background: #ED9405;
+      background: #a84708;
     }
     .error {
       color: #dc2626;
@@ -80,7 +80,7 @@
       color: #06192b;
     }
     .toggle-link a {
-      color: #FFA515;
+      color: #e26f0f;
       cursor: pointer;
       text-decoration: none;
       font-weight: 600;
@@ -113,10 +113,6 @@
 
     <form id="signup-form" style="display: none;">
       <div class="form-group">
-        <label for="signup-name">Full Name</label>
-        <input type="text" id="signup-name" required>
-      </div>
-      <div class="form-group">
         <label for="signup-email">Email</label>
         <input type="email" id="signup-email" required>
       </div>
@@ -133,7 +129,7 @@
     </div>
   </div>
 
-  <script src="javascript/auth.js"></script>
+  <script src="js/auth.js"></script>
   <script>
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
@@ -173,7 +169,7 @@
 
       try {
         await auth.login(email, password);
-        window.location.href = '/profile.html';
+        window.location.href = './profile.html';
       } catch (err) {
         loginError.textContent = err.message;
         loginError.classList.add('show');
@@ -181,25 +177,40 @@
       }
     });
 
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      const button = signupForm.querySelector('button');
-      
-      signupError.classList.remove('show');
-      button.classList.add('loading');
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+  const button = signupForm.querySelector('button');
+  
+  signupError.classList.remove('show');
+  button.classList.add('loading');
 
-      try {
-        await auth.signup(email, password, name);
-        window.location.href = '/profile.html';
-      } catch (err) {
-        signupError.textContent = err.message;
-        signupError.classList.add('show');
-        button.classList.remove('loading');
-      }
-    });
+  try {
+    const result = await auth.signup(email, password, '');
+    if (result.success) {
+      signupError.classList.remove('show');
+      signupError.style.background = '#dcfce7';
+      signupError.style.color = '#16a34a';
+      signupError.textContent = 'Account created! Please login.';
+      signupError.classList.add('show');
+      
+      setTimeout(() => {
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+        toggleText.innerHTML = "Don't have an account? <a id='toggle-btn'>Sign up</a>";
+        attachToggleListener();
+        signupError.classList.remove('show');
+      }, 2000);
+    }
+  } catch (err) {
+    signupError.textContent = err.message;
+    signupError.classList.add('show');
+    button.classList.remove('loading');
+  }
+});
   </script>
 </body>
 </html>
