@@ -1,12 +1,10 @@
 async function fetchNews() {
-    const rssUrl = "https://rss.app/feeds/t0yMjPknbcSjLVy8.xml";
+    const rssUrl = "https://www.draftsharks.com/rss/injury-news";
     const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
     const container = document.getElementById('news-container');
-
     try {
         const response = await fetch(apiUrl);
         const data = await response.json();
-
         if (data.items && data.items.length) {
             // We create a string of links
             const content = data.items.map(item => 
@@ -24,6 +22,5 @@ async function fetchNews() {
         if (container) container.textContent = "Headlines temporarily unavailable.";
     }
 }
-
 // Run immediately
 fetchNews();
