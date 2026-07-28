@@ -169,6 +169,11 @@ layout: null
   #dg .dg-grid{grid-template-columns:1fr}
   #dg .dg-list{max-height:460px}
 }
+
+#dg .dg-roster-cfg{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;background:var(--dg-panel);border:1px solid var(--dg-line);border-radius:var(--dg-radius);padding:.7rem 1rem;margin-bottom:1rem}
+#dg .dg-cfg{display:flex;flex-direction:column;gap:.25rem;font-family:var(--dg-display);font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--dg-faint)}
+#dg .dg-cfg input,#dg .dg-cfg select{width:3.4rem;background:var(--dg-panel2);border:1px solid var(--dg-line);color:var(--dg-ink);padding:.4rem .5rem;border-radius:7px;font-family:var(--dg-sans);font-weight:600;font-size:.85rem}
+#dg .dg-cfg select{width:auto}
 </style>
 
   <div class="dg-topbar">
@@ -208,6 +213,26 @@ layout: null
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
       Reset
     </button>
+  </div>
+
+  <div class="dg-roster-cfg">
+    <span class="dg-sync-lbl">Roster</span>
+    <label class="dg-cfg">QB<input type="number" id="cfgQB" min="0" max="6" value="1"></label>
+    <label class="dg-cfg">RB<input type="number" id="cfgRB" min="0" max="8" value="2"></label>
+    <label class="dg-cfg">WR<input type="number" id="cfgWR" min="0" max="8" value="2"></label>
+    <label class="dg-cfg">TE<input type="number" id="cfgTE" min="0" max="6" value="1"></label>
+    <label class="dg-cfg">FLEX<input type="number" id="cfgFLEX" min="0" max="6" value="1"></label>
+    <label class="dg-cfg">Flex type
+      <select id="cfgFlexType">
+        <option value="WRT" selected>W/R/T</option>
+        <option value="WR">W/R</option>
+        <option value="WT">W/T</option>
+      </select>
+    </label>
+    <label class="dg-cfg">S-Flex<input type="number" id="cfgSFLEX" min="0" max="4" value="0"></label>
+    <label class="dg-cfg">DEF<input type="number" id="cfgDST" min="0" max="4" value="1"></label>
+    <label class="dg-cfg">K<input type="number" id="cfgK" min="0" max="4" value="1"></label>
+    <label class="dg-cfg">Bench<input type="number" id="cfgBENCH" min="0" max="20" value="7"></label>
   </div>
 
   <div class="dg-sync">
@@ -285,19 +310,24 @@ layout: null
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMNdMCYh6drs1eoU4P54POt2RMOvvbSIQaCYce9U8_cdCwJcSfG4znrJPFYk2RdMZ23Cw7ZrNTpV-V/pub?gid=807977812&single=true&output=csv";
 
 
-const ROSTER_TEMPLATE = [
-  {slot:"QB",eligible:["QB"]},
-  {slot:"RB",eligible:["RB"]},
-  {slot:"RB",eligible:["RB"]},
-  {slot:"WR",eligible:["WR"]},
-  {slot:"WR",eligible:["WR"]},
-  {slot:"TE",eligible:["TE"]},
-  {slot:"FLEX",eligible:["RB","WR","TE"]},
-  {slot:"DST",eligible:["DST"]},
-  {slot:"K",eligible:["K"]}
-];
-const BENCH_SPOTS = 7;
-const DEFAULT_ROUNDS = ROSTER_TEMPLATE.length + BENCH_SPOTS;
+const rosterCfg = {QB:1,RB:2,WR:2,TE:1,FLEX:1,SFLEX:0,DST:1,K:1,BENCH:7};
+let flexType = "WRT";
+function buildRosterTemplate(){
+  const t=[];
+  const flexElig=flexType==="WR"?["WR","RB"]:flexType==="WT"?["WR","TE"]:["RB","WR","TE"];
+  const add=(n,slot,elig)=>{for(let i=0;i<n;i++)t.push({slot:slot,eligible:elig});};
+  add(rosterCfg.QB,"QB",["QB"]);
+  add(rosterCfg.RB,"RB",["RB"]);
+  add(rosterCfg.WR,"WR",["WR"]);
+  add(rosterCfg.TE,"TE",["TE"]);
+  add(rosterCfg.FLEX,"FLEX",flexElig);
+  add(rosterCfg.SFLEX,"SFLEX",["QB","RB","WR","TE"]);
+  add(rosterCfg.DST,"DST",["DST"]);
+  add(rosterCfg.K,"K",["K"]);
+  return t;
+}
+let ROSTER_TEMPLATE = buildRosterTemplate();
+const DEFAULT_ROUNDS = ROSTER_TEMPLATE.length + rosterCfg.BENCH;
 const SLEEPER = "https://api.sleeper.app/v1";
 const teamAlias = {JAX:"JAC"};
 
@@ -490,12 +520,12 @@ function renderRoster(){
     return `<div class="dg-rrow${clash}"><span class="dg-slot">${s.slot}</span><span class="dg-pn">${p.name} <small>${p.team}</small></span><span class="dg-rrk">${rk}${bye}</span></div>`;
   }).join("");
   let benchHtml="";
-  for(let i=0;i<BENCH_SPOTS;i++){
+  for(let i=0;i<rosterCfg.BENCH;i++){
     const p=bench[i];
     if(p){const rk=(typeof p.rank==="number")?p.rank:"—";benchHtml+=`<div class="dg-rrow"><span class="dg-slot">BE</span><span class="dg-pn">${p.name} <small>${p.team}</small></span><span class="dg-rrk">${rk}</span></div>`;}
     else benchHtml+=`<div class="dg-rrow"><span class="dg-slot">BE</span><span class="dg-pn dg-none">Empty</span><span class="dg-rrk">—</span></div>`;
   }
-  for(let i=BENCH_SPOTS;i<bench.length;i++){
+  for(let i=rosterCfg.BENCH;i<bench.length;i++){
     const p=bench[i];const rk=(typeof p.rank==="number")?p.rank:"—";
     benchHtml+=`<div class="dg-rrow"><span class="dg-slot">BE+</span><span class="dg-pn">${p.name} <small>${p.team}</small></span><span class="dg-rrk">${rk}</span></div>`;
   }
@@ -638,10 +668,20 @@ function finishLoad(text,isLive){
   else{note.textContent="Sample data · sheet fetch failed";note.classList.add("dg-warn");}
   renderAll();
 }
-
+function cfgInt(id){const v=parseInt($(id).value,10);return isNaN(v)||v<0?0:v;}
+function applyRoster(){
+  rosterCfg.QB=cfgInt("cfgQB");rosterCfg.RB=cfgInt("cfgRB");rosterCfg.WR=cfgInt("cfgWR");rosterCfg.TE=cfgInt("cfgTE");
+  rosterCfg.FLEX=cfgInt("cfgFLEX");rosterCfg.SFLEX=cfgInt("cfgSFLEX");rosterCfg.DST=cfgInt("cfgDST");rosterCfg.K=cfgInt("cfgK");rosterCfg.BENCH=cfgInt("cfgBENCH");
+  flexType=$("cfgFlexType").value;
+  ROSTER_TEMPLATE=buildRosterTemplate();
+  state.rounds=ROSTER_TEMPLATE.length+rosterCfg.BENCH;
+  resetAll();
+}
+["cfgQB","cfgRB","cfgWR","cfgTE","cfgFLEX","cfgFlexType","cfgSFLEX","cfgDST","cfgK","cfgBENCH"].forEach(id=>$(id).addEventListener("change",applyRoster));
 buildSlotOptions();slotSel.value=String(state.slot);setModeButtons();
 fetch(CSV_URL).then(r=>{if(!r.ok)throw new Error(r.status);return r.text();}).then(t=>finishLoad(t,true)).catch(()=>finishLoad(SAMPLE,false));
 })();
+
 </script>
 </main>
 
