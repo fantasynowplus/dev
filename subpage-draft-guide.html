@@ -174,6 +174,19 @@ layout: null
 #dg .dg-cfg{display:flex;flex-direction:column;gap:.25rem;font-family:var(--dg-display);font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--dg-faint)}
 #dg .dg-cfg input,#dg .dg-cfg select{width:3.4rem;background:var(--dg-panel2);border:1px solid var(--dg-line);color:var(--dg-ink);padding:.4rem .5rem;border-radius:7px;font-family:var(--dg-sans);font-weight:600;font-size:.85rem}
 #dg .dg-cfg select{width:auto}
+#dg .dg-gear svg{width:15px;height:15px}
+#dg .dg-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+#dg .dg-modal[hidden]{display:none}
+#dg .dg-modal-backdrop{position:absolute;inset:0;background:rgba(6,10,18,.72)}
+#dg .dg-modal-panel{position:relative;background:var(--dg-panel);border:1px solid var(--dg-line);border-radius:var(--dg-radius);max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#dg .dg-modal-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;border-bottom:1px solid var(--dg-line)}
+#dg .dg-modal-head h2{font-family:var(--dg-display);font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--dg-ink)}
+#dg .dg-modal-x{background:transparent;border:0;color:var(--dg-muted);font-size:1.4rem;line-height:1;cursor:pointer;padding:0 .2rem}
+#dg .dg-modal-x:hover{color:var(--dg-ink)}
+#dg .dg-modal-body{padding:1.1rem}
+#dg .dg-modal .dg-roster-cfg{background:transparent;border:0;padding:0;margin:0}
+#dg .dg-modal-note{font-size:.74rem;color:var(--dg-faint);margin-top:.9rem;line-height:1.4}
+
 </style>
 
   <div class="dg-topbar">
@@ -204,6 +217,10 @@ layout: null
         <option value="3rr">3rd Round Reversal</option>
       </select>
     </div>
+    <button class="dg-btn dg-gear" id="rosterGearBtn" type="button" title="Roster settings" aria-label="Roster settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82z"/></svg>
+      Roster
+    </button>
     <div class="dg-spacer"></div>
     <button class="dg-btn" id="undoBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
@@ -215,24 +232,35 @@ layout: null
     </button>
   </div>
 
-  <div class="dg-roster-cfg">
-    <span class="dg-sync-lbl">Roster</span>
-    <label class="dg-cfg">QB<input type="number" id="cfgQB" min="0" max="6" value="1"></label>
-    <label class="dg-cfg">RB<input type="number" id="cfgRB" min="0" max="8" value="2"></label>
-    <label class="dg-cfg">WR<input type="number" id="cfgWR" min="0" max="8" value="2"></label>
-    <label class="dg-cfg">TE<input type="number" id="cfgTE" min="0" max="6" value="1"></label>
-    <label class="dg-cfg">FLEX<input type="number" id="cfgFLEX" min="0" max="6" value="1"></label>
-    <label class="dg-cfg">Flex type
-      <select id="cfgFlexType">
-        <option value="WRT" selected>W/R/T</option>
-        <option value="WR">W/R</option>
-        <option value="WT">W/T</option>
-      </select>
-    </label>
-    <label class="dg-cfg">S-Flex<input type="number" id="cfgSFLEX" min="0" max="4" value="0"></label>
-    <label class="dg-cfg">DEF<input type="number" id="cfgDST" min="0" max="4" value="1"></label>
-    <label class="dg-cfg">K<input type="number" id="cfgK" min="0" max="4" value="1"></label>
-    <label class="dg-cfg">Bench<input type="number" id="cfgBENCH" min="0" max="20" value="7"></label>
+  <div class="dg-modal" id="rosterModal" hidden>
+    <div class="dg-modal-backdrop" data-close="1"></div>
+    <div class="dg-modal-panel" role="dialog" aria-modal="true" aria-label="Roster settings">
+      <div class="dg-modal-head">
+        <h2>Roster Settings</h2>
+        <button class="dg-modal-x" id="rosterCloseBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="dg-modal-body">
+        <div class="dg-roster-cfg">
+          <label class="dg-cfg">QB<input type="number" id="cfgQB" min="0" max="6" value="1"></label>
+          <label class="dg-cfg">RB<input type="number" id="cfgRB" min="0" max="8" value="2"></label>
+          <label class="dg-cfg">WR<input type="number" id="cfgWR" min="0" max="8" value="2"></label>
+          <label class="dg-cfg">TE<input type="number" id="cfgTE" min="0" max="6" value="1"></label>
+          <label class="dg-cfg">FLEX<input type="number" id="cfgFLEX" min="0" max="6" value="1"></label>
+          <label class="dg-cfg">Flex type
+            <select id="cfgFlexType">
+              <option value="WRT" selected>W/R/T</option>
+              <option value="WR">W/R</option>
+              <option value="WT">W/T</option>
+            </select>
+          </label>
+          <label class="dg-cfg">S-Flex<input type="number" id="cfgSFLEX" min="0" max="4" value="0"></label>
+          <label class="dg-cfg">DEF<input type="number" id="cfgDST" min="0" max="4" value="1"></label>
+          <label class="dg-cfg">K<input type="number" id="cfgK" min="0" max="4" value="1"></label>
+          <label class="dg-cfg">Bench<input type="number" id="cfgBENCH" min="0" max="20" value="7"></label>
+        </div>
+        <p class="dg-modal-note">Changes apply to the board and reset your current picks.</p>
+      </div>
+    </div>
   </div>
 
   <div class="dg-sync">
@@ -503,12 +531,12 @@ function availRow(p,i){
 function renderAvail(){
   const d=D();const pool=availableSorted("ALL",d);
   $("availCount").textContent=`${pool.length} left`;
-  $("availNow").innerHTML=pool.slice(0,5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
+  $("availNow").innerHTML=pool.slice(0,7).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
   const nextPick=nextMyPick(d.pick+1);const nextEl=$("availNext");const hint=$("pickHint");
   if(!nextPick){nextEl.innerHTML='<li class="dg-lt">No more picks for you.</li>';return;}
   const consumed=nextPick-d.pick;const others=isMyPick(d.pick)?consumed-1:consumed;
   nextEl.innerHTML=pool.slice(consumed,consumed+5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
-  hint.innerHTML=`About <b>${others}</b> players typically come off before pick <b>${nextPick}</b>. Anyone below is likely still there.`;
+  hint.innerHTML=`About <b>${others}</b> players typically come off before pick <b>${nextPick}</b>. Anyone above is likely still there based on our redraft rankings.`;
 }
 function renderRoster(){
   const {starters,bench}=fillRoster();const byeCounts={};
@@ -678,6 +706,15 @@ function applyRoster(){
   resetAll();
 }
 ["cfgQB","cfgRB","cfgWR","cfgTE","cfgFLEX","cfgFlexType","cfgSFLEX","cfgDST","cfgK","cfgBENCH"].forEach(id=>$(id).addEventListener("change",applyRoster));
+(function(){
+  const m=$("rosterModal");
+  const open=()=>{m.hidden=false;};
+  const close=()=>{m.hidden=true;};
+  $("rosterGearBtn").addEventListener("click",open);
+  $("rosterCloseBtn").addEventListener("click",close);
+  m.addEventListener("click",e=>{if(e.target.dataset.close)close();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!m.hidden)close();});
+})();
 buildSlotOptions();slotSel.value=String(state.slot);setModeButtons();
 fetch(CSV_URL).then(r=>{if(!r.ok)throw new Error(r.status);return r.text();}).then(t=>finishLoad(t,true)).catch(()=>finishLoad(SAMPLE,false));
 })();
