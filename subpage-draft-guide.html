@@ -138,7 +138,7 @@ layout: null
 #dg .dg-rrow .dg-slot{font-family:var(--dg-display);font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--dg-faint);text-transform:uppercase}
 #dg .dg-rrow .dg-pn{font-weight:600;font-size:.9rem}
 #dg .dg-rrow .dg-pn small{color:var(--dg-faint);font-weight:600;font-size:.76rem}
-#dg .dg-rrow .dg-pn.dg-empty{color:var(--dg-faint);font-weight:500;font-style:italic}
+#dg .dg-rrow .dg-pn.dg-none{color:var(--dg-faint);font-weight:500;font-style:italic}
 #dg .dg-rrow .dg-rrk{font-family:var(--dg-mono);font-size:.74rem;color:var(--dg-muted)}
 #dg .dg-rrow.dg-clash{background:rgba(251,113,133,.09)}
 #dg .dg-rrow.dg-clash .dg-rrk{color:var(--dg-bad)}
@@ -489,7 +489,7 @@ function renderRoster(){
   document.getElementById("starters").innerHTML=starters.map(s=>{
     const p=s.player;
     const clash=p&&p.bye&&byeCounts[p.bye]>1?" dg-clash":"";
-    if(!p)return `<div class="dg-rrow"><span class="dg-slot">${s.slot}</span><span class="dg-pn dg-empty">Empty</span><span class="dg-rrk">—</span></div>`;
+    if(!p)return `<div class="dg-rrow"><span class="dg-slot">${s.slot}</span><span class="dg-pn dg-none">Empty</span><span class="dg-rrk">—</span></div>`;
     return `<div class="dg-rrow${clash}"><span class="dg-slot">${s.slot}</span><span class="dg-pn">${p.name} <small>${p.team}</small></span><span class="dg-rrk">${p.rank}${p.bye?" · B"+p.bye:""}</span></div>`;
   }).join("");
   let benchHtml="";
@@ -497,7 +497,7 @@ function renderRoster(){
     const p=bench[i];
     benchHtml+=p
       ?`<div class="dg-rrow"><span class="dg-slot">BE</span><span class="dg-pn">${p.name} <small>${p.team}</small></span><span class="dg-rrk">${p.rank}</span></div>`
-      :`<div class="dg-rrow"><span class="dg-slot">BE</span><span class="dg-pn dg-empty">Empty</span><span class="dg-rrk">—</span></div>`;
+      :`<div class="dg-rrow"><span class="dg-slot">BE</span><span class="dg-pn dg-none">Empty</span><span class="dg-rrk">—</span></div>`;
   }
   for(let i=BENCH_SPOTS;i<bench.length;i++){
     const p=bench[i];

@@ -56,7 +56,7 @@
 
 /* Tools index cards */
 .tool-card {
-    background-color: var(--bg-card);
+    background-color: #161d2e;
     background-image:
         linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
         linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
@@ -70,7 +70,7 @@
 }
 
 .tool-card h3 {
-    color: var(--bright-orange);
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     font-size: 1.5rem;
