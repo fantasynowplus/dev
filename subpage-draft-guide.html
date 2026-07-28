@@ -154,16 +154,32 @@ layout: null
 #dg .dg-btn.dg-active{background:var(--dg-accent);color:var(--dg-accent-ink);border-color:var(--dg-accent)}
 #dg .dg-board{border:1px solid var(--dg-line);border-radius:var(--dg-radius);background:var(--dg-panel);margin-bottom:1rem;overflow:hidden}
 #dg .dg-board-scroll{overflow-x:auto}
-#dg .dg-board-tbl{border-collapse:collapse;width:100%;font-size:.72rem}
-#dg .dg-board-tbl th{position:sticky;top:0;background:var(--dg-panel2);color:var(--dg-faint);font-family:var(--dg-display);font-weight:600;padding:.4rem .3rem;text-align:center;border:1px solid var(--dg-line)}
-#dg .dg-board-tbl th.dg-mycol{color:var(--dg-accent)}
-#dg .dg-brd{background:var(--dg-panel2);color:var(--dg-faint);font-family:var(--dg-mono);text-align:center;border:1px solid var(--dg-line);width:2rem}
-#dg .dg-cell{border:1px solid var(--dg-line);padding:.3rem .4rem;min-width:96px;white-space:nowrap}
-#dg .dg-cell .dg-pos{margin-right:.3rem;min-width:26px;padding:.1rem .3rem}
-#dg .dg-cell-nm{font-weight:600}
-#dg .dg-cell-empty .dg-cell-pn{font-family:var(--dg-mono);font-size:.7rem;opacity:.5}
-#dg .dg-cell-mine{background:rgba(255,165,21,.06)}
-#dg .dg-cell-cur{outline:2px solid var(--dg-accent);outline-offset:-2px}
+#dg .dg-board-grid{display:grid;gap:6px;padding:12px;min-width:max-content}
+#dg .dg-th{font-family:var(--dg-display);font-size:.7rem;font-weight:600;color:var(--dg-faint);text-align:center;padding:.2rem 0}
+#dg .dg-th.mine{color:var(--dg-accent)}
+#dg .dg-rl{font-family:var(--dg-mono);font-size:.66rem;color:var(--dg-faint);display:flex;align-items:center;justify-content:center}
+#dg .dg-tile{border-radius:9px;padding:.4rem .5rem;background:var(--dg-panel2);border:1px solid var(--dg-line);border-left:3px solid var(--dg-line);min-height:58px;overflow:hidden}
+#dg .dg-tile-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.15rem}
+#dg .dg-tile-pick{font-family:var(--dg-mono);font-size:.6rem;color:var(--dg-faint)}
+#dg .dg-tile-pos{font-family:var(--dg-display);font-size:.62rem;font-weight:700;letter-spacing:.04em}
+#dg .dg-tile-nm{font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dg .dg-tile-tm{font-size:.66rem;color:var(--dg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dg .dg-tile.empty{background:transparent;border-style:dashed;border-left-style:dashed}
+#dg .dg-tile.empty .dg-tile-pick{opacity:.5}
+#dg .dg-tile.cur{outline:2px solid var(--dg-accent);outline-offset:-1px}
+#dg .dg-tile.mine{box-shadow:inset 0 0 0 1px rgba(255,165,21,.25)}
+#dg .dg-tile.qb{background:rgba(192,132,252,.16);border-left-color:var(--dg-qb)}
+#dg .dg-tile.qb .dg-tile-pos{color:var(--dg-qb)}
+#dg .dg-tile.rb{background:rgba(52,211,153,.16);border-left-color:var(--dg-rb)}
+#dg .dg-tile.rb .dg-tile-pos{color:var(--dg-rb)}
+#dg .dg-tile.wr{background:rgba(96,165,250,.16);border-left-color:var(--dg-wr)}
+#dg .dg-tile.wr .dg-tile-pos{color:var(--dg-wr)}
+#dg .dg-tile.te{background:rgba(251,146,60,.16);border-left-color:var(--dg-te)}
+#dg .dg-tile.te .dg-tile-pos{color:var(--dg-te)}
+#dg .dg-tile.k{background:rgba(148,163,184,.16);border-left-color:var(--dg-k)}
+#dg .dg-tile.k .dg-tile-pos{color:var(--dg-k)}
+#dg .dg-tile.dst{background:rgba(94,234,212,.16);border-left-color:var(--dg-dst)}
+#dg .dg-tile.dst .dg-tile-pos{color:var(--dg-dst)}
 
 @media(max-width:1080px){
   #dg .dg-grid{grid-template-columns:1fr}
@@ -574,20 +590,23 @@ function renderGrade(){
 function renderBoard(){
   if(!state.boardOpen)return;
   const d=D();const map={};d.history.forEach(h=>{map[h.pick]=h;});
-  let html='<div class="dg-board-scroll"><table class="dg-board-tbl"><thead><tr><th></th>';
-  for(let sl=1;sl<=state.size;sl++)html+=`<th class="${sl===state.slot?'dg-mycol':''}">${sl}</th>`;
-  html+='</tr></thead><tbody>';
+  let cells='<div class="dg-th"></div>';
+  for(let sl=1;sl<=state.size;sl++)cells+=`<div class="dg-th${sl===state.slot?' mine':''}">${sl}</div>`;
   for(let r=1;r<=state.rounds;r++){
-    html+=`<tr><td class="dg-brd">${r}</td>`;
+    cells+=`<div class="dg-rl">R${r}</div>`;
     for(let sl=1;sl<=state.size;sl++){
       const pn=pickNumber(r,sl,state.size,state.type);const h=map[pn];
-      const cur=pn===d.pick?" dg-cell-cur":"";const mine=sl===state.slot?" dg-cell-mine":"";
-      if(h){const p=h.p;html+=`<td class="dg-cell${cur}${mine}"><span class="dg-pos ${(p.pos||'').toLowerCase()}">${p.pos||''}</span><span class="dg-cell-nm">${escapeHtml(lastName(p.name))}</span></td>`;}
-      else html+=`<td class="dg-cell dg-cell-empty${cur}${mine}"><span class="dg-cell-pn">${pn}</span></td>`;
+      const cur=pn===d.pick?" cur":"";const mine=sl===state.slot?" mine":"";
+      if(h){
+        const p=h.p;const pos=(p.pos||"").toLowerCase();
+        const tm=(p.team||"")+(p.bye?" · B"+p.bye:"");
+        cells+=`<div class="dg-tile ${pos}${cur}${mine}"><div class="dg-tile-top"><span class="dg-tile-pick">#${pn}</span><span class="dg-tile-pos">${p.pos||""}</span></div><div class="dg-tile-nm">${escapeHtml(p.name)}</div><div class="dg-tile-tm">${escapeHtml(tm)}</div></div>`;
+      }else{
+        cells+=`<div class="dg-tile empty${cur}${mine}"><span class="dg-tile-pick">#${pn}</span></div>`;
+      }
     }
-    html+='</tr>';
   }
-  boardView.innerHTML=html+'</tbody></table></div>';
+  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:2.2rem repeat(${state.size},minmax(112px,1fr))">${cells}</div></div>`;
 }
 function renderAll(){renderClock();renderList();renderAvail();renderRoster();renderGrade();renderBoard();}
 
