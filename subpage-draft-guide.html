@@ -13,7 +13,7 @@ layout: null
   --dg-ink:#eef2fb;
   --dg-muted:#94a1bd;
   --dg-faint:#6b7794;
-  --dg-accent:#f0b429;
+  --dg-accent:#FFA515;
   --dg-accent-ink:#1a1204;
   --dg-live:#1f2b1f;
   --dg-live-line:#3f6b3a;
@@ -471,15 +471,16 @@ function renderAvail(){
   const pool=availableSorted("ALL");
   document.getElementById("availCount").textContent=`${pool.length} left`;
   document.getElementById("availNow").innerHTML=pool.slice(0,5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
-  const nextPick=nextMyPick(state.pick);
+  const nextPick=nextMyPick(state.pick+1);
   const nextEl=document.getElementById("availNext");
   const hint=document.getElementById("pickHint");
-  if(state.mode==="board"||!nextPick||nextPick===state.pick){
-    nextEl.innerHTML='<li class="dg-lt">You are on the clock now.</li>';
+  if(state.mode==="board"||!nextPick){
+    nextEl.innerHTML='<li class="dg-lt">No more picks for you.</li>';
   }else{
-    const gap=nextPick-state.pick;
-    nextEl.innerHTML=pool.slice(gap,gap+5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
-    hint.innerHTML=`About <b>${gap}</b> players typically come off before pick <b>${nextPick}</b>. Anyone above that line is at risk of being gone.`;
+    const consumed=nextPick-state.pick;
+    const others=isMyPick(state.pick)?consumed-1:consumed;
+    nextEl.innerHTML=pool.slice(consumed,consumed+5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
+    hint.innerHTML=`About <b>${others}</b> players typically come off before pick <b>${nextPick}</b>. Anyone below is likely still there.`;
   }
 }
 function renderRoster(){
@@ -561,7 +562,7 @@ function finishLoad(text,isLive){
   players=buildPlayers(parseCSV(text));
   byId={};players.forEach(p=>byId[p.id]=p);
   const note=document.getElementById("dataNote");
-  if(isLive){note.textContent=`${players.length} players · live from sheet`;note.classList.remove("dg-warn");}
+  if(isLive){note.textContent=`${players.length} players · FantasyNow+ Redraft Rankings`;note.classList.remove("dg-warn");}
   else{note.textContent="Sample data · sheet fetch failed";note.classList.add("dg-warn");}
   renderAll();
 }
