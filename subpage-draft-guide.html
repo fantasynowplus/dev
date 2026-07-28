@@ -558,10 +558,11 @@ async function sleeperConnect(){
     state.sleeper.userId=user.user_id;
     const season=await currentSeason();
     const leagues=await(await fetch(`${SLEEPER}/user/${user.user_id}/leagues/nfl/${season}`)).json();
-    if(!leagues||!leagues.length){setSync(`No NFL leagues found for ${season}.`,true);leagueSel.hidden=true;return;}
-    leagueSel.innerHTML='<option value="">Select league…</option>'+leagues.filter(l=>l.draft_id).map(l=>`<option value="${l.draft_id}">${escapeHtml(l.name)}</option>`).join("");
-    leagueSel.hidden=false;
-    setSync(`${leagues.length} league(s) found — pick one.`);
+    const redraft=(leagues||[]).filter(l=>l.draft_id&&(!l.settings||l.settings.type===2));
+        if(!redraft.length){setSync(`No redraft leagues found for ${season}.`,true);leagueSel.hidden=true;return;}
+        leagueSel.innerHTML='<option value="">Select league…</option>'+redraft.map(l=>`<option value="${l.draft_id}">${escapeHtml(l.name)}</option>`).join("");
+        leagueSel.hidden=false;
+        setSync(`${redraft.length} redraft league(s) found — pick one.`);
   }catch(e){setSync("Could not reach Sleeper. Check the username.",true);}
 }
 function applyDraftSettings(draft){
