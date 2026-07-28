@@ -158,14 +158,13 @@ layout: null
 #dg .dg-th{font-family:var(--dg-display);font-size:.7rem;font-weight:600;color:var(--dg-faint);text-align:center;padding:.2rem 0}
 #dg .dg-th.mine{color:var(--dg-accent)}
 #dg .dg-rl{font-family:var(--dg-mono);font-size:.66rem;color:var(--dg-faint);display:flex;align-items:center;justify-content:center}
-#dg .dg-tile{border-radius:9px;padding:.4rem .5rem;background:var(--dg-panel2);border:1px solid var(--dg-line);border-left:3px solid var(--dg-line);min-height:58px;overflow:hidden}
-#dg .dg-tile-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.15rem}
-#dg .dg-tile-pick{font-family:var(--dg-mono);font-size:.6rem;color:var(--dg-faint)}
-#dg .dg-tile-pos{font-family:var(--dg-display);font-size:.62rem;font-weight:700;letter-spacing:.04em}
-#dg .dg-tile-nm{font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#dg .dg-tile-tm{font-size:.66rem;color:var(--dg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dg .dg-tile{border-radius:8px;padding:.35rem .45rem;background:var(--dg-panel2);border:1px solid var(--dg-line);border-left:3px solid var(--dg-line);min-height:44px;overflow:hidden}
+#dg .dg-tile-top{display:flex;align-items:center;justify-content:space-between;gap:.3rem;margin-bottom:.1rem}
+#dg .dg-tile-meta{font-family:var(--dg-mono);font-size:.58rem;color:var(--dg-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dg .dg-tile-pos{font-family:var(--dg-display);font-size:.6rem;font-weight:700;letter-spacing:.04em;flex:0 0 auto}
+#dg .dg-tile-nm{font-weight:600;font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
 #dg .dg-tile.empty{background:transparent;border-style:dashed;border-left-style:dashed}
-#dg .dg-tile.empty .dg-tile-pick{opacity:.5}
+#dg .dg-tile.empty .dg-tile-meta{opacity:.5}
 #dg .dg-tile.cur{outline:2px solid var(--dg-accent);outline-offset:-1px}
 #dg .dg-tile.mine{box-shadow:inset 0 0 0 1px rgba(255,165,21,.25)}
 #dg .dg-tile.qb{background:rgba(192,132,252,.16);border-left-color:var(--dg-qb)}
@@ -599,14 +598,14 @@ function renderBoard(){
       const cur=pn===d.pick?" cur":"";const mine=sl===state.slot?" mine":"";
       if(h){
         const p=h.p;const pos=(p.pos||"").toLowerCase();
-        const tm=(p.team||"")+(p.bye?" · B"+p.bye:"");
-        cells+=`<div class="dg-tile ${pos}${cur}${mine}"><div class="dg-tile-top"><span class="dg-tile-pick">#${pn}</span><span class="dg-tile-pos">${p.pos||""}</span></div><div class="dg-tile-nm">${escapeHtml(p.name)}</div><div class="dg-tile-tm">${escapeHtml(tm)}</div></div>`;
+        const meta=`#${pn}`+(p.team?" · "+p.team:"")+(p.bye?" · B"+p.bye:"");
+        cells+=`<div class="dg-tile ${pos}${cur}${mine}"><div class="dg-tile-top"><span class="dg-tile-meta">${escapeHtml(meta)}</span><span class="dg-tile-pos">${p.pos||""}</span></div><div class="dg-tile-nm">${escapeHtml(p.name)}</div></div>`;
       }else{
-        cells+=`<div class="dg-tile empty${cur}${mine}"><span class="dg-tile-pick">#${pn}</span></div>`;
+        cells+=`<div class="dg-tile empty${cur}${mine}"><span class="dg-tile-meta">#${pn}</span></div>`;
       }
     }
   }
-  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:2.2rem repeat(${state.size},minmax(112px,1fr))">${cells}</div></div>`;
+  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:1.9rem repeat(${state.size},minmax(86px,1fr))">${cells}</div></div>`;
 }
 function renderAll(){renderClock();renderList();renderAvail();renderRoster();renderGrade();renderBoard();}
 
