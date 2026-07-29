@@ -18,9 +18,3 @@ A real visual departure from the current site, not just a recolor — built arou
 ## Still untouched
 
 Every JS-driven widget (Sleeper trends, YouTube feed, rankings widget, the 3 roster/recap tools, mobile nav, the Join Our Team Formspree form) hooks into the exact same IDs, classes, and form field names as the live site. Nothing there was renamed.
-
-## Testing this as an A/B candidate
-
-1. Push this to its own repo (or overwrite the previous `redesign` repo/branch).
-2. Enable GitHub Pages the same way as before (Settings → Pages → Deploy from branch → `main` / root).
-3. Compare side-by-side with the live site for staff feedback.
