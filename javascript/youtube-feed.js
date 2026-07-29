@@ -9,20 +9,33 @@ async function loadFeed(playlistId, buttonElement) {
         ? `https://www.youtube.com/feeds/videos.xml?channel_id=${playlistId}`
         : `https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`;
         
-    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rss}`);
-    const data = await response.json();
-    const videos = data.items.slice(0, 8);
-
     const container = document.getElementById('youtube-feed');
-    container.innerHTML = videos.map(v => `
-        <div class="video-card">
-            <a href="${v.link}" target="_blank">
-                <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}">
-            </a>
-            <div class="video-info">
-                <h3 class="video-title">${v.title}</h3>
-                <p class="video-date">${new Date(v.pubDate).toLocaleDateString()}</p>
+    container.innerHTML = 'Loading...';
+
+    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.status !== 'ok' || !Array.isArray(data.items) || data.items.length === 0) {
+            throw new Error(data.message || 'Feed returned no items');
+        }
+
+        const videos = data.items.slice(0, 8);
+        container.innerHTML = videos.map(v => `
+            <div class="video-card">
+                <a href="${v.link}" target="_blank" rel="noopener">
+                    <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}">
+                </a>
+                <div class="video-info">
+                    <h3 class="video-title">${v.title}</h3>
+                    <p class="video-date">${new Date(v.pubDate).toLocaleDateString()}</p>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    } catch (err) {
+        console.error('Feed load failed:', err);
+        container.innerHTML = '<p class="feed-error">Feed unavailable right now — please refresh.</p>';
+    }
 }
