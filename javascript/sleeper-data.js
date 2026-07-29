@@ -22,7 +22,7 @@ async function fetchTrending(type, containerId) {
                     <img src="https://sleepercdn.com/content/nfl/players/${t.player_id}.jpg" 
                          alt="${p.first_name}" 
                          class="player-img" 
-                         onerror="this.src='${logoUrl}';">
+                         onerror="this.onerror=null; this.src='${logoUrl}';">
                     <div class="player-info">
                         <div class="player-name">${p.first_name} ${p.last_name}</div>
                         <div class="player-pos">${p.position} - ${p.team || 'FA'}</div>
