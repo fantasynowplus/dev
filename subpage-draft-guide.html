@@ -17,12 +17,12 @@ layout: null
   --dg-accent-ink:#1a1204;
   --dg-live:#1f2b1f;
   --dg-live-line:#3f6b3a;
-  --dg-qb:#c084fc;
-  --dg-rb:#34d399;
-  --dg-wr:#60a5fa;
-  --dg-te:#fb923c;
-  --dg-k:#94a3b8;
-  --dg-dst:#5eead4;
+  --dg-qb:#bf6186;
+  --dg-rb:#77c3a7;
+  --dg-wr:#48a5c7;
+  --dg-te:#cd8c56;
+  --dg-k:#9496d1;
+  --dg-dst:#995f51;
   --dg-good:#34d399;
   --dg-bad:#fb7185;
   --dg-radius:12px;
@@ -162,7 +162,9 @@ layout: null
 #dg .dg-tile-top{display:flex;align-items:center;justify-content:space-between;gap:.3rem;margin-bottom:.1rem}
 #dg .dg-tile-meta{font-family:var(--dg-mono);font-size:.58rem;color:var(--dg-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #dg .dg-tile-pos{font-family:var(--dg-display);font-size:.6rem;font-weight:700;letter-spacing:.04em;flex:0 0 auto}
-#dg .dg-tile-nm{font-weight:600;font-size:.76rem;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+#dg .dg-tile-nm{font-weight:600;font-size:.76rem;line-height:1.1;overflow:hidden}
+#dg .dg-tile-nm .dg-fn{display:block;font-weight:500;font-size:.66rem;color:var(--dg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dg .dg-tile-nm .dg-ln{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #dg .dg-tile.empty{background:transparent;border-style:dashed;border-left-style:dashed}
 #dg .dg-tile.empty .dg-tile-meta{opacity:.5}
 #dg .dg-tile.cur{outline:2px solid var(--dg-accent);outline-offset:-1px}
@@ -598,14 +600,17 @@ function renderBoard(){
       const cur=pn===d.pick?" cur":"";const mine=sl===state.slot?" mine":"";
       if(h){
         const p=h.p;const pos=(p.pos||"").toLowerCase();
+        const parts=String(p.name||"").trim().split(" ");
+        const first=parts.length>1?parts[0]:"";
+        const last=parts.length>1?parts.slice(1).join(" "):p.name;
         const meta=`#${pn}`+(p.team?" · "+p.team:"")+(p.bye?" · B"+p.bye:"");
-        cells+=`<div class="dg-tile ${pos}${cur}${mine}"><div class="dg-tile-top"><span class="dg-tile-meta">${escapeHtml(meta)}</span><span class="dg-tile-pos">${p.pos||""}</span></div><div class="dg-tile-nm">${escapeHtml(p.name)}</div></div>`;
+        cells+=`<div class="dg-tile ${pos}${cur}${mine}"><div class="dg-tile-top"><span class="dg-tile-meta">${escapeHtml(meta)}</span><span class="dg-tile-pos">${p.pos||""}</span></div><div class="dg-tile-nm"><span class="dg-fn">${escapeHtml(first)}</span><span class="dg-ln">${escapeHtml(last)}</span></div></div>`;
       }else{
         cells+=`<div class="dg-tile empty${cur}${mine}"><span class="dg-tile-meta">#${pn}</span></div>`;
       }
     }
   }
-  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:1.9rem repeat(${state.size},minmax(86px,1fr))">${cells}</div></div>`;
+  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:1.9rem repeat(${state.size},92px)">${cells}</div></div>`;
 }
 function renderAll(){renderClock();renderList();renderAvail();renderRoster();renderGrade();renderBoard();}
 
