@@ -154,7 +154,7 @@ layout: null
 #dg .dg-btn.dg-active{background:var(--dg-accent);color:var(--dg-accent-ink);border-color:var(--dg-accent)}
 #dg .dg-board{border:1px solid var(--dg-line);border-radius:var(--dg-radius);background:var(--dg-panel);margin-bottom:1rem;overflow:hidden}
 #dg .dg-board-scroll{overflow-x:auto}
-#dg .dg-board-grid{display:grid;gap:6px;padding:12px;min-width:max-content}
+#dg .dg-board-grid{display:grid;gap:6px;padding:12px}
 #dg .dg-th{font-family:var(--dg-display);font-size:.7rem;font-weight:600;color:var(--dg-faint);text-align:center;padding:.2rem 0}
 #dg .dg-th.mine{color:var(--dg-accent)}
 #dg .dg-rl{font-family:var(--dg-mono);font-size:.66rem;color:var(--dg-faint);display:flex;align-items:center;justify-content:center}
@@ -610,7 +610,7 @@ function renderBoard(){
       }
     }
   }
-  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:1.9rem repeat(${state.size},126px)">${cells}</div></div>`;
+  boardView.innerHTML=`<div class="dg-board-scroll"><div class="dg-board-grid" style="grid-template-columns:1.9rem repeat(${state.size},minmax(0,1fr))">${cells}</div></div>`;
 }
 function renderAll(){renderClock();renderList();renderAvail();renderRoster();renderGrade();renderBoard();}
 
