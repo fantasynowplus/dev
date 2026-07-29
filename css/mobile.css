@@ -120,24 +120,20 @@
 
   .hero-corner { width: 18px; height: 18px; }
 
-  /* Makes both <aside class="sidebar"> wrappers "disappear" from layout
-     so their individual children can be freely reordered below, as if
-     everything were one flat list inside dashboard-container. */
+
   .sidebar {
     display: contents;
   }
-
-  /* Custom mobile stacking order, per your spec:
-     YouTube feed > Rankings > Underdog Graphic > Trending Adds/Drops > WIN YOUR LEAGUE
-     (Social icons tucked in last — move the number below if you want them elsewhere) */
+  
   .main-content        { order: 1; }
-  .fn-plus-container   { order: 2; width: 100%; max-width: 400px; margin: 0 auto; }
-  .partner-banner-link { order: 3; }
-  .sidebar > .section-eyebrow { order: 4; }
-  #trending-adds       { order: 4; }
-  #trending-drops      { order: 5; }
-  .social-links        { order: 6; justify-content: center; }
-  .sidebar-motto        { order: 7; }
+  .promo-banner        { order: 2; }
+  .fn-plus-container   { order: 3; width: 100%; max-width: 400px; margin: 0 auto; }
+  .partner-banner-link { order: 4; }
+  .sidebar > .section-eyebrow { order: 5; }
+  #trending-adds       { order: 6; }
+  #trending-drops      { order: 7; }
+  .social-links        { order: 8; justify-content: center; }
+  .sidebar-motto        { order: 9; }
 }
 
 /* ============ 600px — phone ============ */
