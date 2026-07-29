@@ -552,7 +552,7 @@ function renderAvail(){
   const nextPick=nextMyPick(d.pick+1);const nextEl=$("availNext");const hint=$("pickHint");
   if(!nextPick){nextEl.innerHTML='<li class="dg-lt">No more picks for you.</li>';return;}
   const consumed=nextPick-d.pick;const others=isMyPick(d.pick)?consumed-1:consumed;
-  nextEl.innerHTML=pool.slice(consumed,consumed+5).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
+  nextEl.innerHTML=pool.slice(consumed,consumed+7).map((p,i)=>availRow(p,i)).join("")||'<li class="dg-lt">—</li>';
   hint.innerHTML=`About <b>${others}</b> players typically come off before pick <b>${nextPick}</b>. Anyone above is likely still there based on our redraft rankings.`;
 }
 function renderRoster(){
