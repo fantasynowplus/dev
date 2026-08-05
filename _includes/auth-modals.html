@@ -1,0 +1,76 @@
+<style>
+  .fn-modal-backdrop { position: fixed; inset: 0; background: rgba(6,25,43,0.55); backdrop-filter: blur(2px); display: none; align-items: flex-start; justify-content: center; z-index: 2000; overflow-y: auto; padding: 40px 16px; }
+  .fn-modal-backdrop.open { display: flex; }
+  .fn-modal { background: #fff; width: 100%; max-width: 440px; border-radius: 10px; border-top: 4px solid #FFA515; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 28px; position: relative; }
+  .fn-modal.wide { max-width: 560px; }
+  .fn-modal-close { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 26px; line-height: 1; color: #999; cursor: pointer; width: auto; padding: 0; }
+  .fn-modal-close:hover { color: #06192b; background: none; }
+  .fn-modal h2 { color: #06192b; margin: 0 0 20px; text-align: center; }
+  .fn-field { margin-bottom: 16px; }
+  .fn-field label { display: block; font-size: 13px; font-weight: 600; color: #06192b; margin-bottom: 5px; }
+  .fn-field input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; font-family: inherit; }
+  .fn-field input:focus { outline: none; border-color: #e26f0f; box-shadow: 0 0 0 2px rgba(226,111,15,0.12); }
+  .fn-primary-btn { width: 100%; padding: 12px; background: #FFA515; color: #fff; border: none; border-radius: 5px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 4px; }
+  .fn-primary-btn:hover { filter: brightness(0.95); }
+  .fn-modal-alt { text-align: center; font-size: 14px; margin-top: 16px; color: #06192b; }
+  .fn-modal-alt a { color: #FFA515; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .fn-msg { margin-top: 12px; padding: 9px; border-radius: 5px; font-size: 14px; display: none; }
+  .fn-msg.show { display: block; }
+  .fn-msg.error { background: #fee2e2; color: #dc2626; }
+  .fn-msg.success { background: #dcfce7; color: #16a34a; }
+  .fn-section-label { margin: 22px 0 10px; padding-top: 14px; border-top: 1px solid #eee; font-size: 14px; font-weight: 700; color: #06192b; }
+  .fn-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .fn-row2 { grid-template-columns: 1fr; } }
+</style>
+
+<div class="fn-modal-backdrop" id="loginBackdrop">
+  <div class="fn-modal">
+    <button type="button" class="fn-modal-close" data-close>&times;</button>
+    <h2 id="authTitle">Login</h2>
+    <form id="fnLoginForm">
+      <div class="fn-field"><label>Email</label><input type="email" id="fnLoginEmail" required></div>
+      <div class="fn-field"><label>Password</label><input type="password" id="fnLoginPassword" required></div>
+      <button type="submit" class="fn-primary-btn">Login</button>
+      <div class="fn-modal-alt"><a href="https://superleagueff.org/forgot-password" target="_blank">Forgot password?</a></div>
+    </form>
+    <form id="fnSignupForm" style="display:none;">
+      <div class="fn-field"><label>Email</label><input type="email" id="fnSignupEmail" required></div>
+      <div class="fn-field"><label>Password</label><input type="password" id="fnSignupPassword" required></div>
+      <button type="submit" class="fn-primary-btn">Create account</button>
+    </form>
+    <div class="fn-msg" id="fnAuthMsg"></div>
+    <div class="fn-modal-alt" id="fnAuthToggle">Don't have an account? <a data-auth-toggle>Sign up</a></div>
+  </div>
+</div>
+
+<div class="fn-modal-backdrop" id="profileBackdrop">
+  <div class="fn-modal wide">
+    <button type="button" class="fn-modal-close" data-close>&times;</button>
+    <h2>My Profile</h2>
+    <p style="text-align:center; color:#666; font-size:13px; margin:-10px 0 18px;" id="fnProfileEmail"></p>
+    <form id="fnProfileForm">
+      <div class="fn-row2">
+        <div class="fn-field"><label>Full Name</label><input type="text" id="fp_name"></div>
+        <div class="fn-field"><label>Cell Phone</label><input type="tel" id="fp_cell_phone"></div>
+      </div>
+      <div class="fn-field"><label>Location</label><input type="text" id="fp_location"></div>
+      <div class="fn-section-label">Social Media</div>
+      <div class="fn-row2">
+        <div class="fn-field"><label>X (Twitter)</label><input type="text" id="fp_x_handle" placeholder="@username"></div>
+        <div class="fn-field"><label>Bluesky</label><input type="text" id="fp_bluesky_handle" placeholder="username.bsky.social"></div>
+      </div>
+      <div class="fn-field"><label>Discord</label><input type="text" id="fp_discord_handle" placeholder="username#0000"></div>
+      <div class="fn-section-label">Fantasy Football</div>
+      <div class="fn-row2">
+        <div class="fn-field"><label>Sleeper Handle</label><input type="text" id="fp_sleeper_handle"></div>
+        <div class="fn-field"><label>MFL Handle</label><input type="text" id="fp_mfl_handle"></div>
+      </div>
+      <button type="submit" class="fn-primary-btn">Save changes</button>
+      <div class="fn-msg" id="fnProfileMsg"></div>
+    </form>
+    <div class="fn-section-label">Sleeper Leagues</div>
+    <button type="button" class="fn-primary-btn" style="background:#06192b;" onclick="syncMySleeperLeagues()">Sync my Sleeper leagues</button>
+    <div id="sleeperResult" style="margin-top:14px; font-size:14px; color:#333;"></div>
+    <button type="button" class="fn-primary-btn" style="background:#999; margin-top:18px;" data-logout>Log out</button>
+  </div>
+</div>
