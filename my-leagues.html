@@ -1,0 +1,68 @@
+---
+layout: null
+---
+{% include header.html %}
+
+<style>
+  .ml-wrap { max-width: 1100px; margin: 30px auto 60px; padding: 0 20px; }
+  .ml-head h1 { color: #06192b; margin: 0 0 4px; }
+  .ml-subtitle { color: #666; margin: 0 0 22px; font-size: 15px; }
+  .ml-gate { text-align: center; padding: 60px 20px; background: #f9f7f4; border: 1px solid #eee; border-radius: 10px; }
+  .ml-gate p { color: #06192b; font-size: 17px; margin: 0 0 16px; }
+  .ml-btn { background: #FFA515; color: #fff; border: none; border-radius: 6px; padding: 11px 22px; font-weight: 600; font-size: 15px; font-family: inherit; cursor: pointer; }
+  .ml-btn:hover { background: #ED9405; }
+  .ml-tabs { display: flex; gap: 8px; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+  .ml-tab { background: none; border: none; padding: 12px 18px; font-size: 15px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; font-family: inherit; cursor: pointer; }
+  .ml-tab.active { color: #06192b; border-bottom-color: #FFA515; }
+  .ml-chart-slot { background: #f9f7f4; border: 1px dashed #ddd; border-radius: 10px; padding: 22px; text-align: center; color: #999; font-size: 14px; margin-bottom: 20px; }
+  .ml-table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; }
+  .ml-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .ml-table thead th { text-align: left; background: #06192b; color: #cdd6df; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 14px; }
+  .ml-table th.ml-center { text-align: center; }
+  .ml-table tbody td { padding: 12px 14px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #333; }
+  .ml-table tbody tr:hover { background: #faf7f2; }
+  .ml-center { text-align: center; }
+  .ml-dim { color: #bbb; }
+  .ml-league { display: flex; align-items: center; gap: 12px; }
+  .ml-avatar { width: 34px; height: 34px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
+  .ml-avatar-blank { background: #e6ebf0; display: inline-block; }
+  .ml-name { font-weight: 600; color: #06192b; }
+  .ml-season { color: #999; font-size: 12px; }
+  .ml-pill { display: inline-block; background: #eef1f4; color: #33475b; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0; white-space: nowrap; }
+  .ml-empty { text-align: center; color: #888; padding: 30px 14px; }
+</style>
+
+<main class="ml-wrap">
+  <div class="ml-head">
+    <h1>My Leagues</h1>
+    <p class="ml-subtitle">Your linked Sleeper leagues, all in one place.</p>
+  </div>
+
+  <div id="ml-gate" class="ml-gate" style="display:none;">
+    <p>Log in to see your leagues.</p>
+    <button id="ml-login-btn" class="ml-btn">Log in</button>
+  </div>
+
+  <div id="ml-content" style="display:none;">
+    <div id="tab-leagues">
+      <div id="ml-chart-slot" class="ml-chart-slot">Tier chart coming in the next step.</div>
+      <div class="ml-table-wrap">
+        <table class="ml-table">
+          <thead>
+            <tr>
+              <th>League</th>
+              <th class="ml-center">Contender Tier</th>
+              <th class="ml-center">Overall Rank</th>
+              <th>Format &amp; Scoring</th>
+            </tr>
+          </thead>
+          <tbody id="leaguesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="javascript/my-leagues.js"></script>
+
+{% include footer.html %}
