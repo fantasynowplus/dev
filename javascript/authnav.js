@@ -18,7 +18,7 @@
     var links = document.querySelectorAll('.btn-login');
     links.forEach(function (link) {
       if (loggedIn()) {
-        link.textContent = (auth.profile && auth.profile.name) || (auth.user && auth.user.email) || 'My Account';
+        link.textContent = 'Edit Profile';
         link.setAttribute('href', '#');
         link.onclick = async function (e) {
           e.preventDefault();
