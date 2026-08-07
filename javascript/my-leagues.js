@@ -83,7 +83,7 @@
     for (var i = 0; i < RANK_POS.length; i++) {
       var pos = RANK_POS[i];
       try {
-        var res = await fetch(WORKER + '?format=' + format + '&position=' + pos);
+        var res = await fetch(WORKER + '?format=' + format + '&position=' + pos + '&limit=200');
         if (!res.ok) continue;
         var data = await res.json();
         var raw = Array.isArray(data) ? data : (data.players || []);
