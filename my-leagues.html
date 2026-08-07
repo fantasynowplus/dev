@@ -11,7 +11,16 @@ layout: null
   .ml-gate p { color: #eef2fb; font-size: 17px; margin: 0 0 16px; }
   .ml-btn { background: #FFA515; color: #1a1204; border: none; border-radius: 6px; padding: 11px 22px; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
   .ml-btn:hover { background: #ED9405; }
-  .ml-chart-slot { background: #161d2e; border: 1px dashed #2a3450; border-radius: 12px; padding: 22px; text-align: center; color: #7d8aa5; font-size: 14px; margin-bottom: 20px; }
+  .ml-chart-slot { background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; padding: 22px; text-align: center; color: #7d8aa5; font-size: 14px; margin-bottom: 20px; }
+  .ml-chart { display: flex; align-items: center; gap: 28px; background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; padding: 22px 26px; margin-bottom: 20px; }
+  .ml-donut { width: 132px; height: 132px; border-radius: 50%; position: relative; flex-shrink: 0; }
+  .ml-donut-hole { position: absolute; inset: 26px; background: #161d2e; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ml-donut-hole span { color: #eef2fb; font-size: 26px; font-weight: 700; line-height: 1; }
+  .ml-donut-hole small { color: #7d8aa5; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+  .ml-legend-title { color: #8a97b3; font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+  .ml-legend-item { display: flex; align-items: center; gap: 8px; color: #c9d2e6; font-size: 14px; padding: 3px 0; }
+  .ml-legend-dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .ml-legend-count { color: #7d8aa5; margin-left: 4px; }
   .ml-table-wrap { overflow-x: auto; border: 1px solid #2a3450; border-radius: 12px; background: #131a29; }
   .ml-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .ml-table thead th { text-align: left; background: #1a2236; color: #8a97b3; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; padding: 13px 16px; border-bottom: 1px solid #2a3450; }
@@ -27,6 +36,10 @@ layout: null
   .ml-name { font-weight: 600; color: #eef2fb; }
   .ml-season { color: #7d8aa5; font-size: 12px; }
   .ml-pill { display: inline-block; background: #232e49; color: #c3cee0; border: 1px solid #303c5a; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0; white-space: nowrap; }
+  .ml-tier { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .ml-tier-contender { background: rgba(63,185,80,0.15); color: #56d364; border: 1px solid rgba(63,185,80,0.4); }
+  .ml-tier-bubble { background: rgba(255,165,21,0.15); color: #ffb84d; border: 1px solid rgba(255,165,21,0.4); }
+  .ml-tier-rebuild { background: rgba(229,83,75,0.15); color: #ff7b72; border: 1px solid rgba(229,83,75,0.4); }
   .ml-empty { text-align: center; color: #8a97b3; padding: 30px 16px; }
 </style>
 
@@ -42,7 +55,7 @@ layout: null
   </div>
 
   <div id="ml-content" style="display:none;">
-    <div id="ml-chart-slot" class="ml-chart-slot">Tier chart coming in the next step.</div>
+    <div id="ml-chart-slot" class="ml-chart-slot"></div>
     <div class="ml-table-wrap">
       <table class="ml-table">
         <thead>
