@@ -2,6 +2,8 @@
   var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
   var VALUE_BASE = 200;
+  var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode'];
+  var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681' };
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {};
 
   function el(id) { return document.getElementById(id); }
@@ -43,7 +45,7 @@
   function render(leagues) {
     const body = el('leaguesBody');
     if (!leagues.length) {
-      body.innerHTML = '<tr><td colspan="4" class="ml-empty">No leagues synced yet. Open <strong>Edit Profile</strong>, add your Sleeper handle, and hit <strong>Sync my Sleeper leagues</strong>.</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Open <strong>Edit Profile</strong>, add your Sleeper handle, and hit <strong>Sync my Sleeper leagues</strong>.</td></tr>';
       return;
     }
     body.innerHTML = leagues.map(function (l) {
@@ -56,6 +58,7 @@
         '<td><div class="ml-league">' + avatar + '<div><div class="ml-name">' + (l.name || 'League') + '</div><div class="ml-season">' + (l.season || '') + '</div></div></div></td>' +
         '<td class="ml-center" id="tier-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
         '<td class="ml-center" id="rank-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
+        '<td class="ml-center" id="value-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
         '<td>' + pills + '</td>' +
         '</tr>';
     }).join('');
@@ -105,6 +108,15 @@
     return vals.slice(0, topN).reduce(function (s, v) { return s + v; }, 0);
   }
 
+  function tierFor(rank, n) {
+    var frac = rank / n;
+    if (frac <= 0.15) return 'Title Favorite';
+    if (frac <= 0.40) return 'Contender';
+    if (frac <= 0.60) return 'On the Bubble';
+    if (frac <= 0.85) return 'Rebuilding';
+    return 'Tank Mode';
+  }
+
   async function insightsForLeague(l, playersMap) {
     var raw = l.raw || {};
     var isDyn = (raw.settings && raw.settings.type) === 2;
@@ -118,35 +130,35 @@
     var idx = scored.findIndex(function (s) { return s.ownerId === USER_SLEEPER_ID; });
     if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
     var rank = idx + 1;
-    var tier = rank <= n / 3 ? 'Contender' : rank <= (2 * n / 3) ? 'On the Bubble' : 'Rebuilding';
-    return { rank: rank, n: n, tier: tier, score: scored[idx].score };
+    return { rank: rank, n: n, tier: tierFor(rank, n), score: scored[idx].score };
   }
 
-  function tierClass(t) { return t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : 'rebuild'; }
+  function tierClass(t) {
+    return t === 'Title Favorite' ? 'title' : t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : t === 'Rebuilding' ? 'rebuild' : 'tank';
+  }
 
-  function setInsight(leagueId, rank, n, tier) {
-    var rc = el('rank-' + leagueId), tc = el('tier-' + leagueId);
+  function setInsight(leagueId, rank, n, tier, value) {
+    var rc = el('rank-' + leagueId), tc = el('tier-' + leagueId), vc = el('value-' + leagueId);
     if (rc) rc.innerHTML = rank ? (rank + ' <span style="color:#5f6c85">/ ' + n + '</span>') : '<span class="ml-dim">-</span>';
     if (tc) tc.innerHTML = tier ? '<span class="ml-tier ml-tier-' + tierClass(tier) + '">' + tier + '</span>' : '<span class="ml-dim">-</span>';
+    if (vc) vc.innerHTML = (value != null) ? '<b style="color:#eef2fb">' + Math.round(value).toLocaleString() + '</b>' : '<span class="ml-dim">-</span>';
   }
 
   function renderSummary(totalLeagues, tierCounts, formatCounts, topTeams) {
     var slot = el('ml-chart-slot');
     if (!totalLeagues) { slot.style.display = 'none'; return; }
-    var order = ['Contender', 'On the Bubble', 'Rebuilding'];
-    var COL = { 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b' };
-    var tierTotal = order.reduce(function (s, t) { return s + tierCounts[t]; }, 0);
+    var tierTotal = TIER_ORDER.reduce(function (s, t) { return s + tierCounts[t]; }, 0);
     var html = '';
 
     if (tierTotal) {
       var acc = 0, stops = [];
-      order.forEach(function (t) {
+      TIER_ORDER.forEach(function (t) {
         if (!tierCounts[t]) return;
         var start = acc / tierTotal * 100; acc += tierCounts[t]; var end = acc / tierTotal * 100;
-        stops.push(COL[t] + ' ' + start + '% ' + end + '%');
+        stops.push(TIER_COL[t] + ' ' + start + '% ' + end + '%');
       });
-      var legend = order.filter(function (t) { return tierCounts[t] > 0; }).map(function (t) {
-        return '<div class="ml-legend-item"><span class="ml-legend-dot" style="background:' + COL[t] + '"></span>' + t + ' <span class="ml-legend-count">' + tierCounts[t] + '</span></div>';
+      var legend = TIER_ORDER.filter(function (t) { return tierCounts[t] > 0; }).map(function (t) {
+        return '<div class="ml-legend-item"><span class="ml-legend-dot" style="background:' + TIER_COL[t] + '"></span>' + t + ' <span class="ml-legend-count">' + tierCounts[t] + '</span></div>';
       }).join('');
       html += '<div class="ml-sum-donut">' +
         '<div class="ml-donut" style="background:conic-gradient(' + stops.join(', ') + ')"><div class="ml-donut-hole"><span>' + totalLeagues + '</span><small>leagues</small></div></div>' +
@@ -162,7 +174,8 @@
       var items = topTeams.map(function (tm, i) {
         return '<div class="ml-top-item"><span class="ml-top-rank">' + (i + 1) + '</span>' +
           '<span class="ml-top-name">' + tm.name + '</span>' +
-          '<span class="ml-tier ml-tier-' + tierClass(tm.tier) + '">' + tm.tier + '</span></div>';
+          '<span class="ml-tier ml-tier-' + tierClass(tm.tier) + '">' + tm.tier + '</span>' +
+          '<span class="ml-top-val">' + Math.round(tm.score).toLocaleString() + '</span></div>';
       }).join('');
       html += '<div class="ml-sum-col ml-sum-top"><div class="ml-sum-title">Your Top Teams</div>' + items + '</div>';
     }
@@ -192,7 +205,7 @@
       else formatCounts.Redraft++;
     });
 
-    var tierCounts = { 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0 };
+    var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0 };
     var topTeams = [];
     try {
       USER_SLEEPER_ID = await getSleeperUserId();
@@ -201,7 +214,7 @@
         for (var i = 0; i < leagues.length; i++) {
           try {
             var ins = await insightsForLeague(leagues[i], playersMap);
-            setInsight(leagues[i].league_id, ins.rank, ins.n, ins.tier);
+            setInsight(leagues[i].league_id, ins.rank, ins.n, ins.tier, ins.score);
             if (ins.tier) tierCounts[ins.tier]++;
             if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', rank: ins.rank, n: ins.n, tier: ins.tier, score: ins.score });
           } catch (e) {}
@@ -226,7 +239,7 @@
     el('ml-content').style.display = 'block';
 
     var body = el('leaguesBody');
-    body.innerHTML = '<tr><td colspan="4" class="ml-empty">Loading your leagues…</td></tr>';
+    body.innerHTML = '<tr><td colspan="5" class="ml-empty">Loading your leagues…</td></tr>';
     try {
       var leagues = await fetchLeagues();
       render(leagues);
@@ -237,7 +250,7 @@
         el('ml-chart-slot').style.display = 'none';
       }
     } catch (e) {
-      body.innerHTML = '<tr><td colspan="4" class="ml-empty">' + e.message + '</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" class="ml-empty">' + e.message + '</td></tr>';
       el('ml-chart-slot').style.display = 'none';
     }
   }
