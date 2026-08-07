@@ -14,6 +14,11 @@
   }
   function comma(v) { return Math.round(v).toLocaleString(); }
 
+  function ordinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
   async function fetchLeagues() {
     const url = SUPABASE_URL + '/rest/v1/sleeper_leagues?user_id=eq.' + auth.user.sub +
       '&select=league_id,name,season,total_rosters,status,raw&order=season.desc,name.asc';
@@ -262,8 +267,8 @@
         '<td class="ml-name">' + t.name + '</td>' +
         '<td class="ml-center"><span class="ml-tier ml-tier-' + tierClass(t.tier) + '">' + t.tier + '</span></td>' +
         '<td class="ml-center">' + t.overallRank + ' <span style="color:#5f6c85">/ ' + n + '</span></td>' +
-        '<td class="ml-center">' + t.posRank.QB + '</td><td class="ml-center">' + t.posRank.RB + '</td>' +
-        '<td class="ml-center">' + t.posRank.WR + '</td><td class="ml-center">' + t.posRank.TE + '</td></tr>';
+        '<td class="ml-center">' + ordinal(t.posRank.QB) + '</td><td class="ml-center">' + ordinal(t.posRank.RB) + '</td>' +
+        '<td class="ml-center">' + ordinal(t.posRank.WR) + '</td><td class="ml-center">' + ordinal(t.posRank.TE) + '</td></tr>';
     }).join('');
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
