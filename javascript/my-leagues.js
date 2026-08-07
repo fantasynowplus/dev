@@ -9,23 +9,18 @@
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681', 'Drafting': '#586f96' };
   var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72' };
   var TIERS = {
-      QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
-      RB: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
-      WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
-      TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
-    };
+    QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
+    RB: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
+    WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
+    TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
+  };
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
   function loggedIn() { return typeof auth !== 'undefined' && auth.isAuthenticated(); }
-  function sbHeaders() {
-    return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + localStorage.getItem('sb-auth-token') };
-  }
+  function sbHeaders() { return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + localStorage.getItem('sb-auth-token') }; }
   function comma(v) { return Math.round(v).toLocaleString(); }
-  function ordinal(n) {
-    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  }
+  function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 
   async function fetchLeagues() {
     const url = SUPABASE_URL + '/rest/v1/sleeper_leagues?user_id=eq.' + auth.user.sub +
@@ -36,10 +31,7 @@
   }
 
   function typeLabel(t) { return t === 2 ? 'Dynasty' : t === 1 ? 'Keeper' : 'Redraft'; }
-  function scoringLabel(s) {
-    const rec = s && typeof s.rec === 'number' ? s.rec : 0;
-    return rec >= 1 ? 'PPR' : rec >= 0.5 ? '1/2 PPR' : 'Standard';
-  }
+  function scoringLabel(s) { const rec = s && typeof s.rec === 'number' ? s.rec : 0; return rec >= 1 ? 'PPR' : rec >= 0.5 ? '1/2 PPR' : 'Standard'; }
   function startersCount(positions) {
     if (!Array.isArray(positions)) return null;
     const bench = { BN: 1, IR: 1, TAXI: 1 };
@@ -91,9 +83,7 @@
     }).join('');
   }
 
-  function normName(s) {
-    return (s || '').toLowerCase().replace(/[^a-z]/g, '').replace(/(jr|sr|ii|iii|iv|v)$/, '');
-  }
+  function normName(s) { return (s || '').toLowerCase().replace(/[^a-z]/g, '').replace(/(jr|sr|ii|iii|iv|v)$/, ''); }
   function matchKey(name, pos) { return normName(name) + '|' + (pos || '').toUpperCase(); }
 
   async function loadPlayers() {
@@ -106,8 +96,6 @@
     var key = format === 'dynasty' ? 'dynasty' : 'draft';
     if (rankCache[key]) return rankCache[key];
     var fnMap = {}, ecrMap = {}, lists = {};
-
-    // 1) FantasyNow+ rankings from the sheet (priority)
     try {
       var res = await fetch(SHEET_URL[key]);
       var text = await res.text();
@@ -125,8 +113,6 @@
         (lists[pos] = lists[pos] || []).push({ name: name, team: team, pos: pos, rank: posRank, key: k });
       }
     } catch (e) {}
-
-    // 2) FantasyPros ECR fallback via the Worker (fills players not in the sheet)
     for (var pi = 0; pi < RANK_POS.length; pi++) {
       var pos2 = RANK_POS[pi];
       try {
@@ -140,7 +126,6 @@
         }
       } catch (e) {}
     }
-
     var map = Object.assign({}, ecrMap, fnMap);
     RANK_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
     rankCache[key] = { map: map, lists: lists };
@@ -186,11 +171,13 @@
     if (frac <= 0.85) return 'Rebuilding';
     return 'Tank Mode';
   }
+  function tierClass(t) {
+    return t === 'Title Favorite' ? 'title' : t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : t === 'Rebuilding' ? 'rebuild' : t === 'Drafting' ? 'drafting' : 'tank';
+  }
 
   async function insightsForLeague(l, playersMap) {
     var raw = l.raw || {};
-    var isDyn = isDynasty(raw);
-    var rankData = await rankingsFor(isDyn ? 'dynasty' : 'draft');
+    var rankData = await rankingsFor(isDynasty(raw) ? 'dynasty' : 'draft');
     var rosters = await Sleeper.get('/league/' + l.league_id + '/rosters');
     var topN = (startersCount(raw.roster_positions) || 12) + 6;
     var scored = rosters.map(function (r) {
@@ -360,8 +347,7 @@
     try {
       if (!USER_SLEEPER_ID) USER_SLEEPER_ID = await getSleeperUserId();
       var raw = league.raw || {};
-      var isDyn = isDynasty(raw);
-      var rankData = await rankingsFor(isDyn ? 'dynasty' : 'draft');
+      var rankData = await rankingsFor(isDynasty(raw) ? 'dynasty' : 'draft');
       var players = await loadPlayers();
       var rosters = await Sleeper.get('/league/' + leagueId + '/rosters');
       var users = await Sleeper.get('/league/' + leagueId + '/users');
@@ -389,7 +375,6 @@
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetail(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-
   window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail };
 
   async function init() {
