@@ -5,167 +5,165 @@ layout: null
 {% include header.html %}
 
 <style>
-  /* ── Brand tokens ── */
-  :root {
-    --fn-orange:        #FFA515;
-    --fn-orange-dim:    rgba(255, 165, 21, 0.15);
-    --fn-orange-glow:   rgba(255, 165, 21, 0.35);
-    --fn-blue-deep:     #002863;
-    --fn-blue-mid:      #003580;
-    --fn-blue-surface:  #04407a;
-    --fn-white:         #FFFFFF;
-    --fn-white-muted:   rgba(255, 255, 255, 0.6);
-    --fn-white-faint:   rgba(255, 255, 255, 0.15);
-  }
-
-  /* ── Full-page dark canvas ── */
+  /* ── Use your existing CSS variables ── */
   body {
-    background-color: var(--fn-blue-deep) !important;
-    color: var(--fn-white) !important;
+    background-color: var(--bg-dark) !important;
+    color: var(--text-light) !important;
   }
 
   /* ── Feed page wrapper ── */
   .fn-feed-page {
     min-height: 100vh;
-    background-color: var(--fn-blue-deep);
-    padding: 0 0 60px;
+    background-color: var(--bg-dark);
+    padding: 0 0 80px;
   }
 
-  /* ── Hero header bar ── */
+  /* ── Orange accent bar (matches your nav's bottom border) ── */
+  .fn-feed-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--bright-orange);
+    margin-bottom: 0;
+  }
+
+  /* ── Hero — minimal, not competing with the nav ── */
   .fn-feed-hero {
     background: linear-gradient(
-      135deg,
-      var(--fn-blue-deep) 0%,
-      var(--fn-blue-mid) 60%,
-      var(--fn-blue-surface) 100%
+      180deg,
+      rgba(7, 26, 61, 0.85) 0%,
+      var(--bg-dark) 100%
     );
-    border-bottom: 3px solid var(--fn-orange);
-    padding: 36px 24px 28px;
+    padding: 40px 24px 32px;
     text-align: center;
     position: relative;
-    overflow: hidden;
   }
 
-  /* Subtle radial glow behind the label */
-  .fn-feed-hero::before {
+  /* Subtle orange glow */
+  .fn-feed-hero::after {
     content: "";
     position: absolute;
-    top: -40px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 500px;
-    height: 200px;
-    background: radial-gradient(ellipse, var(--fn-orange-glow) 0%, transparent 70%);
-    pointer-events: none;
+    width: 300px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--bright-orange),
+      transparent
+    );
   }
 
   .fn-feed-eyebrow {
     display: inline-block;
+    font-family: var(--font-display);
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--fn-orange);
-    background: var(--fn-orange-dim);
-    border: 1px solid var(--fn-orange-glow);
+    color: var(--bright-orange);
+    background: rgba(255, 165, 21, 0.1);
+    border: 1px solid rgba(255, 165, 21, 0.3);
     border-radius: 4px;
     padding: 4px 12px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .fn-feed-title {
-    font-size: clamp(22px, 4vw, 36px);
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 48px);
     font-weight: 700;
-    color: var(--fn-white);
+    color: var(--pure-white);
     margin: 0 0 8px;
-    line-height: 1.2;
+    line-height: 1.1;
     letter-spacing: -0.01em;
+    text-transform: uppercase;
   }
 
   .fn-feed-title span {
-    color: var(--fn-orange);
+    color: var(--bright-orange);
   }
 
   .fn-feed-subtitle {
     font-size: 14px;
-    color: var(--fn-white-muted);
+    color: rgba(244, 244, 244, 0.55);
     margin: 0;
     font-weight: 400;
+    letter-spacing: 0.02em;
   }
 
-  /* ── Live indicator pill ── */
+  /* ── Live badge ── */
   .fn-live-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+    font-family: var(--font-display);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-weight: 700;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--fn-orange);
-    margin-top: 14px;
+    color: var(--bright-orange);
+    margin-top: 16px;
   }
 
   .fn-live-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--fn-orange);
+    background: var(--bright-orange);
     animation: fn-pulse 1.8s ease-in-out infinite;
   }
 
   @keyframes fn-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.75); }
+    50%       { opacity: 0.35; transform: scale(0.7); }
   }
 
   /* ── Widget container ── */
   .fn-widget-wrap {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 32px 16px 0;
+    max-width: 980px;
+    margin: 40px auto 0;
+    padding: 0 16px;
   }
 
-  /* ── Tallysight CSS variable overrides (dark mode) ── */
-  .fn-widget-wrap span
-[data-tallysight-widget-type] {
-    --background-primary:   #002863;
-    --background-secondary: #003580;
-    --background-tertiary:  #04407a;
-    --background-accent:    rgba(255, 165, 21, 0.12);
+  /* ── Tallysight CSS variable overrides ── */
+  .fn-widget-wrap span[data-tallysight-widget-type] {
+    --background-primary:   #0a0f1a;
+    --background-secondary: #071a3d;
+    --background-tertiary:  #0d2147;
+    --background-accent:    rgba(255, 165, 21, 0.1);
 
-    --text-primary:         #FFFFFF;
-    --text-secondary:       rgba(255, 255, 255, 0.65);
-    --text-tertiary:        rgba(255, 255, 255, 0.35);
+    --text-primary:         #F4F4F4;
+    --text-secondary:       rgba(244, 244, 244, 0.6);
+    --text-tertiary:        rgba(244, 244, 244, 0.3);
     --text-accent:          #FFA515;
 
-    --border-primary:       rgba(255, 255, 255, 0.12);
-    --border-secondary:     rgba(255, 255, 255, 0.07);
-    --border-tertiary:      rgba(255, 255, 255, 0.04);
+    --border-primary:       #14294d;
+    --border-secondary:     rgba(20, 41, 77, 0.7);
+    --border-tertiary:      rgba(20, 41, 77, 0.4);
     --border-accent:        #FFA515;
 
     display: block;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
+    border: 1px solid var(--border-dark);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.07),
-      0 8px 32px rgba(0, 0, 0, 0.45);
+      0 0 0 1px rgba(255, 165, 21, 0.06),
+      0 12px 40px rgba(0, 0, 0, 0.5);
   }
 
-  /* ── Responsive tweaks ── */
+  /* ── Responsive ── */
   @media (max-width: 600px) {
-    .fn-feed-hero {
-      padding: 28px 16px 22px;
-    }
-    .fn-widget-wrap {
-      padding: 20px 12px 0;
-    }
+    .fn-feed-hero { padding: 28px 16px 24px; }
+    .fn-widget-wrap { margin-top: 24px; padding: 0 12px; }
   }
 </style>
 
 <div class="fn-feed-page">
 
-  <!-- Hero -->
+  <div class="fn-feed-bar"></div>
+
   <div class="fn-feed-hero">
     <div class="fn-feed-eyebrow">Fantasy Now+</div>
     <h1 class="fn-feed-title">Fantasy <span>Feed</span></h1>
@@ -176,7 +174,6 @@ layout: null
     </div>
   </div>
 
-  <!-- Tallysight Widget -->
   <div class="fn-widget-wrap">
     <span
       data-tallysight-widget-type="feed"
