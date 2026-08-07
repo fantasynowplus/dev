@@ -5,8 +5,8 @@
   };
   var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
-  var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode'];
-  var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681' };
+  var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode', 'Drafting'];
+  var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681', 'Drafting': '#586f96' };
   var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72' };
   var TIERS = {
       QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
@@ -177,16 +177,14 @@
     return { total: total, byPos: byPos, players: arr };
   }
 
-  function tierFor(rank, n) {
+  function tierFor(rank, n, score) {
+    if (score === 0) return 'Drafting';
     var frac = rank / n;
     if (frac <= 0.15) return 'Title Favorite';
     if (frac <= 0.40) return 'Contender';
     if (frac <= 0.60) return 'On the Bubble';
     if (frac <= 0.85) return 'Rebuilding';
     return 'Tank Mode';
-  }
-  function tierClass(t) {
-    return t === 'Title Favorite' ? 'title' : t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : t === 'Rebuilding' ? 'rebuild' : 'tank';
   }
 
   async function insightsForLeague(l, playersMap) {
@@ -202,7 +200,7 @@
     var idx = scored.findIndex(function (s) { return s.ownerId === USER_SLEEPER_ID; });
     if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
     var rank = idx + 1;
-    return { rank: rank, n: n, tier: tierFor(rank, n), score: scored[idx].score };
+    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score };
   }
 
   function setInsight(leagueId, ins) {
@@ -265,7 +263,7 @@
       if (s.type === 2) formatCounts.Dynasty++; else if (s.type === 1) formatCounts.Keeper++; else formatCounts.Redraft++;
       if (s.best_ball === 1) formatCounts.BestBall++;
     });
-    var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0 };
+    var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0, 'Drafting': 0 };
     var topTeams = [], insightsMap = {};
     try {
       USER_SLEEPER_ID = await getSleeperUserId();
@@ -376,7 +374,7 @@
         return { ownerId: r.owner_id, name: name, total: ev.total, byPos: ev.byPos, players: ev.players, posRank: {} };
       }).sort(function (a, b) { return b.total - a.total; });
       var n = teams.length;
-      teams.forEach(function (t, i) { t.overallRank = i + 1; t.tier = tierFor(i + 1, n); });
+      teams.forEach(function (t, i) { t.overallRank = i + 1; t.tier = tierFor(i + 1, n, t.total); });
       RANK_POS.forEach(function (pos) {
         teams.slice().sort(function (a, b) { return (b.byPos[pos] || 0) - (a.byPos[pos] || 0); })
           .forEach(function (t, i) { t.posRank[pos] = i + 1; });
