@@ -9,11 +9,11 @@
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681' };
   var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72' };
   var TIERS = {
-    QB: [[8, 100], [12, 65], [24, 40], [36, 22]],
-    RB: [[12, 100], [24, 65], [36, 40], [60, 22], [100, 11], [200, 5]],
-    WR: [[12, 100], [24, 65], [36, 40], [60, 22], [100, 11], [200, 5]],
-    TE: [[4, 100], [10, 65], [16, 40], [28, 22], [50, 11]]
-  };
+      QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
+      RB: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
+      WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
+      TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
+    };
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
@@ -63,7 +63,12 @@
     return out;
   }
 
-  function render(leagues) {
+  function cellTier(ins) { return (ins && ins.tier) ? '<span class="ml-tier ml-tier-' + tierClass(ins.tier) + '">' + ins.tier + '</span>' : '<span class="ml-dim">-</span>'; }
+  function cellRank(ins) { return (ins && ins.rank) ? (ins.rank + ' <span style="color:#5f6c85">/ ' + ins.n + '</span>') : '<span class="ml-dim">-</span>'; }
+  function cellValue(ins) { return (ins && ins.score != null) ? '<b style="color:#eef2fb">' + comma(ins.score) + '</b>' : '<span class="ml-dim">-</span>'; }
+
+  function render(leagues, insights) {
+    insights = insights || {};
     const body = el('leaguesBody');
     if (!leagues.length) {
       body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Open <strong>Edit Profile</strong>, add your Sleeper handle, and hit <strong>Sync my Sleeper leagues</strong>.</td></tr>';
@@ -71,15 +76,16 @@
     }
     body.innerHTML = leagues.map(function (l) {
       const raw = l.raw || {};
+      const ins = insights[l.league_id];
       const avatar = raw.avatar
         ? '<img class="ml-avatar" src="https://sleepercdn.com/avatars/thumbs/' + raw.avatar + '" alt="">'
         : '<span class="ml-avatar ml-avatar-blank"></span>';
       const pills = bubbles(raw).map(function (b) { return '<span class="ml-pill">' + b + '</span>'; }).join('');
       return '<tr style="cursor:pointer" onclick="MLDetail.open(\'' + l.league_id + '\')">' +
         '<td><div class="ml-league">' + avatar + '<div><div class="ml-name">' + (l.name || 'League') + '</div><div class="ml-season">' + (l.season || '') + '</div></div></div></td>' +
-        '<td class="ml-center" id="tier-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
-        '<td class="ml-center" id="rank-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
-        '<td class="ml-center" id="value-' + l.league_id + '"><span class="ml-dim">-</span></td>' +
+        '<td id="tier-' + l.league_id + '">' + cellTier(ins) + '</td>' +
+        '<td id="rank-' + l.league_id + '">' + cellRank(ins) + '</td>' +
+        '<td id="value-' + l.league_id + '">' + cellValue(ins) + '</td>' +
         '<td>' + pills + '</td>' +
         '</tr>';
     }).join('');
@@ -144,8 +150,15 @@
   function playerValue(pos, rank) {
     var tiers = TIERS[pos];
     if (!tiers || !rank) return 0;
+    var minRank = 1;
     for (var i = 0; i < tiers.length; i++) {
-      if (rank <= tiers[i][0]) return tiers[i][1];
+      var maxRank = tiers[i][0], hi = tiers[i][1], lo = tiers[i][2];
+      if (rank <= maxRank) {
+        if (maxRank === minRank) return hi;
+        var frac = (rank - minRank) / (maxRank - minRank);
+        return Math.round(hi - frac * (hi - lo));
+      }
+      minRank = maxRank + 1;
     }
     return 0;
   }
@@ -192,11 +205,11 @@
     return { rank: rank, n: n, tier: tierFor(rank, n), score: scored[idx].score };
   }
 
-  function setInsight(leagueId, rank, n, tier, value) {
-    var rc = el('rank-' + leagueId), tc = el('tier-' + leagueId), vc = el('value-' + leagueId);
-    if (rc) rc.innerHTML = rank ? (rank + ' <span style="color:#5f6c85">/ ' + n + '</span>') : '<span class="ml-dim">-</span>';
-    if (tc) tc.innerHTML = tier ? '<span class="ml-tier ml-tier-' + tierClass(tier) + '">' + tier + '</span>' : '<span class="ml-dim">-</span>';
-    if (vc) vc.innerHTML = (value != null) ? '<b style="color:#eef2fb">' + comma(value) + '</b>' : '<span class="ml-dim">-</span>';
+  function setInsight(leagueId, ins) {
+    var tc = el('tier-' + leagueId), rc = el('rank-' + leagueId), vc = el('value-' + leagueId);
+    if (tc) tc.innerHTML = cellTier(ins);
+    if (rc) rc.innerHTML = cellRank(ins);
+    if (vc) vc.innerHTML = cellValue(ins);
   }
 
   function renderSummary(totalLeagues, tierCounts, formatCounts, topTeams) {
@@ -220,7 +233,8 @@
     html += '<div class="ml-sum-col"><div class="ml-sum-title">Formats</div>' +
       '<div class="ml-stat"><span>Redraft</span><b>' + formatCounts.Redraft + '</b></div>' +
       '<div class="ml-stat"><span>Dynasty</span><b>' + formatCounts.Dynasty + '</b></div>' +
-      '<div class="ml-stat"><span>Keeper</span><b>' + formatCounts.Keeper + '</b></div></div>';
+      '<div class="ml-stat"><span>Keeper</span><b>' + formatCounts.Keeper + '</b></div>' +
+      (formatCounts.BestBall ? '<div class="ml-stat"><span>Best Ball</span><b>' + formatCounts.BestBall + '</b></div>' : '') + '</div>';
     if (topTeams.length) {
       var items = topTeams.map(function (tm, i) {
         return '<div class="ml-top-item"><span class="ml-top-rank">' + (i + 1) + '</span><span class="ml-top-name">' + tm.name + '</span>' +
@@ -245,13 +259,14 @@
   }
 
   async function computeInsights(leagues) {
-    var formatCounts = { Redraft: 0, Dynasty: 0, Keeper: 0 };
+    var formatCounts = { Redraft: 0, Dynasty: 0, Keeper: 0, BestBall: 0 };
     leagues.forEach(function (l) {
-      var t = (l.raw && l.raw.settings && l.raw.settings.type);
-      if (t === 2) formatCounts.Dynasty++; else if (t === 1) formatCounts.Keeper++; else formatCounts.Redraft++;
+      var s = (l.raw && l.raw.settings) || {};
+      if (s.type === 2) formatCounts.Dynasty++; else if (s.type === 1) formatCounts.Keeper++; else formatCounts.Redraft++;
+      if (s.best_ball === 1) formatCounts.BestBall++;
     });
     var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0 };
-    var topTeams = [];
+    var topTeams = [], insightsMap = {};
     try {
       USER_SLEEPER_ID = await getSleeperUserId();
       if (USER_SLEEPER_ID) {
@@ -259,15 +274,27 @@
         for (var i = 0; i < leagues.length; i++) {
           try {
             var ins = await insightsForLeague(leagues[i], playersMap);
-            setInsight(leagues[i].league_id, ins.rank, ins.n, ins.tier, ins.score);
+            insightsMap[leagues[i].league_id] = ins;
+            setInsight(leagues[i].league_id, ins);
             if (ins.tier) tierCounts[ins.tier]++;
-            if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', rank: ins.rank, n: ins.n, tier: ins.tier, score: ins.score });
+            if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
           } catch (e) {}
         }
       }
     } catch (e) {}
     topTeams.sort(function (a, b) { return b.score - a.score; });
     renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
+
+    var sorted = leagues.slice().sort(function (a, b) {
+      var ia = insightsMap[a.league_id], ib = insightsMap[b.league_id];
+      var ta = (ia && ia.tier) ? TIER_ORDER.indexOf(ia.tier) : 99;
+      var tb = (ib && ib.tier) ? TIER_ORDER.indexOf(ib.tier) : 99;
+      if (ta !== tb) return ta - tb;
+      var va = (ia && ia.score != null) ? ia.score : -1;
+      var vb = (ib && ib.score != null) ? ib.score : -1;
+      return vb - va;
+    });
+    render(sorted, insightsMap);
   }
 
   function shortName(s) { return (s || '').length > 11 ? (s.slice(0, 10) + '…') : (s || ''); }
