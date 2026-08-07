@@ -18,7 +18,7 @@ layout: null
     padding: 0 0 80px;
   }
 
-  /* ── Orange accent bar (matches your nav's bottom border) ── */
+  /* ── Orange accent bar ── */
   .fn-feed-bar {
     width: 100%;
     height: 3px;
@@ -26,7 +26,7 @@ layout: null
     margin-bottom: 0;
   }
 
-  /* ── Hero — minimal, not competing with the nav ── */
+  /* ── Hero ── */
   .fn-feed-hero {
     background: linear-gradient(
       180deg,
@@ -38,7 +38,6 @@ layout: null
     position: relative;
   }
 
-  /* Subtle orange glow */
   .fn-feed-hero::after {
     content: "";
     position: absolute;
@@ -53,21 +52,6 @@ layout: null
       var(--bright-orange),
       transparent
     );
-  }
-
-  .fn-feed-eyebrow {
-    display: inline-block;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--bright-orange);
-    background: rgba(255, 165, 21, 0.1);
-    border: 1px solid rgba(255, 165, 21, 0.3);
-    border-radius: 4px;
-    padding: 4px 12px;
-    margin-bottom: 14px;
   }
 
   .fn-feed-title {
@@ -127,30 +111,30 @@ layout: null
     padding: 0 16px;
   }
 
-  /* ── Tallysight CSS variable overrides ── */
+  /* ── Tallysight CSS variable overrides for Dark Mode Readability ── */
   .fn-widget-wrap span[data-tallysight-widget-type] {
     --background-primary:   #0a0f1a;
     --background-secondary: #071a3d;
     --background-tertiary:  #0d2147;
-    --background-accent:    rgba(255, 165, 21, 0.1);
+    --background-accent:    rgba(255, 165, 21, 0.12);
 
-    --text-primary:         #F4F4F4;
-    --text-secondary:       rgba(244, 244, 244, 0.6);
-    --text-tertiary:        rgba(244, 244, 244, 0.3);
+    --text-primary:         #FFFFFF;
+    --text-secondary:       #F4F4F4;
+    --text-tertiary:        #B0BEC5;
     --text-accent:          #FFA515;
 
     --border-primary:       #14294d;
-    --border-secondary:     rgba(20, 41, 77, 0.7);
+    --border-secondary:     rgba(255, 165, 21, 0.2);
     --border-tertiary:      rgba(20, 41, 77, 0.4);
     --border-accent:        #FFA515;
 
     display: block;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid var(--border-dark);
+    border: 1px solid var(--border-primary);
     box-shadow:
-      0 0 0 1px rgba(255, 165, 21, 0.06),
-      0 12px 40px rgba(0, 0, 0, 0.5);
+      0 0 0 1px rgba(255, 165, 21, 0.08),
+      0 12px 40px rgba(0, 0, 0, 0.6);
   }
 
   /* ── Responsive ── */
@@ -165,9 +149,8 @@ layout: null
   <div class="fn-feed-bar"></div>
 
   <div class="fn-feed-hero">
-    <div class="fn-feed-eyebrow">Fantasy Now+</div>
-    <h1 class="fn-feed-title">Fantasy <span>Feed</span></h1>
-    <p class="fn-feed-subtitle">Rankings, trends, and tools — updated live, no fluff.</p>
+    <h1 class="fn-feed-title">Picks <span>Feed</span></h1>
+    <p class="fn-feed-subtitle">Moneyline, spread, and over/unders</p>
     <div class="fn-live-badge">
       <span class="fn-live-dot"></span>
       Live Updates
@@ -178,6 +161,7 @@ layout: null
     <span
       data-tallysight-widget-type="feed"
       data-tallysight-widget-id="all,all,fantasy-now"
+      data-tallysight-widget-config-theme="dark"
     ></span>
   </div>
 
