@@ -3,6 +3,7 @@
     draft: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=0&single=true&output=csv',
     dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv'
   };
+  var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
   var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode'];
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681' };
@@ -92,7 +93,9 @@
   async function rankingsFor(format) {
     var key = format === 'dynasty' ? 'dynasty' : 'draft';
     if (rankCache[key]) return rankCache[key];
-    var map = {}, lists = {};
+    var fnMap = {}, ecrMap = {}, lists = {};
+
+    // 1) FantasyNow+ rankings from the sheet (priority)
     try {
       var res = await fetch(SHEET_URL[key]);
       var text = await res.text();
@@ -106,11 +109,28 @@
         var team = (cols[3] || '').replace(/^"|"$/g, '').trim();
         if (!name || !pos || !posRank) continue;
         var k = matchKey(name, pos);
-        if (map[k] == null) map[k] = posRank;
+        if (fnMap[k] == null) fnMap[k] = posRank;
         (lists[pos] = lists[pos] || []).push({ name: name, team: team, pos: pos, rank: posRank, key: k });
       }
-      RANK_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
     } catch (e) {}
+
+    // 2) FantasyPros ECR fallback via the Worker (fills players not in the sheet)
+    for (var pi = 0; pi < RANK_POS.length; pi++) {
+      var pos2 = RANK_POS[pi];
+      try {
+        var r2 = await fetch(WORKER + '?format=' + key + '&position=' + pos2 + '&limit=200');
+        if (!r2.ok) continue;
+        var d2 = await r2.json();
+        var arr2 = Array.isArray(d2) ? d2 : (d2.players || []);
+        for (var j = 0; j < arr2.length; j++) {
+          var kk = matchKey(arr2[j].name, arr2[j].position || pos2);
+          if (ecrMap[kk] == null) ecrMap[kk] = j + 1;
+        }
+      } catch (e) {}
+    }
+
+    var map = Object.assign({}, ecrMap, fnMap);
+    RANK_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
     rankCache[key] = { map: map, lists: lists };
     return rankCache[key];
   }
