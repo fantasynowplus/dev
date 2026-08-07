@@ -14,6 +14,7 @@
     WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
     TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
   };
+  var PROJ_SCALE = 700;
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
@@ -297,6 +298,63 @@
       '<div class="ml-bar-label">' + shortName(team.name) + '</div></div>';
   }
 
+  async function leagueTransactions(leagueId) {
+    var weeks = [];
+    for (var w = 1; w <= 18; w++) weeks.push(w);
+    var results = await Promise.all(weeks.map(function (w) {
+      return Sleeper.get('/league/' + leagueId + '/transactions/' + w).catch(function () { return []; });
+    }));
+    var tx = {};
+    results.forEach(function (arr) {
+      (arr || []).forEach(function (t) {
+        if (t.status && t.status !== 'complete') return;
+        var ids = t.roster_ids || [];
+        if (t.type === 'trade') ids.forEach(function (rid) { (tx[rid] = tx[rid] || { waivers: 0, trades: 0 }).trades++; });
+        else if (t.type === 'waiver' || t.type === 'free_agent') ids.forEach(function (rid) { (tx[rid] = tx[rid] || { waivers: 0, trades: 0 }).waivers++; });
+      });
+    });
+    return tx;
+  }
+
+  function standingsHTML(teams) {
+    var sorted = teams.slice().sort(function (a, b) { return (b.wins - a.wins) || (b.pf - a.pf); });
+    var rows = sorted.map(function (t, i) {
+      var rec = t.wins + '-' + t.losses + (t.ties ? '-' + t.ties : '');
+      var proj = t.projGames ? (t.projWins + '-' + t.projLosses + (t.ties ? '-' + t.ties : '')) : '<span class="ml-dim">—</span>';
+      return '<tr><td class="ml-center">' + (i + 1) + '</td><td class="ml-name">' + t.name + '</td>' +
+        '<td class="ml-center">' + rec + '</td>' +
+        '<td class="ml-center">' + (t.maxpf ? t.maxpf.toFixed(1) : '0.0') + '</td>' +
+        '<td class="ml-center">' + proj + '</td></tr>';
+    }).join('');
+    return '<div class="ml-sum-title">Standings</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr>' +
+      '<th class="ml-center">#</th><th>Team</th><th class="ml-center">Record</th><th class="ml-center">Max PF</th><th class="ml-center">Proj. Record</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function txChartHTML(teams, tx) {
+    var TXCOL = { waivers: '#3fb950', trades: '#58a6ff' };
+    var data = teams.map(function (t) {
+      var x = tx[t.rosterId] || { waivers: 0, trades: 0 };
+      return { name: t.name, waivers: x.waivers, trades: x.trades, total: x.waivers + x.trades };
+    }).sort(function (a, b) { return b.total - a.total; });
+    var maxTotal = data.reduce(function (m, d) { return Math.max(m, d.total); }, 0);
+    var bars = data.map(function (d) {
+      var h = maxTotal > 0 ? Math.round(d.total / maxTotal * 200) : 0;
+      var wh = d.total > 0 ? Math.round(d.waivers / d.total * h) : 0;
+      var th = h - wh;
+      return '<div class="ml-bar-col" style="cursor:default">' +
+        '<div class="ml-bar-val">' + d.total + '</div>' +
+        '<div class="ml-bar" style="height:' + h + 'px">' +
+        (th > 0 ? '<div style="height:' + th + 'px;background:' + TXCOL.trades + '"></div>' : '') +
+        (wh > 0 ? '<div style="height:' + wh + 'px;background:' + TXCOL.waivers + '"></div>' : '') +
+        '</div><div class="ml-bar-label">' + shortName(d.name) + '</div></div>';
+    }).join('');
+    var legend = '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + TXCOL.waivers + '"></span>Waivers</span>' +
+      '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + TXCOL.trades + '"></span>Trades</span>';
+    return '<div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Transactions Per Team</span><span class="ml-poslegend">' + legend + '</span></div>' +
+      '<div class="ml-chartrow">' + bars + '</div>';
+  }
+
   function teamNeeds(team, n) {
     var needs = [];
     RANK_POS.forEach(function (pos) { if (team.posRank[pos] && team.posRank[pos] > n * 0.6) needs.push(pos); });
@@ -335,7 +393,9 @@
       '<h2 class="ml-detail-title">' + (d.league.name || 'League') + '</h2>' +
       '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div></div>' +
       '<div class="ml-detail-grid"><div class="ml-panel">' + rosterPanelHTML(teams[sel], n) + '</div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>';
+      '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
+      '<div class="ml-panel">' + standingsHTML(teams) + '</div>' +
+      '<div class="ml-panel">' + txChartHTML(teams, d.tx || {}) + '</div>';
   }
 
   async function openDetail(leagueId) {
@@ -349,15 +409,26 @@
       var raw = league.raw || {};
       var rankData = await rankingsFor(isDynasty(raw) ? 'dynasty' : 'draft');
       var players = await loadPlayers();
-      var rosters = await Sleeper.get('/league/' + leagueId + '/rosters');
-      var users = await Sleeper.get('/league/' + leagueId + '/users');
+      var fetched = await Promise.all([
+        Sleeper.get('/league/' + leagueId + '/rosters'),
+        Sleeper.get('/league/' + leagueId + '/users'),
+        leagueTransactions(leagueId),
+        Sleeper.get('/state/nfl').catch(function () { return { week: 1 }; })
+      ]);
+      var rosters = fetched[0], users = fetched[1], tx = fetched[2], state = fetched[3];
       var userMap = {}; users.forEach(function (u) { userMap[u.user_id] = u; });
       var topN = (startersCount(raw.roster_positions) || 12) + 6;
       var teams = rosters.map(function (r) {
         var ev = evalRoster(r, players, rankData.map, topN);
-        var u = userMap[r.owner_id] || {};
-        var name = (u.metadata && u.metadata.team_name) || u.display_name || 'Ghost Team';
-        return { ownerId: r.owner_id, name: name, total: ev.total, byPos: ev.byPos, players: ev.players, posRank: {} };
+        var u = userMap[r.owner_id] || {}, st = r.settings || {};
+        return {
+          ownerId: r.owner_id, rosterId: r.roster_id,
+          name: (u.metadata && u.metadata.team_name) || u.display_name || 'Ghost Team',
+          total: ev.total, byPos: ev.byPos, players: ev.players, posRank: {},
+          wins: st.wins || 0, losses: st.losses || 0, ties: st.ties || 0,
+          pf: (st.fpts || 0) + (st.fpts_decimal || 0) / 100,
+          maxpf: (st.ppts || 0) + (st.ppts_decimal || 0) / 100
+        };
       }).sort(function (a, b) { return b.total - a.total; });
       var n = teams.length;
       teams.forEach(function (t, i) { t.overallRank = i + 1; t.tier = tierFor(i + 1, n, t.total); });
@@ -365,12 +436,49 @@
         teams.slice().sort(function (a, b) { return (b.byPos[pos] || 0) - (a.byPos[pos] || 0); })
           .forEach(function (t, i) { t.posRank[pos] = i + 1; });
       });
+      await projectRecords(leagueId, teams, raw, state);
       var selIdx = teams.findIndex(function (t) { return t.ownerId === USER_SLEEPER_ID; });
-      DETAIL = { league: league, teams: teams, n: n, rankData: rankData, selected: selIdx >= 0 ? selIdx : 0 };
+      DETAIL = { league: league, teams: teams, n: n, rankData: rankData, tx: tx, selected: selIdx >= 0 ? selIdx : 0 };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
     }
+  }
+
+  async function projectRecords(leagueId, teams, raw, state) {
+    teams.forEach(function (t) { t.projWins = t.wins; t.projLosses = t.losses; t.projGames = 0; });
+    var curWeek = Math.max(1, (state && state.week) || 1);
+    var lastReg = ((raw.settings && raw.settings.playoff_week_start) || 15) - 1;
+    if (curWeek > lastReg) return;
+    var weeks = [];
+    for (var w = curWeek; w <= lastReg; w++) weeks.push(w);
+    var byWeek = await Promise.all(weeks.map(function (w) {
+      return Sleeper.get('/league/' + leagueId + '/matchups/' + w).catch(function () { return []; });
+    }));
+    var valById = {}, proj = {};
+    teams.forEach(function (t) { valById[t.rosterId] = t.total; proj[t.rosterId] = { exp: 0, games: 0 }; });
+    byWeek.forEach(function (week) {
+      var byMatch = {};
+      (week || []).forEach(function (m) {
+        if (m.matchup_id == null) return;
+        (byMatch[m.matchup_id] = byMatch[m.matchup_id] || []).push(m.roster_id);
+      });
+      Object.keys(byMatch).forEach(function (mid) {
+        var pair = byMatch[mid];
+        if (pair.length !== 2) return;
+        var a = pair[0], b = pair[1];
+        var pa = 1 / (1 + Math.exp(-((valById[a] || 0) - (valById[b] || 0)) / PROJ_SCALE));
+        if (proj[a]) { proj[a].exp += pa; proj[a].games++; }
+        if (proj[b]) { proj[b].exp += (1 - pa); proj[b].games++; }
+      });
+    });
+    teams.forEach(function (t) {
+      var p = proj[t.rosterId] || { exp: 0, games: 0 };
+      var addWins = Math.round(p.exp);
+      t.projWins = t.wins + addWins;
+      t.projLosses = t.losses + (p.games - addWins);
+      t.projGames = p.games;
+    });
   }
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetail(); } }
