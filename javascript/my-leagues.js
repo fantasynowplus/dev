@@ -337,22 +337,21 @@
       var x = tx[t.rosterId] || { waivers: 0, trades: 0 };
       return { name: t.name, waivers: x.waivers, trades: x.trades, total: x.waivers + x.trades };
     }).sort(function (a, b) { return b.total - a.total; });
-    var maxTotal = data.reduce(function (m, d) { return Math.max(m, d.total); }, 0);
-    var bars = data.map(function (d) {
-      var h = maxTotal > 0 ? Math.round(d.total / maxTotal * 200) : 0;
-      var wh = d.total > 0 ? Math.round(d.waivers / d.total * h) : 0;
-      var th = h - wh;
+    var maxVal = data.reduce(function (m, d) { return Math.max(m, d.waivers, d.trades); }, 0);
+    function bar(val, color) {
+      var h = maxVal > 0 ? Math.round(val / maxVal * 200) : 0;
+      return '<div class="ml-txbar-wrap"><div class="ml-bar-val">' + val + '</div>' +
+        '<div class="ml-txbar" style="height:' + h + 'px;background:' + color + '"></div></div>';
+    }
+    var cols = data.map(function (d) {
       return '<div class="ml-bar-col" style="cursor:default">' +
-        '<div class="ml-bar-val">' + d.total + '</div>' +
-        '<div class="ml-bar" style="height:' + h + 'px">' +
-        (th > 0 ? '<div style="height:' + th + 'px;background:' + TXCOL.trades + '"></div>' : '') +
-        (wh > 0 ? '<div style="height:' + wh + 'px;background:' + TXCOL.waivers + '"></div>' : '') +
-        '</div><div class="ml-bar-label">' + shortName(d.name) + '</div></div>';
+        '<div class="ml-txgroup">' + bar(d.waivers, TXCOL.waivers) + bar(d.trades, TXCOL.trades) + '</div>' +
+        '<div class="ml-bar-label">' + shortName(d.name) + '</div></div>';
     }).join('');
     var legend = '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + TXCOL.waivers + '"></span>Waivers</span>' +
       '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + TXCOL.trades + '"></span>Trades</span>';
     return '<div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Transactions Per Team</span><span class="ml-poslegend">' + legend + '</span></div>' +
-      '<div class="ml-chartrow">' + bars + '</div>';
+      '<div class="ml-chartrow">' + cols + '</div>';
   }
 
   function teamNeeds(team, n) {
