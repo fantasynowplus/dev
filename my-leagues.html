@@ -28,6 +28,7 @@ layout: null
   .ml-top-item { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
   .ml-top-rank { color: #7d8aa5; font-weight: 700; width: 16px; text-align: right; }
   .ml-top-name { color: #eef2fb; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; flex: 1; }
+  .ml-top-val { color: #8a97b3; font-weight: 600; }
   .ml-sum-top .ml-tier { font-size: 11px; padding: 2px 8px; }
   .ml-table-wrap { overflow-x: auto; border: 1px solid #2a3450; border-radius: 12px; background: #131a29; }
   .ml-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -45,9 +46,11 @@ layout: null
   .ml-season { color: #7d8aa5; font-size: 12px; }
   .ml-pill { display: inline-block; background: #232e49; color: #c3cee0; border: 1px solid #303c5a; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0; white-space: nowrap; }
   .ml-tier { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .ml-tier-title { background: rgba(163,113,247,0.15); color: #b892ff; border: 1px solid rgba(163,113,247,0.4); }
   .ml-tier-contender { background: rgba(63,185,80,0.15); color: #56d364; border: 1px solid rgba(63,185,80,0.4); }
   .ml-tier-bubble { background: rgba(255,165,21,0.15); color: #ffb84d; border: 1px solid rgba(255,165,21,0.4); }
   .ml-tier-rebuild { background: rgba(229,83,75,0.15); color: #ff7b72; border: 1px solid rgba(229,83,75,0.4); }
+  .ml-tier-tank { background: rgba(110,118,129,0.18); color: #a3aec0; border: 1px solid rgba(110,118,129,0.45); }
   .ml-empty { text-align: center; color: #8a97b3; padding: 30px 16px; }
 </style>
 
@@ -71,6 +74,7 @@ layout: null
             <th>League</th>
             <th class="ml-center">Contender Tier</th>
             <th class="ml-center">Overall Rank</th>
+            <th class="ml-center">Team Value</th>
             <th>Format &amp; Scoring</th>
           </tr>
         </thead>
