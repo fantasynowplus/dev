@@ -5,13 +5,12 @@ layout: null
 {% include header.html %}
 
 <style>
-  /* ── Use your existing CSS variables ── */
   body {
     background-color: var(--bg-dark) !important;
     color: var(--text-light) !important;
   }
 
-  /* ── Feed page wrapper ── */
+  /* ── Page wrapper ── */
   .fn-feed-page {
     min-height: 100vh;
     background-color: var(--bg-dark);
@@ -72,36 +71,50 @@ layout: null
   .fn-feed-subtitle {
     font-size: 14px;
     color: rgba(244, 244, 244, 0.55);
-    margin: 0;
+    margin: 0 0 24px;
     font-weight: 400;
     letter-spacing: 0.02em;
   }
 
-  /* ── Live badge ── */
-  .fn-live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
+  /* ── Subnav Tabs (based on user example) ── */
+  .tools-subnav {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tools-subnav button {
+    padding: 10px 20px;
+    border-radius: 0;
+    background: #071a3d;
+    color: #9ca3af;
+    font-family: 'Barlow Condensed', 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--bright-orange);
-    margin-top: 16px;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1px solid #14294d;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .tools-subnav button:hover {
+    background: #002863;
+    color: #fff;
+  }
+  .tools-subnav button.active {
+    background: #002863;
+    color: #fff;
+    border: 1px solid #ffa515;
   }
 
-  .fn-live-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--bright-orange);
-    animation: fn-pulse 1.8s ease-in-out infinite;
+  /* ── Tab Content Panels ── */
+  .fn-tab-content {
+    display: none;
   }
-
-  @keyframes fn-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.35; transform: scale(0.7); }
+  .fn-tab-content.active {
+    display: block;
   }
 
   /* ── Widget container ── */
@@ -149,21 +162,55 @@ layout: null
   <div class="fn-feed-bar"></div>
 
   <div class="fn-feed-hero">
-    <h1 class="fn-feed-title">Picks <span>Feed</span></h1>
-    <div class="fn-live-badge">
-      <span class="fn-live-dot"></span>
-      Live Updates
+    <h1 class="fn-feed-title">Fantasy <span>Now+</span></h1>
+    <p class="fn-feed-subtitle">Live analytics, consensus boards, and verified picks</p>
+    
+    <!-- Tab navigation buttons -->
+    <div class="tools-subnav">
+      <button class="active" onclick="switchTab('picks', this)">Live Picks</button>
+      <button onclick="switchTab('rankings', this)">Rankings</button>
     </div>
   </div>
 
-  <div class="fn-widget-wrap">
-    <span
-      data-tallysight-widget-type="feed"
-      data-tallysight-widget-id="all,all,fantasy-now"
-      data-tallysight-widget-config-theme="dark"
-    ></span>
+  <!-- Live Picks Tab Panel -->
+  <div id="tab-picks" class="fn-tab-content active">
+    <div class="fn-widget-wrap">
+      <span
+        data-tallysight-widget-type="feed"
+        data-tallysight-widget-id="all,all,fantasy-now"
+        data-tallysight-widget-config-theme="dark"
+      ></span>
+    </div>
+  </div>
+
+  <!-- Rankings Tab Panel -->
+  <div id="tab-rankings" class="fn-tab-content">
+    <div class="fn-widget-wrap">
+      <!-- Replace YOUR_RANKINGS_WIDGET_ID with your specific rankings/tile widget ID from your Tallysight dashboard -->
+      <span
+        data-tallysight-widget-type="tile"
+        data-tallysight-widget-id="YOUR_RANKINGS_WIDGET_ID"
+        data-tallysight-widget-config-theme="dark"
+      ></span>
+    </div>
   </div>
 
 </div>
+
+<script>
+  function switchTab(tabName, btnElement) {
+    // Hide all tab contents
+    const contents = document.querySelectorAll('.fn-tab-content');
+    contents.forEach(content => content.classList.remove('active'));
+
+    // Remove active class from all buttons
+    const buttons = document.querySelectorAll('.tools-subnav button');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    // Show selected tab content and highlight button
+    document.getElementById('tab-' + tabName).classList.add('active');
+    btnElement.classList.add('active');
+  }
+</script>
 
 {% include footer.html %}
