@@ -45,6 +45,12 @@
     const bench = { BN: 1, IR: 1, TAXI: 1 };
     return positions.filter(function (p) { return !bench[p]; }).length;
   }
+  function isDynasty(raw) {
+    var s = raw.settings || {};
+    if (s.type === 2 || s.type === 1) return true;
+    if (s.taxi_slots > 0) return true;
+    return (raw.roster_positions || []).indexOf('TAXI') !== -1;
+  }
   function bubbles(raw) {
     const settings = raw.settings || {};
     const out = [typeLabel(settings.type)];
@@ -172,7 +178,7 @@
 
   async function insightsForLeague(l, playersMap) {
     var raw = l.raw || {};
-    var isDyn = (raw.settings && raw.settings.type) === 2;
+    var isDyn = isDynasty(raw);
     var rankData = await rankingsFor(isDyn ? 'dynasty' : 'draft');
     var rosters = await Sleeper.get('/league/' + l.league_id + '/rosters');
     var topN = (startersCount(raw.roster_positions) || 12) + 6;
@@ -329,7 +335,7 @@
     try {
       if (!USER_SLEEPER_ID) USER_SLEEPER_ID = await getSleeperUserId();
       var raw = league.raw || {};
-      var isDyn = (raw.settings && raw.settings.type) === 2;
+      var isDyn = isDynasty(raw);
       var rankData = await rankingsFor(isDyn ? 'dynasty' : 'draft');
       var players = await loadPlayers();
       var rosters = await Sleeper.get('/league/' + leagueId + '/rosters');
