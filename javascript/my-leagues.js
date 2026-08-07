@@ -1,10 +1,18 @@
 (function () {
-  var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
+  var SHEET_URL = {
+    draft: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=0&single=true&output=csv',
+    dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv'
+  };
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
-  var VALUE_BASE = 200;
   var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode'];
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681' };
   var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72' };
+  var TIERS = {
+    QB: [[8, 100], [12, 65], [24, 40], [36, 22]],
+    RB: [[12, 100], [24, 65], [36, 40], [60, 22], [100, 11], [200, 5]],
+    WR: [[12, 100], [24, 65], [36, 40], [60, 22], [100, 11], [200, 5]],
+    TE: [[4, 100], [10, 65], [16, 40], [28, 22], [50, 11]]
+  };
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
@@ -13,7 +21,6 @@
     return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + localStorage.getItem('sb-auth-token') };
   }
   function comma(v) { return Math.round(v).toLocaleString(); }
-
   function ordinal(n) {
     var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
@@ -83,23 +90,38 @@
   }
 
   async function rankingsFor(format) {
-    if (rankCache[format]) return rankCache[format];
+    var key = format === 'dynasty' ? 'dynasty' : 'draft';
+    if (rankCache[key]) return rankCache[key];
     var map = {}, lists = {};
-    for (var i = 0; i < RANK_POS.length; i++) {
-      var pos = RANK_POS[i];
-      try {
-        var res = await fetch(WORKER + '?format=' + format + '&position=' + pos + '&limit=200');
-        if (!res.ok) continue;
-        var data = await res.json();
-        var raw = Array.isArray(data) ? data : (data.players || []);
-        lists[pos] = raw.map(function (pl, idx) {
-          return { name: pl.name, team: pl.team, pos: pos, rank: idx + 1, key: matchKey(pl.name, pl.position || pos) };
-        });
-        lists[pos].forEach(function (it) { if (map[it.key] == null) map[it.key] = it.rank; });
-      } catch (e) {}
+    try {
+      var res = await fetch(SHEET_URL[key]);
+      var text = await res.text();
+      var rows = text.split(/\r?\n/);
+      for (var i = 0; i < rows.length; i++) {
+        if (!rows[i]) continue;
+        var cols = rows[i].split(',');
+        var posRank = parseInt(String(cols[0] || '').replace(/[^0-9]/g, ''), 10);
+        var name = (cols[2] || '').replace(/^"|"$/g, '').trim();
+        var pos = (cols[4] || '').replace(/^"|"$/g, '').trim().toUpperCase();
+        var team = (cols[3] || '').replace(/^"|"$/g, '').trim();
+        if (!name || !pos || !posRank) continue;
+        var k = matchKey(name, pos);
+        if (map[k] == null) map[k] = posRank;
+        (lists[pos] = lists[pos] || []).push({ name: name, team: team, pos: pos, rank: posRank, key: k });
+      }
+      RANK_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
+    } catch (e) {}
+    rankCache[key] = { map: map, lists: lists };
+    return rankCache[key];
+  }
+
+  function playerValue(pos, rank) {
+    var tiers = TIERS[pos];
+    if (!tiers || !rank) return 0;
+    for (var i = 0; i < tiers.length; i++) {
+      if (rank <= tiers[i][0]) return tiers[i][1];
     }
-    rankCache[format] = { map: map, lists: lists };
-    return rankCache[format];
+    return 0;
   }
 
   function evalRoster(roster, playersMap, rankMap, topN) {
@@ -108,7 +130,7 @@
       var p = playersMap[pid]; if (!p) return;
       var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
       var rank = rankMap[matchKey(name, p.position)];
-      arr.push({ name: name, pos: p.position, team: p.team, rank: rank || null, value: rank ? Math.max(0, VALUE_BASE - rank) : 0 });
+      arr.push({ name: name, pos: p.position, team: p.team, rank: rank || null, value: playerValue(p.position, rank) });
     });
     arr.sort(function (a, b) { return b.value - a.value; });
     var top = arr.slice(0, topN), byPos = { QB: 0, RB: 0, WR: 0, TE: 0 }, total = 0;
