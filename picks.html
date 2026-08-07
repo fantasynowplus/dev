@@ -10,14 +10,12 @@ layout: null
     color: var(--text-light) !important;
   }
 
-  /* ── Page wrapper ── */
   .fn-feed-page {
     min-height: 100vh;
     background-color: var(--bg-dark);
     padding: 0 0 80px;
   }
 
-  /* ── Orange accent bar ── */
   .fn-feed-bar {
     width: 100%;
     height: 3px;
@@ -25,7 +23,6 @@ layout: null
     margin-bottom: 0;
   }
 
-  /* ── Hero ── */
   .fn-feed-hero {
     background: linear-gradient(
       180deg,
@@ -76,7 +73,6 @@ layout: null
     letter-spacing: 0.02em;
   }
 
-  /* ── Subnav Tabs (based on user example) ── */
   .tools-subnav {
     display: flex;
     gap: 10px;
@@ -109,7 +105,6 @@ layout: null
     border: 1px solid #ffa515;
   }
 
-  /* ── Tab Content Panels ── */
   .fn-tab-content {
     display: none;
   }
@@ -117,14 +112,12 @@ layout: null
     display: block;
   }
 
-  /* ── Widget container ── */
   .fn-widget-wrap {
     max-width: 980px;
     margin: 40px auto 0;
     padding: 0 16px;
   }
 
-  /* ── Tallysight CSS variable overrides for Dark Mode Readability ── */
   .fn-widget-wrap span[data-tallysight-widget-type] {
     --background-primary:   #0a0f1a;
     --background-secondary: #071a3d;
@@ -150,7 +143,6 @@ layout: null
       0 12px 40px rgba(0, 0, 0, 0.6);
   }
 
-  /* ── Responsive ── */
   @media (max-width: 600px) {
     .fn-feed-hero { padding: 28px 16px 24px; }
     .fn-widget-wrap { margin-top: 24px; padding: 0 12px; }
@@ -165,32 +157,31 @@ layout: null
     <h1 class="fn-feed-title">Fantasy <span>Now+</span></h1>
     <p class="fn-feed-subtitle">Live analytics, consensus boards, and verified picks</p>
     
-    <!-- Tab navigation buttons -->
     <div class="tools-subnav">
       <button class="active" onclick="switchTab('picks', this)">Live Picks</button>
       <button onclick="switchTab('rankings', this)">Rankings</button>
     </div>
   </div>
 
-  <!-- Live Picks Tab Panel -->
   <div id="tab-picks" class="fn-tab-content active">
     <div class="fn-widget-wrap">
       <span
         data-tallysight-widget-type="feed"
         data-tallysight-widget-id="all,all,fantasy-now"
         data-tallysight-widget-config-theme="dark"
+        data-tallysight-widget-loading="eager"
       ></span>
     </div>
   </div>
 
-  <!-- Rankings Tab Panel -->
   <div id="tab-rankings" class="fn-tab-content">
-    <div class="fn-widget-wrap">
-      <!-- Replace YOUR_RANKINGS_WIDGET_ID with your specific rankings/tile widget ID from your Tallysight dashboard -->
+    <div class="fn-widget-wrap" id="rankings-wrap">
       <span
+        id="rankings-widget"
         data-tallysight-widget-type="tile"
-        data-tallysight-widget-id="YOUR_RANKINGS_WIDGET_ID"
+        data-tallysight-widget-id="all,all,fantasy-now"
         data-tallysight-widget-config-theme="dark"
+        data-tallysight-widget-loading="eager"
       ></span>
     </div>
   </div>
@@ -199,17 +190,22 @@ layout: null
 
 <script>
   function switchTab(tabName, btnElement) {
-    // Hide all tab contents
     const contents = document.querySelectorAll('.fn-tab-content');
     contents.forEach(content => content.classList.remove('active'));
 
-    // Remove active class from all buttons
     const buttons = document.querySelectorAll('.tools-subnav button');
     buttons.forEach(btn => btn.classList.remove('active'));
 
-    // Show selected tab content and highlight button
-    document.getElementById('tab-' + tabName).classList.add('active');
+    const targetTab = document.getElementById('tab-' + tabName);
+    targetTab.classList.add('active');
     btnElement.classList.add('active');
+
+    const widget = targetTab.querySelector('[data-tallysight-widget-type]');
+    if (widget && window.Tallysight && typeof window.Tallysight.init === 'function') {
+      window.Tallysight.init();
+    }
+
+    window.dispatchEvent(new Event('resize'));
   }
 </script>
 
