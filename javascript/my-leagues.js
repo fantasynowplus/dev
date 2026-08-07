@@ -6,7 +6,6 @@
 
   function el(id) { return document.getElementById(id); }
   function loggedIn() { return typeof auth !== 'undefined' && auth.isAuthenticated(); }
-
   function sbHeaders() {
     return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + localStorage.getItem('sb-auth-token') };
   }
@@ -117,10 +116,10 @@
     }).sort(function (a, b) { return b.score - a.score; });
     var n = scored.length;
     var idx = scored.findIndex(function (s) { return s.ownerId === USER_SLEEPER_ID; });
-    if (idx < 0 || !n) return { rank: null, n: n, tier: null };
+    if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
     var rank = idx + 1;
     var tier = rank <= n / 3 ? 'Contender' : rank <= (2 * n / 3) ? 'On the Bubble' : 'Rebuilding';
-    return { rank: rank, n: n, tier: tier };
+    return { rank: rank, n: n, tier: tier, score: scored[idx].score };
   }
 
   function tierClass(t) { return t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : 'rebuild'; }
@@ -131,25 +130,45 @@
     if (tc) tc.innerHTML = tier ? '<span class="ml-tier ml-tier-' + tierClass(tier) + '">' + tier + '</span>' : '<span class="ml-dim">-</span>';
   }
 
-  function renderTierChart(counts) {
+  function renderSummary(totalLeagues, tierCounts, formatCounts, topTeams) {
     var slot = el('ml-chart-slot');
+    if (!totalLeagues) { slot.style.display = 'none'; return; }
     var order = ['Contender', 'On the Bubble', 'Rebuilding'];
-    var total = order.reduce(function (s, t) { return s + counts[t]; }, 0);
-    if (!total) { slot.style.display = 'none'; return; }
     var COL = { 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b' };
-    var acc = 0, stops = [];
-    order.forEach(function (t) {
-      if (!counts[t]) return;
-      var start = acc / total * 100; acc += counts[t]; var end = acc / total * 100;
-      stops.push(COL[t] + ' ' + start + '% ' + end + '%');
-    });
-    var legend = order.filter(function (t) { return counts[t] > 0; }).map(function (t) {
-      return '<div class="ml-legend-item"><span class="ml-legend-dot" style="background:' + COL[t] + '"></span>' + t + ' <span class="ml-legend-count">' + counts[t] + '</span></div>';
-    }).join('');
-    slot.className = 'ml-chart';
-    slot.innerHTML =
-      '<div class="ml-donut" style="background:conic-gradient(' + stops.join(', ') + ')"><div class="ml-donut-hole"><span>' + total + '</span><small>leagues</small></div></div>' +
-      '<div><div class="ml-legend-title">Contender Tiers</div>' + legend + '</div>';
+    var tierTotal = order.reduce(function (s, t) { return s + tierCounts[t]; }, 0);
+    var html = '';
+
+    if (tierTotal) {
+      var acc = 0, stops = [];
+      order.forEach(function (t) {
+        if (!tierCounts[t]) return;
+        var start = acc / tierTotal * 100; acc += tierCounts[t]; var end = acc / tierTotal * 100;
+        stops.push(COL[t] + ' ' + start + '% ' + end + '%');
+      });
+      var legend = order.filter(function (t) { return tierCounts[t] > 0; }).map(function (t) {
+        return '<div class="ml-legend-item"><span class="ml-legend-dot" style="background:' + COL[t] + '"></span>' + t + ' <span class="ml-legend-count">' + tierCounts[t] + '</span></div>';
+      }).join('');
+      html += '<div class="ml-sum-donut">' +
+        '<div class="ml-donut" style="background:conic-gradient(' + stops.join(', ') + ')"><div class="ml-donut-hole"><span>' + totalLeagues + '</span><small>leagues</small></div></div>' +
+        '<div><div class="ml-sum-title">Contender Tiers</div>' + legend + '</div></div>';
+    }
+
+    html += '<div class="ml-sum-col"><div class="ml-sum-title">Formats</div>' +
+      '<div class="ml-stat"><span>Redraft</span><b>' + formatCounts.Redraft + '</b></div>' +
+      '<div class="ml-stat"><span>Dynasty</span><b>' + formatCounts.Dynasty + '</b></div>' +
+      '<div class="ml-stat"><span>Keeper</span><b>' + formatCounts.Keeper + '</b></div></div>';
+
+    if (topTeams.length) {
+      var items = topTeams.map(function (tm, i) {
+        return '<div class="ml-top-item"><span class="ml-top-rank">' + (i + 1) + '</span>' +
+          '<span class="ml-top-name">' + tm.name + '</span>' +
+          '<span class="ml-tier ml-tier-' + tierClass(tm.tier) + '">' + tm.tier + '</span></div>';
+      }).join('');
+      html += '<div class="ml-sum-col ml-sum-top"><div class="ml-sum-title">Your Top Teams</div>' + items + '</div>';
+    }
+
+    slot.className = 'ml-summary';
+    slot.innerHTML = html;
   }
 
   async function getSleeperUserId() {
@@ -165,22 +184,32 @@
   }
 
   async function computeInsights(leagues) {
+    var formatCounts = { Redraft: 0, Dynasty: 0, Keeper: 0 };
+    leagues.forEach(function (l) {
+      var t = (l.raw && l.raw.settings && l.raw.settings.type);
+      if (t === 2) formatCounts.Dynasty++;
+      else if (t === 1) formatCounts.Keeper++;
+      else formatCounts.Redraft++;
+    });
+
+    var tierCounts = { 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0 };
+    var topTeams = [];
     try {
       USER_SLEEPER_ID = await getSleeperUserId();
-      if (!USER_SLEEPER_ID) { el('ml-chart-slot').style.display = 'none'; return; }
-      var playersMap = await loadPlayers();
-      var counts = { 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0 };
-      for (var i = 0; i < leagues.length; i++) {
-        try {
-          var ins = await insightsForLeague(leagues[i], playersMap);
-          setInsight(leagues[i].league_id, ins.rank, ins.n, ins.tier);
-          if (ins.tier) counts[ins.tier]++;
-        } catch (e) {}
+      if (USER_SLEEPER_ID) {
+        var playersMap = await loadPlayers();
+        for (var i = 0; i < leagues.length; i++) {
+          try {
+            var ins = await insightsForLeague(leagues[i], playersMap);
+            setInsight(leagues[i].league_id, ins.rank, ins.n, ins.tier);
+            if (ins.tier) tierCounts[ins.tier]++;
+            if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', rank: ins.rank, n: ins.n, tier: ins.tier, score: ins.score });
+          } catch (e) {}
+        }
       }
-      renderTierChart(counts);
-    } catch (e) {
-      el('ml-chart-slot').style.display = 'none';
-    }
+    } catch (e) {}
+    topTeams.sort(function (a, b) { return b.score - a.score; });
+    renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
   }
 
   async function init() {
