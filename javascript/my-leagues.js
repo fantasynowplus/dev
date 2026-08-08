@@ -375,6 +375,24 @@
   }
 
   function renderDetail() {
+    var d = DETAIL, tab = d.tab || 'overview';
+    var tabs = '<div class="ml-dtabs">' +
+      '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
+      '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
+      '</div>';
+    el('ml-detail').innerHTML =
+      '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
+      '<h2 class="ml-detail-title">' + (d.league.name || 'League') + '</h2>' +
+      tabs + '<div id="ml-detail-body"></div>';
+    renderDetailBody();
+  }
+
+  function renderDetailBody() {
+    if ((DETAIL.tab || 'overview') === 'draft') renderDraft();
+    else el('ml-detail-body').innerHTML = overviewHTML();
+  }
+
+  function overviewHTML() {
     var d = DETAIL, teams = d.teams, sel = d.selected, n = d.n;
     var maxTotal = teams.reduce(function (m, t) { return Math.max(m, t.total); }, 0);
     var bars = teams.map(function (t, i) { return barHTML(t, i, maxTotal, sel); }).join('');
@@ -387,14 +405,84 @@
         '<td class="ml-center">' + ordinal(t.posRank.QB) + '</td><td class="ml-center">' + ordinal(t.posRank.RB) + '</td>' +
         '<td class="ml-center">' + ordinal(t.posRank.WR) + '</td><td class="ml-center">' + ordinal(t.posRank.TE) + '</td></tr>';
     }).join('');
-    el('ml-detail').innerHTML =
-      '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
-      '<h2 class="ml-detail-title">' + (d.league.name || 'League') + '</h2>' +
-      '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div></div>' +
+    return '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div></div>' +
       '<div class="ml-detail-grid"><div class="ml-panel">' + rosterPanelHTML(teams[sel], n) + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
       '<div class="ml-panel">' + standingsHTML(teams) + '</div>' +
       '<div class="ml-panel">' + txChartHTML(teams, d.tx || {}) + '</div>';
+  }
+
+  function pickLabel(e, n) { var inRound = ((e.pickNo - 1) % n) + 1; return e.round + '.' + (inRound < 10 ? '0' + inRound : inRound); }
+
+  async function renderDraft() {
+    var body = el('ml-detail-body');
+    if (DETAIL.draftAnalysis) { body.innerHTML = draftHTML(DETAIL.draftAnalysis); return; }
+    body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Analyzing the draft…</div></div>';
+    try {
+      var drafts = await Sleeper.get('/league/' + DETAIL.leagueId + '/drafts');
+      var completed = (drafts || []).filter(function (dr) { return dr.status === 'complete'; });
+      var chosen = (completed.length ? completed : (drafts || [])).sort(function (a, b) { return (b.start_time || 0) - (a.start_time || 0); })[0];
+      if (!chosen) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">No draft found for this league yet.</div></div>'; return; }
+      var picks = await Sleeper.get('/draft/' + chosen.draft_id + '/picks');
+      DETAIL.draftAnalysis = analyzeDraft(picks || []);
+      body.innerHTML = draftHTML(DETAIL.draftAnalysis);
+    } catch (e) {
+      body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the draft: ' + e.message + '</div></div>';
+    }
+  }
+
+  function analyzeDraft(picks) {
+    var rankMap = DETAIL.rankData.map;
+    var nameById = {}; DETAIL.teams.forEach(function (t) { nameById[t.rosterId] = t.name; });
+    var enriched = picks.map(function (p) {
+      var md = p.metadata || {};
+      var name = ((md.first_name || '') + ' ' + (md.last_name || '')).trim();
+      var pos = (md.position || '').toUpperCase();
+      var rank = rankMap[matchKey(name, pos)];
+      return { pickNo: p.pick_no, round: p.round, rosterId: p.roster_id, name: name, pos: pos, rank: rank || null, value: playerValue(pos, rank) };
+    });
+    var byValue = enriched.filter(function (e) { return e.value > 0; }).sort(function (a, b) { return b.value - a.value; });
+    var valueRank = {}; byValue.forEach(function (e, i) { valueRank[e.pickNo] = i + 1; });
+    enriched.forEach(function (e) { e.vop = (valueRank[e.pickNo] != null) ? (e.pickNo - valueRank[e.pickNo]) : null; });
+    var teamTotals = {};
+    enriched.forEach(function (e) { var tt = (teamTotals[e.rosterId] = teamTotals[e.rosterId] || { value: 0, picks: 0 }); tt.value += e.value; tt.picks++; });
+    var teamGrades = DETAIL.teams.map(function (t) {
+      var tt = teamTotals[t.rosterId] || { value: 0, picks: 0 };
+      return { name: t.name, value: tt.value, picks: tt.picks };
+    }).sort(function (a, b) { return b.value - a.value; });
+    var ranked = enriched.filter(function (e) { return e.vop != null; });
+    var steals = ranked.slice().sort(function (a, b) { return b.vop - a.vop; }).slice(0, 5);
+    var reaches = ranked.slice().sort(function (a, b) { return a.vop - b.vop; }).slice(0, 5);
+    return { picks: enriched, teamGrades: teamGrades, steals: steals, reaches: reaches, nameById: nameById };
+  }
+
+  function draftHTML(a) {
+    if (!a.picks.length) return '<div class="ml-panel"><div class="ml-empty">This league hasn\'t drafted yet.</div></div>';
+    var n = DETAIL.n, nameById = a.nameById;
+    var grades = a.teamGrades.map(function (t, i) {
+      return '<tr><td class="ml-center">' + (i + 1) + '</td><td class="ml-name">' + t.name + '</td>' +
+        '<td class="ml-center">' + t.picks + '</td><td class="ml-center"><b style="color:#eef2fb">' + comma(t.value) + '</b></td></tr>';
+    }).join('');
+    var gradesTable = '<div class="ml-sum-title">Draft Grades — Best Haul to Worst</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th class="ml-center">#</th><th>Team</th><th class="ml-center">Picks</th><th class="ml-center">Draft Value</th></tr></thead><tbody>' + grades + '</tbody></table></div>';
+    function pickRow(e, steal) {
+      return '<div class="ml-rost-row"><span class="ml-rost-pos ml-pos-' + (e.pos || '').toLowerCase() + '">' + pickLabel(e, n) + '</span>' +
+        '<span class="ml-rost-name">' + e.name + '</span>' +
+        '<span class="ml-rost-rank" style="width:130px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (nameById[e.rosterId] || '') + '</span>' +
+        '<span class="ml-rost-val" style="color:' + (steal ? '#56d364' : '#ff7b72') + '">' + (steal ? '+' : '') + e.vop + '</span></div>';
+    }
+    var stealsList = a.steals.map(function (e) { return pickRow(e, true); }).join('') || '<div class="ml-empty">—</div>';
+    var reachesList = a.reaches.map(function (e) { return pickRow(e, false); }).join('') || '<div class="ml-empty">—</div>';
+    var board = a.picks.slice().sort(function (x, y) { return x.pickNo - y.pickNo; }).map(function (e) {
+      var col = (e.vop != null && e.vop >= 10) ? '#56d364' : (e.vop != null && e.vop <= -10) ? '#ff7b72' : '#c9d2e6';
+      return '<div class="ml-rost-row"><span class="ml-rost-pos ml-pos-' + (e.pos || '').toLowerCase() + '">' + pickLabel(e, n) + '</span>' +
+        '<span class="ml-rost-name" style="color:' + col + '">' + e.name + '</span>' +
+        '<span class="ml-rost-rank" style="width:130px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (nameById[e.rosterId] || '') + '</span>' +
+        '<span class="ml-rost-val">' + comma(e.value) + '</span></div>';
+    }).join('');
+    return '<div class="ml-panel">' + gradesTable + '</div>' +
+      '<div class="ml-detail-grid"><div class="ml-panel"><div class="ml-sum-title">Best Value Picks</div>' + stealsList + '</div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Biggest Reaches</div>' + reachesList + '</div></div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Full Draft Board</div><div style="max-height:420px;overflow-y:auto;margin-top:8px">' + board + '</div></div>';
   }
 
   async function openDetail(leagueId) {
@@ -437,7 +525,7 @@
       });
       await projectRecords(leagueId, teams, raw, state);
       var selIdx = teams.findIndex(function (t) { return t.ownerId === USER_SLEEPER_ID; });
-      DETAIL = { league: league, teams: teams, n: n, rankData: rankData, tx: tx, selected: selIdx >= 0 ? selIdx : 0 };
+      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
@@ -480,9 +568,9 @@
     });
   }
 
-  function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetail(); } }
+  function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail };
+  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } } };
 
   async function init() {
     if (!loggedIn()) {
