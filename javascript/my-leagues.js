@@ -423,15 +423,18 @@
       var completed = (drafts || []).filter(function (dr) { return dr.status === 'complete'; });
       var chosen = (completed.length ? completed : (drafts || [])).sort(function (a, b) { return (b.start_time || 0) - (a.start_time || 0); })[0];
       if (!chosen) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">No draft found for this league yet.</div></div>'; return; }
+      var slotMap = chosen.slot_to_roster_id;
+      if (!slotMap) { try { slotMap = (await Sleeper.get('/draft/' + chosen.draft_id)).slot_to_roster_id; } catch (e) {} }
       var picks = await Sleeper.get('/draft/' + chosen.draft_id + '/picks');
-      DETAIL.draftAnalysis = analyzeDraft(picks || []);
+      DETAIL.draftAnalysis = analyzeDraft(picks || [], slotMap || {});
       body.innerHTML = draftHTML(DETAIL.draftAnalysis);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the draft: ' + e.message + '</div></div>';
     }
   }
 
-  function analyzeDraft(picks) {
+  function analyzeDraft(picks, slotMap) {
+    slotMap = slotMap || {};
     var rankMap = DETAIL.rankData.map;
     var nameById = {}; DETAIL.teams.forEach(function (t) { nameById[t.rosterId] = t.name; });
     var enriched = picks.map(function (p) {
@@ -439,7 +442,8 @@
       var name = ((md.first_name || '') + ' ' + (md.last_name || '')).trim();
       var pos = (md.position || '').toUpperCase();
       var rank = rankMap[matchKey(name, pos)];
-      return { pickNo: p.pick_no, round: p.round, slot: p.draft_slot, rosterId: p.roster_id, name: name, pos: pos, rank: rank || null, value: playerValue(pos, rank) };
+      var traded = (p.roster_id != null && slotMap[p.draft_slot] != null && String(slotMap[p.draft_slot]) !== String(p.roster_id));
+      return { pickNo: p.pick_no, round: p.round, slot: p.draft_slot, rosterId: p.roster_id, traded: traded, name: name, pos: pos, rank: rank || null, value: playerValue(pos, rank) };
     });
     var byValue = enriched.filter(function (e) { return e.value > 0; }).sort(function (a, b) { return b.value - a.value; });
     var valueRank = {}; byValue.forEach(function (e, i) { valueRank[e.pickNo] = i + 1; });
@@ -479,13 +483,14 @@
         var vc = (e.vop != null && e.vop >= 10) ? '#56d364' : (e.vop != null && e.vop <= -10) ? '#ff7b72' : '#c9d2e6';
         return '<div class="ml-dpick"><span class="ml-dppick">' + pickLabel(e, n) + '</span>' +
           '<span class="ml-dpname" style="color:' + vc + '">' + e.name + '</span>' +
-          '<span class="ml-dpmeta">' + (e.pos || '') + ' · ' + comma(e.value) + '</span></div>';
+          (e.traded ? '<i class="fa-solid fa-right-left ml-trade" title="Acquired via trade"></i>' : '') +
+          '<span class="ml-dpmeta">' + (e.pos || '') + '</span></div>';
       }).join('');
       return '<div class="ml-dcard"><div class="ml-dchead"><div class="ml-dcteam">' + name + '</div>' +
         '<span class="ml-dbgrade ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span></div>' + rows + '</div>';
     }).join('');
     return '<div class="ml-panel"><div class="ml-sum-title">Draft Results — graded on FantasyNow+ rankings</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Each team with the picks they made and the slot they used. Green picks are values, red are reaches.</p>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Each team with the picks they made. The <i class="fa-solid fa-right-left ml-trade"></i> marks a pick acquired via trade. Green picks are values, red are reaches.</p>' +
       '<div class="ml-dgrid">' + cards + '</div></div>';
   }
 
