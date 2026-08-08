@@ -4,6 +4,8 @@
     dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv'
   };
   var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
+  var PROJ_URL = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/projections';
+  var projCache = {};
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
   var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode', 'Drafting'];
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681', 'Drafting': '#586f96' };
@@ -91,6 +93,40 @@
     if (PLAYERS) return PLAYERS;
     PLAYERS = await Sleeper.get('/players/nfl');
     return PLAYERS;
+  }
+
+  function fpScoring(raw) {
+    var rec = (raw.scoring_settings && raw.scoring_settings.rec) || 0;
+    return rec >= 1 ? 'PPR' : rec >= 0.5 ? 'HALF' : 'STD';
+  }
+
+  async function projectionsFor(week, scoring) {
+    var key = week + '|' + scoring;
+    if (projCache[key]) return projCache[key];
+    var map = {};
+    for (var i = 0; i < RANK_POS.length; i++) {
+      var pos = RANK_POS[i];
+      try {
+        var res = await fetch(PROJ_URL + '?position=' + pos + '&week=' + week + '&scoring=' + scoring);
+        if (!res.ok) continue;
+        var data = await res.json();
+        var arr = (data && data.players) || [];
+        for (var j = 0; j < arr.length; j++) {
+          var kk = matchKey(arr[j].name, arr[j].position || pos);
+          if (map[kk] == null) map[kk] = arr[j].points;
+        }
+      } catch (e) {}
+    }
+    projCache[key] = map;
+    return map;
+  }
+
+  function playerProj(pid, playersMap, projMap) {
+    var p = playersMap[pid];
+    if (!p) return { id: pid, name: pid, pos: '', pts: 0 };
+    var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
+    var pts = projMap[matchKey(name, p.position)];
+    return { id: pid, name: name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
   async function rankingsFor(format) {
@@ -538,7 +574,7 @@
       await projectRecords(leagueId, teams, raw, state);
       var selIdx = teams.findIndex(function (t) { return t.ownerId === USER_SLEEPER_ID; });
       var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; }) || null;
-      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, myRoster: myRoster, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
+      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, myRoster: myRoster, week: (state && state.week) || 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
@@ -577,23 +613,26 @@
     body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Building your lineup…</div></div>';
     try {
       var players = await loadPlayers();
-      var rankData = await rankingsFor('draft');
-      body.innerHTML = startSitHTML(DETAIL.myRoster, players, rankData.map);
+      var raw = DETAIL.league.raw || {};
+      var week = DETAIL.week || 0;
+      var scoring = fpScoring(raw);
+      var projMap = await projectionsFor(week, scoring);
+      body.innerHTML = startSitHTML(DETAIL.myRoster, players, projMap, week, scoring);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not build your lineup: ' + e.message + '</div></div>';
     }
   }
 
-  function startSitHTML(roster, playersMap, rankMap) {
+  function startSitHTML(roster, playersMap, projMap, week, scoring) {
     var raw = DETAIL.league.raw || {};
     var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
     var starters = roster.starters || [], taxi = roster.taxi || [], reserve = roster.reserve || [], all = roster.players || [];
-    var info = function (pid) { return playerInfo(pid, playersMap, rankMap); };
+    var info = function (pid) { return playerProj(pid, playersMap, projMap); };
     var inStart = {}; starters.forEach(function (pid) { if (pid && pid !== '0') inStart[pid] = true; });
     var inTaxi = {}; taxi.forEach(function (pid) { inTaxi[pid] = true; });
     var inRes = {}; reserve.forEach(function (pid) { inRes[pid] = true; });
 
-    var available = all.filter(function (pid) { return !inTaxi[pid] && !inRes[pid]; }).map(info).sort(function (a, b) { return b.value - a.value; });
+    var available = all.filter(function (pid) { return !inTaxi[pid] && !inRes[pid]; }).map(info).sort(function (a, b) { return b.pts - a.pts; });
     var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
     var opt = optimalLineup(optSlots, available);
 
@@ -601,33 +640,34 @@
     var lineupRows = startingSlots.map(function (slot, i) {
       var cur = (starters[i] && starters[i] !== '0') ? info(starters[i]) : null;
       var best = opt[i], hint = '';
-      if (best && (!cur || best.id !== cur.id) && (!cur || best.value > cur.value)) {
-        hint = '▲ ' + best.name;
+      if (best && (!cur || best.id !== cur.id) && (!cur || best.pts > cur.pts + 0.01)) {
+        hint = '▲ ' + best.name + ' (' + best.pts.toFixed(1) + ')';
         suggestions.push({ slot: slot, start: best, sit: cur });
       }
       return '<div class="ml-ss-row"><span class="ml-ss-slot">' + (SLOT_LABEL[slot] || slot) + '</span>' +
         '<span class="ml-ss-name">' + (cur ? cur.name : '<span style="color:#5f6c85">Empty</span>') + '</span>' +
         '<span class="ml-ss-pos">' + (cur ? (cur.pos || '') : '') + '</span>' +
-        '<span class="ml-ss-val">' + (cur ? comma(cur.value) : '') + '</span>' +
+        '<span class="ml-ss-val">' + (cur ? cur.pts.toFixed(1) : '') + '</span>' +
         '<span class="ml-ss-hint">' + hint + '</span></div>';
     }).join('');
 
     var benchRows = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(info)
-      .sort(function (a, b) { return b.value - a.value; })
-      .map(function (pl) { return '<div class="ml-ss-row"><span class="ml-ss-slot">BN</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + comma(pl.value) + '</span><span class="ml-ss-hint"></span></div>'; }).join('') || '<div class="ml-empty">No bench players.</div>';
+      .sort(function (a, b) { return b.pts - a.pts; })
+      .map(function (pl) { return '<div class="ml-ss-row"><span class="ml-ss-slot">BN</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + pl.pts.toFixed(1) + '</span><span class="ml-ss-hint"></span></div>'; }).join('') || '<div class="ml-empty">No bench players.</div>';
 
     function resSection(title, ids, tag) {
       if (!ids.length) return '';
-      var rows = ids.map(info).map(function (pl) { return '<div class="ml-ss-row ml-ss-res"><span class="ml-ss-slot">' + tag + '</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + comma(pl.value) + '</span><span class="ml-ss-hint"></span></div>'; }).join('');
+      var rows = ids.map(info).map(function (pl) { return '<div class="ml-ss-row ml-ss-res"><span class="ml-ss-slot">' + tag + '</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + pl.pts.toFixed(1) + '</span><span class="ml-ss-hint"></span></div>'; }).join('');
       return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + rows + '</div>';
     }
 
     var sugHTML = suggestions.length
-      ? suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.start.name + '</b> (' + comma(s.start.value) + ') over ' + (s.sit ? '<b>' + s.sit.name + '</b> (' + comma(s.sit.value) + ')' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('')
-      : '<div style="color:#56d364">Your lineup already starts your best players by our rankings.</div>';
+      ? suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.start.name + '</b> (' + s.start.pts.toFixed(1) + ') over ' + (s.sit ? '<b>' + s.sit.name + '</b> (' + s.sit.pts.toFixed(1) + ')' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('')
+      : '<div style="color:#56d364">Your lineup is already optimal by this week\'s projections.</div>';
 
+    var wkLabel = (week && String(week) !== '0') ? ('Week ' + week) : 'Season';
     return '<div class="ml-panel"><div class="ml-sum-title">Start / Sit Suggestions</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 12px">Based on your FantasyNow+ redraft rankings — who to start for the most production.</p>' + sugHTML + '</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 12px">' + wkLabel + ' · FantasyPros projected points (' + scoring + '). Weekly projections already factor in the matchup.</p>' + sugHTML + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
       resSection('Taxi Squad', taxi, 'TAXI') +
