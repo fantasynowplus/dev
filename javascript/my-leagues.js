@@ -379,6 +379,7 @@
     var tabs = '<div class="ml-dtabs">' +
       '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
       '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
+      '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>' +
       '</div>';
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
@@ -388,7 +389,9 @@
   }
 
   function renderDetailBody() {
-    if ((DETAIL.tab || 'overview') === 'draft') renderDraft();
+    var t = DETAIL.tab || 'overview';
+    if (t === 'draft') renderDraft();
+    else if (t === 'startsit') renderStartSit();
     else el('ml-detail-body').innerHTML = overviewHTML();
   }
 
@@ -534,11 +537,101 @@
       });
       await projectRecords(leagueId, teams, raw, state);
       var selIdx = teams.findIndex(function (t) { return t.ownerId === USER_SLEEPER_ID; });
-      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
+      var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; }) || null;
+      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, myRoster: myRoster, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
     }
+  }
+
+  var SLOT_ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['RB', 'WR'], REC_FLEX: ['WR', 'TE'], WRRB_WRT_FLEX: ['RB', 'WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'] };
+  var SLOT_LABEL = { WRRB_FLEX: 'W/R', REC_FLEX: 'W/T', WRRB_WRT_FLEX: 'FLEX', SUPER_FLEX: 'SFLEX' };
+
+  function playerInfo(pid, playersMap, rankMap) {
+    var p = playersMap[pid];
+    if (!p) return { id: pid, name: pid, pos: '', value: 0, rank: null };
+    var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
+    var rank = rankMap[matchKey(name, p.position)];
+    return { id: pid, name: name, pos: p.position, value: playerValue(p.position, rank), rank: rank || null };
+  }
+
+  function optimalLineup(optSlots, pool) {
+    var order = { QB: 1, RB: 1, WR: 1, TE: 1, REC_FLEX: 2, WRRB_FLEX: 2, WRRB_WRT_FLEX: 3, FLEX: 3, SUPER_FLEX: 4 };
+    var sorted = optSlots.slice().sort(function (a, b) { return (order[a.slot] || 9) - (order[b.slot] || 9); });
+    var used = {}, assign = {};
+    sorted.forEach(function (sl) {
+      var elig = SLOT_ELIG[sl.slot] || [];
+      for (var k = 0; k < pool.length; k++) {
+        var pl = pool[k];
+        if (used[pl.id] || elig.indexOf(pl.pos) === -1) continue;
+        used[pl.id] = true; assign[sl.i] = pl; break;
+      }
+    });
+    return assign;
+  }
+
+  async function renderStartSit() {
+    var body = el('ml-detail-body');
+    if (!DETAIL.myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
+    body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Building your lineup…</div></div>';
+    try {
+      var players = await loadPlayers();
+      var rankData = await rankingsFor('draft');
+      body.innerHTML = startSitHTML(DETAIL.myRoster, players, rankData.map);
+    } catch (e) {
+      body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not build your lineup: ' + e.message + '</div></div>';
+    }
+  }
+
+  function startSitHTML(roster, playersMap, rankMap) {
+    var raw = DETAIL.league.raw || {};
+    var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
+    var starters = roster.starters || [], taxi = roster.taxi || [], reserve = roster.reserve || [], all = roster.players || [];
+    var info = function (pid) { return playerInfo(pid, playersMap, rankMap); };
+    var inStart = {}; starters.forEach(function (pid) { if (pid && pid !== '0') inStart[pid] = true; });
+    var inTaxi = {}; taxi.forEach(function (pid) { inTaxi[pid] = true; });
+    var inRes = {}; reserve.forEach(function (pid) { inRes[pid] = true; });
+
+    var available = all.filter(function (pid) { return !inTaxi[pid] && !inRes[pid]; }).map(info).sort(function (a, b) { return b.value - a.value; });
+    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
+    var opt = optimalLineup(optSlots, available);
+
+    var suggestions = [];
+    var lineupRows = startingSlots.map(function (slot, i) {
+      var cur = (starters[i] && starters[i] !== '0') ? info(starters[i]) : null;
+      var best = opt[i], hint = '';
+      if (best && (!cur || best.id !== cur.id) && (!cur || best.value > cur.value)) {
+        hint = '▲ ' + best.name;
+        suggestions.push({ slot: slot, start: best, sit: cur });
+      }
+      return '<div class="ml-ss-row"><span class="ml-ss-slot">' + (SLOT_LABEL[slot] || slot) + '</span>' +
+        '<span class="ml-ss-name">' + (cur ? cur.name : '<span style="color:#5f6c85">Empty</span>') + '</span>' +
+        '<span class="ml-ss-pos">' + (cur ? (cur.pos || '') : '') + '</span>' +
+        '<span class="ml-ss-val">' + (cur ? comma(cur.value) : '') + '</span>' +
+        '<span class="ml-ss-hint">' + hint + '</span></div>';
+    }).join('');
+
+    var benchRows = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(info)
+      .sort(function (a, b) { return b.value - a.value; })
+      .map(function (pl) { return '<div class="ml-ss-row"><span class="ml-ss-slot">BN</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + comma(pl.value) + '</span><span class="ml-ss-hint"></span></div>'; }).join('') || '<div class="ml-empty">No bench players.</div>';
+
+    function resSection(title, ids, tag) {
+      if (!ids.length) return '';
+      var rows = ids.map(info).map(function (pl) { return '<div class="ml-ss-row ml-ss-res"><span class="ml-ss-slot">' + tag + '</span><span class="ml-ss-name">' + pl.name + '</span><span class="ml-ss-pos">' + (pl.pos || '') + '</span><span class="ml-ss-val">' + comma(pl.value) + '</span><span class="ml-ss-hint"></span></div>'; }).join('');
+      return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + rows + '</div>';
+    }
+
+    var sugHTML = suggestions.length
+      ? suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.start.name + '</b> (' + comma(s.start.value) + ') over ' + (s.sit ? '<b>' + s.sit.name + '</b> (' + comma(s.sit.value) + ')' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('')
+      : '<div style="color:#56d364">Your lineup already starts your best players by our rankings.</div>';
+
+    return '<div class="ml-panel"><div class="ml-sum-title">Start / Sit Suggestions</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 12px">Based on your FantasyNow+ redraft rankings — who to start for the most production.</p>' + sugHTML + '</div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
+      resSection('Taxi Squad', taxi, 'TAXI') +
+      resSection('IR / Reserve', reserve, 'IR');
   }
 
   async function projectRecords(leagueId, teams, raw, state) {
