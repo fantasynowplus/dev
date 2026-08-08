@@ -68,7 +68,7 @@
     var lf = $('fnLoginForm');
     if (lf) lf.addEventListener('submit', async function (e) {
       e.preventDefault();
-      try { await auth.login($('fnLoginEmail').value, $('fnLoginPassword').value); closeModals(); refreshNav(); }
+      try { await auth.login($('fnLoginEmail').value, $('fnLoginPassword').value); location.reload(); }
       catch (err) { msg($('fnAuthMsg'), err.message, 'error'); }
     });
 
@@ -89,7 +89,7 @@
     });
 
     var lo = document.querySelector('[data-logout]');
-    if (lo) lo.onclick = async function () { await auth.logout(); closeModals(); refreshNav(); };
+    if (lo) lo.onclick = async function () { await auth.logout(); location.reload(); };
   }
 
   function start() {
