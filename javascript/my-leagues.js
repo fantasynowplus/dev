@@ -468,27 +468,25 @@
     var n = DETAIL.n, nameById = a.nameById;
     var gradeByRoster = {};
     a.teamGrades.forEach(function (t, i) { gradeByRoster[t.rosterId] = letterGrade(i + 1, a.teamGrades.length); });
-    var slots = {};
-    a.picks.forEach(function (e) {
-      if (e.slot == null) return;
-      (slots[e.slot] = slots[e.slot] || { rosterId: e.rosterId, picks: [] }).picks.push(e);
-    });
-    var cols = Object.keys(slots).sort(function (x, y) { return x - y; }).map(function (slot) {
-      var col = slots[slot];
-      var grade = gradeByRoster[col.rosterId] || '—';
-      var name = nameById[col.rosterId] || 'Team';
-      var cells = col.picks.slice().sort(function (x, y) { return x.round - y.round; }).map(function (e) {
+    var byRoster = {};
+    a.picks.forEach(function (e) { if (e.rosterId == null) return; (byRoster[e.rosterId] = byRoster[e.rosterId] || []).push(e); });
+    var cards = a.teamGrades.map(function (tg) {
+      var picks = (byRoster[tg.rosterId] || []).slice().sort(function (x, y) { return x.pickNo - y.pickNo; });
+      if (!picks.length) return '';
+      var grade = gradeByRoster[tg.rosterId] || '—';
+      var name = nameById[tg.rosterId] || tg.name || 'Team';
+      var rows = picks.map(function (e) {
         var vc = (e.vop != null && e.vop >= 10) ? '#56d364' : (e.vop != null && e.vop <= -10) ? '#ff7b72' : '#c9d2e6';
-        return '<div class="ml-dbcell"><span class="ml-dbpick">' + pickLabel(e, n) + '</span>' +
-          '<div class="ml-dbplayer" style="color:' + vc + '">' + e.name + '</div>' +
-          '<div class="ml-dbmeta">' + (e.pos || '') + ' · ' + comma(e.value) + '</div></div>';
+        return '<div class="ml-dpick"><span class="ml-dppick">' + pickLabel(e, n) + '</span>' +
+          '<span class="ml-dpname" style="color:' + vc + '">' + e.name + '</span>' +
+          '<span class="ml-dpmeta">' + (e.pos || '') + ' · ' + comma(e.value) + '</span></div>';
       }).join('');
-      return '<div class="ml-dbcol"><div class="ml-dbhead"><div class="ml-dbteam">' + name + '</div>' +
-        '<span class="ml-dbgrade ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span></div>' + cells + '</div>';
+      return '<div class="ml-dcard"><div class="ml-dchead"><div class="ml-dcteam">' + name + '</div>' +
+        '<span class="ml-dbgrade ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span></div>' + rows + '</div>';
     }).join('');
-    return '<div class="ml-panel"><div class="ml-sum-title">Draft Board — graded on FantasyNow+ rankings</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Each column is a team; the grade by their name reflects the value of their haul. Green picks are values, red are reaches.</p>' +
-      '<div class="ml-dbwrap">' + cols + '</div></div>';
+    return '<div class="ml-panel"><div class="ml-sum-title">Draft Results — graded on FantasyNow+ rankings</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Each team with the picks they made and the slot they used. Green picks are values, red are reaches.</p>' +
+      '<div class="ml-dgrid">' + cards + '</div></div>';
   }
 
   async function openDetail(leagueId) {
