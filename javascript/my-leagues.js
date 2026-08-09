@@ -642,7 +642,7 @@
     var raw = DETAIL.league.raw || {};
     var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
     var hasTaxi = (raw.settings && raw.settings.taxi_slots) > 0;
-    var hasIR = (raw.roster_positions || []).indexOf('IR') !== -1;
+    var hasIR = (raw.roster_positions || []).indexOf('IR') !== -1 || ((raw.settings && raw.settings.reserve_slots) || 0) > 0;
     var starters = roster.starters || [], taxi = roster.taxi || [], reserve = roster.reserve || [], all = roster.players || [];
     var inTaxi = {}; taxi.forEach(function (p) { inTaxi[p] = true; });
     var inRes = {}; reserve.forEach(function (p) { inRes[p] = true; });
