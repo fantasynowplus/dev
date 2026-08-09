@@ -474,6 +474,17 @@
     }
   }
 
+  function asAssets(players) {
+    return players.map(function (p) { return { id: p.name, name: p.name, pos: p.pos, team: p.team, value: p.value }; });
+  }
+
+  function lineupValue(assets, optSlots) {
+    var pool = assets.slice().sort(function (a, b) { return b.value - a.value; });
+    var opt = optimalLineup(optSlots, pool), total = 0;
+    Object.keys(opt).forEach(function (i) { if (opt[i]) total += opt[i].value; });
+    return total;
+  }
+
   function computeLineup(players, startingSlots) {
     var pool = players.map(function (p) { return { id: p.name, name: p.name, pos: p.pos, team: p.team, value: p.value }; }).sort(function (a, b) { return b.value - a.value; });
     var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
@@ -494,43 +505,49 @@
   }
 
   function tradesHTML(me, teams, startingSlots) {
+    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
+    var mine = asAssets(me.players).filter(function (p) { return p.value > 0; });
+    var baseline = lineupValue(mine, optSlots);
     var myLineup = computeLineup(me.players, startingSlots);
-    var myStarters = myLineup.starters.filter(function (s) { return s.value > 0; }).sort(function (a, b) { return a.value - b.value; });
-    var myChips = myLineup.bench.filter(function (c) { return c.value > 0; }).sort(function (a, b) { return b.value - a.value; });
+    var weakStarters = myLineup.starters.filter(function (s) { return s.value > 0; }).sort(function (a, b) { return a.value - b.value; });
 
-    var gettable = [];
+    var targets = [];
     teams.forEach(function (t) {
       if (t === me) return;
-      computeLineup(t.players, startingSlots).bench.forEach(function (p) { if (p.value > 0) gettable.push({ name: p.name, pos: p.pos, team: p.team, value: p.value, teamName: t.name }); });
+      asAssets(t.players).forEach(function (p) { if (p.value > 0) targets.push({ p: p, teamName: t.name }); });
     });
 
     var sugMap = {};
-    myStarters.slice(0, 6).forEach(function (ws) {
-      gettable.filter(function (g) { return g.pos === ws.pos && g.value > ws.value + 3; }).sort(function (a, b) { return b.value - a.value; }).forEach(function (t) {
-        var chip = myChips.filter(function (c) { return Math.abs(c.value - t.value) <= Math.max(10, t.value * 0.18); }).sort(function (a, b) { return Math.abs(a.value - t.value) - Math.abs(b.value - t.value); })[0];
-        if (!chip) return;
-        var benefit = t.value - ws.value, ex = sugMap[t.name];
-        if (!ex || benefit > ex.benefit) sugMap[t.name] = { give: chip, get: t, fromTeam: t.teamName, needPos: ws.pos, benefit: benefit };
+    mine.forEach(function (chip) {
+      var band = Math.max(10, chip.value * 0.18);
+      var cands = targets.filter(function (t) { return Math.abs(t.p.value - chip.value) <= band; })
+        .sort(function (a, b) { return b.p.value - a.p.value; }).slice(0, 8);
+      cands.forEach(function (t) {
+        var after = mine.filter(function (x) { return x.id !== chip.id; }).concat([t.p]);
+        var benefit = lineupValue(after, optSlots) - baseline;
+        if (benefit <= 0) return;
+        var key = t.p.name + '|' + t.teamName, ex = sugMap[key];
+        if (!ex || benefit > ex.benefit) sugMap[key] = { give: chip, get: t.p, fromTeam: t.teamName, benefit: benefit };
       });
     });
-    var suggestions = Object.keys(sugMap).map(function (k) { return sugMap[k]; }).sort(function (a, b) { return b.benefit - a.benefit; }).slice(0, 8);
+    var suggestions = Object.keys(sugMap).map(function (k) { return sugMap[k]; }).sort(function (a, b) { return b.benefit - a.benefit; }).slice(0, 10);
 
-    var needsHTML = myStarters.slice(0, 3).map(function (s) { return '<span class="ml-pill">' + s.pos + ' · ' + s.name + ' (' + comma(s.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">—</span>';
-    var chipsHTML = myChips.slice(0, 5).map(function (c) { return '<span class="ml-pill">' + c.pos + ' · ' + c.name + ' (' + comma(c.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">Thin bench — not much to deal</span>';
+    var weakHTML = weakStarters.slice(0, 3).map(function (s) { return '<span class="ml-pill">' + s.pos + ' · ' + s.name + ' (' + comma(s.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">—</span>';
+    var chipsHTML = mine.slice().sort(function (a, b) { return b.value - a.value; }).slice(0, 5).map(function (c) { return '<span class="ml-pill">' + c.pos + ' · ' + c.name + ' (' + comma(c.value) + ')</span>'; }).join(' ');
 
     var sugRows = suggestions.length ? suggestions.map(function (s) {
-      return '<div class="ml-trade-card"><div class="ml-trade-head"><span class="ml-trade-benefit">+' + comma(s.benefit) + '</span> upgrade at ' + s.needPos + ' · target <b>' + s.fromTeam + '</b></div>' +
+      return '<div class="ml-trade-card"><div class="ml-trade-head"><span class="ml-trade-benefit">+' + comma(s.benefit) + '</span> to your starting lineup · target <b>' + s.fromTeam + '</b></div>' +
         '<div class="ml-trade-body">' +
         '<div class="ml-trade-side"><div class="ml-trade-lbl">You send</div><div class="ml-trade-p" style="color:' + (POS_COL[s.give.pos] || '#c9d2e6') + '">' + s.give.name + '</div><div class="ml-trade-sub">' + s.give.pos + ' · ' + comma(s.give.value) + '</div></div>' +
         '<i class="fa-solid fa-right-left" style="color:#79c0ff"></i>' +
         '<div class="ml-trade-side"><div class="ml-trade-lbl">You get</div><div class="ml-trade-p" style="color:' + (POS_COL[s.get.pos] || '#c9d2e6') + '">' + s.get.name + '</div><div class="ml-trade-sub">' + s.get.pos + ' · ' + comma(s.get.value) + '</div></div>' +
         '</div></div>';
-    }).join('') : '<div class="ml-empty">No clean value-matched upgrades right now — your starters are ahead of the tradeable depth around the league.</div>';
+    }).join('') : '<div class="ml-empty">No value-fair deal improves your lineup right now.</div>';
 
-    return '<div class="ml-panel"><div class="ml-sum-title">Your Weakest Starters</div><div class="ml-needs">' + needsHTML + '</div>' +
-      '<div class="ml-sum-title" style="margin-top:16px">Your Trade Chips (bench surplus)</div><div class="ml-needs">' + chipsHTML + '</div></div>' +
+    return '<div class="ml-panel"><div class="ml-sum-title">Your Weakest Starters</div><div class="ml-needs">' + weakHTML + '</div>' +
+      '<div class="ml-sum-title" style="margin-top:16px">Your Most Valuable Pieces</div><div class="ml-needs">' + chipsHTML + '</div></div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Value-matched deals that upgrade a starting spot by dealing from your bench. The other manager still has to say yes.</p>' + sugRows + '</div>';
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Value-fair 1-for-1 deals across every roster in the league, ranked by how much they add to your starting lineup. The other manager still has to say yes.</p>' + sugRows + '</div>';
   }
 
   function analyzeDraft(picks, slotMap) {
