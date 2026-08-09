@@ -551,6 +551,8 @@
         Sleeper.get('/state/nfl').catch(function () { return { week: 1 }; })
       ]);
       var rosters = fetched[0], users = fetched[1], tx = fetched[2], state = fetched[3];
+      var rosteredIds = {};
+      rosters.forEach(function (r) { (r.players || []).forEach(function (pid) { rosteredIds[pid] = true; }); });
       var userMap = {}; users.forEach(function (u) { userMap[u.user_id] = u; });
       var topN = (startersCount(raw.roster_positions) || 12) + 6;
       var teams = rosters.map(function (r) {
@@ -574,7 +576,7 @@
       await projectRecords(leagueId, teams, raw, state);
       var selIdx = teams.findIndex(function (t) { return t.ownerId === USER_SLEEPER_ID; });
       var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; }) || null;
-      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, myRoster: myRoster, week: (state && state.week) || 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
+      DETAIL = { league: league, leagueId: leagueId, teams: teams, n: n, rankData: rankData, tx: tx, myRoster: myRoster, rosteredIds: rosteredIds, week: (state && state.week) || 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
@@ -624,71 +626,101 @@
     }
   }
 
+  function boxColor(label) {
+    var m = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b' };
+    return m[label] || '#5a6a85';
+  }
+
   function startSitHTML(roster, playersMap, projMap, rankMap, week, scoring) {
     var raw = DETAIL.league.raw || {};
     var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
     var starters = roster.starters || [], taxi = roster.taxi || [], reserve = roster.reserve || [], all = roster.players || [];
-    var inTaxi = {}; taxi.forEach(function (pid) { inTaxi[pid] = true; });
-    var inRes = {}; reserve.forEach(function (pid) { inRes[pid] = true; });
-    var inStart = {}; starters.forEach(function (pid) { if (pid && pid !== '0') inStart[pid] = true; });
+    var inTaxi = {}; taxi.forEach(function (p) { inTaxi[p] = true; });
+    var inRes = {}; reserve.forEach(function (p) { inRes[p] = true; });
+    var inStart = {}; starters.forEach(function (p) { if (p && p !== '0') inStart[p] = true; });
 
     function obj(pid) {
       var p = playersMap[pid];
-      if (!p) return { id: pid, name: pid, pos: '', pts: 0, value: 0, score: 0 };
+      if (!p) return { id: pid, name: pid, pos: '', team: '', pts: 0, value: 0, score: 0 };
       var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
       var k = matchKey(name, p.position);
-      return { id: pid, name: name, pos: p.position, pts: (projMap[k] != null ? projMap[k] : 0), value: playerValue(p.position, rankMap[k]), score: 0 };
+      return { id: pid, name: name, pos: p.position, team: p.team || '', pts: (projMap[k] != null ? projMap[k] : 0), value: playerValue(p.position, rankMap[k]), score: 0 };
     }
     var objById = {}; all.forEach(function (pid) { objById[pid] = obj(pid); });
 
     var available = all.filter(function (pid) { return !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; });
     var maxProj = 0, maxValue = 0;
     available.forEach(function (o) { if (o.pts > maxProj) maxProj = o.pts; if (o.value > maxValue) maxValue = o.value; });
-    Object.keys(objById).forEach(function (pid) {
-      var o = objById[pid];
-      o.score = 50 * (maxProj ? o.pts / maxProj : 0) + 50 * (maxValue ? o.value / maxValue : 0);
-    });
+    function blend(pts, value) { return 50 * (maxProj ? pts / maxProj : 0) + 50 * (maxValue ? value / maxValue : 0); }
+    all.forEach(function (pid) { var o = objById[pid]; o.score = blend(o.pts, o.value); });
 
     available.sort(function (a, b) { return b.score - a.score; });
     var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
     var opt = optimalLineup(optSlots, available);
 
-    var suggestions = [];
-    var lineupRows = startingSlots.map(function (slot, i) {
+    var optScore = 0, curScore = 0, suggestions = [];
+    startingSlots.forEach(function (slot, i) {
+      if (opt[i]) optScore += opt[i].score;
       var cur = (starters[i] && starters[i] !== '0') ? objById[starters[i]] : null;
-      var best = opt[i], hint = '';
-      if (best && (!cur || best.id !== cur.id) && (!cur || best.score > cur.score + 0.5)) {
-        hint = '▲ ' + best.name;
-        suggestions.push({ slot: slot, start: best, sit: cur });
-      }
-      return '<div class="ml-ss-row"><span class="ml-ss-slot">' + (SLOT_LABEL[slot] || slot) + '</span>' +
-        '<span class="ml-ss-name">' + (cur ? cur.name : '<span style="color:#5f6c85">Empty</span>') + '</span>' +
-        '<span class="ml-ss-pos">' + (cur ? (cur.pos || '') : '') + '</span>' +
-        '<span class="ml-ss-val">' + (cur ? Math.round(cur.score) : '') + '</span>' +
-        '<span class="ml-ss-hint">' + hint + '</span></div>';
+      if (cur) curScore += cur.score;
+      if (opt[i] && (!cur || opt[i].id !== cur.id) && (!cur || opt[i].score > cur.score + 0.5)) suggestions.push({ slot: slot, best: opt[i], cur: cur });
+    });
+    var eff = optScore > 0 ? curScore / optScore : 1;
+    var grade = eff >= 0.995 ? 'A+' : eff >= 0.97 ? 'A' : eff >= 0.93 ? 'B' : eff >= 0.87 ? 'C' : eff >= 0.78 ? 'D' : 'F';
+
+    function row(boxLabel, o, dim) {
+      var sub = (o.pos || '') + (o.team ? ' · ' + o.team : '');
+      return '<div class="ml-ss2' + (dim ? ' ml-ss2-dim' : '') + '">' +
+        '<div class="ml-ss2-box" style="background:' + boxColor(boxLabel) + '">' + boxLabel + '</div>' +
+        '<div class="ml-ss2-main"><div class="ml-ss2-name">' + o.name + '</div><div class="ml-ss2-sub">' + sub + '</div></div>' +
+        '<div class="ml-ss2-pts">' + (o.pts ? o.pts.toFixed(1) : '–') + '</div></div>';
+    }
+
+    var lineupRows = startingSlots.map(function (slot, i) {
+      var cur = (starters[i] && starters[i] !== '0') ? objById[starters[i]] : { name: 'Empty', pos: '', team: '', pts: 0 };
+      return row(SLOT_LABEL[slot] || slot, cur, false);
     }).join('');
 
-    var benchRows = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; })
-      .sort(function (a, b) { return b.score - a.score; })
-      .map(function (o) { return '<div class="ml-ss-row"><span class="ml-ss-slot">BN</span><span class="ml-ss-name">' + o.name + '</span><span class="ml-ss-pos">' + (o.pos || '') + '</span><span class="ml-ss-val">' + Math.round(o.score) + '</span><span class="ml-ss-hint"></span></div>'; }).join('') || '<div class="ml-empty">No bench players.</div>';
+    var benchList = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; }).sort(function (a, b) { return b.score - a.score; });
+    var benchRows = benchList.map(function (o) { return row(o.pos, o, false); }).join('') || '<div class="ml-empty">No bench players.</div>';
 
     function resSection(title, ids, tag) {
       if (!ids.length) return '';
-      var rows = ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return '<div class="ml-ss-row ml-ss-res"><span class="ml-ss-slot">' + tag + '</span><span class="ml-ss-name">' + o.name + '</span><span class="ml-ss-pos">' + (o.pos || '') + '</span><span class="ml-ss-val">' + Math.round(o.score) + '</span><span class="ml-ss-hint"></span></div>'; }).join('');
+      var rows = ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return row(o.pos, o, true); }).join('');
       return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + rows + '</div>';
     }
 
-    var sugHTML = suggestions.length
-      ? suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.start.name + '</b> over ' + (s.sit ? '<b>' + s.sit.name + '</b>' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('')
-      : '<div style="color:#56d364">Your lineup already starts your best options.</div>';
+    var rostered = DETAIL.rosteredIds || {}, fas = [];
+    for (var pid in playersMap) {
+      if (rostered[pid]) continue;
+      var p = playersMap[pid];
+      if (!p || RANK_POS.indexOf(p.position) === -1) continue;
+      var nm = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
+      var k = matchKey(nm, p.position);
+      var pts = projMap[k], val = playerValue(p.position, rankMap[k]);
+      if (!pts && !val) continue;
+      fas.push({ name: nm, pos: p.position, team: p.team || '', pts: pts || 0, score: blend(pts || 0, val) });
+    }
+    fas.sort(function (a, b) { return b.score - a.score; });
+    var topFAs = fas.slice(0, 6);
+    var worstBench = benchList.length ? benchList[benchList.length - 1] : null, bestFA = topFAs[0];
+    var addDrop = (bestFA && worstBench && bestFA.score > worstBench.score + 1)
+      ? '<div class="ml-ss-sug"><i class="fa-solid fa-right-left" style="color:#79c0ff"></i> Add <b>' + bestFA.name + '</b> (' + bestFA.pts.toFixed(1) + ') and drop <b>' + worstBench.name + '</b> (' + worstBench.pts.toFixed(1) + ')</div>'
+      : '<div style="color:#8a97b3">No clear free-agent upgrade over your bench right now.</div>';
+    var faRows = topFAs.map(function (o) { return row(o.pos, o, false); }).join('') || '<div class="ml-empty">No notable free agents available.</div>';
 
+    var sugHTML = suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.best.name + '</b> over ' + (s.cur ? '<b>' + s.cur.name + '</b>' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('');
     var wkLabel = (week && String(week) !== '0') ? ('Week ' + week) : 'Season';
-    return '<div class="ml-panel"><div class="ml-sum-title">Start / Sit Suggestions</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 12px">' + wkLabel + ' · 70/30 blend of FantasyPros projections (' + scoring + ') and FantasyNow+ rankings. The number is that blended score (0–100).</p>' + sugHTML + '</div>' +
+
+    return '<div class="ml-panel"><div class="ml-sum-title">Lineup Grade</div>' +
+      '<div class="ml-ss-grade"><span class="ml-ss-gbadge ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span>' +
+      '<span style="color:#8a97b3;font-size:14px">You\'re starting ' + Math.round(eff * 100) + '% of your best lineup · ' + wkLabel + ' · ' + scoring + ' (50/50 projections + rankings)</span></div>' +
+      (sugHTML ? '<div style="margin-top:12px">' + sugHTML + '</div>' : '') + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
       resSection('Taxi Squad', taxi, 'TAXI') +
-      resSection('IR / Reserve', reserve, 'IR');
+      resSection('IR / Reserve', reserve, 'IR') +
+      '<div class="ml-panel"><div class="ml-sum-title">Free Agent Targets</div>' + addDrop + '<div style="margin-top:12px">' + faRows + '</div></div>';
   }
 
   async function projectRecords(leagueId, teams, raw, state) {
