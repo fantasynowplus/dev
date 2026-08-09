@@ -627,14 +627,13 @@
   }
 
   function boxColor(label) {
-    var c = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b', DL: '#e8a44e', LB: '#a78bfa', DB: '#ef7fb0', IDP: '#586074', K: '#c07cd0', DEF: '#5a6a85', DST: '#5a6a85' };
+    var c = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b', DL: '#e8a44e', LB: '#a78bfa', DB: '#ef7fb0', IDP: '#586074', K: '#c07cd0', DEF: '#5a6a85', DST: '#5a6a85', IDP_FLEX: '#1a1d28' };
     if (c[label]) return c[label];
     var g = {
-      'FLEX': 'linear-gradient(120deg,#3fb98a 0 33%,#4b8fe0 33% 66%,#e08a4b 66%)',
-      'W/R': 'linear-gradient(120deg,#3fb98a 0 50%,#4b8fe0 50%)',
-      'W/T': 'linear-gradient(120deg,#4b8fe0 0 50%,#e08a4b 50%)',
-      'SFLEX': 'linear-gradient(120deg,#e5578a 0 25%,#3fb98a 25% 50%,#4b8fe0 50% 75%,#e08a4b 75%)',
-      'IDP_FLEX': 'linear-gradient(120deg,#e8a44e 0 33%,#a78bfa 33% 66%,#ef7fb0 66%)'
+      'FLEX': 'linear-gradient(90deg,#3fb98a 0 33%,#4b8fe0 33% 66%,#e08a4b 66%)',
+      'W/R': 'linear-gradient(90deg,#3fb98a 0 50%,#4b8fe0 50%)',
+      'W/T': 'linear-gradient(90deg,#4b8fe0 0 50%,#e08a4b 50%)',
+      'SFLEX': 'linear-gradient(90deg,#e5578a 0 25%,#3fb98a 25% 50%,#4b8fe0 50% 75%,#e08a4b 75%)'
     };
     return g[label] || '#5a6a85';
   }
@@ -642,6 +641,8 @@
   function startSitHTML(roster, playersMap, projMap, rankMap, week, scoring) {
     var raw = DETAIL.league.raw || {};
     var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
+    var hasTaxi = (raw.settings && raw.settings.taxi_slots) > 0;
+    var hasIR = (raw.roster_positions || []).indexOf('IR') !== -1;
     var starters = roster.starters || [], taxi = roster.taxi || [], reserve = roster.reserve || [], all = roster.players || [];
     var inTaxi = {}; taxi.forEach(function (p) { inTaxi[p] = true; });
     var inRes = {}; reserve.forEach(function (p) { inRes[p] = true; });
@@ -692,10 +693,12 @@
     var benchList = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; }).sort(function (a, b) { return b.score - a.score; });
     var benchRows = benchList.map(function (o) { return row(o.pos, o, true, false); }).join('') || '<div class="ml-empty">No bench players.</div>';
 
-    function resSection(title, ids) {
-      if (!ids.length) return '';
-      var rows = ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return row(o.pos, o, true, true); }).join('');
-      return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + rows + '</div>';
+    function resSection(title, ids, show) {
+      if (!show && !ids.length) return '';
+      var body = ids.length
+        ? ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return row(o.pos, o, true, true); }).join('')
+        : '<div class="ml-empty" style="padding:14px 0">No players</div>';
+      return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + body + '</div>';
     }
 
     var rostered = DETAIL.rosteredIds || {}, fas = [];
@@ -728,7 +731,7 @@
         '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
         '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
       '</div>' +
-      ((taxi.length || reserve.length) ? '<div class="ml-detail-grid">' + resSection('Taxi Squad', taxi) + resSection('IR / Reserve', reserve) + '</div>' : '') +
+      ((hasTaxi || hasIR) ? '<div class="ml-detail-grid">' + resSection('Taxi Squad', taxi, hasTaxi) + resSection('IR / Reserve', reserve, hasIR) + '</div>' : '') +
       '<div class="ml-panel"><div class="ml-sum-title">Free Agent Targets</div>' + addDrop + '<div style="margin-top:12px">' + faRows + '</div></div>';
   }
 
