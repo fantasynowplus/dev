@@ -725,7 +725,7 @@
 
     return '<div class="ml-panel"><div class="ml-sum-title">Lineup Grade</div>' +
       '<div class="ml-ss-grade"><span class="ml-ss-gbadge ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span>' +
-      '<span style="color:#8a97b3;font-size:14px">You\'re starting ' + Math.round(eff * 100) + '% of your best lineup · ' + wkLabel + ' · ' + scoring + ' (50/50 projections + rankings)</span></div>' +
+      '<span style="color:#8a97b3;font-size:14px">You\'re starting ' + Math.round(eff * 100) + '% of your best lineup · ' + wkLabel + ' · ' + scoring + ' (based on projections + rankings)</span></div>' +
       (sugHTML ? '<div style="margin-top:12px">' + sugHTML + '</div>' : '') + '</div>' +
       '<div class="ml-detail-grid">' +
         '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
