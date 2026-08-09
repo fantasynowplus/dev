@@ -513,17 +513,18 @@
     var teams = DETAIL.teams, me = null;
     for (var i = 0; i < teams.length; i++) { if (teams[i].ownerId === USER_SLEEPER_ID) { me = teams[i]; break; } }
     if (!me) me = teams[DETAIL.selected] || teams[0];
-    el('ml-detail-body').innerHTML = tradesHTML(me, teams, startingSlots);
+    if (!DETAIL.tradeData) DETAIL.tradeData = computeTrades(me, teams, startingSlots);
+    el('ml-detail-body').innerHTML = tradesHTML(DETAIL.tradeData, DETAIL.tradeChip || 0);
   }
 
-  function tradesHTML(me, teams, startingSlots) {
+  function computeTrades(me, teams, startingSlots) {
     var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
     var mine = asAssets(me.players).filter(function (p) { return p.value > 0; }).sort(function (a, b) { return b.value - a.value; });
     var myBase = lineupValue(mine, optSlots);
     var myLineup = computeLineup(me.players, startingSlots);
-    var weakStarters = myLineup.starters.filter(function (s) { return s.value > 0; }).sort(function (a, b) { return a.value - b.value; });
+    var weak = myLineup.starters.filter(function (s) { return s.value > 0; }).sort(function (a, b) { return a.value - b.value; });
 
-    var suggestions = [];
+    var all = [];
     teams.forEach(function (t) {
       if (t === me) return;
       var theirs = asAssets(t.players).filter(function (p) { return p.value > 0; }).sort(function (a, b) { return b.value - a.value; });
@@ -542,18 +543,44 @@
         if (Math.abs(gv - rv) > Math.max(12, Math.max(gv, rv) * 0.15)) return;
         var myGain = lineupValue(removeIds(mine, give).concat(get), optSlots) - myBase;
         if (myGain <= 0) return;
-        var theirAfter = removeIds(theirs, get).concat(give);
-        var info = lineupInfo(theirAfter, optSlots);
+        var info = lineupInfo(removeIds(theirs, get).concat(give), optSlots);
         var theirGain = info.total - theirBase;
         if (theirGain <= 0) return;
         var fills = give.filter(function (p) { return info.startIds[p.id]; }).map(function (p) { return p.pos; });
         best.push({ give: give, get: get, myGain: myGain, theirGain: theirGain, teamName: t.name, fills: fills });
       });
       best.sort(function (a, b) { return (b.myGain + b.theirGain) - (a.myGain + a.theirGain); });
-      suggestions = suggestions.concat(best.slice(0, 2));
+      all = all.concat(best.slice(0, 6));
     });
-    suggestions.sort(function (a, b) { return b.myGain - a.myGain; });
-    suggestions = suggestions.slice(0, 10);
+
+    var byChip = {};
+    all.forEach(function (s) {
+      s.give.forEach(function (g) { (byChip[g.id] = byChip[g.id] || { player: g, trades: [] }).trades.push(s); });
+    });
+    var tiles = Object.keys(byChip).map(function (k) {
+      var e = byChip[k];
+      e.trades.sort(function (a, b) { return b.myGain - a.myGain; });
+      e.trades = e.trades.slice(0, 8);
+      e.best = e.trades.length ? e.trades[0].myGain : 0;
+      return e;
+    }).sort(function (a, b) { return b.best - a.best; });
+
+    return { tiles: tiles, weak: weak, mine: mine };
+  }
+
+  function tradesHTML(data, selIdx) {
+    var weakHTML = data.weak.slice(0, 3).map(function (s) { return '<span class="ml-pill">' + s.pos + ' · ' + s.name + ' (' + comma(s.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">—</span>';
+    var head = '<div class="ml-panel"><div class="ml-sum-title">Your Weakest Starters</div><div class="ml-needs">' + weakHTML + '</div></div>';
+    if (!data.tiles.length) return head + '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div><div class="ml-empty">No deal improves both lineups at a fair value right now.</div></div>';
+
+    var sel = data.tiles[selIdx] || data.tiles[0];
+    var tiles = data.tiles.map(function (e, i) {
+      return '<div class="ml-chiptile' + (e === sel ? ' active' : '') + '" onclick="MLDetail.chip(' + i + ')">' +
+        '<div class="ml-chiptile-bar" style="background:' + (POS_COL[e.player.pos] || '#5a6a85') + '"></div>' +
+        '<div class="ml-chiptile-name">' + e.player.name + '</div>' +
+        '<div class="ml-chiptile-sub">' + e.player.pos + ' · ' + comma(e.player.value) + '</div>' +
+        '<div class="ml-chiptile-meta">' + e.trades.length + ' deal' + (e.trades.length === 1 ? '' : 's') + ' · best +' + comma(e.best) + '</div></div>';
+    }).join('');
 
     function sideHTML(label, list) {
       var rows = list.map(function (p) {
@@ -563,21 +590,20 @@
       return '<div class="ml-trade-side"><div class="ml-trade-lbl">' + label + '</div><div class="ml-trade-stack">' + rows + '</div></div>';
     }
 
-    var weakHTML = weakStarters.slice(0, 3).map(function (s) { return '<span class="ml-pill">' + s.pos + ' · ' + s.name + ' (' + comma(s.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">—</span>';
-    var chipsHTML = mine.slice(0, 5).map(function (c) { return '<span class="ml-pill">' + c.pos + ' · ' + c.name + ' (' + comma(c.value) + ')</span>'; }).join(' ');
-
-    var sugRows = suggestions.length ? suggestions.map(function (s) {
+    var rows = sel.trades.map(function (s) {
       var fill = s.fills.length ? ' · fills their ' + s.fills.filter(function (v, i, a) { return a.indexOf(v) === i; }).join('/') : '';
       return '<div class="ml-trade-card"><div class="ml-trade-head">' +
         '<span class="ml-trade-benefit">+' + comma(s.myGain) + '</span> your lineup · <span style="color:#79c0ff">+' + comma(s.theirGain) + '</span> theirs · target <b>' + s.teamName + '</b>' + fill + '</div>' +
         '<div class="ml-trade-body">' + sideHTML('You send', s.give) +
         '<i class="fa-solid fa-right-left" style="color:#79c0ff"></i>' + sideHTML('You get', s.get) + '</div></div>';
-    }).join('') : '<div class="ml-empty">No deal improves both lineups at a fair value right now.</div>';
+    }).join('');
 
-    return '<div class="ml-panel"><div class="ml-sum-title">Your Weakest Starters</div><div class="ml-needs">' + weakHTML + '</div>' +
-      '<div class="ml-sum-title" style="margin-top:16px">Your Most Valuable Pieces</div><div class="ml-needs">' + chipsHTML + '</div></div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Deals that improve <b>both</b> starting lineups at fair value — including 2-for-1 and 1-for-2 packages. Sorted by what you gain.</p>' + sugRows + '</div>';
+    return head +
+      '<div class="ml-panel"><div class="ml-sum-title">Players To Shop</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Click a player to see every deal built around him.</p>' +
+      '<div class="ml-chipgrid">' + tiles + '</div></div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Trades for ' + sel.player.name + '</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Both lineups improve at fair value. Sorted by what you gain.</p>' + rows + '</div>';
   }
 
   function analyzeDraft(picks, slotMap) {
@@ -881,7 +907,7 @@
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } } };
+  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
 
   async function init() {
     if (!loggedIn()) {
