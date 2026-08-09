@@ -475,7 +475,7 @@
   }
 
   function computeLineup(players, startingSlots) {
-    var pool = players.map(function (p) { return { id: p.name, pos: p.pos, team: p.team, value: p.value }; }).sort(function (a, b) { return b.value - a.value; });
+    var pool = players.map(function (p) { return { id: p.name, name: p.name, pos: p.pos, team: p.team, value: p.value }; }).sort(function (a, b) { return b.value - a.value; });
     var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
     var opt = optimalLineup(optSlots, pool);
     var startIds = {}; Object.keys(opt).forEach(function (i) { if (opt[i]) startIds[opt[i].id] = true; });
