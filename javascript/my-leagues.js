@@ -627,8 +627,16 @@
   }
 
   function boxColor(label) {
-    var m = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b' };
-    return m[label] || '#5a6a85';
+    var c = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b', DL: '#e8a44e', LB: '#a78bfa', DB: '#ef7fb0', IDP: '#586074', K: '#c07cd0', DEF: '#5a6a85', DST: '#5a6a85' };
+    if (c[label]) return c[label];
+    var g = {
+      'FLEX': 'linear-gradient(120deg,#3fb98a 0 33%,#4b8fe0 33% 66%,#e08a4b 66%)',
+      'W/R': 'linear-gradient(120deg,#3fb98a 0 50%,#4b8fe0 50%)',
+      'W/T': 'linear-gradient(120deg,#4b8fe0 0 50%,#e08a4b 50%)',
+      'SFLEX': 'linear-gradient(120deg,#e5578a 0 25%,#3fb98a 25% 50%,#4b8fe0 50% 75%,#e08a4b 75%)',
+      'IDP_FLEX': 'linear-gradient(120deg,#e8a44e 0 33%,#a78bfa 33% 66%,#ef7fb0 66%)'
+    };
+    return g[label] || '#5a6a85';
   }
 
   function startSitHTML(roster, playersMap, projMap, rankMap, week, scoring) {
@@ -668,25 +676,25 @@
     var eff = optScore > 0 ? curScore / optScore : 1;
     var grade = eff >= 0.995 ? 'A+' : eff >= 0.97 ? 'A' : eff >= 0.93 ? 'B' : eff >= 0.87 ? 'C' : eff >= 0.78 ? 'D' : 'F';
 
-    function row(boxLabel, o, dim) {
+    function row(boxLabel, o, grayBox, dimRow) {
       var sub = (o.pos || '') + (o.team ? ' · ' + o.team : '');
-      return '<div class="ml-ss2' + (dim ? ' ml-ss2-dim' : '') + '">' +
-        '<div class="ml-ss2-box" style="background:' + boxColor(boxLabel) + '">' + boxLabel + '</div>' +
+      return '<div class="ml-ss2' + (dimRow ? ' ml-ss2-dim' : '') + '">' +
+        '<div class="ml-ss2-box" style="background:' + (grayBox ? '#39435a' : boxColor(boxLabel)) + '">' + boxLabel.replace(/_/g, ' ') + '</div>' +
         '<div class="ml-ss2-main"><div class="ml-ss2-name">' + o.name + '</div><div class="ml-ss2-sub">' + sub + '</div></div>' +
         '<div class="ml-ss2-pts">' + (o.pts ? o.pts.toFixed(1) : '–') + '</div></div>';
     }
 
     var lineupRows = startingSlots.map(function (slot, i) {
       var cur = (starters[i] && starters[i] !== '0') ? objById[starters[i]] : { name: 'Empty', pos: '', team: '', pts: 0 };
-      return row(SLOT_LABEL[slot] || slot, cur, false);
+      return row(SLOT_LABEL[slot] || slot, cur, false, false);
     }).join('');
 
     var benchList = all.filter(function (pid) { return !inStart[pid] && !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; }).sort(function (a, b) { return b.score - a.score; });
-    var benchRows = benchList.map(function (o) { return row(o.pos, o, false); }).join('') || '<div class="ml-empty">No bench players.</div>';
+    var benchRows = benchList.map(function (o) { return row(o.pos, o, true, false); }).join('') || '<div class="ml-empty">No bench players.</div>';
 
-    function resSection(title, ids, tag) {
+    function resSection(title, ids) {
       if (!ids.length) return '';
-      var rows = ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return row(o.pos, o, true); }).join('');
+      var rows = ids.map(function (pid) { return objById[pid] || obj(pid); }).map(function (o) { return row(o.pos, o, true, true); }).join('');
       return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div>' + rows + '</div>';
     }
 
@@ -707,19 +715,20 @@
     var addDrop = (bestFA && worstBench && bestFA.score > worstBench.score + 1)
       ? '<div class="ml-ss-sug"><i class="fa-solid fa-right-left" style="color:#79c0ff"></i> Add <b>' + bestFA.name + '</b> (' + bestFA.pts.toFixed(1) + ') and drop <b>' + worstBench.name + '</b> (' + worstBench.pts.toFixed(1) + ')</div>'
       : '<div style="color:#8a97b3">No clear free-agent upgrade over your bench right now.</div>';
-    var faRows = topFAs.map(function (o) { return row(o.pos, o, false); }).join('') || '<div class="ml-empty">No notable free agents available.</div>';
+    var faRows = topFAs.map(function (o) { return row(o.pos, o, false, false); }).join('') || '<div class="ml-empty">No notable free agents available.</div>';
 
-    var sugHTML = suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.best.name + '</b> over ' + (s.cur ? '<b>' + s.cur.name + '</b>' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot) + '</div>'; }).join('');
+    var sugHTML = suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.best.name + '</b> over ' + (s.cur ? '<b>' + s.cur.name + '</b>' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot).replace(/_/g, ' ') + '</div>'; }).join('');
     var wkLabel = (week && String(week) !== '0') ? ('Week ' + week) : 'Season';
 
     return '<div class="ml-panel"><div class="ml-sum-title">Lineup Grade</div>' +
       '<div class="ml-ss-grade"><span class="ml-ss-gbadge ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span>' +
       '<span style="color:#8a97b3;font-size:14px">You\'re starting ' + Math.round(eff * 100) + '% of your best lineup · ' + wkLabel + ' · ' + scoring + ' (50/50 projections + rankings)</span></div>' +
       (sugHTML ? '<div style="margin-top:12px">' + sugHTML + '</div>' : '') + '</div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
-      resSection('Taxi Squad', taxi, 'TAXI') +
-      resSection('IR / Reserve', reserve, 'IR') +
+      '<div class="ml-detail-grid">' +
+        '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
+        '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
+      '</div>' +
+      ((taxi.length || reserve.length) ? '<div class="ml-detail-grid">' + resSection('Taxi Squad', taxi) + resSection('IR / Reserve', reserve) + '</div>' : '') +
       '<div class="ml-panel"><div class="ml-sum-title">Free Agent Targets</div>' + addDrop + '<div style="margin-top:12px">' + faRows + '</div></div>';
   }
 
