@@ -416,6 +416,7 @@
       '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
       '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
       '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>' +
+      '<button class="ml-dtab' + (tab === 'trades' ? ' active' : '') + '" onclick="MLDetail.tab(\'trades\')">Trade Finder</button>' +
       '</div>';
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
@@ -428,6 +429,7 @@
     var t = DETAIL.tab || 'overview';
     if (t === 'draft') renderDraft();
     else if (t === 'startsit') renderStartSit();
+    else if (t === 'trades') renderTrades();
     else el('ml-detail-body').innerHTML = overviewHTML();
   }
 
@@ -470,6 +472,65 @@
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the draft: ' + e.message + '</div></div>';
     }
+  }
+
+  function computeLineup(players, startingSlots) {
+    var pool = players.map(function (p) { return { id: p.name, pos: p.pos, team: p.team, value: p.value }; }).sort(function (a, b) { return b.value - a.value; });
+    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
+    var opt = optimalLineup(optSlots, pool);
+    var startIds = {}; Object.keys(opt).forEach(function (i) { if (opt[i]) startIds[opt[i].id] = true; });
+    var starters = [], bench = [];
+    pool.forEach(function (p) { (startIds[p.id] ? starters : bench).push(p); });
+    return { starters: starters, bench: bench };
+  }
+
+  function renderTrades() {
+    var raw = DETAIL.league.raw || {};
+    var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
+    var teams = DETAIL.teams, me = null;
+    for (var i = 0; i < teams.length; i++) { if (teams[i].ownerId === USER_SLEEPER_ID) { me = teams[i]; break; } }
+    if (!me) me = teams[DETAIL.selected] || teams[0];
+    el('ml-detail-body').innerHTML = tradesHTML(me, teams, startingSlots);
+  }
+
+  function tradesHTML(me, teams, startingSlots) {
+    var myLineup = computeLineup(me.players, startingSlots);
+    var myStarters = myLineup.starters.filter(function (s) { return s.value > 0; }).sort(function (a, b) { return a.value - b.value; });
+    var myChips = myLineup.bench.filter(function (c) { return c.value > 0; }).sort(function (a, b) { return b.value - a.value; });
+
+    var gettable = [];
+    teams.forEach(function (t) {
+      if (t === me) return;
+      computeLineup(t.players, startingSlots).bench.forEach(function (p) { if (p.value > 0) gettable.push({ name: p.name, pos: p.pos, team: p.team, value: p.value, teamName: t.name }); });
+    });
+
+    var sugMap = {};
+    myStarters.slice(0, 6).forEach(function (ws) {
+      gettable.filter(function (g) { return g.pos === ws.pos && g.value > ws.value + 3; }).sort(function (a, b) { return b.value - a.value; }).forEach(function (t) {
+        var chip = myChips.filter(function (c) { return Math.abs(c.value - t.value) <= Math.max(10, t.value * 0.18); }).sort(function (a, b) { return Math.abs(a.value - t.value) - Math.abs(b.value - t.value); })[0];
+        if (!chip) return;
+        var benefit = t.value - ws.value, ex = sugMap[t.name];
+        if (!ex || benefit > ex.benefit) sugMap[t.name] = { give: chip, get: t, fromTeam: t.teamName, needPos: ws.pos, benefit: benefit };
+      });
+    });
+    var suggestions = Object.keys(sugMap).map(function (k) { return sugMap[k]; }).sort(function (a, b) { return b.benefit - a.benefit; }).slice(0, 8);
+
+    var needsHTML = myStarters.slice(0, 3).map(function (s) { return '<span class="ml-pill">' + s.pos + ' · ' + s.name + ' (' + comma(s.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">—</span>';
+    var chipsHTML = myChips.slice(0, 5).map(function (c) { return '<span class="ml-pill">' + c.pos + ' · ' + c.name + ' (' + comma(c.value) + ')</span>'; }).join(' ') || '<span style="color:#8a97b3">Thin bench — not much to deal</span>';
+
+    var sugRows = suggestions.length ? suggestions.map(function (s) {
+      return '<div class="ml-trade-card"><div class="ml-trade-head"><span class="ml-trade-benefit">+' + comma(s.benefit) + '</span> upgrade at ' + s.needPos + ' · target <b>' + s.fromTeam + '</b></div>' +
+        '<div class="ml-trade-body">' +
+        '<div class="ml-trade-side"><div class="ml-trade-lbl">You send</div><div class="ml-trade-p" style="color:' + (POS_COL[s.give.pos] || '#c9d2e6') + '">' + s.give.name + '</div><div class="ml-trade-sub">' + s.give.pos + ' · ' + comma(s.give.value) + '</div></div>' +
+        '<i class="fa-solid fa-right-left" style="color:#79c0ff"></i>' +
+        '<div class="ml-trade-side"><div class="ml-trade-lbl">You get</div><div class="ml-trade-p" style="color:' + (POS_COL[s.get.pos] || '#c9d2e6') + '">' + s.get.name + '</div><div class="ml-trade-sub">' + s.get.pos + ' · ' + comma(s.get.value) + '</div></div>' +
+        '</div></div>';
+    }).join('') : '<div class="ml-empty">No clean value-matched upgrades right now — your starters are ahead of the tradeable depth around the league.</div>';
+
+    return '<div class="ml-panel"><div class="ml-sum-title">Your Weakest Starters</div><div class="ml-needs">' + needsHTML + '</div>' +
+      '<div class="ml-sum-title" style="margin-top:16px">Your Trade Chips (bench surplus)</div><div class="ml-needs">' + chipsHTML + '</div></div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Value-matched deals that upgrade a starting spot by dealing from your bench. The other manager still has to say yes.</p>' + sugRows + '</div>';
   }
 
   function analyzeDraft(picks, slotMap) {
