@@ -151,6 +151,28 @@ layout: null
   .ml-port-wrap thead th { position: sticky; top: 0; z-index: 2; }
   .ml-port-foot { color: #7d8aa5; font-size: 12px; padding-top: 10px; }
   .ml-port-bar { display: inline-block; height: 6px; border-radius: 3px; background: #FFA515; vertical-align: middle; margin-right: 8px; min-width: 2px; }
+  .ml-port-name { color: #eef2fb; font-weight: 600; cursor: pointer; border-bottom: 1px dotted #4a5876; }
+  .ml-port-name:hover { color: #FFA515; border-bottom-color: #FFA515; }
+  .ml-modal { position: fixed; inset: 0; background: rgba(6,10,18,0.78); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .ml-modal-panel { position: relative; background: #161d2e; border: 1px solid #2a3450; border-radius: 14px; padding: 24px 26px; width: 100%; max-width: 620px; max-height: 82vh; overflow-y: auto; }
+  .ml-modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: #7d8aa5; font-size: 26px; line-height: 1; cursor: pointer; }
+  .ml-modal-close:hover { color: #ff7b72; }
+  .ml-pm-title { color: #eef2fb; font-size: 20px; font-weight: 700; margin-bottom: 18px; padding-right: 30px; }
+  .ml-pm-meta { color: #8a97b3; font-size: 13px; font-weight: 500; }
+  .ml-pm-league { border-top: 1px solid #232c42; padding: 14px 0; }
+  .ml-pm-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ml-pm-lname { color: #eef2fb; font-weight: 700; font-size: 15px; }
+  .ml-pm-sub { color: #6b7890; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 6px; }
+  .ml-pm-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+  .ml-pm-name { flex: 1; color: #c9d2e6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ml-pm-team { width: 40px; color: #7d8aa5; font-size: 12px; }
+  .ml-pm-val { width: 44px; text-align: right; color: #eef2fb; font-weight: 700; }
+  .ml-pm-status { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .ml-pm-start { background: rgba(63,185,80,0.15); color: #56d364; }
+  .ml-pm-bench { background: rgba(110,118,129,0.18); color: #a3aec0; }
+  .ml-pm-taxi { background: rgba(88,111,150,0.2); color: #9fb4d6; }
+  .ml-pm-ir { background: rgba(229,83,75,0.15); color: #ff7b72; }
+  .ml-pm-empty { color: #7d8aa5; font-size: 13px; padding: 4px 0; }
 </style>
 
 <main class="ml-wrap">
@@ -198,6 +220,12 @@ layout: null
   </div>
 
   <div id="ml-detail" style="display:none;"></div>
+  <div id="ml-modal" class="ml-modal" style="display:none;" onclick="if(event.target===this)MLPort.close()">
+    <div class="ml-modal-panel">
+      <button class="ml-modal-close" onclick="MLPort.close()">&times;</button>
+      <div id="ml-modal-body"></div>
+    </div>
+  </div>
 </main>
 
 <script src="javascript/my-leagues.js"></script>
