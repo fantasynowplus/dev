@@ -191,7 +191,7 @@
       var p = playersMap[pid]; if (!p) return;
       var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
       var rank = rankMap[matchKey(name, p.position)];
-      arr.push({ name: name, pos: p.position, team: p.team, rank: rank || null, value: playerValue(p.position, rank) });
+      arr.push({ id: pid, name: name, pos: p.position, team: p.team, rank: rank || null, value: playerValue(p.position, rank) });
     });
     arr.sort(function (a, b) { return b.value - a.value; });
     var top = arr.slice(0, topN), byPos = { QB: 0, RB: 0, WR: 0, TE: 0 }, total = 0;
@@ -219,13 +219,13 @@
     var topN = (startersCount(raw.roster_positions) || 12) + 6;
     var scored = rosters.map(function (r) {
       var ev = evalRoster(r, playersMap, rankData.map, topN);
-      return { ownerId: r.owner_id, score: ev.total, players: ev.players };
+      return { ownerId: r.owner_id, score: ev.total, players: ev.players, roster: r };
     }).sort(function (a, b) { return b.score - a.score; });
     var n = scored.length;
     var idx = scored.findIndex(function (s) { return s.ownerId === USER_SLEEPER_ID; });
     if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
     var rank = idx + 1;
-    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score, players: scored[idx].players, dynasty: isDynasty(raw) };
+    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score, players: scored[idx].players, roster: scored[idx].roster, dynasty: isDynasty(raw) };
   }
 
   function setInsight(leagueId, ins) {
@@ -285,6 +285,7 @@
     });
     var list = Object.keys(map).map(function (k) { return map[k]; })
       .sort(function (a, b) { return (b.shares - a.shares) || a.name.localeCompare(b.name); });
+    list.forEach(function (r, i) { r.idx = i; });
     return { list: list, leagues: leagues };
   }
 
@@ -293,7 +294,7 @@
     var rows = PORT.list.filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || (r.pos || '').toLowerCase() === filter || (r.team || '').toLowerCase() === filter; });
     el('ml-port-body').innerHTML = rows.length ? rows.map(function (r) {
       var pct = PORT.leagues ? Math.round(r.shares / PORT.leagues * 100) : 0;
-      return '<tr><td class="ml-name">' + r.name + '</td>' +
+      return '<tr><td><span class="ml-port-name" onclick="MLPort.open(' + r.idx + ')">' + r.name + '</span></td>' +
         '<td><span class="ml-rost-pos ml-pos-' + (r.pos || '').toLowerCase() + '">' + r.pos + '</span></td>' +
         '<td>' + (r.team || '—') + '</td>' +
         '<td><b style="color:#eef2fb">' + r.shares + '</b></td>' +
@@ -303,9 +304,49 @@
     el('ml-port-foot').textContent = rows.length + ' of ' + PORT.list.length + ' players · across ' + PORT.leagues + ' leagues';
   }
 
+  function statusFor(pid, roster, slots) {
+    var st = roster.starters || [];
+    for (var i = 0; i < st.length; i++) {
+      if (st[i] === pid) { var s = slots[i] || 'FLEX'; return { label: 'Starter · ' + (SLOT_LABEL[s] || s).replace(/_/g, ' '), cls: 'start' }; }
+    }
+    if ((roster.taxi || []).indexOf(pid) !== -1) return { label: 'Taxi', cls: 'taxi' };
+    if ((roster.reserve || []).indexOf(pid) !== -1) return { label: 'IR', cls: 'ir' };
+    return { label: 'Bench', cls: 'bench' };
+  }
+
+  function openPortfolioPlayer(idx) {
+    var row = PORT.list[idx];
+    if (!row) return;
+    var blocks = (PORT.entries || []).map(function (e) {
+      var mine = e.players.filter(function (p) { return matchKey(p.name, p.pos) === matchKey(row.name, row.pos); })[0];
+      if (!mine) return '';
+      var st = statusFor(mine.id, e.roster, e.slots);
+      var mates = e.players.filter(function (p) { return p.pos === row.pos && p.id !== mine.id; })
+        .sort(function (a, b) { return b.value - a.value; })
+        .map(function (p) {
+          var ms = statusFor(p.id, e.roster, e.slots);
+          return '<div class="ml-pm-row"><span class="ml-pm-name">' + p.name + '</span>' +
+            '<span class="ml-pm-team">' + (p.team || '') + '</span>' +
+            '<span class="ml-pm-status ml-pm-' + ms.cls + '">' + ms.label + '</span>' +
+            '<span class="ml-pm-val">' + comma(p.value) + '</span></div>';
+        }).join('') || '<div class="ml-pm-empty">Only ' + row.pos + ' on this roster.</div>';
+      return '<div class="ml-pm-league"><div class="ml-pm-head"><span class="ml-pm-lname">' + e.leagueName + '</span>' +
+        '<span class="ml-pill">' + (e.dynasty ? 'Dynasty' : 'Redraft') + '</span>' +
+        '<span class="ml-pm-status ml-pm-' + st.cls + '">' + st.label + '</span></div>' +
+        '<div class="ml-pm-sub">Other ' + row.pos + 's on this team</div>' + mates + '</div>';
+    }).join('');
+    el('ml-modal-body').innerHTML =
+      '<div class="ml-pm-title">' + row.name + ' <span class="ml-pm-meta">' + row.pos + (row.team ? ' · ' + row.team : '') + ' · ' + row.shares + ' share' + (row.shares === 1 ? '' : 's') + '</span></div>' + blocks;
+    el('ml-modal').style.display = 'flex';
+  }
+
+  function closePortfolioModal() { el('ml-modal').style.display = 'none'; }
+  window.MLPort = { open: openPortfolioPlayer, close: closePortfolioModal };
+
   function renderPortfolio(entries) {
     var built = buildPortfolio(entries);
     PORT.list = built.list; PORT.leagues = built.leagues;
+    PORT.entries = entries;
     if (!PORT.list.length) { el('ml-portfolio').style.display = 'none'; return; }
     el('ml-portfolio').style.display = 'block';
     if (!PORT.wired) {
@@ -345,7 +386,14 @@
           try {
             var ins = await insightsForLeague(leagues[i], playersMap);
             insightsMap[leagues[i].league_id] = ins;
-            if (ins.players) portEntries.push(ins);
+            if (ins.players && ins.roster) {
+              var lraw = leagues[i].raw || {};
+              portEntries.push({
+                players: ins.players, roster: ins.roster, dynasty: ins.dynasty,
+                leagueName: leagues[i].name || 'League',
+                slots: (lraw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; })
+              });
+            }
             setInsight(leagues[i].league_id, ins);
             if (ins.tier) tierCounts[ins.tier]++;
             if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
