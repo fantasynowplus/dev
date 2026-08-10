@@ -224,6 +224,15 @@
     .main{margin-left:0}
     .form-grid{grid-template-columns:1fr}
   }
+
+  .perm-matrix{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
+  .perm-matrix th{background:#f7f8fb;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 10px;text-align:center;border-bottom:1px solid var(--line)}
+  .perm-matrix th:first-child{text-align:left}
+  .perm-matrix td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  .perm-matrix input{width:17px;height:17px;accent-color:var(--orange)}
+  td.pm{white-space:nowrap;text-align:center}
+  .pm-on{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:var(--green);background:color-mix(in srgb,var(--green) 14%,#fff);border:1px solid color-mix(in srgb,var(--green) 30%,#fff);border-radius:5px;padding:1px 4px;margin:0 1px}
+  .pm-off{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:#c2c7d0;background:#f4f5f8;border:1px solid #e7eaf1;border-radius:5px;padding:1px 4px;margin:0 1px}
 </style>
 </head>
 <body>
@@ -256,6 +265,8 @@
       <button data-go="youtube">YouTube Stats</button>
       <div class="nav-label">Work</div>
       <button data-go="board">Project Board</button>
+      <div class="nav-label">Access</div>
+      <button data-go="roles">Roles &amp; permissions</button>
     </nav>
     <div class="side-foot">
       <div class="who">
@@ -284,7 +295,7 @@ const GATE_LEVEL = 7;
 
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers',
-  shows:'Shows', channels:'Channels', youtube:'YouTube Stats', board:'Project Board'
+  shows:'Shows', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -302,6 +313,19 @@ const ACCENTS = ['var(--violet)','var(--pink)','var(--sky)','var(--green)','var(
 let ME = null;
 let ADMINS = [];
 let CHANNELS_CACHE = [];
+
+let PERMS = {};
+let ROLES = [];
+const RESOURCES = {
+  staff:'Staff', subscribers:'Subscribers', shows:'Shows',
+  channels:'Channels', youtube:'YouTube Stats', board:'Project Board'
+};
+function can(resource, action){
+  if(ME && ME.admin_level >= 9) return true;
+  const p = PERMS[resource];
+  return !!(p && p[action]);
+}
+function ifCan(resource, action, html){ return can(resource, action) ? html : ''; }
 
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function initials(name){if(!name)return '?';return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
@@ -380,10 +404,10 @@ async function boot(){
     return;
   }
   const lvl = ME && ME.admin_level ? ME.admin_level : 0;
-  if(!ME || lvl < GATE_LEVEL){
-    gateMsg(ME?'Not enough access':'Admin access required',
-      ME ? 'Your account is level '+lvl+'. This portal needs level '+GATE_LEVEL+' or higher.'
-         : 'Found a session but no matching profile row. Log out and back in on the site.');
+  if(!ME){ gateMsg('Admin access required','Found a session but no matching profile row. Log out and back in on the site.'); return; }
+  try{ if(ME.role_id){ const r = await dbGet('roles?select=permissions&id=eq.'+ME.role_id); if(r&&r[0]) PERMS = r[0].permissions||{}; } }catch(e){ PERMS = {}; }
+  if(!(lvl>=9 || Object.keys(RESOURCES).some(k=>can(k,'r')))){
+    gateMsg('No access yet','Your account has no dashboard permissions. Ask an owner to assign you a role.');
     return;
   }
   document.getElementById('gate').style.display='none';
@@ -396,6 +420,12 @@ async function boot(){
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
   try{ ADMINS = await dbGet('profiles?select=id,name,email,admin_level&admin_level=gte.1&order=name.asc') || []; }catch(e){ ADMINS=[]; }
+  try{ ROLES = await dbGet('roles?select=*&order=name.asc') || []; }catch(e){ ROLES=[]; }
+  document.querySelectorAll('#nav button[data-go]').forEach(b=>{
+    const k=b.dataset.go;
+    if(RESOURCES[k] && !can(k,'r')) b.style.display='none';
+    if(k==='roles' && ME.admin_level<9) b.style.display='none';
+  });
 
   go('dashboard');
 }
@@ -405,8 +435,12 @@ function go(name){
   document.getElementById('pageTitle').textContent = NAV_TITLES[name] || name;
   document.getElementById('topActions').innerHTML='';
   document.getElementById('content').innerHTML='<div class="loading">Loading…</div>';
+  if(RESOURCES[name] && !can(name,'r')){
+    document.getElementById('content').innerHTML='<div class="empty"><h4>No access</h4><p>You don\'t have permission to view this section.</p></div>';
+    return;
+  }
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers,
-    shows:loadShows, channels:loadChannels, youtube:loadYouTube, board:loadBoard}[name];
+    shows:loadShows, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles}[name];
   fn().catch(err=>{
     document.getElementById('content').innerHTML =
       '<div class="empty"><h4>Couldn\'t load this</h4><p>'+esc(err.message)+'</p></div>';
@@ -492,6 +526,45 @@ async function loadDashboard(){
     '</div>';
 }
 
+async function loadRoles(){
+  if(ME.admin_level < 9){ document.getElementById('content').innerHTML='<div class="empty"><h4>Owner only</h4><p>Managing roles is restricted to level 9 owners.</p></div>'; return; }
+  topAction('<button class="btn btn-primary" onclick="roleForm()">+ New role</button>');
+  ROLES = await dbGet('roles?select=*&order=name.asc')||[];
+  const cell=(perm,k,a)=> (perm&&perm[k]&&perm[k][a])?'<span class="pm-on">'+a.toUpperCase()+'</span>':'<span class="pm-off">'+a.toUpperCase()+'</span>';
+  document.getElementById('content').innerHTML =
+    (ROLES.length? '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Role</th>'+
+      Object.values(RESOURCES).map(n=>'<th>'+n+'</th>').join('')+'<th></th></tr></thead><tbody>'+
+      ROLES.map(r=>'<tr><td><strong>'+esc(r.name)+'</strong>'+(r.description?'<div style="font-size:12px;color:var(--muted)">'+esc(r.description)+'</div>':'')+'</td>'+
+        Object.keys(RESOURCES).map(k=>'<td class="pm">'+['c','r','u','d'].map(a=>cell(r.permissions,k,a)).join('')+'</td>').join('')+
+        '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'roleForm("'+r.id+'")\'>Edit</button>'+
+        '<button class="btn btn-danger btn-sm" onclick=\'roleDelete("'+r.id+'")\'>Delete</button></div></td></tr>').join('')+
+      '</tbody></table></div></div>'
+      : '<div class="empty"><h4>No roles yet</h4><p>Create a role and choose what it can do in each section.</p><button class="btn btn-primary" onclick="roleForm()">+ New role</button></div>');
+}
+function roleForm(id){
+  const r = id? ROLES.find(x=>x.id===id) : {permissions:{}};
+  const perm = r.permissions||{};
+  const rows = Object.keys(RESOURCES).map(k=>{
+    const p = perm[k]||{};
+    return '<tr><td style="font-weight:600">'+RESOURCES[k]+'</td>'+
+      ['c','r','u','d'].map(a=>'<td style="text-align:center"><input type="checkbox" data-res="'+k+'" data-act="'+a+'"'+(p[a]?' checked':'')+'></td>').join('')+'</tr>';
+  }).join('');
+  modal({title:id?'Edit role':'New role',wide:true,saveLabel:id?'Save role':'Create role',
+    body:'<div class="form-grid"><div class="field"><label>Role name</label><input name="name" value="'+esc(r.name||'')+'"></div>'+
+      '<div class="field"><label>Description</label><input name="description" value="'+esc(r.description||'')+'"></div></div>'+
+      '<table class="perm-matrix"><thead><tr><th>Section</th><th>Create</th><th>Read</th><th>Update</th><th>Delete</th></tr></thead><tbody>'+rows+'</tbody></table>',
+    onSave:async(bg)=>{
+      const name=val(bg,'name'); if(!name) throw new Error('Role name is required');
+      const permissions={};
+      bg.querySelectorAll('input[data-res]').forEach(cb=>{ if(cb.checked){ (permissions[cb.dataset.res]=permissions[cb.dataset.res]||{})[cb.dataset.act]=true; } });
+      const body={name,description:val(bg,'description'),permissions};
+      if(id) await dbPatch('roles?id=eq.'+id,body); else await dbPost('roles',body);
+      loadRoles(); toast(id?'Role updated':'Role created');
+    }});
+}
+function roleDelete(id){const r=ROLES.find(x=>x.id===id);confirmDelete('the "'+esc(r.name)+'" role',async()=>{
+  await dbDel('roles?id=eq.'+id);loadRoles();toast('Role deleted');});}
+
 /* ---------------- STAFF ---------------- */
 let STAFF=[];
 async function loadStaff(){
@@ -524,23 +597,25 @@ function renderStaff(q){
     '</tbody></table></div></div>';
   bindSearch(renderStaff);
 }
-function staffForm(id){
+
+async function staffForm(id){
   const s = id? STAFF.find(x=>x.id===id) : {};
+  let curRole=null;
+  if(s.profile_id){ try{ const pr=await dbGet('profiles?select=role_id&id=eq.'+s.profile_id); curRole=pr&&pr[0]?pr[0].role_id:null; }catch(e){} }
   const f=(n,l,type,v,opts)=>'<div class="field'+(opts&&opts.full?' full':'')+'"><label>'+l+'</label>'+
-    (type==='textarea'?'<textarea name="'+n+'">'+esc(v||'')+'</textarea>':
-      '<input name="'+n+'" type="'+(type||'text')+'" value="'+esc(v||'')+'">')+'</div>';
+    (type==='textarea'?'<textarea name="'+n+'">'+esc(v||'')+'</textarea>':'<input name="'+n+'" type="'+(type||'text')+'" value="'+esc(v||'')+'">')+'</div>';
+  const roleField = s.profile_id
+    ? '<div class="field full"><label>Access role</label><select name="role_id"><option value="">— no access —</option>'+
+        ROLES.map(r=>'<option value="'+r.id+'"'+(curRole===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></div>'
+    : '<div class="field full"><label>Access role</label><div style="font-size:13px;color:var(--muted);padding:6px 0">Link a login profile (Add from profiles) to assign dashboard access.</div></div>';
   modal({title:id?'Edit staff':'Add staff',wide:true,saveLabel:id?'Save changes':'Add staff',
     body:'<div class="form-grid">'+
-      f('name','Full name','text',s.name)+
-      f('role','Role','text',s.role)+
-      f('email','Email','email',s.email)+
-      f('phone','Phone','text',s.phone)+
+      f('name','Full name','text',s.name)+ f('role','Job title','text',s.role)+
+      f('email','Email','email',s.email)+ f('phone','Phone','text',s.phone)+
       f('department','Department','text',s.department)+
       '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(s.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(s.is_active===false?' selected':'')+'>Inactive</option></select></div>'+
-      f('dob','Date of birth','date',s.dob)+
-      f('start_date','Start date','date',s.start_date)+
-      f('address','Address','text',s.address,{full:true})+
-      f('notes','Notes','textarea',s.notes,{full:true})+
+      f('dob','Date of birth','date',s.dob)+ f('start_date','Start date','date',s.start_date)+
+      roleField+ f('address','Address','text',s.address,{full:true})+ f('notes','Notes','textarea',s.notes,{full:true})+
     '</div>',
     onSave:async(bg)=>{
       const body={name:val(bg,'name'),role:val(bg,'role'),email:val(bg,'email'),phone:val(bg,'phone'),
@@ -548,11 +623,14 @@ function staffForm(id){
         dob:val(bg,'dob')||null,start_date:val(bg,'start_date')||null,
         is_active: bg.querySelector('[name="is_active"]').value==='true'};
       if(!body.name)throw new Error('Name is required');
-      if(id){body.updated_at=new Date().toISOString();await dbPatch('staff?id=eq.'+id,body);toast('Staff updated');}
-      else{await dbPost('staff',body);toast('Staff added');}
+      if(id){body.updated_at=new Date().toISOString();await dbPatch('staff?id=eq.'+id,body);}
+      else{await dbPost('staff',body);}
+      if(s.profile_id){ const sel=bg.querySelector('[name="role_id"]'); if(sel){ await dbPatch('profiles?id=eq.'+s.profile_id,{role_id: sel.value||null}); } }
       STAFF = await dbGet('staff?select=*&order=name.asc')||[];renderStaff('');
+      toast(id?'Staff updated':'Staff added');
     }});
 }
+
 function staffDelete(id){const s=STAFF.find(x=>x.id===id);confirmDelete(esc(s.name),async()=>{
   await dbDel('staff?id=eq.'+id);STAFF=STAFF.filter(x=>x.id!==id);renderStaff('');toast('Staff removed');});}
 async function staffFromProfiles(){
@@ -590,7 +668,7 @@ async function staffFromProfiles(){
 /* ---------------- SUBSCRIBERS ---------------- */
 let SUBS=[];
 async function loadSubscribers(){
-  topAction('<button class="btn btn-ghost" onclick="exportSubs()">Export CSV</button> <button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button>');
+  topAction('<button class="btn btn-ghost" onclick="exportSubs()">Export CSV</button> '+ifCan('subscribers','c','<button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button>'));
   SUBS = await dbGet('subscribers?select=*&order=subscribed_at.desc')||[];
   renderSubs('');
 }
@@ -604,8 +682,8 @@ function renderSubs(q){
       '<td>'+badge(s.source||'manual', s.source==='website'?'var(--aqua)':s.source==='import'?'var(--sky)':'var(--muted)')+'</td>'+
       '<td>'+fmtDate(s.subscribed_at)+'</td>'+
       '<td>'+(s.is_active!==false?badge('Active','var(--green)'):badge('Unsubbed','var(--muted)'))+'</td>'+
-      '<td><div class="row-actions"><button class="btn btn-danger btn-sm" onclick=\'subDelete("'+s.id+'")\'>Delete</button></div></td></tr>').join('')
-      : '<tr><td colspan="6"><div class="empty"><h4>No subscribers yet</h4><p>Add people manually now. Later, your site\'s subscribe button can feed this list automatically.</p><button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button></div></td></tr>')+
+      '<td><div class="row-actions">'+ifCan('subscribers','d','<button class="btn btn-danger btn-sm" onclick=\'subDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
+      : '<tr><td colspan="6"><div class="empty"><h4>No subscribers yet</h4><p>Add people manually now. Later, your site\'s subscribe button can feed this list automatically.</p>'+ifCan('subscribers','c','<button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button>')+'</div></td></tr>')+
     '</tbody></table></div></div>';
   bindSearch(renderSubs);
 }
@@ -631,7 +709,7 @@ function exportSubs(){
 /* ---------------- SHOWS ---------------- */
 let SHOWS=[];
 async function loadShows(){
-  topAction('<button class="btn btn-primary" onclick="showForm()">+ Add show</button>');
+  topAction(ifCan('shows','c','<button class="btn btn-primary" onclick="showForm()">+ Add show</button>'));
   CHANNELS_CACHE = await dbGet('channels?select=id,name&order=name.asc')||[];
   SHOWS = await dbGet('shows?select=*,channel:channels(name)&order=name.asc')||[];
   renderShows('');
@@ -648,9 +726,9 @@ function renderShows(q){
       '<td>'+esc(s.schedule_day||'—')+'</td>'+
       '<td>'+esc(s.channel?s.channel.name:'—')+'</td>'+
       '<td>'+(s.is_active!==false?badge('Active','var(--green)'):badge('Off air','var(--muted)'))+'</td>'+
-      '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'showForm("'+s.id+'")\'>Edit</button>'+
-      '<button class="btn btn-danger btn-sm" onclick=\'showDelete("'+s.id+'")\'>Delete</button></div></td></tr>').join('')
-      : '<tr><td colspan="7"><div class="empty"><h4>No shows yet</h4><p>Add a show and assign it to one of your channels.</p><button class="btn btn-primary" onclick="showForm()">+ Add show</button></div></td></tr>')+
+      '<td><div class="row-actions">'+ifCan('shows','u','<button class="btn btn-ghost btn-sm" onclick=\'showForm("'+s.id+'")\'>Edit</button>')+
+      ifCan('shows','d','<button class="btn btn-danger btn-sm" onclick=\'showDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
+      : '<tr><td colspan="7"><div class="empty"><h4>No shows yet</h4><p>Add a show and assign it to one of your channels.</p>'+ifCan('shows','c','<button class="btn btn-primary" onclick="showForm()">+ Add show</button>')+'</div></td></tr>')+
     '</tbody></table></div></div>';
   bindSearch(renderShows);
 }
@@ -684,10 +762,10 @@ function showDelete(id){const s=SHOWS.find(x=>x.id===id);confirmDelete(esc(s.nam
 /* ---------------- CHANNELS ---------------- */
 let CHANNELS=[];
 async function loadChannels(){
-  topAction('<button class="btn btn-primary" onclick="channelForm()">+ Add channel</button>');
+  topAction(ifCan('channels','c','<button class="btn btn-primary" onclick="channelForm()">+ Add channel</button>'));
   CHANNELS = await dbGet('channels?select=*,shows(id)&order=name.asc')||[];
   const content=document.getElementById('content');
-  if(!CHANNELS.length){content.innerHTML='<div class="empty"><h4>No channels yet</h4><p>Create a channel to house your shows and link out to its YouTube page.</p><button class="btn btn-primary" onclick="channelForm()">+ Add channel</button></div>';return;}
+  if(!CHANNELS.length){content.innerHTML='<div class="empty"><h4>No channels yet</h4><p>Create a channel to house your shows and link out to its YouTube page.</p>'+ifCan('channels','c','<button class="btn btn-primary" onclick="channelForm()">+ Add channel</button>')+'</div>';return;}
   content.innerHTML='<div class="yt-grid">'+CHANNELS.map(c=>
     '<div class="yt-card"><h4>'+esc(c.name)+'</h4>'+
     '<div class="yt-sub">'+(c.shows?c.shows.length:0)+' show'+((c.shows&&c.shows.length===1)?'':'s')+
@@ -695,8 +773,8 @@ async function loadChannels(){
     (c.description?'<p style="font-size:13.5px;color:var(--muted);line-height:1.5;margin:0 0 14px">'+esc(c.description)+'</p>':'')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
       (c.youtube_url?'<a class="btn btn-navy btn-sm" href="'+esc(c.youtube_url)+'" target="_blank" rel="noopener">Open on YouTube</a>':'')+
-      '<button class="btn btn-ghost btn-sm" onclick=\'channelForm("'+c.id+'")\'>Edit</button>'+
-      '<button class="btn btn-danger btn-sm" onclick=\'channelDelete("'+c.id+'")\'>Delete</button>'+
+      ifCan('channels','u','<button class="btn btn-ghost btn-sm" onclick=\'channelForm("'+c.id+'")\'>Edit</button>')+
+      ifCan('channels','d','<button class="btn btn-danger btn-sm" onclick=\'channelDelete("'+c.id+'")\'>Delete</button>')+
     '</div></div>').join('')+'</div>';
 }
 function channelForm(id){
@@ -721,7 +799,7 @@ function channelDelete(id){const c=CHANNELS.find(x=>x.id===id);confirmDelete(esc
 
 /* ---------------- YOUTUBE STATS ---------------- */
 async function loadYouTube(){
-  topAction('<button class="btn btn-primary" onclick="snapshotForm()">+ Add snapshot</button>');
+  topAction(ifCan('youtube','c','<button class="btn btn-primary" onclick="snapshotForm()">+ Add snapshot</button>'));
   const channels = await dbGet('channels?select=id,name,youtube_url&order=name.asc')||[];
   if(!channels.length){document.getElementById('content').innerHTML='<div class="empty"><h4>No channels to track</h4><p>Add a channel first, then record YouTube stats for it here.</p><button class="btn btn-primary" onclick="go(\'channels\')">Go to Channels</button></div>';return;}
   const stats = await dbGet('youtube_stats?select=*&order=fetched_at.asc')||[];
@@ -774,11 +852,11 @@ let PROJECTS=[], CUR_PROJECT=null, TASKS=[];
 async function loadBoard(){
   PROJECTS = await dbGet('projects?select=*&order=position.asc,created_at.asc')||[];
   if(!PROJECTS.length){
-    document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project board to start tracking tasks Monday-style.</p><button class="btn btn-primary" onclick="projectForm()">+ New project</button></div>';
+    document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project board to start tracking tasks Monday-style.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>';
     topAction('');return;
   }
   if(!CUR_PROJECT||!PROJECTS.find(p=>p.id===CUR_PROJECT))CUR_PROJECT=PROJECTS[0].id;
-  topAction('<button class="btn btn-ghost" onclick="projectForm()">+ New project</button> <button class="btn btn-primary" onclick="taskForm()">+ New task</button>');
+  topAction(ifCan('board','c','<button class="btn btn-ghost" onclick="projectForm()">+ New project</button> <button class="btn btn-primary" onclick="taskForm()">+ New task</button>'));
   await renderBoard();
 }
 async function renderBoard(){
@@ -788,14 +866,14 @@ async function renderBoard(){
     '<div class="board-top"><select onchange="CUR_PROJECT=this.value;renderBoard()">'+
       PROJECTS.map(p=>'<option value="'+p.id+'"'+(p.id===CUR_PROJECT?' selected':'')+'>'+esc(p.name)+'</option>').join('')+
     '</select>'+
-    '<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+CUR_PROJECT+'")\'>Edit project</button>'+
+    ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+CUR_PROJECT+'")\'>Edit project</button>')+
     '<span class="count-pill" style="margin-left:auto">'+TASKS.length+' tasks</span></div>'+
     '<div class="board">'+cols.map(st=>{
       const items=TASKS.filter(t=>t.status===st);
       return '<div class="col" data-status="'+st+'">'+
         '<div class="col-head"><span class="dot" style="background:'+STATUS[st].color+'"></span>'+STATUS[st].label+'<span class="n">'+items.length+'</span></div>'+
         '<div class="col-body">'+items.map(taskCard).join('')+'</div>'+
-        '<button class="add-task" onclick=\'taskForm(null,"'+st+'")\'>+ Add task</button>'+
+        ifCan('board','c','<button class="add-task" onclick=\'taskForm(null,"'+st+'")\'>+ Add task</button>')+
       '</div>';
     }).join('')+'</div>';
   wireDnD();
@@ -879,8 +957,8 @@ async function taskDetail(id){
       (t.assignee?'<span class="chip">'+esc(t.assignee.name)+'</span>':'')+
       (t.due_date?'<span class="chip">Due '+fmtDate(t.due_date)+'</span>':'')+'</div>'+
       (t.description?'<p style="line-height:1.6;color:#333;white-space:pre-wrap;margin:0 0 6px">'+esc(t.description)+'</p>':'<p style="color:var(--muted);margin:0 0 6px">No description.</p>')+
-      '<div style="display:flex;gap:8px;margin:14px 0 8px"><button class="btn btn-ghost btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());taskForm("'+t.id+'")\'>Edit task</button>'+
-      '<button class="btn btn-danger btn-sm" onclick=\'taskDelete("'+t.id+'")\'>Delete</button></div>'+
+      '<div style="display:flex;gap:8px;margin:14px 0 8px">'+ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());taskForm("'+t.id+'")\'>Edit task</button>')+
+      ifCan('board','d','<button class="btn btn-danger btn-sm" onclick=\'taskDelete("'+t.id+'")\'>Delete</button>')+'</div>'+
       '<h4 style="font-size:14px;color:var(--navy);margin:20px 0 4px">Comments</h4>'+
       '<div id="comments"><div class="loading" style="padding:16px">Loading…</div></div>'+
       '<div class="add-comment"><input id="cInput" placeholder="Write a comment…"><button class="btn btn-primary btn-sm" onclick="postComment(\''+t.id+'\')">Post</button></div>'
