@@ -807,7 +807,7 @@
         var u = userMap[r.owner_id] || {}, st = r.settings || {};
         return {
           ownerId: r.owner_id, rosterId: r.roster_id,
-          name: (u.metadata && u.metadata.team_name) || u.display_name || 'Ghost Team',
+          name: u.display_name || (u.metadata && u.metadata.team_name) || 'Ghost Team',
           total: ev.total, byPos: ev.byPos, players: ev.players, posRank: {},
           wins: st.wins || 0, losses: st.losses || 0, ties: st.ties || 0,
           pf: (st.fpts || 0) + (st.fpts_decimal || 0) / 100,
