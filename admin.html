@@ -160,6 +160,15 @@
     padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
   .field textarea{resize:vertical;min-height:70px}
   .err{color:var(--red);font-size:13px;font-weight:600;margin-right:auto;align-self:center}
+  .pick-list{max-height:340px;overflow-y:auto;border:1px solid var(--line-2);border-radius:11px}
+  .pick{display:flex;align-items:center;gap:11px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+  .pick:last-child{border-bottom:0}
+  .pick:hover{background:#fbfcfe}
+  .pick input{width:16px;height:16px;accent-color:var(--orange);flex:none}
+  .pick .pk-name{font-size:14px;font-weight:600;color:var(--ink)}
+  .pick .pk-email{font-size:12.5px;color:var(--muted);margin-left:auto}
+  .pk-more,.pk-empty{padding:14px;text-align:center;font-size:13px;color:var(--muted)}
+  .linked-dot{color:var(--aqua);font-size:12px;margin-left:5px;cursor:default}
 
   #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--navy);color:#fff;padding:11px 20px;border-radius:11px;font-size:13.5px;font-weight:600;
@@ -326,29 +335,55 @@ const dbPost  =(p,b)=>api(p,{method:'POST',headers:{'Prefer':'return=representat
 const dbPatch =(p,b)=>api(p,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(b)});
 const dbDel   =(p)=>api(p,{method:'DELETE'});
 
-async function waitForAuth(timeout){
-  timeout=timeout||6000;const start=Date.now();
+function gateMsg(title,msg){
+  document.getElementById('gateTitle').textContent=title;
+  document.getElementById('gateMsg').textContent=msg;
+  document.getElementById('gate').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+async function waitForConfig(timeout){
+  timeout=timeout||5000;const start=Date.now();
   while(Date.now()-start<timeout){
-    if(window.auth){
-      const authed = auth.isAuthenticated? auth.isAuthenticated() : !!localStorage.getItem('sb-auth-token');
-      if(authed){
-        if(!auth.profile && auth.fetchProfile){try{await auth.fetchProfile();}catch(e){}}
-        if(auth.profile) return auth.profile;
-      }
-    }
-    await new Promise(r=>setTimeout(r,150));
+    if(typeof SUPABASE_URL!=='undefined' && typeof SUPABASE_ANON_KEY!=='undefined') return true;
+    await new Promise(r=>setTimeout(r,120));
   }
-  return (window.auth&&auth.profile)||null;
+  return false;
+}
+function decodeJwt(tok){
+  try{const seg=tok.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(seg))));}catch(e){return null;}
 }
 
 async function boot(){
-  ME = await waitForAuth();
+  if(!(await waitForConfig())){
+    gateMsg('Auth didn\'t load',
+      'This page couldn\'t find auth.js (SUPABASE_URL is undefined). Check the <script src="javascript/auth.js"> path is right for where admin.html sits, and open it through your site URL — not a local file:// path.');
+    return;
+  }
+  const token = localStorage.getItem('sb-auth-token');
+  if(!token){
+    gateMsg('Admin access required',
+      'No saved session on this page. Sign in on the site, then return here — and make sure both are the same address (same https:// site, not a file:// path).');
+    return;
+  }
+  const claims = (window.auth && auth.user && auth.user.sub) ? auth.user : decodeJwt(token);
+  const uid = claims && claims.sub;
+  if(!uid){
+    gateMsg('Session problem','Your saved sign-in couldn\'t be read. Log out and back in on the site, then return here.');
+    return;
+  }
+  try{
+    const rows = await dbGet('profiles?select=*&id=eq.'+uid);
+    ME = rows && rows[0];
+  }catch(e){
+    gateMsg('Couldn\'t verify access','Signed in, but the profile lookup failed: '+e.message);
+    return;
+  }
   const lvl = ME && ME.admin_level ? ME.admin_level : 0;
   if(!ME || lvl < GATE_LEVEL){
-    document.getElementById('gateTitle').textContent = ME ? 'Not enough access' : 'Admin access required';
-    document.getElementById('gateMsg').textContent = ME
-      ? 'Your account is level '+lvl+'. This portal needs level '+GATE_LEVEL+' or higher.'
-      : 'You need to be signed in as an admin (level '+GATE_LEVEL+'+) to view this portal.';
+    gateMsg(ME?'Not enough access':'Admin access required',
+      ME ? 'Your account is level '+lvl+'. This portal needs level '+GATE_LEVEL+' or higher.'
+         : 'Found a session but no matching profile row. Log out and back in on the site.');
     return;
   }
   document.getElementById('gate').style.display='none';
@@ -460,7 +495,7 @@ async function loadDashboard(){
 /* ---------------- STAFF ---------------- */
 let STAFF=[];
 async function loadStaff(){
-  topAction('<button class="btn btn-primary" onclick="staffForm()">+ Add staff</button>');
+  topAction('<button class="btn btn-primary" onclick="staffFromProfiles()">+ Add from profiles</button> <button class="btn btn-ghost" onclick="staffForm()">+ Add manually</button>');
   STAFF = await dbGet('staff?select=*&order=name.asc')||[];
   renderStaff('');
   bindSearch(renderStaff);
@@ -478,14 +513,14 @@ function renderStaff(q){
     '<div class="panel"><div class="table-wrap"><table><thead><tr>'+
       '<th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Phone</th><th>Start</th><th>Status</th><th></th></tr></thead><tbody>'+
     (rows.length? rows.map(s=>
-      '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="background:'+accentFor(s.department)+'">'+initials(s.name)+'</span><strong>'+esc(s.name)+'</strong></div></td>'+
+      '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="background:'+accentFor(s.department)+'">'+initials(s.name)+'</span><strong>'+esc(s.name)+'</strong>'+(s.profile_id?'<span class="linked-dot" title="Linked to a login profile">●</span>':'')+'</div></td>'+
       '<td>'+esc(s.role||'—')+'</td>'+
       '<td>'+(s.department?'<span class="chip">'+esc(s.department)+'</span>':'—')+'</td>'+
       '<td>'+esc(s.email||'—')+'</td><td>'+esc(s.phone||'—')+'</td><td>'+fmtDate(s.start_date)+'</td>'+
       '<td>'+(s.is_active?badge('Active','var(--green)'):badge('Inactive','var(--muted)'))+'</td>'+
       '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'staffForm("'+s.id+'")\'>Edit</button>'+
       '<button class="btn btn-danger btn-sm" onclick=\'staffDelete("'+s.id+'")\'>Delete</button></div></td></tr>').join('')
-      : '<tr><td colspan="8"><div class="empty"><h4>No staff yet</h4><p>Add your first team member to start building the directory.</p><button class="btn btn-primary" onclick="staffForm()">+ Add staff</button></div></td></tr>')+
+      : '<tr><td colspan="8"><div class="empty"><h4>No staff yet</h4><p>Promote people from your existing profiles, or add someone manually.</p><button class="btn btn-primary" onclick="staffFromProfiles()">+ Add from profiles</button> <button class="btn btn-ghost" onclick="staffForm()">Add manually</button></div></td></tr>')+
     '</tbody></table></div></div>';
   bindSearch(renderStaff);
 }
@@ -520,6 +555,37 @@ function staffForm(id){
 }
 function staffDelete(id){const s=STAFF.find(x=>x.id===id);confirmDelete(esc(s.name),async()=>{
   await dbDel('staff?id=eq.'+id);STAFF=STAFF.filter(x=>x.id!==id);renderStaff('');toast('Staff removed');});}
+async function staffFromProfiles(){
+  const all = await dbGet('profiles?select=id,name,email,admin_level&order=name.asc')||[];
+  const taken = new Set(STAFF.map(s=>s.profile_id).filter(Boolean));
+  const pool = all.filter(p=>!taken.has(p.id));
+  const render=(list)=> list.length
+    ? list.slice(0,60).map(p=>'<label class="pick"><input type="checkbox" value="'+p.id+'">'+
+        '<span class="mini-avatar" style="background:'+accentFor(p.name||p.email)+'">'+initials(p.name||p.email)+'</span>'+
+        '<span class="pk-name">'+esc(p.name||'(no name)')+'</span>'+
+        '<span class="pk-email">'+esc(p.email||'')+'</span></label>').join('')+
+        (list.length>60?'<div class="pk-more">Showing 60 of '+list.length+' — keep typing to narrow.</div>':'')
+    : '<div class="pk-empty">'+(pool.length?'No profiles match that search.':'Everyone in profiles is already on staff.')+'</div>';
+  modal({title:'Add staff from profiles',wide:true,saveLabel:'Add selected',
+    body:'<div class="search" style="max-width:none;margin-bottom:12px">'+
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>'+
+      '<input id="pickSearch" placeholder="Search '+pool.length+' profiles by name or email…"></div>'+
+      '<div id="pickList" class="pick-list">'+render(pool)+'</div>',
+    onReady:(bg)=>{
+      const inp=bg.querySelector('#pickSearch');
+      inp.oninput=()=>{const q=inp.value.toLowerCase().trim();
+        bg.querySelector('#pickList').innerHTML=render(q?pool.filter(p=>((p.name||'')+' '+(p.email||'')).toLowerCase().includes(q)):pool);};
+      inp.focus();
+    },
+    onSave:async(bg)=>{
+      const ids=[...bg.querySelectorAll('#pickList input:checked')].map(c=>c.value);
+      if(!ids.length)throw new Error('Select at least one profile');
+      const rows=ids.map(id=>{const p=pool.find(x=>x.id===id);return {profile_id:id,name:p.name||p.email,email:p.email,is_active:true};});
+      await dbPost('staff',rows);
+      STAFF = await dbGet('staff?select=*&order=name.asc')||[];renderStaff('');
+      toast('Added '+ids.length+' staff member'+(ids.length>1?'s':''));
+    }});
+}
 
 /* ---------------- SUBSCRIBERS ---------------- */
 let SUBS=[];
