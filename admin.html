@@ -44,6 +44,13 @@
   #gate p{color:#cdd7ea;line-height:1.55;margin:12px 0 22px}
   #gate a.btn{display:inline-block;background:var(--orange);color:var(--navy);font-weight:700;
     text-decoration:none;padding:11px 20px;border-radius:10px}
+  .gate-login{display:flex;flex-direction:column;gap:10px;margin:20px 0 6px;text-align:left}
+  .gate-login input{padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:14px;font-family:inherit}
+  .gate-login input::placeholder{color:#9fb0d0}
+  .gate-login .btn{margin-top:4px;border:0;cursor:pointer;width:100%;background:var(--orange);color:var(--navy);font-weight:700;padding:11px 20px;border-radius:10px;font-size:14px}
+  .gate-err{color:#ffb3ab;font-size:13px;font-weight:600;min-height:2px}
+  .gate-alt{display:inline-block;margin-top:14px;color:#9fb0d0;font-size:13px;text-decoration:none}
+  .gate-alt:hover{color:#fff}
 
   #app{display:none;min-height:100vh}
 
@@ -242,7 +249,13 @@
     <span class="mark">FN+</span>
     <h1 id="gateTitle">Admin access required</h1>
     <p id="gateMsg">You need to be signed in as an admin to view this portal.</p>
-    <a class="btn" href="index.html">Go to site &amp; sign in</a>
+    <div class="gate-login">
+      <input id="gEmail" type="email" placeholder="Email" autocomplete="username">
+      <input id="gPass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')gateLogin()">
+      <div id="gErr" class="gate-err"></div>
+      <button id="gBtn" class="btn" onclick="gateLogin()">Sign in</button>
+    </div>
+    <a class="gate-alt" href="index.html">Or sign in on the main site &rarr;</a>
   </div>
 </div>
 
@@ -358,6 +371,29 @@ const dbGet   =(p)=>api(p,{method:'GET'});
 const dbPost  =(p,b)=>api(p,{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(b)});
 const dbPatch =(p,b)=>api(p,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(b)});
 const dbDel   =(p)=>api(p,{method:'DELETE'});
+
+async function gateLogin(){
+  const email=document.getElementById('gEmail').value.trim();
+  const pw=document.getElementById('gPass').value;
+  const err=document.getElementById('gErr'); err.textContent='';
+  if(!email||!pw){ err.textContent='Enter your email and password.'; return; }
+  const btn=document.getElementById('gBtn'); btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    if(typeof SUPABASE_URL==='undefined') throw new Error('noconfig');
+    const res=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST', headers:{'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pw})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error_description||data.msg||data.message||'Login failed');
+    if(!data.access_token) throw new Error('No token returned');
+    localStorage.setItem('sb-auth-token', data.access_token);
+    boot();
+  }catch(e){
+    err.textContent = e.message==='noconfig' ? 'Sign-in isn\'t available (auth.js didn\'t load).' : 'Sign in failed. Check your email and password.';
+    btn.disabled=false; btn.textContent='Sign in';
+  }
+}
 
 function gateMsg(title,msg){
   document.getElementById('gateTitle').textContent=title;
@@ -668,7 +704,7 @@ async function staffFromProfiles(){
 /* ---------------- SUBSCRIBERS ---------------- */
 let SUBS=[];
 async function loadSubscribers(){
-  topAction('<button class="btn btn-ghost" onclick="exportSubs()">Export CSV</button> '+ifCan('subscribers','c','<button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button>'));
+  topAction('<button class="btn btn-ghost" onclick="exportSubs()">Export CSV</button> '+ifCan('subscribers','c','<button class="btn btn-ghost" onclick="subImport()">Import</button> <button class="btn btn-primary" onclick="subForm()">+ Add subscriber</button>'));
   SUBS = await dbGet('subscribers?select=*&order=subscribed_at.desc')||[];
   renderSubs('');
 }
@@ -704,6 +740,43 @@ function exportSubs(){
   const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='subscribers.csv';a.click();toast('Exported '+SUBS.length+' subscribers');
+}
+
+function parseSubscribers(text){
+  const emailRe=/[^\s,;<>()"']+@[^\s,;<>()"']+\.[^\s,;<>()"']+/g;
+  const seen=new Set(); const rows=[]; let skipped=0;
+  (text||'').split(/\r?\n/).forEach(line=>{
+    line=line.trim(); if(!line) return;
+    const found=line.match(emailRe); if(!found) return;
+    const add=(email,name)=>{ email=email.toLowerCase(); if(seen.has(email)){skipped++;return;} seen.add(email); rows.push({name:(name||'').trim()||null,email,source:'import'}); };
+    if(found.length===1){
+      const name=line.replace(found[0],'').replace(/[",;<>()]/g,' ').replace(/\s+/g,' ');
+      add(found[0],name);
+    } else { found.forEach(e=>add(e,'')); }
+  });
+  return {rows,skipped};
+}
+function subImport(){
+  modal({title:'Import subscribers',wide:true,saveLabel:'Import',
+    body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.55">Upload a CSV or paste a list — one subscriber per line, as <strong>Name, email@example.com</strong> or just the email. Lines without a valid email are ignored, and duplicates are skipped automatically.</p>'+
+      '<div class="field full" style="margin-bottom:14px"><label>CSV file</label><input type="file" id="impFile" accept=".csv,text/csv,text/plain"></div>'+
+      '<div class="field full"><label>Or paste / review here</label><textarea id="impText" style="min-height:150px;font-family:\'IBM Plex Mono\',monospace;font-size:13px" placeholder="Jane Smith, jane@example.com&#10;john@example.com"></textarea></div>'+
+      '<div id="impHint" style="font-size:13px;color:var(--muted);margin-top:10px;font-weight:600"></div>',
+    onReady:(bg)=>{
+      const ta=bg.querySelector('#impText'), hint=bg.querySelector('#impHint');
+      const updateHint=()=>{ const {rows,skipped}=parseSubscribers(ta.value); hint.textContent=rows.length?(rows.length+' valid email'+(rows.length===1?'':'s')+' found'+(skipped?', '+skipped+' duplicate'+(skipped===1?'':'s')+' in list skipped':'')+'.'):''; };
+      bg.querySelector('#impFile').onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ ta.value=r.result; updateHint(); }; r.readAsText(f); };
+      ta.oninput=updateHint;
+    },
+    onSave:async(bg)=>{
+      const {rows}=parseSubscribers(bg.querySelector('#impText').value);
+      if(!rows.length) throw new Error('No valid emails found to import.');
+      const inserted = await api('subscribers?on_conflict=email',{method:'POST',headers:{'Prefer':'resolution=ignore-duplicates,return=representation'},body:JSON.stringify(rows)}) || [];
+      const existed = rows.length - inserted.length;
+      SUBS = await dbGet('subscribers?select=*&order=subscribed_at.desc')||[];
+      renderSubs('');
+      toast('Imported '+inserted.length+' new'+(existed>0?' ('+existed+' already existed)':''));
+    }});
 }
 
 /* ---------------- SHOWS ---------------- */
