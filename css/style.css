@@ -12,6 +12,12 @@
     --bg-panel: #0a0f1a;
     --text-light: #F4F4F4;
     --border-dark: #14294d;
+    --accent-yellow:  #FFD21A;
+    --accent-lime:    #A6E22E;
+    --accent-cyan:    #17C3FF;
+    --accent-cobalt:  #3D6FFF;
+    --accent-purple:  #8B3DFF;
+    --accent-magenta: #FF3D8B;
     --font-display: 'Barlow Condensed', 'Inter', sans-serif;
 }
 
