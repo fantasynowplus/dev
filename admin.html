@@ -419,7 +419,7 @@ async function boot(){
 
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
-  try{ ADMINS = await dbGet('profiles?select=id,name,email,admin_level&admin_level=gte.1&order=name.asc') || []; }catch(e){ ADMINS=[]; }
+  try{ ADMINS = await dbGet('profiles?select=id,name,email&role_id=not.is.null&order=name.asc') || []; }catch(e){ ADMINS=[]; }
   try{ ROLES = await dbGet('roles?select=*&order=name.asc') || []; }catch(e){ ROLES=[]; }
   document.querySelectorAll('#nav button[data-go]').forEach(b=>{
     const k=b.dataset.go;
@@ -496,7 +496,7 @@ async function loadDashboard(){
     dbGet('tasks?select=id,status')
   ]);
   const activeTasks=(tasks||[]).filter(t=>t.status!=='done').length;
-  const recentAdmins = await dbGet('profiles?select=name,email,admin_level,updated_at&admin_level=gte.1&order=updated_at.desc.nullslast&limit=8')||[];
+  const recentAdmins = await dbGet('profiles?select=name,email,role:roles(name)&role_id=not.is.null&order=name.asc&limit=20')||[];
   const recentTasks = await dbGet('tasks?select=title,status,updated_at,project:projects(name)&order=updated_at.desc&limit=6')||[];
 
   const stat=(k,v,color)=>'<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="bar" style="background:'+color+'"></div></div>';
@@ -516,11 +516,12 @@ async function loadDashboard(){
           '<td class="mono" style="color:var(--muted);text-align:right">'+timeAgo(t.updated_at)+'</td></tr>').join('')+
           '</tbody></table></div>' : '<div class="empty" style="padding:30px"><p>No tasks yet. Head to the Project Board to start one.</p></div>')+
       '</div>'+
-      '<div class="panel"><div class="panel-head"><h3>Admins</h3><span class="count-pill" style="margin-left:auto">'+recentAdmins.length+'</span></div>'+
-        '<div class="table-wrap"><table><tbody>'+recentAdmins.map(a=>
+      '<div class="panel"><div class="panel-head"><h3>Dashboard access</h3><span class="count-pill" style="margin-left:auto">'+recentAdmins.length+'</span></div>'+
+        '<div class="table-wrap"><table><tbody>'+(recentAdmins.length?recentAdmins.map(a=>
           '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar">'+initials(a.name||a.email)+'</span>'+
           '<span>'+esc(a.name||a.email)+'</span></div></td>'+
-          '<td style="text-align:right"><span class="chip">Lvl '+a.admin_level+'</span></td></tr>').join('')+
+          '<td style="text-align:right"><span class="chip">'+esc(a.role?a.role.name:'—')+'</span></td></tr>').join('')
+          :'<tr><td><div class="empty" style="padding:20px"><p>No one has dashboard access yet. Assign a role in the Staff area.</p></div></td></tr>')+
         '</tbody></table></div>'+
       '</div>'+
     '</div>';
