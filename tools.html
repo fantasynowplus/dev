@@ -106,7 +106,7 @@ layout: null
             <div class="dgf-cta">
                 <a href="draft-guide.html" class="tool-card-link">Open Draft Guide</a>
                 {% assign guide = site.static_files | where: "path", "/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf" | first %}
-                <a href="/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf{% if guide %}?v={{ guide.modified_time | date: '%s' }}{% endif %}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
+                <a href="{{ '/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf' | relative_url }}{% if guide %}?v={{ guide.modified_time | date: '%s' }}{% endif %}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
                     <i class="fa-solid fa-file-arrow-down"></i> Download PDF
                 </a>
                 {% if guide %}<span class="dgf-pdf-date">Updated {{ guide.modified_time | date: "%b %-d, %Y" }}</span>{% endif %}
