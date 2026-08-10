@@ -321,19 +321,20 @@
       var mine = e.players.filter(function (p) { return matchKey(p.name, p.pos) === matchKey(row.name, row.pos); })[0];
       if (!mine) return '';
       var st = statusFor(mine.id, e.roster, e.slots);
-      var mates = e.players.filter(function (p) { return p.pos === row.pos && p.id !== mine.id; })
+      var mates = e.players.filter(function (p) { return p.pos === row.pos; })
         .sort(function (a, b) { return b.value - a.value; })
         .map(function (p) {
           var ms = statusFor(p.id, e.roster, e.slots);
-          return '<div class="ml-pm-row"><span class="ml-pm-name">' + p.name + '</span>' +
+          var isSel = p.id === mine.id;
+          return '<div class="ml-pm-row' + (isSel ? ' ml-pm-sel' : '') + '"><span class="ml-pm-name">' + p.name + '</span>' +
             '<span class="ml-pm-team">' + (p.team || '') + '</span>' +
-            '<span class="ml-pm-status ml-pm-' + ms.cls + '">' + ms.label + '</span>' +
+            '<span class="ml-pm-statuscell"><span class="ml-pm-status ml-pm-' + ms.cls + '">' + ms.label + '</span></span>' +
             '<span class="ml-pm-val">' + comma(p.value) + '</span></div>';
-        }).join('') || '<div class="ml-pm-empty">Only ' + row.pos + ' on this roster.</div>';
+        }).join('');
       return '<div class="ml-pm-league"><div class="ml-pm-head"><span class="ml-pm-lname">' + e.leagueName + '</span>' +
         '<span class="ml-pill">' + (e.dynasty ? 'Dynasty' : 'Redraft') + '</span>' +
         '<span class="ml-pm-status ml-pm-' + st.cls + '">' + st.label + '</span></div>' +
-        '<div class="ml-pm-sub">Other ' + row.pos + 's on this team</div>' + mates + '</div>';
+        '<div class="ml-pm-sub">All ' + row.pos + 's on this team</div>' + mates + '</div>';
     }).join('');
     el('ml-modal-body').innerHTML =
       '<div class="ml-pm-title">' + row.name + ' <span class="ml-pm-meta">' + row.pos + (row.team ? ' · ' + row.team : '') + ' · ' + row.shares + ' share' + (row.shares === 1 ? '' : 's') + '</span></div>' + blocks;
