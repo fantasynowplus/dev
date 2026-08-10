@@ -318,7 +318,7 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows',
-  channels:'Channels', youtube:'YouTube Stats', board:'Project Board'
+  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 function can(resource, action){
   if(ME && ME.admin_level >= 9) return true;
@@ -424,7 +424,6 @@ async function boot(){
   document.querySelectorAll('#nav button[data-go]').forEach(b=>{
     const k=b.dataset.go;
     if(RESOURCES[k] && !can(k,'r')) b.style.display='none';
-    if(k==='roles' && ME.admin_level<9) b.style.display='none';
   });
 
   go('dashboard');
@@ -528,8 +527,8 @@ async function loadDashboard(){
 }
 
 async function loadRoles(){
-  if(ME.admin_level < 9){ document.getElementById('content').innerHTML='<div class="empty"><h4>Owner only</h4><p>Managing roles is restricted to level 9 owners.</p></div>'; return; }
-  topAction('<button class="btn btn-primary" onclick="roleForm()">+ New role</button>');
+  if(!can('roles','r')){ document.getElementById('content').innerHTML='<div class="empty"><h4>No access</h4><p>You don\'t have permission to manage roles.</p></div>'; return; }
+  topAction(ifCan('roles','c','<button class="btn btn-primary" onclick="roleForm()">+ New role</button>'));
   ROLES = await dbGet('roles?select=*&order=name.asc')||[];
   const cell=(perm,k,a)=> (perm&&perm[k]&&perm[k][a])?'<span class="pm-on">'+a.toUpperCase()+'</span>':'<span class="pm-off">'+a.toUpperCase()+'</span>';
   document.getElementById('content').innerHTML =
@@ -537,11 +536,11 @@ async function loadRoles(){
       Object.values(RESOURCES).map(n=>'<th>'+n+'</th>').join('')+'<th></th></tr></thead><tbody>'+
       ROLES.map(r=>'<tr><td><strong>'+esc(r.name)+'</strong>'+(r.description?'<div style="font-size:12px;color:var(--muted)">'+esc(r.description)+'</div>':'')+'</td>'+
         Object.keys(RESOURCES).map(k=>'<td class="pm">'+['c','r','u','d'].map(a=>cell(r.permissions,k,a)).join('')+'</td>').join('')+
-        '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'roleForm("'+r.id+'")\'>Edit</button>'+
-        '<button class="btn btn-danger btn-sm" onclick=\'roleDelete("'+r.id+'")\'>Delete</button></div></td></tr>').join('')+
+        '<td><div class="row-actions">'+ifCan('roles','u','<button class="btn btn-ghost btn-sm" onclick=\'roleForm("'+r.id+'")\'>Edit</button>')+ifCan('roles','d','<button class="btn btn-danger btn-sm" onclick=\'roleDelete("'+r.id+'")\'>Delete</button>')+'</div></td></tr>').join('')+
       '</tbody></table></div></div>'
-      : '<div class="empty"><h4>No roles yet</h4><p>Create a role and choose what it can do in each section.</p><button class="btn btn-primary" onclick="roleForm()">+ New role</button></div>');
+      : '<div class="empty"><h4>No roles yet</h4><p>Create a role and choose what it can do in each section.</p>'+ifCan('roles','c','<button class="btn btn-primary" onclick="roleForm()">+ New role</button>')+'</div>');
 }
+
 function roleForm(id){
   const r = id? ROLES.find(x=>x.id===id) : {permissions:{}};
   const perm = r.permissions||{};
