@@ -5,7 +5,7 @@ layout: null
 
 <main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
     <h1 style="text-align: center;">Tools & Graphics</h1>
-    <p style="text-align: center; color: #ffffff; margin-bottom: 40px;">Level up your league chat with these custom visual tools.</p>
+    <p style="text-align: center; color: #ffffff; margin-bottom: 40px;">Level up your teams with these free tools from FantasyNow+</p>
 
     <!-- Row 1: My Leagues + Trade Calculator -->
     <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 30px;">
@@ -26,19 +26,19 @@ layout: null
     <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
         <div class="tool-card">
             <h3>SFB Draft Graphic</h3>
-            <p>Official tournament branding with your specific division and full 20-round breakdown.</p>
+            <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
             <a href="sfb-roster.html" class="tool-card-link">Open Tool</a>
         </div>
 
         <div class="tool-card">
             <h3>League Flex Graphic</h3>
-            <p>Transform your draft results into a single, streamlined roster view for quick trash-talk.</p>
+            <p>Transform your draft results into a single roster view for quick trash-talk.</p>
             <a href="fantasy-roster.html" class="tool-card-link">Open Tool</a>
         </div>
 
         <div class="tool-card">
             <h3>Dynasty Rookie Recap</h3>
-            <p>High-impact graphic highlighting your rookie haul and pick value.</p>
+            <p>High-impact graphic highlighting your rookie haul and pick value. </p>
             <a href="rookie-recap.html" class="tool-card-link">Open Tool</a>
         </div>
     </div>
@@ -78,12 +78,17 @@ layout: null
         content:"";position:absolute;left:0;top:12px;width:10px;height:10px;border-radius:3px;
         background:#f0b429;
     }
-    .dgf-cta{text-align:right;}
+    .dgf-cta{display:flex;flex-direction:column;align-items:flex-end;gap:12px;}
     .dgf-cta .tool-card-link{font-size:1.05rem;padding:14px 28px;}
-    @media(max-width:760px){
-        .dgf-inner{grid-template-columns:1fr;padding:26px 22px;}
-        .dgf-cta{text-align:left;}
+    .dgf-pdf{
+        display:inline-flex;align-items:center;gap:8px;
+        background:transparent;border:1px solid #f0b429;color:#f0b429;
+        font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+        letter-spacing:.04em;font-size:.95rem;padding:11px 22px;border-radius:6px;
+        text-decoration:none;white-space:nowrap;transition:background .15s,color .15s;
     }
+    .dgf-pdf:hover{background:#f0b429;color:#1a1204;}
+    .dgf-pdf-date{display:block;color:#7d8aa5;font-size:.78rem;font-weight:500;letter-spacing:0;text-transform:none;}
     </style>
 
     <section class="dgf-feature">
@@ -100,6 +105,11 @@ layout: null
             </div>
             <div class="dgf-cta">
                 <a href="draft-guide.html" class="tool-card-link">Open Draft Guide</a>
+                {% assign guide = site.static_files | where: "path", "/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf" | first %}
+                <a href="/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf{% if guide %}?v={{ guide.modified_time | date: '%s' }}{% endif %}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
+                    <i class="fa-solid fa-file-arrow-down"></i> Download PDF
+                </a>
+                {% if guide %}<span class="dgf-pdf-date">Updated {{ guide.modified_time | date: "%b %-d, %Y" }}</span>{% endif %}
             </div>
         </div>
     </section>
