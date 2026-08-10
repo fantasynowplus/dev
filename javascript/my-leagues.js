@@ -218,13 +218,14 @@
     var rosters = await Sleeper.get('/league/' + l.league_id + '/rosters');
     var topN = (startersCount(raw.roster_positions) || 12) + 6;
     var scored = rosters.map(function (r) {
-      return { ownerId: r.owner_id, score: evalRoster(r, playersMap, rankData.map, topN).total };
+      var ev = evalRoster(r, playersMap, rankData.map, topN);
+      return { ownerId: r.owner_id, score: ev.total, players: ev.players };
     }).sort(function (a, b) { return b.score - a.score; });
     var n = scored.length;
     var idx = scored.findIndex(function (s) { return s.ownerId === USER_SLEEPER_ID; });
     if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
     var rank = idx + 1;
-    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score };
+    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score, players: scored[idx].players, dynasty: isDynasty(raw) };
   }
 
   function setInsight(leagueId, ins) {
@@ -268,6 +269,53 @@
     slot.innerHTML = html;
   }
 
+  var PORT = { list: [], leagues: 0, wired: false };
+
+  function buildPortfolio(entries) {
+    var map = {}, leagues = 0;
+    entries.forEach(function (e) {
+      if (!e.players) return;
+      leagues++;
+      e.players.forEach(function (pl) {
+        var k = matchKey(pl.name, pl.pos);
+        var row = map[k] || (map[k] = { name: pl.name, pos: pl.pos || '', team: pl.team || '', shares: 0, dyn: 0, red: 0 });
+        row.shares++;
+        if (e.dynasty) row.dyn++; else row.red++;
+      });
+    });
+    var list = Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return (b.shares - a.shares) || a.name.localeCompare(b.name); });
+    return { list: list, leagues: leagues };
+  }
+
+  function renderPortfolioRows(filter) {
+    filter = (filter || '').trim().toLowerCase();
+    var rows = PORT.list.filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || (r.pos || '').toLowerCase() === filter || (r.team || '').toLowerCase() === filter; });
+    el('ml-port-body').innerHTML = rows.length ? rows.map(function (r) {
+      var pct = PORT.leagues ? Math.round(r.shares / PORT.leagues * 100) : 0;
+      return '<tr><td class="ml-name">' + r.name + '</td>' +
+        '<td><span class="ml-rost-pos ml-pos-' + (r.pos || '').toLowerCase() + '">' + r.pos + '</span></td>' +
+        '<td>' + (r.team || '—') + '</td>' +
+        '<td><b style="color:#eef2fb">' + r.shares + '</b></td>' +
+        '<td><span class="ml-port-bar" style="width:' + Math.max(2, pct * 0.5) + 'px"></span>' + pct + '%</td>' +
+        '<td>' + r.dyn + '</td><td>' + r.red + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="ml-empty">No players match that search.</td></tr>';
+    el('ml-port-foot').textContent = rows.length + ' of ' + PORT.list.length + ' players · across ' + PORT.leagues + ' leagues';
+  }
+
+  function renderPortfolio(entries) {
+    var built = buildPortfolio(entries);
+    PORT.list = built.list; PORT.leagues = built.leagues;
+    if (!PORT.list.length) { el('ml-portfolio').style.display = 'none'; return; }
+    el('ml-portfolio').style.display = 'block';
+    if (!PORT.wired) {
+      PORT.wired = true;
+      var s = el('ml-port-search');
+      if (s) s.addEventListener('input', function () { renderPortfolioRows(this.value); });
+    }
+    renderPortfolioRows(el('ml-port-search') ? el('ml-port-search').value : '');
+  }
+
   async function getSleeperUserId() {
     if (auth.profile && auth.profile.sleeper_user_id) return auth.profile.sleeper_user_id;
     try {
@@ -288,7 +336,7 @@
       if (s.best_ball === 1) formatCounts.BestBall++;
     });
     var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0, 'Drafting': 0 };
-    var topTeams = [], insightsMap = {};
+    var topTeams = [], insightsMap = {}; var portEntries = [];
     try {
       USER_SLEEPER_ID = await getSleeperUserId();
       if (USER_SLEEPER_ID) {
@@ -297,6 +345,7 @@
           try {
             var ins = await insightsForLeague(leagues[i], playersMap);
             insightsMap[leagues[i].league_id] = ins;
+            if (ins.players) portEntries.push(ins);
             setInsight(leagues[i].league_id, ins);
             if (ins.tier) tierCounts[ins.tier]++;
             if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
@@ -306,6 +355,7 @@
     } catch (e) {}
     topTeams.sort(function (a, b) { return b.score - a.score; });
     renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
+    renderPortfolio(portEntries);
 
     var sorted = leagues.slice().sort(function (a, b) {
       var ia = insightsMap[a.league_id], ib = insightsMap[b.league_id];
