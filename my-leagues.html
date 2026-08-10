@@ -143,6 +143,14 @@ layout: null
   .ml-chiptile-name { color: #eef2fb; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ml-chiptile-sub { color: #8a97b3; font-size: 12px; margin-top: 2px; }
   .ml-chiptile-meta { color: #56d364; font-size: 11px; font-weight: 700; margin-top: 6px; }
+  .ml-port { background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; padding: 20px 22px; margin-top: 20px; }
+  .ml-port-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ml-port-search { background: #0f1523; border: 1px solid #2a3450; border-radius: 8px; padding: 9px 12px; color: #eef2fb; font-size: 14px; font-family: inherit; min-width: 220px; }
+  .ml-port-search:focus { outline: none; border-color: #FFA515; }
+  .ml-port-wrap { max-height: 460px; overflow-y: auto; border: 1px solid #2a3450; border-radius: 10px; background: #131a29; }
+  .ml-port-wrap thead th { position: sticky; top: 0; z-index: 2; }
+  .ml-port-foot { color: #7d8aa5; font-size: 12px; padding-top: 10px; }
+  .ml-port-bar { display: inline-block; height: 6px; border-radius: 3px; background: #FFA515; vertical-align: middle; margin-right: 8px; min-width: 2px; }
 </style>
 
 <main class="ml-wrap">
@@ -171,6 +179,21 @@ layout: null
         </thead>
         <tbody id="leaguesBody"></tbody>
       </table>
+    </div>
+    <div id="ml-portfolio" class="ml-port" style="display:none;">
+      <div class="ml-port-head">
+        <div class="ml-sum-title" style="margin:0">Player Portfolio</div>
+        <input id="ml-port-search" class="ml-port-search" placeholder="Search players…" autocomplete="off">
+      </div>
+      <div class="ml-port-wrap">
+        <table class="ml-table">
+          <thead>
+            <tr><th>Player</th><th>Pos</th><th>Team</th><th>Shares</th><th>Exposure</th><th>Dynasty</th><th>Redraft</th></tr>
+          </thead>
+          <tbody id="ml-port-body"></tbody>
+        </table>
+      </div>
+      <div class="ml-port-foot" id="ml-port-foot"></div>
     </div>
   </div>
 
