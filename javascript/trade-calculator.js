@@ -1,16 +1,24 @@
 (function () {
   var SHEET_URL = {
     draft: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=0&single=true&output=csv',
-    dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv'
+    dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv',
+    idp: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=1415867354&single=true&output=csv'
   };
   var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
-  var POS_COL = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b' };
+  var IDP_POS = ['DL', 'LB', 'DB'];
+  var ALL_POS = ['QB', 'RB', 'WR', 'TE', 'DL', 'LB', 'DB'];
+  var IDP_GROUP = { DE: 'DL', DT: 'DL', NT: 'DL', DL: 'DL', EDGE: 'DL', LB: 'LB', OLB: 'LB', ILB: 'LB', MLB: 'LB', CB: 'DB', S: 'DB', SS: 'DB', FS: 'DB', DB: 'DB' };
+  function posGroup(pos) { var p = (pos || '').toUpperCase(); return IDP_GROUP[p] || p; }
+  var POS_COL = { QB: '#e5578a', RB: '#3fb98a', WR: '#4b8fe0', TE: '#e08a4b', DL: '#e8a44e', LB: '#a78bfa', DB: '#ef7fb0' };
   var TIERS = {
     QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
     RB: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
     WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
     TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
+    DL: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]],
+    LB: [[6, 140, 110], [12, 80, 60], [24, 45, 32], [40, 22, 13], [60, 9, 4]],
+    DB: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]]
   };
   var PICK_BASE = { 1: 90, 2: 45, 3: 20 };
   var YEAR_DISCOUNT = [1.0, 0.7, 0.5];
@@ -21,12 +29,12 @@
   function el(id) { return document.getElementById(id); }
   function comma(v) { return Math.round(v).toLocaleString(); }
   function normName(s) { return (s || '').toLowerCase().replace(/[^a-z]/g, '').replace(/(jr|sr|ii|iii|iv|v)$/, ''); }
-  function matchKey(name, pos) { return normName(name) + '|' + (pos || '').toUpperCase(); }
+  function matchKey(name, pos) { return normName(name) + '|' + posGroup(pos); }
   function draftYears() { var y = new Date().getFullYear() + 1; return [y, y + 1, y + 2]; }
   function ordRound(r) { return r === 1 ? '1st' : r === 2 ? '2nd' : '3rd'; }
 
   function playerValue(pos, rank) {
-    var tiers = TIERS[pos];
+    var tiers = TIERS[posGroup(pos)];
     if (!tiers || !rank) return 0;
     var minRank = 1;
     for (var i = 0; i < tiers.length; i++) {
@@ -42,12 +50,9 @@
   }
   function pickValue(a) { return Math.round((PICK_BASE[a.round] || 0) * (YEAR_DISCOUNT[a.yearIdx] || 0)); }
 
-  async function rankingsFor(format) {
-    var key = format === 'dynasty' ? 'dynasty' : 'draft';
-    if (rankCache[key]) return rankCache[key];
-    var fnMap = {}, ecrMap = {}, lists = {};
+  async function loadSheet(url, fnMap, lists) {
     try {
-      var res = await fetch(SHEET_URL[key]);
+      var res = await fetch(url);
       var text = await res.text();
       var rows = text.split(/\r?\n/);
       for (var i = 0; i < rows.length; i++) {
@@ -55,7 +60,7 @@
         var cols = rows[i].split(',');
         var posRank = parseInt(String(cols[0] || '').replace(/[^0-9]/g, ''), 10);
         var name = (cols[2] || '').replace(/^"|"$/g, '').trim();
-        var pos = (cols[4] || '').replace(/^"|"$/g, '').trim().toUpperCase();
+        var pos = posGroup((cols[4] || '').replace(/^"|"$/g, '').trim());
         var team = (cols[3] || '').replace(/^"|"$/g, '').trim();
         if (!name || !pos || !posRank) continue;
         var k = matchKey(name, pos);
@@ -63,6 +68,14 @@
         (lists[pos] = lists[pos] || []).push({ name: name, team: team, pos: pos, rank: posRank });
       }
     } catch (e) {}
+  }
+
+  async function rankingsFor(format) {
+    var key = format === 'dynasty' ? 'dynasty' : 'draft';
+    if (rankCache[key]) return rankCache[key];
+    var fnMap = {}, ecrMap = {}, lists = {};
+    await loadSheet(SHEET_URL[key], fnMap, lists);
+    await loadSheet(SHEET_URL.idp, fnMap, lists);
     for (var pi = 0; pi < RANK_POS.length; pi++) {
       var pos2 = RANK_POS[pi];
       try {
@@ -82,7 +95,7 @@
 
   function buildPool(rankData) {
     var pool = [], seen = {};
-    RANK_POS.forEach(function (pos) {
+    ALL_POS.forEach(function (pos) {
       (rankData.lists[pos] || []).forEach(function (p) {
         var k = matchKey(p.name, pos);
         if (seen[k]) return; seen[k] = true;

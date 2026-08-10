@@ -1,20 +1,28 @@
 (function () {
   var SHEET_URL = {
     draft: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=0&single=true&output=csv',
-    dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv'
+    dynasty: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=102395833&single=true&output=csv',
+    idp: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0RwIKqubfB3GVgr2hFzH5VqjemlPqpOHeJFRaFYtIdeW4wYaOol2HJq6mqB6pNUXj9ztP-4mDGzOk/pub?gid=1415867354&single=true&output=csv'
   };
   var WORKER = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings';
   var PROJ_URL = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/projections';
   var projCache = {};
   var RANK_POS = ['QB', 'RB', 'WR', 'TE'];
+  var IDP_POS = ['DL', 'LB', 'DB'];
+  var ALL_POS = ['QB', 'RB', 'WR', 'TE', 'DL', 'LB', 'DB'];
+  var IDP_GROUP = { DE: 'DL', DT: 'DL', NT: 'DL', DL: 'DL', EDGE: 'DL', LB: 'LB', OLB: 'LB', ILB: 'LB', MLB: 'LB', CB: 'DB', S: 'DB', SS: 'DB', FS: 'DB', DB: 'DB' };
+  function posGroup(pos) { var p = (pos || '').toUpperCase(); return IDP_GROUP[p] || p; }
   var TIER_ORDER = ['Title Favorite', 'Contender', 'On the Bubble', 'Rebuilding', 'Tank Mode', 'Drafting'];
   var TIER_COL = { 'Title Favorite': '#a371f7', 'Contender': '#3fb950', 'On the Bubble': '#FFA515', 'Rebuilding': '#e5534b', 'Tank Mode': '#6e7681', 'Drafting': '#586f96' };
-  var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72' };
+  var POS_COL = { QB: '#f2cc60', RB: '#56d364', WR: '#58a6ff', TE: '#ff7b72', DL: '#e8a44e', LB: '#a78bfa', DB: '#ef7fb0' };
   var TIERS = {
     QB: [[8, 200, 160], [12, 100, 80], [24, 55, 42], [36, 30, 20]],
     RB: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
     WR: [[12, 200, 160], [24, 100, 80], [36, 55, 42], [60, 30, 20], [100, 12, 7], [200, 5, 2]],
     TE: [[4, 200, 160], [10, 100, 80], [16, 55, 42], [28, 30, 20], [50, 12, 7]]
+    DL: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]],
+    LB: [[6, 140, 110], [12, 80, 60], [24, 45, 32], [40, 22, 13], [60, 9, 4]],
+    DB: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]]
   };
   var PROJ_SCALE = 700;
   var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
@@ -87,7 +95,7 @@
   }
 
   function normName(s) { return (s || '').toLowerCase().replace(/[^a-z]/g, '').replace(/(jr|sr|ii|iii|iv|v)$/, ''); }
-  function matchKey(name, pos) { return normName(name) + '|' + (pos || '').toUpperCase(); }
+  function matchKey(name, pos) { return normName(name) + '|' + posGroup(pos); }
 
   async function loadPlayers() {
     if (PLAYERS) return PLAYERS;
@@ -129,12 +137,9 @@
     return { id: pid, name: name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
-  async function rankingsFor(format) {
-    var key = format === 'dynasty' ? 'dynasty' : 'draft';
-    if (rankCache[key]) return rankCache[key];
-    var fnMap = {}, ecrMap = {}, lists = {};
+  async function loadSheet(url, fnMap, lists) {
     try {
-      var res = await fetch(SHEET_URL[key]);
+      var res = await fetch(url);
       var text = await res.text();
       var rows = text.split(/\r?\n/);
       for (var i = 0; i < rows.length; i++) {
@@ -142,7 +147,7 @@
         var cols = rows[i].split(',');
         var posRank = parseInt(String(cols[0] || '').replace(/[^0-9]/g, ''), 10);
         var name = (cols[2] || '').replace(/^"|"$/g, '').trim();
-        var pos = (cols[4] || '').replace(/^"|"$/g, '').trim().toUpperCase();
+        var pos = posGroup((cols[4] || '').replace(/^"|"$/g, '').trim());
         var team = (cols[3] || '').replace(/^"|"$/g, '').trim();
         if (!name || !pos || !posRank) continue;
         var k = matchKey(name, pos);
@@ -150,6 +155,14 @@
         (lists[pos] = lists[pos] || []).push({ name: name, team: team, pos: pos, rank: posRank, key: k });
       }
     } catch (e) {}
+  }
+
+  async function rankingsFor(format) {
+    var key = format === 'dynasty' ? 'dynasty' : 'draft';
+    if (rankCache[key]) return rankCache[key];
+    var fnMap = {}, ecrMap = {}, lists = {};
+    await loadSheet(SHEET_URL[key], fnMap, lists);
+    await loadSheet(SHEET_URL.idp, fnMap, lists);
     for (var pi = 0; pi < RANK_POS.length; pi++) {
       var pos2 = RANK_POS[pi];
       try {
@@ -164,13 +177,13 @@
       } catch (e) {}
     }
     var map = Object.assign({}, ecrMap, fnMap);
-    RANK_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
+    ALL_POS.forEach(function (p) { if (lists[p]) lists[p].sort(function (a, b) { return a.rank - b.rank; }); });
     rankCache[key] = { map: map, lists: lists };
     return rankCache[key];
   }
 
   function playerValue(pos, rank) {
-    var tiers = TIERS[pos];
+    var tiers = TIERS[posGroup(pos)];
     if (!tiers || !rank) return 0;
     var minRank = 1;
     for (var i = 0; i < tiers.length; i++) {
@@ -194,8 +207,9 @@
       arr.push({ id: pid, name: name, pos: p.position, team: p.team, rank: rank || null, value: playerValue(p.position, rank) });
     });
     arr.sort(function (a, b) { return b.value - a.value; });
-    var top = arr.slice(0, topN), byPos = { QB: 0, RB: 0, WR: 0, TE: 0 }, total = 0;
-    top.forEach(function (pl) { total += pl.value; if (byPos[pl.pos] != null) byPos[pl.pos] += pl.value; });
+    var top = arr.slice(0, topN), byPos = {}, total = 0;
+    ALL_POS.forEach(function (p) { byPos[p] = 0; });
+    top.forEach(function (pl) { total += pl.value; var g = posGroup(pl.pos); if (byPos[g] != null) byPos[g] += pl.value; });
     return { total: total, byPos: byPos, players: arr };
   }
 
@@ -422,7 +436,7 @@
 
   function barHTML(team, idx, maxTotal, sel) {
     var h = maxTotal > 0 ? Math.round(team.total / maxTotal * 220) : 0;
-    var segs = RANK_POS.map(function (pos) {
+    var segs = ALL_POS.map(function (pos) {
       var v = team.byPos[pos] || 0;
       var sh = team.total > 0 ? Math.round(v / team.total * h) : 0;
       return sh > 0 ? '<div style="height:' + sh + 'px;background:' + POS_COL[pos] + '"></div>' : '';
@@ -816,7 +830,7 @@
     }
   }
 
-  var SLOT_ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['RB', 'WR'], REC_FLEX: ['WR', 'TE'], WRRB_WRT_FLEX: ['RB', 'WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'] };
+  var SLOT_ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['RB', 'WR'], REC_FLEX: ['WR', 'TE'], WRRB_WRT_FLEX: ['RB', 'WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'], DL: ['DL'], LB: ['LB'], DB: ['DB'], IDP_FLEX: ['DL', 'LB', 'DB'] };
   var SLOT_LABEL = { WRRB_FLEX: 'W/R', REC_FLEX: 'W/T', WRRB_WRT_FLEX: 'FLEX', SUPER_FLEX: 'SFLEX' };
 
   function playerInfo(pid, playersMap, rankMap) {
@@ -828,7 +842,7 @@
   }
 
   function optimalLineup(optSlots, pool) {
-    var order = { QB: 1, RB: 1, WR: 1, TE: 1, REC_FLEX: 2, WRRB_FLEX: 2, WRRB_WRT_FLEX: 3, FLEX: 3, SUPER_FLEX: 4 };
+    var order = { QB: 1, RB: 1, WR: 1, TE: 1, DL: 1, LB: 1, DB: 1, REC_FLEX: 2, WRRB_FLEX: 2, WRRB_WRT_FLEX: 3, FLEX: 3, IDP_FLEX: 3, SUPER_FLEX: 4 };
     var sorted = optSlots.slice().sort(function (a, b) { return (order[a.slot] || 9) - (order[b.slot] || 9); });
     var used = {}, assign = {};
     sorted.forEach(function (sl) {
@@ -938,7 +952,7 @@
     for (var pid in playersMap) {
       if (rostered[pid]) continue;
       var p = playersMap[pid];
-      if (!p || RANK_POS.indexOf(p.position) === -1) continue;
+      if (!p || ALL_POS.indexOf(posGroup(p.position)) === -1) continue;
       var nm = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
       var k = matchKey(nm, p.position);
       var pts = projMap[k], val = playerValue(p.position, rankMap[k]);
