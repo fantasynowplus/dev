@@ -77,7 +77,9 @@
 .nav-btn:nth-child(1) { background: var(--bright-orange); color: #1a0f00; }
 .nav-btn:nth-child(2) { background: var(--red-orange); color: #1a0503; }
 .nav-btn:nth-child(3) { background: var(--aqua); color: #00110a; }
-.nav-btn:nth-child(4) { background: var(--light-gray); color: #000000; }
+.nav-btn:nth-child(4) { background: var(--accent-magenta); color: #000000; }
+.nav-btn:nth-child(5) { background: var(--accent-cobalt); color: #000000; }
+.nav-btn:nth-child(6) { background: var(--accent-lime); color: #000000; }
 
 /* The active state overrides all of the above with brand navy */
 .nav-btn.active { 
