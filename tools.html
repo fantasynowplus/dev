@@ -105,11 +105,13 @@ layout: null
             </div>
             <div class="dgf-cta">
                 <a href="draft-guide.html" class="tool-card-link">Open Draft Guide</a>
-                {% assign guide = site.static_files | where: "path", "/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf" | first %}
-                <a href="{{ '/assets/2026_Fantasy_Football_Draft_Guide_-_Cheat_Sheet.pdf' | relative_url }}{% if guide %}?v={{ guide.modified_time | date: '%s' }}{% endif %}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
+                {% assign guide = site.static_files | where_exp: "f", "f.path contains '/assets/' and f.extname == '.pdf'" | first %}
+                {% if guide %}
+                <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
                     <i class="fa-solid fa-file-arrow-down"></i> Download PDF
                 </a>
-                {% if guide %}<span class="dgf-pdf-date">Updated {{ guide.modified_time | date: "%b %-d, %Y" }}</span>{% endif %}
+                <span class="dgf-pdf-date">Updated {{ site.time | date: "%b %-d, %Y" }}</span>
+                {% endif %}
             </div>
         </div>
     </section>
