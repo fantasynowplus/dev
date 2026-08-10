@@ -176,6 +176,11 @@
   .pick .pk-email{font-size:12.5px;color:var(--muted);margin-left:auto}
   .pk-more,.pk-empty{padding:14px;text-align:center;font-size:13px;color:var(--muted)}
   .linked-dot{color:var(--aqua);font-size:12px;margin-left:5px;cursor:default}
+  .col-menu{position:absolute;z-index:120;background:#fff;border:1px solid var(--line-2);border-radius:12px;box-shadow:0 12px 34px rgba(0,20,50,.18);padding:8px;min-width:190px}
+  .col-menu-h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:6px 10px 8px}
+  .col-menu-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:14px}
+  .col-menu-item:hover{background:var(--paper)}
+  .col-menu-item input{width:16px;height:16px;accent-color:var(--orange)}
 
   #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--navy);color:#fff;padding:11px 20px;border-radius:11px;font-size:13.5px;font-weight:600;
@@ -232,6 +237,7 @@
     .form-grid{grid-template-columns:1fr}
   }
 
+  .on-dot{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--green);border:2px solid #fff}
   .perm-matrix{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
   .perm-matrix th{background:#f7f8fb;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:9px 10px;text-align:center;border-bottom:1px solid var(--line)}
   .perm-matrix th:first-child{text-align:left}
@@ -246,7 +252,7 @@
 
 <div id="gate">
   <div class="card">
-    <span class="mark">FN+</span>
+    <span class="mark">FantasyNow+</span>
     <h1 id="gateTitle">Admin access required</h1>
     <p id="gateMsg">You need to be signed in as an admin to view this portal.</p>
     <div class="gate-login">
@@ -284,7 +290,7 @@
     <div class="side-foot">
       <div class="who">
         <div class="avatar" id="meAvatar">?</div>
-        <div><div class="name" id="meName">—</div><div class="lvl" id="meLvl">—</div></div>
+        <div><div class="name" id="meName">—</div></div>
       </div>
       <button class="logout" id="logoutBtn">Log out</button>
     </div>
@@ -422,8 +428,8 @@ async function boot(){
   }
   const token = localStorage.getItem('sb-auth-token');
   if(!token){
-    gateMsg('Admin access required',
-      'No saved session on this page. Sign in on the site, then return here — and make sure both are the same address (same https:// site, not a file:// path).');
+    gateMsg('Staff Access Required',
+      'Only members of FantasyNow+ have access to login.');
     return;
   }
   const claims = (window.auth && auth.user && auth.user.sub) ? auth.user : decodeJwt(token);
@@ -461,6 +467,9 @@ async function boot(){
     const k=b.dataset.go;
     if(RESOURCES[k] && !can(k,'r')) b.style.display='none';
   });
+
+  dbPatch('profiles?id=eq.'+ME.id,{last_seen:new Date().toISOString()}).catch(()=>{});
+  if(!window._fnpHeartbeat){ window._fnpHeartbeat=setInterval(()=>{ if(ME) dbPatch('profiles?id=eq.'+ME.id,{last_seen:new Date().toISOString()}).catch(()=>{}); }, 120000); }
 
   go('dashboard');
 }
@@ -531,7 +540,8 @@ async function loadDashboard(){
     dbGet('tasks?select=id,status')
   ]);
   const activeTasks=(tasks||[]).filter(t=>t.status!=='done').length;
-  const recentAdmins = await dbGet('profiles?select=name,email,role:roles(name)&role_id=not.is.null&order=name.asc&limit=20')||[];
+  const accessRows = await dbGet('profiles?select=name,email,last_seen,role:roles(name,permissions)&role_id=not.is.null&order=name.asc&limit=50')||[];
+  const elevated = accessRows.filter(a=>a.role && a.role.permissions && Object.values(a.role.permissions).some(p=>p&&(p.c||p.u||p.d)));
   const recentTasks = await dbGet('tasks?select=title,status,updated_at,project:projects(name)&order=updated_at.desc&limit=6')||[];
 
   const stat=(k,v,color)=>'<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="bar" style="background:'+color+'"></div></div>';
@@ -551,12 +561,13 @@ async function loadDashboard(){
           '<td class="mono" style="color:var(--muted);text-align:right">'+timeAgo(t.updated_at)+'</td></tr>').join('')+
           '</tbody></table></div>' : '<div class="empty" style="padding:30px"><p>No tasks yet. Head to the Project Board to start one.</p></div>')+
       '</div>'+
-      '<div class="panel"><div class="panel-head"><h3>Dashboard access</h3><span class="count-pill" style="margin-left:auto">'+recentAdmins.length+'</span></div>'+
-        '<div class="table-wrap"><table><tbody>'+(recentAdmins.length?recentAdmins.map(a=>
-          '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar">'+initials(a.name||a.email)+'</span>'+
-          '<span>'+esc(a.name||a.email)+'</span></div></td>'+
-          '<td style="text-align:right"><span class="chip">'+esc(a.role?a.role.name:'—')+'</span></td></tr>').join('')
-          :'<tr><td><div class="empty" style="padding:20px"><p>No one has dashboard access yet. Assign a role in the Staff area.</p></div></td></tr>')+
+      '<div class="panel"><div class="panel-head"><h3>Elevated access</h3><span class="count-pill" style="margin-left:auto">'+elevated.length+'</span></div>'+
+        '<div class="table-wrap"><table><tbody>'+(elevated.length?elevated.map(a=>{
+          const online=a.last_seen && (Date.now()-new Date(a.last_seen).getTime() < 300000);
+          return '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="position:relative">'+initials(a.name||a.email)+(online?'<span class="on-dot"></span>':'')+'</span>'+
+          '<div><div>'+esc(a.name||a.email)+'</div><div style="font-size:11px;font-weight:600;color:'+(online?'var(--green)':'var(--muted)')+'">'+(online?'Online now':(a.last_seen?'Seen '+timeAgo(a.last_seen):'Offline'))+'</div></div></div></td>'+
+          '<td style="text-align:right"><span class="chip">'+esc(a.role?a.role.name:'—')+'</span></td></tr>';}).join('')
+          :'<tr><td><div class="empty" style="padding:20px"><p>No one has elevated access yet. Assign a role with create/edit/delete permissions in the Staff area.</p></div></td></tr>')+
         '</tbody></table></div>'+
       '</div>'+
     '</div>';
@@ -615,22 +626,56 @@ function toolbar(placeholder,rightHTML){
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>'+
     '<input id="searchBox" placeholder="'+placeholder+'"></div>'+(rightHTML||'')+'</div>';
 }
+
+const STAFF_COLS = [
+  {key:'name', label:'Name', always:true, cell:s=>'<div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="background:'+accentFor(s.department)+'">'+initials(s.name)+'</span><strong>'+esc(s.name)+'</strong>'+(s.profile_id?'<span class="linked-dot" title="Linked to a login profile">\u25CF</span>':'')+'</div>'},
+  {key:'role', label:'Role', cell:s=>esc(s.role||'—')},
+  {key:'department', label:'Department', cell:s=>s.department?'<span class="chip">'+esc(s.department)+'</span>':'—'},
+  {key:'email', label:'Email', cell:s=>esc(s.email||'—')},
+  {key:'phone', label:'Phone', cell:s=>esc(s.phone||'—')},
+  {key:'dob', label:'Date of birth', cell:s=>fmtDate(s.dob)},
+  {key:'start_date', label:'Start', cell:s=>fmtDate(s.start_date)},
+  {key:'address', label:'Address', cell:s=>esc(s.address||'—')},
+  {key:'account', label:'Account', cell:s=>s.profile_id?badge('Login linked','var(--aqua)'):'<span style="color:var(--muted)">None</span>'},
+  {key:'is_active', label:'Status', cell:s=>s.is_active?badge('Active','var(--green)'):badge('Inactive','var(--muted)')},
+];
+function visibleStaffCols(){
+  try{ const v=JSON.parse(localStorage.getItem('fnp-staff-cols')); if(Array.isArray(v)) return v; }catch(e){}
+  return ['role','department','email','phone','start_date','is_active'];
+}
+function saveStaffCols(arr){ try{ localStorage.setItem('fnp-staff-cols', JSON.stringify(arr)); }catch(e){} }
+function staffColumnsMenu(ev){
+  document.querySelectorAll('.col-menu').forEach(m=>m.remove());
+  const vis=visibleStaffCols();
+  const menu=document.createElement('div'); menu.className='col-menu';
+  menu.innerHTML='<div class="col-menu-h">Show columns</div>'+
+    STAFF_COLS.filter(c=>!c.always).map(c=>'<label class="col-menu-item"><input type="checkbox" data-col="'+c.key+'"'+(vis.includes(c.key)?' checked':'')+'><span>'+esc(c.label)+'</span></label>').join('');
+  document.body.appendChild(menu);
+  const r=ev.currentTarget.getBoundingClientRect();
+  menu.style.top=(r.bottom+6+window.scrollY)+'px';
+  menu.style.left=Math.min(r.left+window.scrollX, window.innerWidth-200)+'px';
+  menu.querySelectorAll('input[data-col]').forEach(cb=>cb.onchange=()=>{
+    let cur=visibleStaffCols();
+    if(cb.checked){ if(!cur.includes(cb.dataset.col)) cur.push(cb.dataset.col); } else cur=cur.filter(k=>k!==cb.dataset.col);
+    saveStaffCols(cur);
+    const sb=document.getElementById('searchBox');
+    renderStaff(sb?sb.value.toLowerCase():'');
+  });
+  setTimeout(()=>{ const close=(e)=>{ if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },0);
+}
+
 function renderStaff(q){
+  q=q||'';
+  const cols = STAFF_COLS.filter(c=>c.always || visibleStaffCols().includes(c.key));
   const rows=STAFF.filter(s=>!q||[s.name,s.email,s.role,s.department].some(v=>(v||'').toLowerCase().includes(q)));
+  const head = cols.map(c=>'<th>'+esc(c.label)+'</th>').join('')+'<th></th>';
+  const body = rows.length? rows.map(s=>'<tr>'+cols.map(c=>'<td>'+c.cell(s)+'</td>').join('')+
+      '<td><div class="row-actions">'+ifCan('staff','u','<button class="btn btn-ghost btn-sm" onclick=\'staffForm("'+s.id+'")\'>Edit</button>')+ifCan('staff','d','<button class="btn btn-danger btn-sm" onclick=\'staffDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
+    : '<tr><td colspan="'+(cols.length+1)+'"><div class="empty"><h4>No staff yet</h4><p>Promote people from your existing profiles, or add someone manually.</p>'+ifCan('staff','c','<button class="btn btn-primary" onclick="staffFromProfiles()">+ Add from profiles</button> <button class="btn btn-ghost" onclick="staffForm()">Add manually</button>')+'</div></td></tr>';
   document.getElementById('content').innerHTML =
-    toolbar('Search staff by name, role, department…','<span class="count-pill" style="margin-left:auto">'+rows.length+' of '+STAFF.length+'</span>')+
-    '<div class="panel"><div class="table-wrap"><table><thead><tr>'+
-      '<th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Phone</th><th>Start</th><th>Status</th><th></th></tr></thead><tbody>'+
-    (rows.length? rows.map(s=>
-      '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="background:'+accentFor(s.department)+'">'+initials(s.name)+'</span><strong>'+esc(s.name)+'</strong>'+(s.profile_id?'<span class="linked-dot" title="Linked to a login profile">●</span>':'')+'</div></td>'+
-      '<td>'+esc(s.role||'—')+'</td>'+
-      '<td>'+(s.department?'<span class="chip">'+esc(s.department)+'</span>':'—')+'</td>'+
-      '<td>'+esc(s.email||'—')+'</td><td>'+esc(s.phone||'—')+'</td><td>'+fmtDate(s.start_date)+'</td>'+
-      '<td>'+(s.is_active?badge('Active','var(--green)'):badge('Inactive','var(--muted)'))+'</td>'+
-      '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'staffForm("'+s.id+'")\'>Edit</button>'+
-      '<button class="btn btn-danger btn-sm" onclick=\'staffDelete("'+s.id+'")\'>Delete</button></div></td></tr>').join('')
-      : '<tr><td colspan="8"><div class="empty"><h4>No staff yet</h4><p>Promote people from your existing profiles, or add someone manually.</p><button class="btn btn-primary" onclick="staffFromProfiles()">+ Add from profiles</button> <button class="btn btn-ghost" onclick="staffForm()">Add manually</button></div></td></tr>')+
-    '</tbody></table></div></div>';
+    toolbar('Search staff by name, role, department…','<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="staffColumnsMenu(event)">Columns</button> <span class="count-pill">'+rows.length+' of '+STAFF.length+'</span>')+
+    '<div class="panel"><div class="table-wrap"><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div></div>';
+  const sb=document.getElementById('searchBox'); if(sb&&q){ sb.value=q; }
   bindSearch(renderStaff);
 }
 
