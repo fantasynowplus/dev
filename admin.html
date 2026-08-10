@@ -455,7 +455,6 @@ async function boot(){
   document.getElementById('gate').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('meName').textContent = ME.name || ME.email || 'Admin';
-  document.getElementById('meLvl').textContent = 'Level '+lvl+' admin';
   document.getElementById('meAvatar').textContent = initials(ME.name||ME.email);
   document.getElementById('logoutBtn').onclick = ()=>{ if(window.auth&&auth.logout)auth.logout(); else {localStorage.removeItem('sb-auth-token');location.href='index.html';} };
 
