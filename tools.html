@@ -105,7 +105,8 @@ layout: null
             </div>
             <div class="dgf-cta">
                 <a href="draft-guide.html" class="tool-card-link">Open Draft Guide</a>
-                {% assign guide = site.static_files | where_exp: "f", "f.path contains '/assets/' and f.extname == '.pdf'" | first %}
+                {% assign pdfs = site.static_files | where: "extname", ".pdf" %}
+                {% for f in pdfs %}{% if f.path contains "/assets/" %}{% assign guide = f %}{% break %}{% endif %}{% endfor %}
                 {% if guide %}
                 <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
                     <i class="fa-solid fa-file-arrow-down"></i> Download PDF
