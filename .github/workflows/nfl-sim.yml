@@ -1,0 +1,44 @@
+name: NFL model daily
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nfl-sim
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the model
+        working-directory: scripts
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          NFL_SIM_SHEET_CSV: ${{ secrets.NFL_SIM_SHEET_CSV }}
+          NFL_SIM_OUT: nfl-sim.json
+          NFL_SIM_SLATE: slate.csv
+        run: python run_sim.py
+
+      - name: Push data to Supabase
+        working-directory: scripts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          jq -n --slurpfile d nfl-sim.json '{id: 1, data: $d[0], updated_at: (now | todate)}' > body.json
+          curl -sf -X POST "${SUPABASE_URL}/rest/v1/nfl_sim?on_conflict=id" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates" \
+            --data @body.json
+          echo "Uploaded to Supabase."

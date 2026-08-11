@@ -120,6 +120,35 @@ class AuthManager {
     this.profile = null;
   }
 
+  async requestPasswordReset(email, redirectTo) {
+    if (!email) throw new Error('Please enter your email.');
+    const url = `${SUPABASE_URL}/auth/v1/recover` +
+      (redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : '');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) throw new Error(this.getErrorMessage(await res.json().catch(() => ({}))));
+    return { success: true };
+  }
+
+  async setNewPassword(accessToken, newPassword) {
+    if (!newPassword || newPassword.length < 6) throw new Error('Password must be at least 6 characters.');
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(this.getErrorMessage(data));
+    return { success: true };
+  }
+
   async fetchProfile() {
     if (!this.user) return null;
     const token = localStorage.getItem('sb-auth-token');
