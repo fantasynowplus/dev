@@ -540,7 +540,7 @@ async function loadDashboard(){
   ]);
   const activeTasks=(tasks||[]).filter(t=>t.status!=='done').length;
   const accessRows = await dbGet('profiles?select=name,email,last_seen,role:roles(name,permissions)&role_id=not.is.null&order=name.asc&limit=50')||[];
-  const elevated = accessRows.filter(a=>a.role && a.role.permissions && Object.entries(a.role.permissions).some(([k,p])=>k!=='staff' && p&&(p.c||p.u||p.d)));
+  const elevated = accessRows.filter(a=>a.role && (a.role.name||'').toLowerCase()!=='staff' && a.role.permissions && Object.values(a.role.permissions).some(p=>p&&(p.c||p.u||p.d)));
   const recentTasks = await dbGet('tasks?select=title,status,updated_at,project:projects(name)&order=updated_at.desc&limit=6')||[];
 
   const stat=(k,v,color)=>'<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="bar" style="background:'+color+'"></div></div>';
