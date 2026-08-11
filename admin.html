@@ -246,6 +246,9 @@
   td.pm{white-space:nowrap;text-align:center}
   .pm-on{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:var(--green);background:color-mix(in srgb,var(--green) 14%,#fff);border:1px solid color-mix(in srgb,var(--green) 30%,#fff);border-radius:5px;padding:1px 4px;margin:0 1px}
   .pm-off{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:#c2c7d0;background:#f4f5f8;border:1px solid #e7eaf1;border-radius:5px;padding:1px 4px;margin:0 1px}
+
+  .chip-link{cursor:pointer}
+  .chip-link:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
 </style>
 </head>
 <body>
@@ -529,6 +532,59 @@ function confirmDelete(what,onYes){
     saveLabel:'Delete',onSave:async()=>{await onYes();}});
 }
 
+function detailRow(label,val){ return '<div style="display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--line)"><div style="min-width:120px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">'+esc(label)+'</div><div style="flex:1;font-size:14px">'+val+'</div></div>'; }
+function viewShow(id){ document.querySelectorAll('.modal-bg').forEach(m=>m.remove()); showDetail(id); }
+function viewStaff(id){ document.querySelectorAll('.modal-bg').forEach(m=>m.remove()); staffDetail(id); }
+function viewChannel(id){ document.querySelectorAll('.modal-bg').forEach(m=>m.remove()); channelDetail(id); }
+
+async function showDetail(id){
+  const rows = await dbGet('shows?select=*,channel:channels(name),host_links:show_hosts(staff(id,name))&id=eq.'+id);
+  const s = rows&&rows[0]; if(!s) return;
+  const hosts=(s.host_links||[]).map(h=>h.staff).filter(Boolean);
+  modal({title:s.name,wide:true,footer:false,
+    body:'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+        (s.content_type?badge(s.content_type,accentFor(s.content_type)):'')+
+        (s.is_active!==false?badge('Active','var(--green)'):badge('Off air','var(--muted)'))+'</div>'+
+      detailRow('Hosts', hosts.length? hosts.map(h=>'<span class="chip chip-link" onclick=\'viewStaff("'+h.id+'")\'>'+esc(h.name)+'</span>').join('') : '<span style="color:var(--muted)">None linked</span>')+
+      detailRow('Channel', s.channel?esc(s.channel.name):'—')+
+      detailRow('Schedule', s.schedule_day?esc(s.schedule_day):'—')+
+      (s.description?detailRow('Description','<div style="line-height:1.6;white-space:pre-wrap">'+esc(s.description)+'</div>'):'')+
+      (can('shows','u')?'<div style="margin-top:16px"><button class="btn btn-ghost btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());showForm("'+s.id+'")\'>Edit show</button></div>':'')
+  });
+}
+async function staffDetail(id){
+  const rows = await dbGet('staff?select=*&id=eq.'+id); const s=rows&&rows[0]; if(!s) return;
+  let role=null; if(s.profile_id){ try{ const pr=await dbGet('profiles?select=role:roles(name)&id=eq.'+s.profile_id); role=pr&&pr[0]&&pr[0].role?pr[0].role.name:null; }catch(e){} }
+  let hosted=[]; try{ const hs=await dbGet('show_hosts?select=show:shows(id,name)&staff_id=eq.'+id); hosted=(hs||[]).map(h=>h.show).filter(Boolean); }catch(e){}
+  modal({title:s.name,wide:true,footer:false,
+    body:'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+        (s.role?'<span class="chip">'+esc(s.role)+'</span>':'')+
+        (s.is_active!==false?badge('Active','var(--green)'):badge('Inactive','var(--muted)'))+
+        (s.profile_id?badge('Login linked','var(--aqua)'):'')+
+        (role?'<span class="chip">Access: '+esc(role)+'</span>':'')+'</div>'+
+      detailRow('Email', s.email?esc(s.email):'—')+
+      detailRow('Phone', s.phone?esc(s.phone):'—')+
+      detailRow('Department', s.department?esc(s.department):'—')+
+      detailRow('Start date', fmtDate(s.start_date))+
+      detailRow('Date of birth', fmtDate(s.dob))+
+      (s.address?detailRow('Address', esc(s.address)):'')+
+      detailRow('Shows hosted', hosted.length? hosted.map(sh=>'<span class="chip chip-link" onclick=\'viewShow("'+sh.id+'")\'>'+esc(sh.name)+'</span>').join('') : '<span style="color:var(--muted)">None</span>')+
+      (s.notes?detailRow('Notes','<div style="line-height:1.6;white-space:pre-wrap">'+esc(s.notes)+'</div>'):'')+
+      '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+ifCan('staff','u','<button class="btn btn-ghost btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());staffForm("'+s.id+'")\'>Edit</button>')+((!s.profile_id && can('staff','c'))?'<button class="btn btn-navy btn-sm" onclick=\'createLoginForm("'+s.id+'")\'>Create login</button>':'')+'</div>'
+  });
+}
+async function channelDetail(id){
+  const rows = await dbGet('channels?select=*,shows(id,name)&id=eq.'+id); const c=rows&&rows[0]; if(!c) return;
+  const shows=c.shows||[];
+  modal({title:c.name,wide:true,footer:false,
+    body:(c.youtube_channel_id?detailRow('YouTube ID','<span class="mono">'+esc(c.youtube_channel_id)+'</span>'):'')+
+      (c.youtube_url?detailRow('YouTube URL','<a href="'+esc(c.youtube_url)+'" target="_blank" rel="noopener">'+esc(c.youtube_url)+'</a>'):'')+
+      (c.description?detailRow('Description','<div style="line-height:1.6;white-space:pre-wrap">'+esc(c.description)+'</div>'):'')+
+      detailRow('Shows ('+shows.length+')', shows.length? shows.map(sh=>'<span class="chip chip-link" onclick=\'viewShow("'+sh.id+'")\'>'+esc(sh.name)+'</span>').join('') : '<span style="color:var(--muted)">None</span>')+
+      (can('channels','u')?'<div style="margin-top:16px"><button class="btn btn-ghost btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());channelForm("'+c.id+'")\'>Edit</button></div>':'')
+  });
+}
+
 /* ---------------- DASHBOARD ---------------- */
 async function loadDashboard(){
   const [staff,subs,shows,channels,tasks] = await Promise.all([
@@ -663,13 +719,45 @@ function staffColumnsMenu(ev){
   setTimeout(()=>{ const close=(e)=>{ if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },0);
 }
 
+async function createLoginForm(id){
+  const rows = await dbGet('staff?select=id,name,email,profile_id&id=eq.'+id); const staff=rows&&rows[0]; if(!staff) return;
+  if(staff.profile_id){ toast('This person already has a login',true); return; }
+  const genPw = ()=>Math.random().toString(36).slice(2,8)+Math.floor(10+Math.random()*90)+'!';
+  modal({title:'Create login for '+staff.name, saveLabel:'Create account',
+    body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">Creates a login and links it to this staff record. Share the password with them — they can change it later.</p>'+
+      '<div class="form-grid">'+
+      '<div class="field full"><label>Email</label><input name="email" type="email" value="'+esc(staff.email||'')+'"></div>'+
+      '<div class="field full"><label>Temporary password</label><input name="password" value="'+genPw()+'"></div>'+
+      '</div>',
+    onSave:async(bg)=>{
+      const email=val(bg,'email'), password=val(bg,'password');
+      if(!email||!password) throw new Error('Email and password are required');
+      const res = await fetch(SUPABASE_URL+'/functions/v1/create-user',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({email,password,name:staff.name})
+      });
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.error||'Failed to create login');
+      await dbPatch('staff?id=eq.'+staff.id,{profile_id:data.id});
+      STAFF = await dbGet('staff?select=*&order=name.asc')||[];
+      document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
+      renderStaff('');
+      toast('Login created for '+staff.name);
+      modal({title:'Login created', footer:false,
+        body:'<p style="line-height:1.6;font-size:14px">Share these with <strong>'+esc(staff.name)+'</strong>:</p>'+
+          detailRow('Email', esc(email))+detailRow('Temp password','<span class="mono">'+esc(password)+'</span>')+
+          '<p style="color:var(--muted);font-size:13px;margin-top:12px">They can log in right away and change their password later.</p>'});
+    }});
+}
+
 function renderStaff(q){
   q=q||'';
   const cols = STAFF_COLS.filter(c=>c.always || visibleStaffCols().includes(c.key));
   const rows=STAFF.filter(s=>!q||[s.name,s.email,s.role,s.department].some(v=>(v||'').toLowerCase().includes(q)));
   const head = cols.map(c=>'<th>'+esc(c.label)+'</th>').join('')+'<th></th>';
   const body = rows.length? rows.map(s=>'<tr>'+cols.map(c=>'<td>'+c.cell(s)+'</td>').join('')+
-      '<td><div class="row-actions">'+ifCan('staff','u','<button class="btn btn-ghost btn-sm" onclick=\'staffForm("'+s.id+'")\'>Edit</button>')+ifCan('staff','d','<button class="btn btn-danger btn-sm" onclick=\'staffDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
+      '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'viewStaff("'+s.id+'")\'>View</button>'+ifCan('staff','u','<button class="btn btn-ghost btn-sm" onclick=\'staffForm("'+s.id+'")\'>Edit</button>')+ifCan('staff','d','<button class="btn btn-danger btn-sm" onclick=\'staffDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
     : '<tr><td colspan="'+(cols.length+1)+'"><div class="empty"><h4>No staff yet</h4><p>Promote people from your existing profiles, or add someone manually.</p>'+ifCan('staff','c','<button class="btn btn-primary" onclick="staffFromProfiles()">+ Add from profiles</button> <button class="btn btn-ghost" onclick="staffForm()">Add manually</button>')+'</div></td></tr>';
   document.getElementById('content').innerHTML =
     toolbar('Search staff by name, role, department…','<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="staffColumnsMenu(event)">Columns</button> <span class="count-pill">'+rows.length+' of '+STAFF.length+'</span>')+
@@ -848,7 +936,7 @@ function renderShows(q){
       '<td>'+esc(s.schedule_day||'—')+'</td>'+
       '<td>'+esc(s.channel?s.channel.name:'—')+'</td>'+
       '<td>'+(s.is_active!==false?badge('Active','var(--green)'):badge('Off air','var(--muted)'))+'</td>'+
-      '<td><div class="row-actions">'+ifCan('shows','u','<button class="btn btn-ghost btn-sm" onclick=\'showForm("'+s.id+'")\'>Edit</button>')+
+      '<td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'viewShow("'+s.id+'")\'>View</button>'+ifCan('shows','u','<button class="btn btn-ghost btn-sm" onclick=\'showForm("'+s.id+'")\'>Edit</button>')+
       ifCan('shows','d','<button class="btn btn-danger btn-sm" onclick=\'showDelete("'+s.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
       : '<tr><td colspan="7"><div class="empty"><h4>No shows yet</h4><p>Add a show and assign it to one of your channels.</p>'+ifCan('shows','c','<button class="btn btn-primary" onclick="showForm()">+ Add show</button>')+'</div></td></tr>')+
     '</tbody></table></div></div>';
@@ -906,6 +994,7 @@ async function loadChannels(){
     (c.youtube_channel_id?' · <span class="mono">'+esc(c.youtube_channel_id)+'</span>':'')+'</div>'+
     (c.description?'<p style="font-size:13.5px;color:var(--muted);line-height:1.5;margin:0 0 14px">'+esc(c.description)+'</p>':'')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-ghost btn-sm" onclick=\'viewChannel("'+c.id+'")\'>View</button>'+
       (c.youtube_url?'<a class="btn btn-navy btn-sm" href="'+esc(c.youtube_url)+'" target="_blank" rel="noopener">Open on YouTube</a>':'')+
       ifCan('channels','u','<button class="btn btn-ghost btn-sm" onclick=\'channelForm("'+c.id+'")\'>Edit</button>')+
       ifCan('channels','d','<button class="btn btn-danger btn-sm" onclick=\'channelDelete("'+c.id+'")\'>Delete</button>')+
