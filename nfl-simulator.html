@@ -1,0 +1,268 @@
+---
+layout: null
+---
+{% include header.html %}
+
+<style>
+  .nm-wrap { max-width: 1060px; margin: 24px auto 70px; padding: 0 20px; }
+
+  .nm-eyebrow {
+    font-family: var(--font-display); font-size: .8rem; font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--bright-orange);
+    margin-bottom: 10px;
+  }
+  .nm-head h1 {
+    color: #eef2fb; font-size: 2.6rem; line-height: 1; margin: 0 0 10px;
+    text-transform: uppercase; letter-spacing: .01em;
+  }
+  .nm-sub { color: #94a1bd; max-width: 640px; line-height: 1.55; margin: 0 0 18px; font-size: 1rem; }
+
+  .nm-meta {
+    display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+    padding: 12px 0 18px; border-bottom: 1px solid var(--border-dark);
+    color: #7d8aa5; font-size: .82rem;
+  }
+  .nm-legend { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .nm-key { display: inline-flex; align-items: center; gap: 6px; color: #9aa6c0; font-size: .8rem; }
+  .nm-swatch { width: 22px; height: 4px; border-radius: 2px; display: inline-block; }
+  .nm-swatch.model { background: var(--bright-orange); }
+  .nm-swatch.market { background: #4b8fe0; }
+  .nm-swatch.edge { background: var(--aqua); }
+
+  .nm-status { color: #7d8aa5; font-size: 15px; padding: 40px 0; text-align: center; }
+
+  .nm-board { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
+
+  .nm-card {
+    position: relative; display: grid;
+    grid-template-columns: 1fr 240px; gap: 26px;
+    background: #131a29; border: 1px solid #23304d; border-radius: 12px;
+    padding: 18px 22px 18px 26px; overflow: hidden;
+  }
+  .nm-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+
+  .nm-top { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .nm-tag {
+    font-family: var(--font-display); font-weight: 700; font-size: .72rem;
+    letter-spacing: .1em; text-transform: uppercase; color: #0a0f1a;
+    background: #4b8fe0; padding: 3px 8px; border-radius: 4px; flex-shrink: 0;
+  }
+  .nm-tag.prime { background: var(--bright-orange); }
+  .nm-match { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; color: #eef2fb; line-height: 1; }
+  .nm-match .at { color: #6b7890; font-weight: 500; margin: 0 6px; }
+  .nm-kick { color: #7d8aa5; font-size: .8rem; margin-left: auto; white-space: nowrap; }
+
+  .nm-proj {
+    font-family: var(--font-display); color: #c9d2e6; font-size: .92rem;
+    letter-spacing: .02em; margin: -8px 0 16px;
+  }
+  .nm-proj b { color: #eef2fb; font-size: 1.05rem; }
+  .nm-proj .lbl { color: #6b7890; text-transform: uppercase; letter-spacing: .1em; font-size: .68rem; margin-right: 8px; }
+
+  .nm-row { display: grid; grid-template-columns: 84px 1fr; gap: 14px; align-items: center; padding: 7px 0; }
+  .nm-row + .nm-row { border-top: 1px solid #1d2740; }
+  .nm-rowlbl { font-family: var(--font-display); font-weight: 700; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: #8a97b3; }
+  .nm-rowlbl small { display: block; color: #5f6d88; font-weight: 500; letter-spacing: 0; font-size: .72rem; margin-top: 2px; }
+
+  .nm-tracks { display: flex; flex-direction: column; gap: 5px; }
+  .nm-track { display: grid; grid-template-columns: 46px 1fr 42px; gap: 10px; align-items: center; }
+  .nm-track .who { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #6b7890; }
+  .nm-bar { height: 7px; background: #0d1524; border-radius: 4px; overflow: hidden; }
+  .nm-bar > span { display: block; height: 100%; border-radius: 4px; }
+  .nm-bar.market > span { background: #4b8fe0; }
+  .nm-bar.model > span { background: var(--bright-orange); }
+  .nm-pct { font-family: var(--font-display); font-weight: 700; font-size: .82rem; color: #d6deee; text-align: right; }
+
+  .nm-delta { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-display); font-weight: 700; font-size: .82rem; }
+  .nm-delta.up { color: var(--aqua); }
+  .nm-delta.down { color: var(--red-orange); }
+  .nm-delta.flat { color: #6b7890; }
+
+  .nm-lean { font-size: .84rem; color: #c9d2e6; }
+  .nm-lean b { color: #eef2fb; }
+
+  .nm-edge {
+    align-self: stretch; border-left: 1px solid #23304d; padding-left: 22px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .nm-edge .cap { font-family: var(--font-display); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: #6b7890; margin-bottom: 8px; }
+  .nm-edge .play { font-family: var(--font-display); font-weight: 700; color: #eef2fb; font-size: 1.15rem; line-height: 1.1; margin-bottom: 2px; }
+  .nm-edge .mkt { color: #8a97b3; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  .nm-edge .num {
+    display: inline-flex; align-items: baseline; gap: 5px; align-self: flex-start;
+    font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; line-height: 1;
+    padding: 6px 12px; border-radius: 8px;
+  }
+  .nm-edge .num small { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .nm-edge .num.hot { color: var(--aqua); background: rgba(66,244,176,.1); }
+  .nm-edge .num.warm { color: var(--bright-orange); background: rgba(255,165,21,.1); }
+  .nm-edge .num.cool { color: #8a97b3; background: rgba(138,151,179,.08); }
+
+  .nm-note {
+    margin-top: 34px; padding: 22px 24px; background: #101828;
+    border: 1px solid #1d2740; border-radius: 12px; color: #94a1bd;
+    font-size: .88rem; line-height: 1.6;
+  }
+  .nm-note h4 { font-family: var(--font-display); color: #c9d2e6; text-transform: uppercase; letter-spacing: .06em; font-size: .9rem; margin: 0 0 8px; }
+  .nm-note b { color: #c9d2e6; }
+  .nm-disc { margin-top: 14px; padding-top: 14px; border-top: 1px solid #1d2740; color: #6b7890; font-size: .78rem; }
+
+  @media (max-width: 720px) {
+    .nm-head h1 { font-size: 2rem; }
+    .nm-card { grid-template-columns: 1fr; gap: 0; }
+    .nm-edge { border-left: none; border-top: 1px solid #23304d; padding-left: 0; padding-top: 16px; margin-top: 16px; flex-direction: row; align-items: center; gap: 14px; }
+    .nm-edge .cap { display: none; }
+    .nm-edge .num { margin-left: auto; }
+    .nm-legend { margin-left: 0; width: 100%; }
+    .nm-kick { display: none; }
+  }
+</style>
+
+<main class="nm-wrap">
+  <div class="nm-head">
+    <div class="nm-eyebrow">FantasyNow+ Model</div>
+    <h1>NFL Simulator</h1>
+    <p class="nm-sub">We run 20,000 Monte&nbsp;Carlo simulations of every game, then line the model up against the sportsbook to show where the two disagree. Games are ranked by the size of that gap — the bigger the disagreement, the more it's worth a second look.</p>
+  </div>
+
+  <div class="nm-meta">
+    <span id="nm-updated">Loading the board…</span>
+    <span class="nm-legend">
+      <span class="nm-key"><span class="nm-swatch model"></span> Model</span>
+      <span class="nm-key"><span class="nm-swatch market"></span> Market</span>
+      <span class="nm-key"><span class="nm-swatch edge"></span> Edge</span>
+    </span>
+  </div>
+
+  <div id="nm-board" class="nm-board"></div>
+  <div id="nm-status" class="nm-status">Loading the board…</div>
+
+  <div class="nm-note">
+    <h4>How to read it</h4>
+    <p>Each game shows the <b>market's</b> price (what the sportsbook implies) next to the <b>model's</b> simulated result. On moneyline, the number to the right is how far the model moves off the market on the home side — an <b style="color:var(--aqua)">aqua ▲</b> means the model likes that side more than the book does; a <b style="color:var(--red-orange)">red ▼</b> means it likes the other side. Spread and total bars show how often that side hit across all 20,000 sims. The <b>Top Edge</b> is the single biggest disagreement in the game.</p>
+    <div class="nm-disc">The model is for entertainment and research only — it is not betting advice, and past calibration doesn't guarantee future results. If you or someone you know has a gambling problem, call 1-800-GAMBLER. 21+.</div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var DATA_URL = "https://fckobcxprmudfpxdmswi.supabase.co/rest/v1/nfl_sim?id=eq.1&select=data";
+  var ANON_KEY = "sb_publishable_lUJ8FDkLUorRO5PQwvMHTA_5_W_mbh2";
+  var board = document.getElementById("nm-board");
+  var statusEl = document.getElementById("nm-status");
+  var updatedEl = document.getElementById("nm-updated");
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  function pct(n) { return (Math.round(n * 10) / 10) + "%"; }
+
+  function fmtKick(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleString([], { weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit" });
+  }
+
+  function fmtUpdated(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "just now";
+    return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
+  function edgeClass(e) { return e >= 5 ? "hot" : e >= 2.5 ? "warm" : "cool"; }
+  function edgeColor(e) { return e >= 5 ? "var(--aqua)" : e >= 2.5 ? "var(--bright-orange)" : "#38445f"; }
+
+  function bar(cls, value) {
+    return '<div class="nm-bar ' + cls + '"><span style="width:' + Math.max(0, Math.min(100, value)) + '%"></span></div>';
+  }
+
+  function card(g) {
+    var primeTags = { TNF: 1, SNF: 1, MNF: 1 };
+    var tagCls = primeTags[g.slate] ? "nm-tag prime" : "nm-tag";
+    var kick = fmtKick(g.kickoff);
+
+    var mlDelta = g.sim_home_win_pct - g.market_home_win_pct;
+    var mlDir = mlDelta > 0.5 ? "up" : mlDelta < -0.5 ? "down" : "flat";
+    var mlArrow = mlDelta > 0.5 ? "▲" : mlDelta < -0.5 ? "▼" : "▬";
+    var deltaTxt = (Math.abs(mlDelta) < 0.05 ? "0" : Math.abs(mlDelta).toFixed(1));
+
+    var spreadHome = g.sim_home_cover_pct >= 50;
+    var spreadPct = spreadHome ? g.sim_home_cover_pct : g.sim_away_cover_pct;
+    var spreadPick = spreadHome
+      ? esc(g.home_abbr) + " " + (g.home_spread > 0 ? "+" : "") + g.home_spread
+      : esc(g.away_abbr) + " " + (-g.home_spread > 0 ? "+" : "") + (-g.home_spread);
+
+    var overPick = g.sim_over_pct >= 50;
+    var totalPct = overPick ? g.sim_over_pct : g.sim_under_pct;
+    var totalTxt = (overPick ? "Over " : "Under ") + g.total_line;
+
+    var e = g.best_bet_edge;
+
+    return '' +
+      '<div class="nm-card">' +
+        '<div class="nm-rail" style="background:' + edgeColor(e) + '"></div>' +
+        '<div>' +
+          '<div class="nm-top">' +
+            '<span class="' + tagCls + '">' + esc(g.slate || "NFL") + '</span>' +
+            '<span class="nm-match">' + esc(g.away_abbr) + '<span class="at">@</span>' + esc(g.home_abbr) + '</span>' +
+            (kick ? '<span class="nm-kick">' + esc(kick) + '</span>' : '') +
+          '</div>' +
+
+          '<div class="nm-proj"><span class="lbl">Proj</span>' +
+            esc(g.home_abbr) + ' <b>' + g.proj_home_score + '</b> &nbsp;–&nbsp; <b>' + g.proj_away_score + '</b> ' + esc(g.away_abbr) +
+          '</div>' +
+
+          '<div class="nm-row">' +
+            '<div class="nm-rowlbl">Moneyline<small>' + esc(g.home_abbr) + ' win</small></div>' +
+            '<div class="nm-tracks">' +
+              '<div class="nm-track"><span class="who">Market</span>' + bar("market", g.market_home_win_pct) + '<span class="nm-pct">' + pct(g.market_home_win_pct) + '</span></div>' +
+              '<div class="nm-track"><span class="who">Model</span>' + bar("model", g.sim_home_win_pct) +
+                '<span class="nm-delta ' + mlDir + '">' + mlArrow + ' ' + deltaTxt + '</span></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="nm-row">' +
+            '<div class="nm-rowlbl">Spread<small>' + (g.home_spread > 0 ? "+" : "") + g.home_spread + '</small></div>' +
+            '<div class="nm-tracks"><div class="nm-track"><span class="who">Model</span>' + bar("model", spreadPct) + '<span class="nm-pct">' + pct(spreadPct) + '</span></div>' +
+              '<div class="nm-lean"><b>' + spreadPick + '</b> covers</div></div>' +
+          '</div>' +
+
+          '<div class="nm-row">' +
+            '<div class="nm-rowlbl">Total<small>' + g.total_line + '</small></div>' +
+            '<div class="nm-tracks"><div class="nm-track"><span class="who">Model</span>' + bar("model", totalPct) + '<span class="nm-pct">' + pct(totalPct) + '</span></div>' +
+              '<div class="nm-lean"><b>' + esc(totalTxt) + '</b></div></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="nm-edge">' +
+          '<div class="cap">Top Edge</div>' +
+          '<div class="play">' + esc(g.best_bet_pick) + '</div>' +
+          '<div class="mkt">' + esc(g.best_bet_market) + '</div>' +
+          '<div class="num ' + edgeClass(e) + '">+' + e.toFixed(1) + ' <small>pts</small></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  fetch(DATA_URL)
+    .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+    .then(function (data) {
+      updatedEl.textContent = "Updated " + fmtUpdated(data.generated_at) +
+        "  ·  " + data.count + " game" + (data.count === 1 ? "" : "s") + "  ·  ranked by edge";
+
+      if (!data.games || !data.games.length) {
+        statusEl.innerHTML = "No games on the board right now. The model runs every morning and posts the day's slate here once lines are up.";
+        return;
+      }
+      statusEl.style.display = "none";
+      board.innerHTML = data.games.map(card).join("");
+    })
+    .catch(function () {
+      updatedEl.textContent = "";
+      statusEl.innerHTML = "Couldn't load the model right now. It refreshes every morning — check back shortly.";
+    });
+})();
+</script>
+
+{% include footer.html %}
