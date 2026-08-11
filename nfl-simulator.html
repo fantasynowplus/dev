@@ -116,6 +116,41 @@ layout: null
     .nm-legend { margin-left: 0; width: 100%; }
     .nm-kick { display: none; }
   }
+
+  .nm-gate { display: none; margin-top: 26px; }
+  .nm-gate-inner {
+    max-width: 520px; margin: 0 auto; text-align: center;
+    background: #131a29; border: 1px solid #23304d; border-radius: 14px;
+    padding: 40px 34px; position: relative; overflow: hidden;
+  }
+  .nm-gate-inner::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--bright-orange), var(--aqua));
+  }
+  .nm-lock {
+    width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,165,21,.12); color: var(--bright-orange); font-size: 22px;
+  }
+  .nm-gate-inner h2 {
+    color: #eef2fb; font-family: var(--font-display); text-transform: uppercase;
+    letter-spacing: .04em; font-size: 1.8rem; margin: 0 0 10px;
+  }
+  .nm-gate-inner p { color: #94a1bd; line-height: 1.55; margin: 0 auto 22px; max-width: 400px; font-size: .95rem; }
+  .nm-gate-btn {
+    background: var(--bright-orange); color: #1a1204; border: none;
+    font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; font-size: 1rem; padding: 13px 30px; border-radius: 8px;
+    cursor: pointer; transition: filter .15s;
+  }
+  .nm-gate-btn:hover { filter: brightness(.95); }
+  .nm-gate-note {
+    margin: 22px auto 0 !important; padding-top: 18px; border-top: 1px solid #1d2740;
+    font-size: .86rem !important; color: #7d8aa5 !important;
+  }
+  .nm-gate-note b { color: #c9d2e6; }
+  .nm-gate-note a { color: var(--bright-orange); text-decoration: none; font-weight: 600; }
+  .nm-gate-note a:hover { text-decoration: underline; }
 </style>
 
 <main class="nm-wrap">
@@ -125,17 +160,29 @@ layout: null
     <p class="nm-sub">We run 20,000 Monte&nbsp;Carlo simulations of every game, then line the model up against the sportsbook to show where the two disagree. Games are ranked by the size of that gap — the bigger the disagreement, the more it's worth a second look.</p>
   </div>
 
-  <div class="nm-meta">
-    <span id="nm-updated">Loading the board…</span>
-    <span class="nm-legend">
-      <span class="nm-key"><span class="nm-swatch model"></span> Model</span>
-      <span class="nm-key"><span class="nm-swatch market"></span> Market</span>
-      <span class="nm-key"><span class="nm-swatch edge"></span> Edge</span>
-    </span>
+  <div id="nm-gate" class="nm-gate">
+    <div class="nm-gate-inner">
+      <div class="nm-lock"><i class="fa-solid fa-lock"></i></div>
+      <h2>Members only</h2>
+      <p>The NFL model is free to use — you just need a FantasyNow+ account to see the board. Log in or create one and you'll land right back here.</p>
+      <button class="nm-gate-btn" id="nm-login-btn">Log in or sign up</button>
+      <p class="nm-gate-note">Played in <b>Super League FF</b>? You already have an account — just <a href="https://superleagueff.org/forgot-password" target="_blank" rel="noopener">reset your password</a> to log in.</p>
+    </div>
   </div>
 
-  <div id="nm-board" class="nm-board"></div>
-  <div id="nm-status" class="nm-status">Loading the board…</div>
+  <div id="nm-authed" style="display:none;">
+    <div class="nm-meta">
+      <span id="nm-updated">Loading the board…</span>
+      <span class="nm-legend">
+        <span class="nm-key"><span class="nm-swatch model"></span> Model</span>
+        <span class="nm-key"><span class="nm-swatch market"></span> Market</span>
+        <span class="nm-key"><span class="nm-swatch edge"></span> Edge</span>
+      </span>
+    </div>
+
+    <div id="nm-board" class="nm-board"></div>
+    <div id="nm-status" class="nm-status">Loading the board…</div>
+  </div>
 
   <div class="nm-note">
     <h4>How to read it</h4>
@@ -245,23 +292,56 @@ layout: null
       '</div>';
   }
 
-  fetch(DATA_URL)
-    .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-    .then(function (data) {
-      updatedEl.textContent = "Updated " + fmtUpdated(data.generated_at) +
-        "  ·  " + data.count + " game" + (data.count === 1 ? "" : "s") + "  ·  ranked by edge";
+  function loadBoard() {
+    var token = localStorage.getItem("sb-auth-token");
+    fetch(DATA_URL, { headers: { apikey: ANON_KEY, Authorization: "Bearer " + token } })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (rows) {
+        var data = rows && rows[0] && rows[0].data;
+        if (!data) throw new Error("no data");
+        updatedEl.textContent = "Updated " + fmtUpdated(data.generated_at) +
+          "  ·  " + data.count + " game" + (data.count === 1 ? "" : "s") + "  ·  ranked by edge";
 
-      if (!data.games || !data.games.length) {
-        statusEl.innerHTML = "No games on the board right now. The model runs every morning and posts the day's slate here once lines are up.";
-        return;
-      }
-      statusEl.style.display = "none";
-      board.innerHTML = data.games.map(card).join("");
-    })
-    .catch(function () {
-      updatedEl.textContent = "";
-      statusEl.innerHTML = "Couldn't load the model right now. It refreshes every morning — check back shortly.";
-    });
+        if (!data.games || !data.games.length) {
+          statusEl.innerHTML = "No games on the board right now. The model runs every morning and posts the day's slate here once lines are up.";
+          return;
+        }
+        statusEl.style.display = "none";
+        board.innerHTML = data.games.map(card).join("");
+      })
+      .catch(function () {
+        updatedEl.textContent = "";
+        statusEl.innerHTML = "Couldn't load the model right now. It refreshes every morning — check back shortly.";
+      });
+  }
+
+  function isLoggedIn() {
+    return typeof auth !== "undefined" && auth.isAuthenticated && auth.isAuthenticated();
+  }
+
+  function openLogin() {
+    var m = document.getElementById("loginBackdrop");
+    if (m) { m.classList.add("open"); document.body.style.overflow = "hidden"; }
+    else { window.location.href = "login.html"; }
+  }
+
+  function start() {
+    var gate = document.getElementById("nm-gate");
+    var authed = document.getElementById("nm-authed");
+    if (isLoggedIn()) {
+      gate.style.display = "none";
+      authed.style.display = "block";
+      loadBoard();
+    } else {
+      authed.style.display = "none";
+      gate.style.display = "block";
+      var btn = document.getElementById("nm-login-btn");
+      if (btn) btn.addEventListener("click", openLogin);
+    }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();
 </script>
 
