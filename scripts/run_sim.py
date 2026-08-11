@@ -87,7 +87,11 @@ def slate_label(kickoff_iso: str) -> str:
 # ---------- The Odds API ----------
 
 def _get(url: str) -> list:
-    req = urllib.request.Request(url, headers={"User-Agent": "fantasynowplus"})
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "application/json",
+    })
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode())
 
