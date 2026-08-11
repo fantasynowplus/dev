@@ -1,6 +1,8 @@
-const { SUPABASE_URL, SUPABASE_SERVICE_KEY, YOUTUBE_API_KEY } = process.env;
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !YOUTUBE_API_KEY) {
-  console.error('Missing one of SUPABASE_URL / SUPABASE_SERVICE_KEY / YOUTUBE_API_KEY');
+const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, YOUTUBE_API_KEY } = process.env;
+const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'YOUTUBE_API_KEY'].filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error('Missing environment variable(s): ' + missing.join(', '));
+  console.error('Add them as GitHub secrets (repo Settings → Secrets and variables → Actions) and make sure the workflow env block maps each one.');
   process.exit(1);
 }
 
@@ -8,8 +10,8 @@ const sb = (path, opts = {}) =>
   fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...opts,
     headers: {
-      apikey: SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       'Content-Type': 'application/json',
       ...(opts.headers || {}),
     },
