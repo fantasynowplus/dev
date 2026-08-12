@@ -1357,7 +1357,7 @@ async function loadRecruitment(){
   renderRecruits('');
 }
 function renderRecruits(q){
-  const rows=RECRUITS.filter(r=>!q||[r.name,r.email,r.role].some(v=>(v||'').toLowerCase().includes(q)));
+  const rows=RECRUITS.filter(r=>r.status!=='converted').filter(r=>!q||[r.name,r.email,r.role].some(v=>(v||'').toLowerCase().includes(q)));
   document.getElementById('content').innerHTML=
     toolbar('Search recruits…','<span class="count-pill" style="margin-left:auto">'+rows.length+' of '+RECRUITS.length+'</span>')+
     '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Source</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>'+
@@ -1400,12 +1400,13 @@ async function convertRecruit(id){
   modal({title:'Convert '+rec.name+' to staff',wide:true,saveLabel:'Convert to staff',
     body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">Creates a staff record from this recruit'+(matches.length?' — found '+matches.length+' possible existing profile'+(matches.length>1?'s':'')+' by name/email. Link one to avoid a duplicate login.':'.')+'</p>'+
       '<div class="form-grid"><div class="field"><label>Start date</label><input name="start_date" type="date" value="'+today+'"></div>'+
+      '<div class="field"><label>Department</label><select name="department"><option value="">— none —</option><option>Administration</option><option>Content</option><option>Partnership</option><option>Social Media</option></select></div>'+
       '<div class="field"><label>Login account</label><select name="login">'+loginOpts+'</select></div>'+
       '<div class="field full"><label>Temp password (only used if creating a new login)</label><input name="password" value="'+genPw()+'"></div></div>',
     onSave:async(bg)=>{
       const start_date=val(bg,'start_date')||today;
       const login=bg.querySelector('[name="login"]').value;
-      const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,start_date,is_active:true});
+      const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,department:val(bg,'department')||null,start_date,is_active:true});
       const staffId=staffRow[0].id;let pwShown=null;
       if(login.startsWith('link:')){ await dbPatch('staff?id=eq.'+staffId,{profile_id:login.slice(5)}); }
       else if(login==='create'){
