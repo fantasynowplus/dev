@@ -1382,7 +1382,7 @@ async function recruitForm(id){
     }});
 }
 async function recruitDetail(id){
-  const rows=await dbGet('recruits?select=*,contact:staff!recruits_contact_id_fkey(id,name)&id=eq.'+id);const r=rows&&rows[0];if(!r)return;const rows=await dbGet('recruits?select=*,contact:staff(id,name)&id=eq.'+id);const r=rows&&rows[0];if(!r)return;
+  const rows=await dbGet('recruits?select=*,contact:staff!recruits_contact_id_fkey(id,name)&id=eq.'+id);const r=rows&&rows[0];if(!r)return;
   modal({title:r.name,wide:true,footer:false,
     body:'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+(r.role?'<span class="chip">'+esc(r.role)+'</span>':'')+badge(r.source==='website'?'Website':'Manual',r.source==='website'?'var(--aqua)':'var(--muted)')+(r.status==='converted'?badge('Converted','var(--green)'):badge('New','var(--orange)'))+'</div>'+
       detailRow('Email',r.email?esc(r.email):'—')+detailRow('Phone',r.phone?esc(r.phone):'—')+detailRow('Date of birth',fmtDate(r.dob))+detailRow('Point of contact',r.contact?esc(r.contact.name):'—')+detailRow('Why join?',r.reason?'<div style="line-height:1.6;white-space:pre-wrap">'+esc(r.reason)+'</div>':'—')+detailRow('Applied',fmtDate(r.created_at))+
