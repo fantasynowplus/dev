@@ -113,6 +113,10 @@
   .stat .v{font-family:'Archivo';font-weight:800;font-size:34px;color:var(--navy);line-height:1.1;margin-top:6px}
   .stat .bar{height:4px;border-radius:3px;margin-top:14px}
 
+  .proj-section{font-size:13px;font-weight:700;color:var(--navy);margin:26px 0 10px;text-transform:uppercase;letter-spacing:.04em}
+  .done-row{cursor:pointer}
+  .done-row:hover td{background:#f7f8fb}
+
   .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   .panel-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
   .panel-head h3{font-size:16px;color:var(--navy)}
@@ -331,6 +335,7 @@
       <button data-go="dashboard" class="active">Dashboard</button>
       <div class="nav-label">People</div>
       <button data-go="staff">Staff</button>
+      <button class="nav-link" data-go="recruitment" onclick="go('recruitment')">Recruitment</button>
       <button data-go="subscribers">Subscribers</button>
       <div class="nav-label">Content</div>
       <button data-go="shows">Shows</button>
@@ -367,7 +372,7 @@
 const GATE_LEVEL = 7;
 
 const NAV_TITLES = {
-  dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers',
+  dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   shows:'Shows', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 const STATUS = {
@@ -390,7 +395,7 @@ let CHANNELS_CACHE = [];
 let PERMS = {};
 let ROLES = [];
 const RESOURCES = {
-  staff:'Staff', subscribers:'Subscribers', shows:'Shows',
+  staff:'Staff', subscribers:'Subscribers', shows:'Shows', recruitment:'Recruitment',
   channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 function can(resource, action){
@@ -536,7 +541,7 @@ function go(name){
     document.getElementById('content').innerHTML='<div class="empty"><h4>No access</h4><p>You don\'t have permission to view this section.</p></div>';
     return;
   }
-  const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers,
+  const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     shows:loadShows, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles}[name];
   fn().catch(err=>{
     document.getElementById('content').innerHTML =
@@ -1194,31 +1199,40 @@ async function loadBoard(){
 function boardOverview(){
   CUR_PROJECT=null;
   topAction(ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>'));
-  const active=PROJECTS.filter(p=>p.is_active!==false);
-  if(!active.length){ document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project to start tracking work.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>'; return; }
-  document.getElementById('content').innerHTML='<div class="proj-grid">'+active.map(p=>{
-    const pr=PRIORITY[p.priority]||PRIORITY.medium;
-    return '<div class="proj-card" onclick=\'openProject("'+p.id+'")\'>'+
-      '<div class="proj-head"><div class="proj-name">'+esc(p.name)+'</div>'+badge(pr.label,pr.color)+'</div>'+
-      (p.description?'<div class="proj-desc">'+esc(p.description)+'</div>':'<div class="proj-desc" style="color:var(--muted);font-style:italic">No description</div>')+
-      '<div class="proj-meta">'+(p.due_date?'<span class="chip">Due '+fmtDate(p.due_date)+'</span>':'')+(p.owner?'<span class="chip">'+esc(p.owner.name)+'</span>':'<span class="chip" style="color:var(--muted)">No owner</span>')+'</div>'+
-    '</div>';
-  }).join('')+'</div>';
+  const active=PROJECTS.filter(p=>(p.status||'active')==='active');
+  const done=PROJECTS.filter(p=>p.status==='completed');
+  if(!active.length&&!done.length){ document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project to start tracking work.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>'; return; }
+  let html = active.length
+    ? '<div class="proj-grid">'+active.map(p=>{const pr=PRIORITY[p.priority]||PRIORITY.medium;return '<div class="proj-card" onclick=\'openProject("'+p.id+'")\'><div class="proj-head"><div class="proj-name">'+esc(p.name)+'</div>'+badge(pr.label,pr.color)+'</div>'+(p.description?'<div class="proj-desc">'+esc(p.description)+'</div>':'<div class="proj-desc" style="color:var(--muted);font-style:italic">No description</div>')+'<div class="proj-meta">'+(p.due_date?'<span class="chip">Due '+fmtDate(p.due_date)+'</span>':'')+(p.owner?'<span class="chip">'+esc(p.owner.name)+'</span>':'<span class="chip" style="color:var(--muted)">No owner</span>')+'</div></div>';}).join('')+'</div>'
+    : '<div class="empty" style="padding:30px"><p>No active projects.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>';
+  if(done.length){ html+='<h3 class="proj-section">Completed</h3><div class="panel"><div class="table-wrap"><table><tbody>'+done.map(p=>'<tr class="done-row" onclick=\'openProject("'+p.id+'")\'><td><strong>'+esc(p.name)+'</strong></td><td style="color:var(--muted)">'+(p.owner?esc(p.owner.name):'—')+'</td><td style="text-align:right;color:var(--muted)">'+(p.completed_at?'Completed '+fmtDate(p.completed_at):'Completed')+'</td></tr>').join('')+'</tbody></table></div></div>'; }
+  document.getElementById('content').innerHTML=html;
 }
 function openProject(id){ CUR_PROJECT=id; topAction(ifCan('board','c','<button class="btn btn-primary" onclick="taskForm()">+ New task</button>')); renderBoard(); }
+
 async function renderBoard(){
   const proj=PROJECTS.find(p=>p.id===CUR_PROJECT);
   if(!proj){ boardOverview(); return; }
   TASKS = await dbGet('tasks?select=*,assignee:profiles!tasks_assignee_id_fkey(name)&project_id=eq.'+CUR_PROJECT+'&order=position.asc,created_at.asc')||[];
   const pr=PRIORITY[proj.priority]||PRIORITY.medium, cols=Object.keys(STATUS);
+  const statusBtn = proj.status==='completed'
+    ? ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'setProjectStatus("'+proj.id+'","active")\'>Reopen</button>')
+    : ifCan('board','u','<button class="btn btn-primary btn-sm" onclick=\'setProjectStatus("'+proj.id+'","completed")\'>Mark completed</button>');
   document.getElementById('content').innerHTML=
     '<button class="btn btn-ghost btn-sm" onclick="boardOverview()" style="margin-bottom:16px">&larr; All projects</button>'+
-    '<div class="proj-detail"><div class="proj-detail-top"><h2 class="proj-detail-name">'+esc(proj.name)+'</h2>'+badge(pr.label,pr.color)+ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+proj.id+'")\'>Edit</button>')+'</div>'+
+    '<div class="proj-detail"><div class="proj-detail-top"><h2 class="proj-detail-name">'+esc(proj.name)+'</h2>'+badge(pr.label,pr.color)+statusBtn+ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+proj.id+'")\'>Edit</button>')+'</div>'+
     (proj.description?'<p class="proj-detail-desc">'+esc(proj.description)+'</p>':'')+
     '<div class="proj-detail-meta">'+(proj.due_date?'<span class="chip">Due '+fmtDate(proj.due_date)+'</span>':'')+(proj.owner?'<span class="chip">Owner: '+esc(proj.owner.name)+'</span>':'')+'</div></div>'+
-    '<div class="board-top"><select onchange="openProject(this.value)">'+PROJECTS.filter(p=>p.is_active!==false).map(p=>'<option value="'+p.id+'"'+(p.id===CUR_PROJECT?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select><span class="count-pill" style="margin-left:auto">'+TASKS.length+' tasks</span></div>'+
+    '<div class="board-top"><select onchange="openProject(this.value)">'+PROJECTS.filter(p=>p.status!=='archived').map(p=>'<option value="'+p.id+'"'+(p.id===CUR_PROJECT?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select><span class="count-pill" style="margin-left:auto">'+TASKS.length+' tasks</span></div>'+
     '<div class="board">'+cols.map(st=>{const items=TASKS.filter(t=>t.status===st);return '<div class="col" data-status="'+st+'"><div class="col-head"><span class="dot" style="background:'+STATUS[st].color+'"></span>'+STATUS[st].label+'<span class="n">'+items.length+'</span></div><div class="col-body">'+items.map(taskCard).join('')+'</div>'+ifCan('board','c','<button class="add-task" onclick=\'taskForm(null,"'+st+'")\'>+ Add task</button>')+'</div>';}).join('')+'</div>';
   wireDnD();
+}
+
+async function setProjectStatus(id,status){
+  await dbPatch('projects?id=eq.'+id,{status,completed_at:status==='completed'?new Date().toISOString():null});
+  PROJECTS=await dbGet(PROJ_SELECT)||[];
+  if(status==='completed') boardOverview(); else renderBoard();
+  toast(status==='completed'?'Project completed':'Project reopened');
 }
 function taskCard(t){
   const p=PRIORITY[t.priority]||PRIORITY.medium;
@@ -1257,11 +1271,12 @@ async function projectForm(id){
       '<div class="field"><label>Priority</label><select name="priority">'+opt(PRIORITY,p.priority||'medium')+'</select></div>'+
       '<div class="field"><label>Due date</label><input name="due_date" type="date" value="'+esc(p.due_date||'')+'"></div>'+
       '<div class="field"><label>Owner</label><select name="owner_id"><option value="">— none —</option>'+staffList.map(st=>'<option value="'+st.id+'"'+(p.owner_id===st.id?' selected':'')+'>'+esc(st.name)+'</option>').join('')+'</select></div>'+
-      '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(p.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(p.is_active===false?' selected':'')+'>Archived</option></select></div>'+
+      '<div class="field"><label>Status</label><select name="status"><option value="active"'+((p.status||'active')==='active'?' selected':'')+'>Active</option><option value="completed"'+(p.status==='completed'?' selected':'')+'>Completed</option><option value="archived"'+(p.status==='archived'?' selected':'')+'>Archived</option></select></div>'+
       '<div class="field full"><label>Description</label><textarea name="description">'+esc(p.description||'')+'</textarea></div></div>'+
       (id?'<button class="btn btn-danger btn-sm" style="margin-top:14px" onclick=\'projectDelete("'+id+'")\'>Delete project</button>':''),
     onSave:async(bg)=>{
-      const body={name:val(bg,'name'),description:val(bg,'description'),priority:bg.querySelector('[name="priority"]').value,due_date:val(bg,'due_date')||null,owner_id:bg.querySelector('[name="owner_id"]').value||null,is_active:bg.querySelector('[name="is_active"]').value==='true'};
+      const statusVal=bg.querySelector('[name="status"]').value;
+      const body={name:val(bg,'name'),description:val(bg,'description'),priority:bg.querySelector('[name="priority"]').value,due_date:val(bg,'due_date')||null,owner_id:bg.querySelector('[name="owner_id"]').value||null,status:statusVal,completed_at:statusVal==='completed'?(p.completed_at||new Date().toISOString()):null};
       if(!body.name)throw new Error('Project name is required');
       if(id){ await dbPatch('projects?id=eq.'+id,body); PROJECTS=await dbGet(PROJ_SELECT)||[]; if(CUR_PROJECT)renderBoard(); else boardOverview(); toast('Project updated'); }
       else{ body.created_by=ME.id; const r=await dbPost('projects',body); PROJECTS=await dbGet(PROJ_SELECT)||[]; openProject(r[0].id); toast('Project created'); }
@@ -1333,6 +1348,79 @@ async function delComment(id,taskId){await dbDel('task_comments?id=eq.'+id);load
 function taskDelete(id){
   document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
   confirmDelete('this task',async()=>{await dbDel('tasks?id=eq.'+id);renderBoard();toast('Task deleted');});
+}
+let RECRUITS=[];
+const RECRUIT_SELECT='recruits?select=*,contact:staff(id,name)&order=created_at.desc';
+async function loadRecruitment(){
+  topAction(ifCan('recruitment','c','<button class="btn btn-primary" onclick="recruitForm()">+ Add recruit</button>'));
+  RECRUITS=await dbGet(RECRUIT_SELECT)||[];
+  renderRecruits('');
+}
+function renderRecruits(q){
+  const rows=RECRUITS.filter(r=>!q||[r.name,r.email,r.role].some(v=>(v||'').toLowerCase().includes(q)));
+  document.getElementById('content').innerHTML=
+    toolbar('Search recruits…','<span class="count-pill" style="margin-left:auto">'+rows.length+' of '+RECRUITS.length+'</span>')+
+    '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Source</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>'+
+    (rows.length? rows.map(r=>'<tr><td><strong>'+esc(r.name)+'</strong></td><td>'+esc(r.role||'—')+'</td><td>'+esc(r.email||'—')+'</td><td>'+badge(r.source==='website'?'Website':'Manual',r.source==='website'?'var(--aqua)':'var(--muted)')+'</td><td>'+(r.contact?esc(r.contact.name):'—')+'</td><td>'+(r.status==='converted'?badge('Converted','var(--green)'):badge('New','var(--orange)'))+'</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick=\'recruitDetail("'+r.id+'")\'>View</button>'+ifCan('recruitment','u','<button class="btn btn-ghost btn-sm" onclick=\'recruitForm("'+r.id+'")\'>Edit</button>')+((r.status!=='converted'&&can('staff','c'))?'<button class="btn btn-primary btn-sm" onclick=\'convertRecruit("'+r.id+'")\'>Convert</button>':'')+ifCan('recruitment','d','<button class="btn btn-danger btn-sm" onclick=\'recruitDelete("'+r.id+'")\'>Delete</button>')+'</div></td></tr>').join('')
+      : '<tr><td colspan="7"><div class="empty"><h4>No recruits yet</h4><p>Add someone interested in joining, or let the website form feed them in.</p>'+ifCan('recruitment','c','<button class="btn btn-primary" onclick="recruitForm()">+ Add recruit</button>')+'</div></td></tr>')+
+    '</tbody></table></div></div>';
+  bindSearch(renderRecruits);
+}
+async function recruitForm(id){
+  const r=id?RECRUITS.find(x=>x.id===id):{};
+  const staffList=await dbGet('staff?select=id,name&order=name.asc')||[];
+  const f=(n,l,type,v)=>'<div class="field"><label>'+l+'</label><input name="'+n+'" type="'+(type||'text')+'" value="'+esc(v||'')+'"></div>';
+  modal({title:id?'Edit recruit':'Add recruit',wide:true,saveLabel:id?'Save changes':'Add recruit',
+    body:'<div class="form-grid">'+f('name','Full name','text',r.name)+f('role','Role','text',r.role)+f('email','Email','email',r.email)+f('phone','Phone number','text',r.phone)+f('dob','Date of birth','date',r.dob)+
+      '<div class="field"><label>Point of contact</label><select name="contact_id"><option value="">— none —</option>'+staffList.map(st=>'<option value="'+st.id+'"'+(r.contact_id===st.id?' selected':'')+'>'+esc(st.name)+'</option>').join('')+'</select></div>'+
+      '<div class="field full"><label>Why do you want to join?</label><textarea name="reason">'+esc(r.reason||'')+'</textarea></div></div>',
+    onSave:async(bg)=>{
+      const body={name:val(bg,'name'),role:val(bg,'role'),email:val(bg,'email'),phone:val(bg,'phone'),dob:val(bg,'dob')||null,contact_id:bg.querySelector('[name="contact_id"]').value||null,reason:val(bg,'reason')};
+      if(!body.name)throw new Error('Name is required');
+      if(id)await dbPatch('recruits?id=eq.'+id,body);else await dbPost('recruits',body);
+      RECRUITS=await dbGet(RECRUIT_SELECT)||[];renderRecruits('');toast(id?'Recruit updated':'Recruit added');
+    }});
+}
+async function recruitDetail(id){
+  const rows=await dbGet('recruits?select=*,contact:staff(id,name)&id=eq.'+id);const r=rows&&rows[0];if(!r)return;
+  modal({title:r.name,wide:true,footer:false,
+    body:'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+(r.role?'<span class="chip">'+esc(r.role)+'</span>':'')+badge(r.source==='website'?'Website':'Manual',r.source==='website'?'var(--aqua)':'var(--muted)')+(r.status==='converted'?badge('Converted','var(--green)'):badge('New','var(--orange)'))+'</div>'+
+      detailRow('Email',r.email?esc(r.email):'—')+detailRow('Phone',r.phone?esc(r.phone):'—')+detailRow('Date of birth',fmtDate(r.dob))+detailRow('Point of contact',r.contact?esc(r.contact.name):'—')+detailRow('Why join?',r.reason?'<div style="line-height:1.6;white-space:pre-wrap">'+esc(r.reason)+'</div>':'—')+detailRow('Applied',fmtDate(r.created_at))+
+      ((r.status!=='converted'&&can('staff','c'))?'<div style="margin-top:16px"><button class="btn btn-primary btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());convertRecruit("'+r.id+'")\'>Convert to staff</button></div>':'')});
+}
+function recruitDelete(id){const r=RECRUITS.find(x=>x.id===id);confirmDelete(esc(r.name),async()=>{await dbDel('recruits?id=eq.'+id);RECRUITS=RECRUITS.filter(x=>x.id!==id);renderRecruits('');toast('Recruit removed');});}
+async function convertRecruit(id){
+  const rows=await dbGet('recruits?select=*&id=eq.'+id);const rec=rows&&rows[0];if(!rec)return;
+  if(rec.status==='converted'){toast('Already converted',true);return;}
+  let matches=[];
+  try{const parts=[];if(rec.email)parts.push('email.eq.'+encodeURIComponent(rec.email));if(rec.name)parts.push('name.ilike.*'+encodeURIComponent(rec.name)+'*');if(parts.length)matches=await dbGet('profiles?select=id,name,email&or=('+parts.join(',')+')&limit=5')||[];}catch(e){}
+  const genPw=()=>Math.random().toString(36).slice(2,8)+Math.floor(10+Math.random()*90)+'!';
+  const loginOpts='<option value="none">No login account</option>'+matches.map(m=>'<option value="link:'+m.id+'">Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+'<option value="create">Create a new login</option>';
+  const today=new Date().toISOString().slice(0,10);
+  modal({title:'Convert '+rec.name+' to staff',wide:true,saveLabel:'Convert to staff',
+    body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">Creates a staff record from this recruit'+(matches.length?' — found '+matches.length+' possible existing profile'+(matches.length>1?'s':'')+' by name/email. Link one to avoid a duplicate login.':'.')+'</p>'+
+      '<div class="form-grid"><div class="field"><label>Start date</label><input name="start_date" type="date" value="'+today+'"></div>'+
+      '<div class="field"><label>Login account</label><select name="login">'+loginOpts+'</select></div>'+
+      '<div class="field full"><label>Temp password (only used if creating a new login)</label><input name="password" value="'+genPw()+'"></div></div>',
+    onSave:async(bg)=>{
+      const start_date=val(bg,'start_date')||today;
+      const login=bg.querySelector('[name="login"]').value;
+      const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,start_date,is_active:true});
+      const staffId=staffRow[0].id;let pwShown=null;
+      if(login.startsWith('link:')){ await dbPatch('staff?id=eq.'+staffId,{profile_id:login.slice(5)}); }
+      else if(login==='create'){
+        const password=val(bg,'password');
+        const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name})});
+        const data=await res.json();
+        if(!res.ok)throw new Error(data.error||'Failed to create login');
+        await dbPatch('staff?id=eq.'+staffId,{profile_id:data.id});
+        pwShown={email:rec.email,password};
+      }
+      await dbPatch('recruits?id=eq.'+id,{status:'converted',converted_at:new Date().toISOString(),staff_id:staffId});
+      document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
+      RECRUITS=await dbGet(RECRUIT_SELECT)||[];renderRecruits('');toast(rec.name+' converted to staff');
+      if(pwShown)modal({title:'Login created',footer:false,body:'<p style="line-height:1.6">Share these with <strong>'+esc(rec.name)+'</strong>:</p>'+detailRow('Email',esc(pwShown.email))+detailRow('Temp password','<span class="mono">'+esc(pwShown.password)+'</span>')});
+    }});
 }
 
 document.addEventListener('DOMContentLoaded',boot);
