@@ -61,30 +61,34 @@ layout: null
         </section>
 
         <!-- 6. Join Us -->
-        <section class="section-padding">
-            <div class="join-team-section">
-            <h2>Join Our Team</h2>
-            <form action="https://formspree.io/f/maqrylal" method="POST">
-                
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="Name" required class="custom-input">
-                
-                <label for="email">Email Address:</label>
-                <input type="email" id="email" name="Email" required class="custom-input">
-        
-                <label for="phone">Cell Phone:</label>
-                <input type="tel" id="phone" name="Cell Phone" required class="custom-input">
-                
-                <label for="message">Why do you want to join?</label>
-                <textarea id="message" name="Why they'd like to join" required class="custom-input"></textarea>
-                
-                <!-- Submit Button -->
-                <button type="submit" class="custom-submit">
-                    Apply Now
-                </button>
+        <form id="fnpJoinForm" class="fnp-join">
+            <input name="name" placeholder="Full name" required>
+            <input name="email" type="email" placeholder="Email">
+            <input name="phone" placeholder="Phone number">
+            <input name="dob" type="date" placeholder="Date of birth">
+            <input name="role" placeholder="Role you're interested in">
+            <textarea name="reason" placeholder="Why do you want to join?"></textarea>
+            <button type="submit">Apply</button>
+            <p id="fnpJoinMsg"></p>
             </form>
-            </div>
-        </section>
+            <script>
+            (function(){
+            var SB_URL='https://fckobcxprmudfpxdmswi.supabase.co';
+            var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja29iY3hwcm11ZGZweGRtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTI5MzcsImV4cCI6MjA5OTE4ODkzN30.9wMb0SXAZs-jo1G9xRxk5M47fJIIU7-DTJTl1yFRwFk';
+            var form=document.getElementById('fnpJoinForm'), msg=document.getElementById('fnpJoinMsg');
+            form.addEventListener('submit', async function(e){
+                e.preventDefault();
+                var fd=new FormData(form);
+                var body={name:fd.get('name'),email:fd.get('email')||null,phone:fd.get('phone')||null,dob:fd.get('dob')||null,role:fd.get('role')||null,reason:fd.get('reason')||null,source:'website'};
+                if(!body.name){ msg.textContent='Please enter your name.'; return; }
+                try{
+                var res=await fetch(SB_URL+'/rest/v1/recruits',{method:'POST',headers:{'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
+                if(res.ok){ form.reset(); msg.textContent='Thanks — we\'ll be in touch!'; }
+                else { msg.textContent='Something went wrong. Please try again.'; }
+                }catch(err){ msg.textContent='Something went wrong. Please try again.'; }
+            });
+            })();
+            </script>
     </main>
 
     <!-- Scripts -->
