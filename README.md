@@ -1,1 +1,1 @@
-Site built by Justin Bauerle in github. 
+This is a development site for new pushes. 
