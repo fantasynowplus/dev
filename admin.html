@@ -287,6 +287,19 @@
 
   a.tv-title{color:var(--ink);text-decoration:none;min-width:0}
   a.tv-title:hover{color:var(--navy);text-decoration:underline}
+
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .proj-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:150px}
+  .proj-card:hover{border-color:var(--navy-3)}
+  .proj-head{display:flex;align-items:center;gap:10px}
+  .proj-name{font-family:'Archivo';font-weight:700;font-size:16px;color:var(--navy);flex:1}
+  .proj-desc{font-size:13.5px;color:var(--ink);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .proj-detail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+  .proj-detail-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .proj-detail-name{font-size:20px;color:var(--navy);flex:1}
+  .proj-detail-desc{font-size:14px;color:var(--ink);line-height:1.6;white-space:pre-wrap;margin:0 0 10px}
+  .proj-detail-meta{display:flex;gap:6px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -1173,33 +1186,38 @@ async function snapshotForm(){
 
 /* ---------------- PROJECT BOARD ---------------- */
 let PROJECTS=[], CUR_PROJECT=null, TASKS=[];
+const PROJ_SELECT='projects?select=*,owner:staff(id,name)&order=position.asc,created_at.asc';
 async function loadBoard(){
-  PROJECTS = await dbGet('projects?select=*&order=position.asc,created_at.asc')||[];
-  if(!PROJECTS.length){
-    document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project board to start tracking tasks Monday-style.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>';
-    topAction('');return;
-  }
-  if(!CUR_PROJECT||!PROJECTS.find(p=>p.id===CUR_PROJECT))CUR_PROJECT=PROJECTS[0].id;
-  topAction(ifCan('board','c','<button class="btn btn-ghost" onclick="projectForm()">+ New project</button> <button class="btn btn-primary" onclick="taskForm()">+ New task</button>'));
-  await renderBoard();
+  PROJECTS = await dbGet(PROJ_SELECT)||[];
+  boardOverview();
 }
+function boardOverview(){
+  CUR_PROJECT=null;
+  topAction(ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>'));
+  const active=PROJECTS.filter(p=>p.is_active!==false);
+  if(!active.length){ document.getElementById('content').innerHTML='<div class="empty"><h4>No projects yet</h4><p>Create your first project to start tracking work.</p>'+ifCan('board','c','<button class="btn btn-primary" onclick="projectForm()">+ New project</button>')+'</div>'; return; }
+  document.getElementById('content').innerHTML='<div class="proj-grid">'+active.map(p=>{
+    const pr=PRIORITY[p.priority]||PRIORITY.medium;
+    return '<div class="proj-card" onclick=\'openProject("'+p.id+'")\'>'+
+      '<div class="proj-head"><div class="proj-name">'+esc(p.name)+'</div>'+badge(pr.label,pr.color)+'</div>'+
+      (p.description?'<div class="proj-desc">'+esc(p.description)+'</div>':'<div class="proj-desc" style="color:var(--muted);font-style:italic">No description</div>')+
+      '<div class="proj-meta">'+(p.due_date?'<span class="chip">Due '+fmtDate(p.due_date)+'</span>':'')+(p.owner?'<span class="chip">'+esc(p.owner.name)+'</span>':'<span class="chip" style="color:var(--muted)">No owner</span>')+'</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function openProject(id){ CUR_PROJECT=id; topAction(ifCan('board','c','<button class="btn btn-primary" onclick="taskForm()">+ New task</button>')); renderBoard(); }
 async function renderBoard(){
+  const proj=PROJECTS.find(p=>p.id===CUR_PROJECT);
+  if(!proj){ boardOverview(); return; }
   TASKS = await dbGet('tasks?select=*,assignee:profiles!tasks_assignee_id_fkey(name)&project_id=eq.'+CUR_PROJECT+'&order=position.asc,created_at.asc')||[];
-  const cols=Object.keys(STATUS);
-  document.getElementById('content').innerHTML =
-    '<div class="board-top"><select onchange="CUR_PROJECT=this.value;renderBoard()">'+
-      PROJECTS.map(p=>'<option value="'+p.id+'"'+(p.id===CUR_PROJECT?' selected':'')+'>'+esc(p.name)+'</option>').join('')+
-    '</select>'+
-    ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+CUR_PROJECT+'")\'>Edit project</button>')+
-    '<span class="count-pill" style="margin-left:auto">'+TASKS.length+' tasks</span></div>'+
-    '<div class="board">'+cols.map(st=>{
-      const items=TASKS.filter(t=>t.status===st);
-      return '<div class="col" data-status="'+st+'">'+
-        '<div class="col-head"><span class="dot" style="background:'+STATUS[st].color+'"></span>'+STATUS[st].label+'<span class="n">'+items.length+'</span></div>'+
-        '<div class="col-body">'+items.map(taskCard).join('')+'</div>'+
-        ifCan('board','c','<button class="add-task" onclick=\'taskForm(null,"'+st+'")\'>+ Add task</button>')+
-      '</div>';
-    }).join('')+'</div>';
+  const pr=PRIORITY[proj.priority]||PRIORITY.medium, cols=Object.keys(STATUS);
+  document.getElementById('content').innerHTML=
+    '<button class="btn btn-ghost btn-sm" onclick="boardOverview()" style="margin-bottom:16px">&larr; All projects</button>'+
+    '<div class="proj-detail"><div class="proj-detail-top"><h2 class="proj-detail-name">'+esc(proj.name)+'</h2>'+badge(pr.label,pr.color)+ifCan('board','u','<button class="btn btn-ghost btn-sm" onclick=\'projectForm("'+proj.id+'")\'>Edit</button>')+'</div>'+
+    (proj.description?'<p class="proj-detail-desc">'+esc(proj.description)+'</p>':'')+
+    '<div class="proj-detail-meta">'+(proj.due_date?'<span class="chip">Due '+fmtDate(proj.due_date)+'</span>':'')+(proj.owner?'<span class="chip">Owner: '+esc(proj.owner.name)+'</span>':'')+'</div></div>'+
+    '<div class="board-top"><select onchange="openProject(this.value)">'+PROJECTS.filter(p=>p.is_active!==false).map(p=>'<option value="'+p.id+'"'+(p.id===CUR_PROJECT?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select><span class="count-pill" style="margin-left:auto">'+TASKS.length+' tasks</span></div>'+
+    '<div class="board">'+cols.map(st=>{const items=TASKS.filter(t=>t.status===st);return '<div class="col" data-status="'+st+'"><div class="col-head"><span class="dot" style="background:'+STATUS[st].color+'"></span>'+STATUS[st].label+'<span class="n">'+items.length+'</span></div><div class="col-body">'+items.map(taskCard).join('')+'</div>'+ifCan('board','c','<button class="add-task" onclick=\'taskForm(null,"'+st+'")\'>+ Add task</button>')+'</div>';}).join('')+'</div>';
   wireDnD();
 }
 function taskCard(t){
@@ -1230,18 +1248,23 @@ function wireDnD(){
     });
   });
 }
-function projectForm(id){
+async function projectForm(id){
   const p=id?PROJECTS.find(x=>x.id===id):{};
-  modal({title:id?'Edit project':'New project',saveLabel:id?'Save':'Create project',
+  const staffList=await dbGet('staff?select=id,name&order=name.asc')||[];
+  const opt=(o,cur)=>Object.keys(o).map(k=>'<option value="'+k+'"'+(cur===k?' selected':'')+'>'+o[k].label+'</option>').join('');
+  modal({title:id?'Edit project':'New project',wide:true,saveLabel:id?'Save':'Create project',
     body:'<div class="form-grid"><div class="field full"><label>Project name</label><input name="name" value="'+esc(p.name||'')+'"></div>'+
+      '<div class="field"><label>Priority</label><select name="priority">'+opt(PRIORITY,p.priority||'medium')+'</select></div>'+
+      '<div class="field"><label>Due date</label><input name="due_date" type="date" value="'+esc(p.due_date||'')+'"></div>'+
+      '<div class="field"><label>Owner</label><select name="owner_id"><option value="">— none —</option>'+staffList.map(st=>'<option value="'+st.id+'"'+(p.owner_id===st.id?' selected':'')+'>'+esc(st.name)+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(p.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(p.is_active===false?' selected':'')+'>Archived</option></select></div>'+
       '<div class="field full"><label>Description</label><textarea name="description">'+esc(p.description||'')+'</textarea></div></div>'+
       (id?'<button class="btn btn-danger btn-sm" style="margin-top:14px" onclick=\'projectDelete("'+id+'")\'>Delete project</button>':''),
     onSave:async(bg)=>{
-      const body={name:val(bg,'name'),description:val(bg,'description')};
+      const body={name:val(bg,'name'),description:val(bg,'description'),priority:bg.querySelector('[name="priority"]').value,due_date:val(bg,'due_date')||null,owner_id:bg.querySelector('[name="owner_id"]').value||null,is_active:bg.querySelector('[name="is_active"]').value==='true'};
       if(!body.name)throw new Error('Project name is required');
-      if(id)await dbPatch('projects?id=eq.'+id,body);
-      else{body.created_by=ME.id;const r=await dbPost('projects',body);CUR_PROJECT=r[0].id;}
-      loadBoard();toast(id?'Project updated':'Project created');
+      if(id){ await dbPatch('projects?id=eq.'+id,body); PROJECTS=await dbGet(PROJ_SELECT)||[]; if(CUR_PROJECT)renderBoard(); else boardOverview(); toast('Project updated'); }
+      else{ body.created_by=ME.id; const r=await dbPost('projects',body); PROJECTS=await dbGet(PROJ_SELECT)||[]; openProject(r[0].id); toast('Project created'); }
     }});
 }
 function projectDelete(id){
