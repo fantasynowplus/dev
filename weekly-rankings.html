@@ -214,8 +214,7 @@ function buildHead(){
   let h = '<th class="rank">#</th><th class="player">Player</th>';
   SOURCES.forEach(s=>{
     h += '<th><div class="srccol">'
-       + '<img src="assets/logos/'+s.key+'.png" alt="'+s.name+'" onerror="this.remove()">'
-       + '<span class="srcname">'+s.name+'</span></div></th>';
+       + '<img src="assets/logos/'+s.key+'.png" alt="'+s.name+'" onerror="this.remove()">';
   });
   h += '<th class="avg">Avg</th>';
   document.getElementById("head").innerHTML = h;
