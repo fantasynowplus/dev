@@ -1,1 +1,1 @@
-Site built by Justin Bauerle in github
+Site built by Justin Bauerle in github. 
