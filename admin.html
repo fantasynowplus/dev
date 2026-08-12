@@ -284,6 +284,9 @@
   .topvid .tv-n{font-family:'IBM Plex Mono';color:var(--muted);font-size:12px;width:20px}
   .topvid .tv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .topvid .tv-stat{font-family:'IBM Plex Mono';font-size:12px;color:var(--navy);white-space:nowrap}
+
+  a.tv-title{color:var(--ink);text-decoration:none;min-width:0}
+  a.tv-title:hover{color:var(--navy);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1098,7 +1101,7 @@ async function channelAnalytics(id){
     metricBlock('Subscribers (net)',(netSubs(d,28)>=0?'+':'')+fmtNum(netSubs(d,28)),(netSubs(d,90)>=0?'+':'')+fmtNum(netSubs(d,90)),(netSubs(d,365)>=0?'+':'')+fmtNum(netSubs(d,365)))+'</div>'+
     '<div class="yt-section-title">Views — last 90 days</div>'+lineChart(d,'views',90)+
     '<div class="yt-section-title">Top videos — last 90 days</div>'+
-    ((tops&&tops.length)?tops.map((v,i)=>'<div class="topvid"><span class="tv-n">'+(i+1)+'</span><span class="tv-title" title="'+esc(v.title)+'">'+esc(v.title)+'</span><span class="tv-stat">'+fmtNum(v.views)+' views · '+fmtDur(v.avg_view_duration)+' avg</span></div>').join(''):'<div style="color:var(--muted);font-size:13px">No video data yet.</div>');
+    ((tops&&tops.length)?tops.map((v,i)=>'<div class="topvid"><span class="tv-n">'+(i+1)+'</span><a class="tv-title" href="https://www.youtube.com/watch?v='+encodeURIComponent(v.video_id)+'" target="_blank" rel="noopener" title="'+esc(v.title)+'">'+esc(v.title)+'</a><span class="tv-stat">'+fmtNum(v.views)+' views · '+fmtDur(v.avg_view_duration)+' avg</span></div>').join(''):'<div style="color:var(--muted);font-size:13px">No video data yet.</div>');
   const traffic=byKind('traffic').map(b=>({label:ytHuman('traffic',b.label),value:Number(b.views)})).sort((a,b)=>b.value-a.value);
   const content='<div class="yt-section-title">How viewers find you — last 28 days</div>'+barList(traffic)+
     '<p style="color:var(--muted);font-size:12.5px;margin-top:16px;line-height:1.5">Shorts / long-form / live splits and the impressions funnel aren\'t exposed by the API — those live only in YouTube Studio.</p>';
