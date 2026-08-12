@@ -488,7 +488,7 @@ async function boot(){
   const token = localStorage.getItem('sb-auth-token');
   if(!token){
     gateMsg('Staff Access Required',
-      'Only members of FantasyNow+ have access to login.');
+      'Only FantasyNow+ staff has access to login.');
     return;
   }
   const claims = (window.auth && auth.user && auth.user.sub) ? auth.user : decodeJwt(token);
