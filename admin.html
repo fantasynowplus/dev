@@ -255,11 +255,11 @@
   .yt-summary .s-top{display:flex;gap:34px;flex-wrap:wrap}
   .yt-summary .s-stat .n{font-family:'Archivo';font-weight:800;font-size:30px}
   .yt-summary .s-stat .l{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9fb0d0;font-weight:700}
-  .yt-fullcard{display:flex;align-items:center;gap:20px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);cursor:pointer;margin-bottom:14px}
+  .yt-fullcard{display:grid;grid-template-columns:1fr 130px 130px 110px;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow);cursor:pointer;margin-bottom:14px}
   .yt-fullcard:hover{border-color:var(--navy-3)}
   .yt-fullcard .fc-name{font-size:16px;font-weight:700;color:var(--navy);font-family:'Archivo'}
   .yt-fullcard .fc-sub{font-size:12px;color:var(--muted);margin-top:2px}
-  .yt-fullcard .fc-stats{display:flex;gap:26px;margin-left:auto}
+  .yt-fullcard .fc-stat{text-align:right}
   .yt-fullcard .fc-stat .n{font-family:'Archivo';font-weight:800;font-size:20px;color:var(--navy)}
   .yt-fullcard .fc-stat .l{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
   .yt-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
@@ -1120,10 +1120,11 @@ async function channelAnalytics(id){
 
 async function loadYouTube(){
   topAction(ifCan('youtube','c','<button class="btn btn-primary" onclick="snapshotForm()">+ Add snapshot</button>'));
+  const cut=new Date(); cut.setDate(cut.getDate()-30); const cutISO=cut.toISOString().slice(0,10);
   const [channels,statsAll,dailyAll]=await Promise.all([
     dbGet('channels?select=id,name,youtube_channel_id&order=name.asc'),
     dbGet('youtube_stats?select=channel_id,subscriber_count,view_count,video_count,fetched_at&order=fetched_at.desc'),
-    dbGet('yt_daily?select=channel_id,date,views,watch_minutes,subs_gained,subs_lost&order=date.asc')
+    dbGet('yt_daily?select=channel_id,date,views,watch_minutes,subs_gained,subs_lost&date=gte.'+cutISO+'&order=date.asc')
   ]);
   if(!channels||!channels.length){ document.getElementById('content').innerHTML='<div class="empty"><h4>No channels to track</h4><p>Add a channel first, then record stats for it here.</p>'+ifCan('channels','c','<button class="btn btn-primary" onclick="go(\'channels\')">Go to Channels</button>')+'</div>'; return; }
   const latest={}; (statsAll||[]).forEach(s=>{ if(!latest[s.channel_id]) latest[s.channel_id]=s; });
@@ -1139,7 +1140,7 @@ async function loadYouTube(){
     '<div class="s-stat"><div class="n">'+fmtHours(sumWindow(daily,28,'watch_minutes'))+'</div><div class="l">Watch hrs · 28d</div></div>'+
     '<div class="s-stat"><div class="n">'+(netSubs(daily,28)>=0?'+':'')+fmtNum(netSubs(daily,28))+'</div><div class="l">Net subs · 28d</div></div>'+
     '</div></div>';
-  const cards=channels.map(c=>{const s=latest[c.id]||{};return '<div class="yt-fullcard" onclick=\'channelAnalytics("'+c.id+'")\'><div><div class="fc-name">'+esc(c.name)+'</div><div class="fc-sub">'+(s.fetched_at?'Updated '+timeAgo(s.fetched_at):'No snapshot yet')+' · click for analytics</div></div><div class="fc-stats"><div class="fc-stat"><div class="n">'+fmtNum(s.subscriber_count)+'</div><div class="l">Subscribers</div></div><div class="fc-stat"><div class="n">'+fmtNum(s.view_count)+'</div><div class="l">Views</div></div><div class="fc-stat"><div class="n">'+fmtNum(s.video_count)+'</div><div class="l">Videos</div></div></div></div>';}).join('');
+  const cards=channels.map(c=>{const s=latest[c.id]||{};return '<div class="yt-fullcard" onclick=\'channelAnalytics("'+c.id+'")\'><div class="fc-info"><div class="fc-name">'+esc(c.name)+'</div><div class="fc-sub">'+(s.fetched_at?'Updated '+timeAgo(s.fetched_at):'No snapshot yet')+' · click for analytics</div></div><div class="fc-stat"><div class="n">'+fmtNum(s.subscriber_count)+'</div><div class="l">Subscribers</div></div><div class="fc-stat"><div class="n">'+fmtNum(s.view_count)+'</div><div class="l">Views</div></div><div class="fc-stat"><div class="n">'+fmtNum(s.video_count)+'</div><div class="l">Videos</div></div></div>';}).join('');
   document.getElementById('content').innerHTML=summary+cards;
 }
 
