@@ -1,0 +1,327 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FantasyNow+ Consensus Rankings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- FantasyNow+ brand palette, dark board ---- */
+  :root{
+    --navy-900:#00102a;
+    --navy-850:#00163a;
+    --navy-800:#002863;      /* brand deep blue */
+    --panel:rgba(255,255,255,.035);
+    --panel-hi:rgba(255,255,255,.06);
+    --line:rgba(255,255,255,.09);
+    --orange:#FFA515;        /* brand */
+    --aqua:#42F4B0;          /* brand */
+    --redorange:#EA4E3D;     /* brand */
+    --text:#EAF1FF;
+    --muted:#8FA4C6;
+
+    --t1:#EA4E3D; --t2:#FFA515; --t3:#F5C518;
+    --t4:#42F4B0; --t5:#3DA5EA; --t6:#B07BEA;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(0,40,99,.55), transparent 60%),
+      linear-gradient(180deg,#00102a 0%, #00163a 100%);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
+
+  /* ---- top bar ---- */
+  .topbar{
+    display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;
+    padding-bottom:18px;margin-bottom:22px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-right:auto}
+  .brand img{height:42px;width:auto;display:block}
+  .brand .fallback{
+    font-family:"Oswald";font-weight:700;font-size:26px;letter-spacing:.5px;
+    color:#fff;line-height:1;
+  }
+  .brand .fallback b{color:var(--orange)}
+  .title{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;
+    letter-spacing:.16em;font-size:13px;color:var(--muted);
+    margin-top:6px;
+  }
+  .title .pos{color:var(--orange)}
+
+  /* ---- position toggle ---- */
+  .toggle{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:5px}
+  .toggle button{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+    font-size:14px;color:var(--muted);background:transparent;border:0;cursor:pointer;
+    padding:8px 20px;border-radius:999px;transition:color .15s, background .15s;
+  }
+  .toggle button.active{background:var(--orange);color:#04122b}
+  .toggle button:not(.active):hover{color:#fff}
+  .toggle button:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+
+  .meta{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .updated{font-size:12px;color:var(--muted);letter-spacing:.02em}
+  .refresh{background:transparent;border:1px solid var(--line);color:var(--muted);
+    font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer}
+  .refresh:hover{color:#fff;border-color:var(--muted)}
+
+  /* ---- board ---- */
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+  table{border-collapse:collapse;width:100%;min-width:820px}
+
+  thead th{
+    position:sticky;top:0;z-index:3;
+    background:#03153a;
+    border-bottom:2px solid var(--orange);
+    padding:12px 10px;font-family:"Oswald";font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);
+    text-align:center;white-space:nowrap;
+  }
+  thead th.rank{width:64px}
+  thead th.player{text-align:left;padding-left:16px;min-width:190px}
+  thead th.avg{color:var(--aqua)}
+
+  .srccol{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .srccol img{height:26px;width:auto;max-width:78px;object-fit:contain;display:block}
+  .srcname{font-size:11px;letter-spacing:.05em}
+
+  tbody td{padding:9px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:15px;color:#D8E3F7}
+  tbody td.player{text-align:left;padding-left:16px;font-weight:600;color:#fff;
+    font-size:15px;letter-spacing:.01em}
+  tbody td.avg{color:var(--aqua);font-weight:700}
+  tbody tr:hover td{background:rgba(255,255,255,.035)}
+  tbody td.src-blank{color:#4a5c7d}
+
+  .rankpill{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:26px;padding:0 8px;border-radius:7px;
+    font-family:"Oswald";font-weight:700;font-size:14px;color:#04122b;
+  }
+
+  /* tier divider rows */
+  tr.tier td{
+    padding:10px 16px;background:#020e26;
+    border-top:1px solid rgba(255,255,255,.06);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .tierlabel{display:flex;align-items:center;gap:12px;
+    font-family:"Oswald";font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+    font-size:13px;color:#fff}
+  .tierlabel .bar{width:26px;height:12px;border-radius:3px;display:inline-block}
+  .tierlabel .rng{color:var(--muted);font-weight:500;letter-spacing:.06em;font-size:12px}
+
+  .state{padding:60px 20px;text-align:center;color:var(--muted);font-size:15px}
+  .state b{color:#fff;font-weight:600}
+  .state code{color:var(--aqua);background:rgba(66,244,176,.08);padding:2px 6px;border-radius:5px}
+
+  @media (max-width:640px){
+    .wrap{padding:18px 12px 48px}
+    .brand .fallback{font-size:22px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="assets/logos/fantasynowplus.png" alt="FantasyNow+" onerror="this.remove()">
+      <span class="fallback">Fantasy<b>Now+</b></span>
+    </div>
+    <div>
+      <div class="toggle" role="tablist" aria-label="Position">
+        <button id="tab-RB" class="active" role="tab" aria-selected="true" onclick="show('RB')">RB</button>
+        <button id="tab-WR" role="tab" aria-selected="false" onclick="show('WR')">WR</button>
+      </div>
+      <div class="meta">
+        <span class="updated" id="updated"></span>
+        <button class="refresh" onclick="reload()">Refresh</button>
+      </div>
+    </div>
+    <div class="title">Consensus Redraft &middot; <span class="pos" id="posLabel">RB</span></div>
+  </div>
+
+  <div class="scroller">
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"><tr><td class="state">Loading rankings&hellip;</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+
+const CONFIG = {
+  RB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=2073640362&single=true&output=csv",
+  WR_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=378173209&single=true&output=csv"
+};
+
+/* Source columns, in sheet order G..L (0-indexed 6..11).
+   Drop logos at assets/logos/<key>.png to replace the text. */
+const SOURCES = [
+  { key:"cbs",                name:"CBS",         col:6  },
+  { key:"fantasyfootballers", name:"Footballers", col:7  },
+  { key:"fantasylife",        name:"FantasyLife", col:8  },
+  { key:"fantasynowplus",     name:"FantasyNow+", col:9  },
+  { key:"fantasypros",        name:"FantasyPros", col:10 },
+  { key:"rotoballer",         name:"RotoBaller",  col:11 }
+];
+
+const PLAYER_COL = 0, RANK_COL = 1, AVG_COL = 2;
+
+const TIERS = [
+  { max:12, label:"Tier 1", range:"1-12",  color:"var(--t1)" },
+  { max:24, label:"Tier 2", range:"13-24", color:"var(--t2)" },
+  { max:36, label:"Tier 3", range:"25-36", color:"var(--t3)" },
+  { max:48, label:"Tier 4", range:"37-48", color:"var(--t4)" },
+  { max:60, label:"Tier 5", range:"49-60", color:"var(--t5)" },
+  { max:999,label:"Tier 6", range:"61-80", color:"var(--t6)" }
+];
+function tierOf(rank){ for(let i=0;i<TIERS.length;i++) if(rank<=TIERS[i].max) return i; return TIERS.length-1; }
+
+const cache = {};
+let current = "RB";
+
+function buildHead(){
+  let h = '<th class="rank">#</th><th class="player">Player</th>';
+  SOURCES.forEach(s=>{
+    h += '<th><div class="srccol">'
+       + '<img src="assets/logos/'+s.key+'.png" alt="'+s.name+'" onerror="this.remove()">'
+       + '<span class="srcname">'+s.name+'</span></div></th>';
+  });
+  h += '<th class="avg">Avg</th>';
+  document.getElementById("head").innerHTML = h;
+}
+
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===",") { row.push(cur); cur=""; }
+      else if(c==="\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c!=="\r") cur+=c;
+    }
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function toPlayers(rows){
+  const out=[];
+  rows.forEach(r=>{
+    const rank = parseInt((r[RANK_COL]||"").trim(),10);
+    const name = (r[PLAYER_COL]||"").trim();
+    if(!name || isNaN(rank) || rank<1) return;   // skips header + tier separators
+    out.push({ rank, name, avg:(r[AVG_COL]||"").trim(), row:r });
+  });
+  out.sort((a,b)=>a.rank-b.rank);
+  return out;
+}
+
+function render(players){
+  const body=document.getElementById("body");
+  if(!players.length){ body.innerHTML='<tr><td class="state">No rows found.</td></tr>'; return; }
+  const span = 3 + SOURCES.length;
+  let html="", lastTier=-1;
+  players.forEach(p=>{
+    const t=tierOf(p.rank);
+    if(t!==lastTier){
+      const T=TIERS[t];
+      html += '<tr class="tier"><td colspan="'+span+'"><span class="tierlabel">'
+            + '<span class="bar" style="background:'+T.color+'"></span>'+T.label
+            + '<span class="rng">'+T.range+'</span></span></td></tr>';
+      lastTier=t;
+    }
+    let cells="";
+    SOURCES.forEach(s=>{
+      const v=(p.row[s.col]||"").trim();
+      cells += v ? '<td>'+v+'</td>' : '<td class="src-blank">-</td>';
+    });
+    const avg = p.avg ? (isNaN(+p.avg)?p.avg:(+p.avg).toFixed(1)) : "";
+    html += '<tr>'
+          + '<td><span class="rankpill" style="background:'+TIERS[t].color+'">'+p.rank+'</span></td>'
+          + '<td class="player">'+escapeHtml(p.name)+'</td>'
+          + cells
+          + '<td class="avg">'+avg+'</td></tr>';
+  });
+  body.innerHTML=html;
+}
+
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+async function load(pos, force){
+  const url=CONFIG[pos+"_URL"];
+  if(!url || url.indexOf("PASTE_")===0){
+    document.getElementById("body").innerHTML=
+      '<tr><td class="state">Add your published-CSV links in the <b>CONFIG</b> block '
+      +'(<code>'+pos+'_URL</code>) to load the '+pos+' board.</td></tr>';
+    return;
+  }
+  if(cache[pos] && !force){ render(cache[pos]); return; }
+  document.getElementById("body").innerHTML='<tr><td class="state">Loading '+pos+'&hellip;</td></tr>';
+  try{
+    const res=await fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const players=toPlayers(parseCSV(await res.text()));
+    cache[pos]=players;
+    render(players);
+    stamp();
+  }catch(e){
+    document.getElementById("body").innerHTML=
+      '<tr><td class="state">Couldn\'t load the '+pos+' data. Check that the sheet is '
+      +'<b>published to the web</b> and the link in <code>'+pos+'_URL</code> is correct.</td></tr>';
+  }
+}
+
+function stamp(){
+  const d=new Date();
+  document.getElementById("updated").textContent=
+    "Updated "+d.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+}
+
+function show(pos){
+  current=pos;
+  document.getElementById("posLabel").textContent=pos;
+  ["RB","WR"].forEach(p=>{
+    const b=document.getElementById("tab-"+p);
+    const on=p===pos;
+    b.classList.toggle("active",on);
+    b.setAttribute("aria-selected",on);
+  });
+  load(pos);
+}
+function reload(){ load(current,true); if(current==="RB") delete cache.WR; else delete cache.RB; }
+
+buildHead();
+show("RB");
+load("WR");  // warm the other tab
+</script>
+</body>
+</html>
