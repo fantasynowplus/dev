@@ -61,34 +61,113 @@ layout: null
         </section>
 
         <!-- 6. Join Us -->
-        <form id="fnpJoinForm" class="fnp-join">
-            <input name="name" placeholder="Full name" required>
-            <input name="email" type="email" placeholder="Email">
-            <input name="phone" placeholder="Phone number">
-            <input name="dob" type="date" placeholder="Date of birth">
-            <input name="role" placeholder="Role you're interested in">
-            <textarea name="reason" placeholder="Why do you want to join?"></textarea>
-            <button type="submit">Apply</button>
-            <p id="fnpJoinMsg"></p>
-            </form>
-            <script>
-            (function(){
-            var SB_URL='https://fckobcxprmudfpxdmswi.supabase.co';
-            var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja29iY3hwcm11ZGZweGRtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTI5MzcsImV4cCI6MjA5OTE4ODkzN30.9wMb0SXAZs-jo1G9xRxk5M47fJIIU7-DTJTl1yFRwFk';
-            var form=document.getElementById('fnpJoinForm'), msg=document.getElementById('fnpJoinMsg');
-            form.addEventListener('submit', async function(e){
-                e.preventDefault();
-                var fd=new FormData(form);
-                var body={name:fd.get('name'),email:fd.get('email')||null,phone:fd.get('phone')||null,dob:fd.get('dob')||null,role:fd.get('role')||null,reason:fd.get('reason')||null,source:'website'};
-                if(!body.name){ msg.textContent='Please enter your name.'; return; }
-                try{
-                var res=await fetch(SB_URL+'/rest/v1/recruits',{method:'POST',headers:{'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
-                if(res.ok){ form.reset(); msg.textContent='Thanks — we\'ll be in touch!'; }
-                else { msg.textContent='Something went wrong. Please try again.'; }
-                }catch(err){ msg.textContent='Something went wrong. Please try again.'; }
-            });
-            })();
-            </script>
+        <div class="fnp-join-wrap">
+  <div class="fnp-join">
+    <h2>Join Our Team</h2>
+    <p class="fnp-join-intro">Interested in joining FantasyNow+? Tell us a bit about yourself and we'll be in touch.</p>
+    <form id="fnpJoinForm" autocomplete="on">
+      <label>Full name
+        <input name="name" placeholder="Your name" required>
+      </label>
+      <div class="fnp-row">
+        <label>Email
+          <input name="email" type="email" placeholder="you@email.com">
+        </label>
+        <label>Phone number
+          <input name="phone" placeholder="555-555-5555">
+        </label>
+      </div>
+      <div class="fnp-row">
+        <label>Date of birth
+          <input name="dob" type="date">
+        </label>
+        <label>Role you're interested in
+          <input name="role" placeholder="e.g. Content, Social Media">
+        </label>
+      </div>
+      <label>Why do you want to join?
+        <textarea name="reason" rows="4" placeholder="Tell us what draws you to FantasyNow+…"></textarea>
+      </label>
+      <button type="submit">Apply Now</button>
+      <p id="fnpJoinMsg" class="fnp-join-msg"></p>
+    </form>
+  </div>
+</div>
+
+<style>
+  .fnp-join-wrap{display:flex;justify-content:center;padding:40px 16px;background:#000}
+  .fnp-join{
+    width:100%;max-width:620px;
+    background:#002863;
+    border-top:4px solid #FFA515;
+    border-radius:14px;
+    padding:34px 34px 30px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  .fnp-join h2{
+    margin:0 0 6px;text-align:center;color:#FFA515;
+    font-family:'Archivo','Inter',sans-serif;font-weight:800;font-size:26px;letter-spacing:.01em;
+  }
+  .fnp-join-intro{margin:0 0 24px;text-align:center;color:#9fb0d0;font-size:14px;line-height:1.5}
+  .fnp-join label{
+    display:block;margin-bottom:16px;
+    font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8ea3c9;
+  }
+  .fnp-row{display:flex;gap:16px}
+  .fnp-row label{flex:1}
+  .fnp-join input,.fnp-join textarea{
+    display:block;width:100%;margin-top:7px;
+    background:#0a2a5e;
+    border:1px solid #1c407e;
+    border-radius:9px;
+    padding:12px 13px;
+    color:#fff;font-size:15px;font-weight:400;letter-spacing:normal;text-transform:none;font-family:inherit;
+    box-sizing:border-box;transition:border-color .15s, box-shadow .15s;
+  }
+  .fnp-join textarea{resize:vertical;min-height:96px}
+  .fnp-join input::placeholder,.fnp-join textarea::placeholder{color:#6f86b3}
+  .fnp-join input:focus,.fnp-join textarea:focus{
+    outline:none;border-color:#FFA515;box-shadow:0 0 0 3px rgba(255,165,21,.22);
+  }
+  .fnp-join input[type="date"]{color-scheme:dark}
+  .fnp-join button{
+    width:100%;margin-top:8px;
+    background:#FFA515;color:#002863;
+    border:0;border-radius:10px;
+    padding:14px;font-size:16px;font-weight:800;letter-spacing:.02em;cursor:pointer;
+    font-family:'Archivo','Inter',sans-serif;transition:background .15s, transform .05s;
+  }
+  .fnp-join button:hover{background:#ED9405}
+  .fnp-join button:active{transform:translateY(1px)}
+  .fnp-join button:disabled{opacity:.6;cursor:default}
+  .fnp-join-msg{margin:14px 0 0;text-align:center;font-size:14px;font-weight:600;min-height:2px}
+  .fnp-join-msg.ok{color:#42F4B0}
+  .fnp-join-msg.bad{color:#EA4E3D}
+  @media(max-width:520px){.fnp-row{flex-direction:column;gap:0}.fnp-join{padding:26px 20px}}
+</style>
+
+<script>
+(function(){
+  var SB_URL='https://fckobcxprmudfpxdmswi.supabase.co';
+  var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja29iY3hwcm11ZGZweGRtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTI5MzcsImV4cCI6MjA5OTE4ODkzN30.9wMb0SXAZs-jo1G9xRxk5M47fJIIU7-DTJTl1yFRwFk';
+  var form=document.getElementById('fnpJoinForm'), msg=document.getElementById('fnpJoinMsg');
+  var btn=form.querySelector('button');
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var fd=new FormData(form);
+    var body={name:fd.get('name'),email:fd.get('email')||null,phone:fd.get('phone')||null,dob:fd.get('dob')||null,role:fd.get('role')||null,reason:fd.get('reason')||null,source:'website'};
+    if(!body.name){ msg.className='fnp-join-msg bad'; msg.textContent='Please enter your name.'; return; }
+    btn.disabled=true; btn.textContent='Sending…';
+    try{
+      var res=await fetch(SB_URL+'/rest/v1/recruits',{method:'POST',headers:{'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
+      if(res.ok){ form.reset(); msg.className='fnp-join-msg ok'; msg.textContent='Thanks — we\'ll be in touch!'; }
+      else { msg.className='fnp-join-msg bad'; msg.textContent='Something went wrong. Please try again.'; }
+    }catch(err){ msg.className='fnp-join-msg bad'; msg.textContent='Something went wrong. Please try again.'; }
+    btn.disabled=false; btn.textContent='Apply Now';
+  });
+})();
+</script>
     </main>
 
     <!-- Scripts -->
