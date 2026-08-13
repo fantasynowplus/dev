@@ -13,9 +13,9 @@ layout: null
 <style>
   /* ---- FantasyNow+ brand palette, dark board ---- */
   :root{
-    --navy-900:#00102a;
-    --navy-850:#00163a;
-    --navy-800:#002863;      /* brand deep blue */
+    --stream-bg:#001738;
+    --header-bg:#002863;
+    --panel:rgba(255,255,255,.035);
     --panel:rgba(255,255,255,.035);
     --panel-hi:rgba(255,255,255,.06);
     --line:rgba(255,255,255,.09);
@@ -33,8 +33,7 @@ layout: null
   html,body{margin:0}
   body{
     background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(0,40,99,.55), transparent 60%),
-      linear-gradient(180deg,#00102a 0%, #00163a 100%);
+      var(--stream-bg);
     background-attachment:fixed;
     color:var(--text);
     font-family:"Inter",system-ui,sans-serif;
