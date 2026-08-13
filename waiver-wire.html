@@ -1,0 +1,492 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FantasyNow+ Waiver Wire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#00102a;
+    --navy-850:#00163a;
+    --navy-800:#002863;
+    --panel:rgba(255,255,255,.035);
+    --panel-hi:rgba(255,255,255,.06);
+    --line:rgba(255,255,255,.09);
+    --orange:#FFA515;
+    --aqua:#42F4B0;
+    --redorange:#EA4E3D;
+    --text:#EAF1FF;
+    --muted:#8FA4C6;
+
+    --t1:#EA4E3D; --t2:#FFA515; --t3:#F5C518;
+    --t4:#42F4B0; --t5:#3DA5EA; --t6:#B07BEA;
+
+    --qb:var(--t1); --rb:var(--t4); --wr:var(--t5); --te:var(--t6);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(0,40,99,.55), transparent 60%),
+      linear-gradient(180deg,#00102a 0%, #00163a 100%);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:"Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
+
+  .topbar{
+    display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;
+    padding-bottom:18px;margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-right:auto}
+  .brand img{height:42px;width:auto;display:block}
+  .brand .report-title{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;
+    letter-spacing:.12em;font-size:16px;color:#fff;
+    padding-left:16px;border-left:1px solid var(--line);
+  }
+  .title{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;
+    letter-spacing:.16em;font-size:13px;color:var(--muted);
+    margin-top:6px;
+  }
+  .title .pos{color:var(--orange)}
+
+  .toggle{display:inline-flex;gap:6px;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:5px}
+  .toggle button{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+    font-size:14px;color:var(--muted);background:transparent;border:0;cursor:pointer;
+    padding:8px 18px;border-radius:999px;transition:color .15s, background .15s;
+  }
+  .toggle button.active{background:var(--orange);color:#04122b}
+  .toggle button:not(.active):hover{color:#fff}
+  .toggle button:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+
+  .meta{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .updated{font-size:12px;color:var(--muted);letter-spacing:.02em}
+  .refresh{background:transparent;border:1px solid var(--line);color:var(--muted);
+    font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer}
+  .refresh:hover{color:#fff;border-color:var(--muted)}
+
+  .filters{
+    display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;margin-bottom:18px;
+  }
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field > label{
+    font-family:"Oswald";font-weight:600;text-transform:uppercase;
+    letter-spacing:.1em;font-size:11px;color:var(--muted);
+  }
+  .field .val{color:var(--orange)}
+
+  .search input{
+    background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--text);
+    font-family:"Inter",sans-serif;font-size:14px;padding:8px 12px;border-radius:8px;
+    width:210px;
+  }
+  .search input::placeholder{color:#5d719a}
+  .search input:focus{outline:none;border-color:var(--aqua)}
+
+  input[type=range]{width:170px;accent-color:var(--orange);cursor:pointer}
+
+  .stepper{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);
+    border:1px solid var(--line);border-radius:8px;padding:3px}
+  .stepper button{
+    background:transparent;border:0;color:var(--muted);cursor:pointer;
+    font-size:16px;line-height:1;width:26px;height:26px;border-radius:6px;
+  }
+  .stepper button:hover{color:#fff;background:var(--panel-hi)}
+  .stepper span{min-width:22px;text-align:center;font-size:14px;font-weight:600}
+
+  .check{display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+    font-size:13px;color:var(--text);padding-bottom:9px}
+  .check input{accent-color:var(--orange);width:16px;height:16px;cursor:pointer}
+
+  .reset{background:transparent;border:1px solid var(--line);color:var(--muted);
+    font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;margin-left:auto}
+  .reset:hover{color:#fff;border-color:var(--muted)}
+
+  .count{font-size:12px;color:var(--muted);margin:0 0 12px 2px;letter-spacing:.02em}
+  .count b{color:#fff;font-weight:600}
+
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+  table{border-collapse:collapse;width:100%;min-width:940px}
+
+  thead th{
+    position:sticky;top:0;z-index:3;
+    background:#03153a;
+    border-bottom:2px solid var(--orange);
+    padding:12px 10px;font-family:"Oswald";font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);
+    text-align:center;white-space:nowrap;cursor:pointer;user-select:none;
+  }
+  thead th:hover{color:#fff}
+  thead th.pos{width:62px}
+  thead th.player{text-align:left;padding-left:16px;min-width:180px}
+  thead th.key{color:var(--aqua)}
+  thead th .arrow{opacity:.45;font-size:10px;margin-left:4px}
+  thead th.sorted{color:#fff}
+  thead th.sorted .arrow{opacity:1;color:var(--orange)}
+
+  tbody td{padding:9px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:15px;color:#D8E3F7}
+  tbody td.player{text-align:left;padding-left:16px;font-weight:600;color:#fff;
+    font-size:15px;letter-spacing:.01em}
+  tbody td.key{color:var(--aqua);font-weight:700}
+  tbody td.dim{color:#4a5c7d}
+  tbody tr:hover td{background:rgba(255,255,255,.035)}
+  tbody td.thin{color:var(--t3)}
+
+  .pospill{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:34px;height:24px;padding:0 8px;border-radius:7px;
+    font-family:"Oswald";font-weight:700;font-size:13px;color:#04122b;
+  }
+  .byetag{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:26px;height:22px;padding:0 7px;border-radius:6px;
+    background:rgba(234,78,61,.16);color:var(--redorange);
+    font-weight:700;font-size:13px;
+  }
+
+  .state{padding:60px 20px;text-align:center;color:var(--muted);font-size:15px}
+  .state b{color:#fff;font-weight:600}
+  .state code{color:var(--aqua);background:rgba(66,244,176,.08);padding:2px 6px;border-radius:5px}
+
+  @media (max-width:640px){
+    .wrap{padding:18px 12px 48px}
+    .filters{gap:16px;padding:14px}
+    .search input{width:100%}
+    .reset{margin-left:0}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="assets/logos/fantasynowplus.png" alt="FantasyNow+" onerror="this.remove()">
+      <span class="report-title">Waiver Wire Board</span>
+    </div>
+    <div>
+      <div class="toggle" role="tablist" aria-label="Position">
+        <button id="tab-ALL" class="active" role="tab" aria-selected="true" onclick="setPos('ALL')">All</button>
+        <button id="tab-QB" role="tab" aria-selected="false" onclick="setPos('QB')">QB</button>
+        <button id="tab-RB" role="tab" aria-selected="false" onclick="setPos('RB')">RB</button>
+        <button id="tab-WR" role="tab" aria-selected="false" onclick="setPos('WR')">WR</button>
+        <button id="tab-TE" role="tab" aria-selected="false" onclick="setPos('TE')">TE</button>
+      </div>
+      <div class="meta">
+        <span class="updated" id="updated"></span>
+        <button class="refresh" onclick="reload()">Refresh</button>
+      </div>
+    </div>
+    <div class="title">Waiver Targets &middot; <span class="pos" id="weekLabel">&mdash;</span></div>
+  </div>
+
+  <div class="filters">
+    <div class="field search">
+      <label for="q">Search</label>
+      <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
+    </div>
+
+    <div class="field">
+      <label for="rost">Max roster % <span class="val" id="rostVal">60%</span></label>
+      <input id="rost" type="range" min="0" max="100" step="5" value="60" oninput="draw()">
+    </div>
+
+    <div class="field">
+      <label>Min games (L3)</label>
+      <div class="stepper">
+        <button type="button" onclick="bumpGP(-1)" aria-label="Decrease">&minus;</button>
+        <span id="gpVal">1</span>
+        <button type="button" onclick="bumpGP(1)" aria-label="Increase">+</button>
+      </div>
+    </div>
+
+    <label class="check" id="byeWrap">
+      <input id="hideBye" type="checkbox" checked onchange="draw()">
+      <span id="byeLabel">Hide players on bye</span>
+    </label>
+
+    <button class="reset" onclick="resetFilters()">Reset filters</button>
+  </div>
+
+  <p class="count" id="count"></p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"><tr><td class="state">Loading waiver board&hellip;</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+
+const CONFIG = {
+  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv"
+};
+
+const COL = { pos:0, player:1, team:2, bye:3, rost:4,
+              lwPts:5, lwRank:6, l3Ppg:7, l3Rank:8, l3Gp:9,
+              season:10, week:11 };
+
+const POS_COLOR = { QB:"var(--qb)", RB:"var(--rb)", WR:"var(--wr)", TE:"var(--te)" };
+
+const COLUMNS = [
+  { key:"pos",    label:"Pos",     cls:"pos",    type:"str" },
+  { key:"player", label:"Player",  cls:"player", type:"str" },
+  { key:"team",   label:"Team",    cls:"",       type:"str" },
+  { key:"bye",    label:"Bye",     cls:"",       type:"num" },
+  { key:"rost",   label:"Rost %",  cls:"",       type:"num" },
+  { key:"lwPts",  label:"LW Pts",  cls:"",       type:"num" },
+  { key:"lwRank", label:"LW Rank", cls:"",       type:"num" },
+  { key:"l3Ppg",  label:"L3 PPG",  cls:"key",    type:"num" },
+  { key:"l3Rank", label:"L3 Rank", cls:"",       type:"num" },
+  { key:"l3Gp",   label:"L3 GP",   cls:"",       type:"num" }
+];
+
+let ALL = [];
+let upcomingWeek = null;
+let season = "";
+let pos = "ALL";
+let minGP = 1;
+let sort = { key:"l3Ppg", dir:-1 };
+
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===",") { row.push(cur); cur=""; }
+      else if(c==="\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c!=="\r") cur+=c;
+    }
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function num(v){
+  const s=String(v==null?"":v).replace(/,/g,"").trim();
+  if(s==="") return null;
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function pct(v){
+  const s=String(v==null?"":v).replace(/,/g,"").trim();
+  if(s==="") return null;
+  const hasSign=s.indexOf("%")>-1;
+  const n=parseFloat(s.replace("%",""));
+  if(isNaN(n)) return null;
+  if(hasSign) return n/100;
+  return n>1 ? n/100 : n;
+}
+
+function toRows(raw){
+  const out=[];
+  raw.forEach((r,i)=>{
+    if(i===0) return;
+    const p=(r[COL.player]||"").trim();
+    const ps=(r[COL.pos]||"").trim().toUpperCase();
+    if(!p || !POS_COLOR[ps]) return;
+    out.push({
+      pos:ps,
+      player:p,
+      team:(r[COL.team]||"").trim(),
+      bye:num(r[COL.bye]),
+      rost:pct(r[COL.rost]),
+      lwPts:num(r[COL.lwPts]),
+      lwRank:num(r[COL.lwRank]),
+      l3Ppg:num(r[COL.l3Ppg]),
+      l3Rank:num(r[COL.l3Rank]),
+      l3Gp:num(r[COL.l3Gp]),
+      season:(r[COL.season]||"").trim(),
+      week:num(r[COL.week])
+    });
+  });
+  return out;
+}
+
+function buildHead(){
+  let h="";
+  COLUMNS.forEach(c=>{
+    const on = sort.key===c.key;
+    const arrow = on ? (sort.dir===1?"&#9650;":"&#9660;") : "&#9670;";
+    h += '<th class="'+c.cls+(on?" sorted":"")+'" onclick="setSort(\''+c.key+'\')">'
+       + c.label + '<span class="arrow">'+arrow+'</span></th>';
+  });
+  document.getElementById("head").innerHTML=h;
+}
+
+function setSort(key){
+  const c=COLUMNS.find(x=>x.key===key);
+  if(sort.key===key){ sort.dir=-sort.dir; }
+  else { sort.key=key; sort.dir = c.type==="str" ? 1 : -1; }
+  buildHead(); draw();
+}
+
+function setPos(p){
+  pos=p;
+  ["ALL","QB","RB","WR","TE"].forEach(x=>{
+    const b=document.getElementById("tab-"+x);
+    const on=x===p;
+    b.classList.toggle("active",on);
+    b.setAttribute("aria-selected",on);
+  });
+  draw();
+}
+
+function bumpGP(d){
+  minGP=Math.max(0,Math.min(3,minGP+d));
+  document.getElementById("gpVal").textContent=minGP;
+  draw();
+}
+
+function resetFilters(){
+  document.getElementById("q").value="";
+  document.getElementById("rost").value=60;
+  document.getElementById("hideBye").checked=true;
+  minGP=1;
+  document.getElementById("gpVal").textContent="1";
+  sort={key:"l3Ppg",dir:-1};
+  buildHead();
+  setPos("ALL");
+}
+
+function draw(){
+  const body=document.getElementById("body");
+  if(!ALL.length){ return; }
+
+  const q=document.getElementById("q").value.trim().toLowerCase();
+  const maxRost=parseInt(document.getElementById("rost").value,10)/100;
+  const hideBye=document.getElementById("hideBye").checked;
+  document.getElementById("rostVal").textContent=Math.round(maxRost*100)+"%";
+
+  const rows=ALL.filter(r=>{
+    if(pos!=="ALL" && r.pos!==pos) return false;
+    if(r.rost!=null && r.rost>maxRost) return false;
+    if(minGP>0 && (r.l3Gp==null || r.l3Gp<minGP)) return false;
+    if(hideBye && upcomingWeek!=null && r.bye!=null && r.bye===upcomingWeek) return false;
+    if(q){
+      const hay=(r.player+" "+r.team).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+
+  const c=COLUMNS.find(x=>x.key===sort.key);
+  rows.sort((a,b)=>{
+    let x=a[sort.key], y=b[sort.key];
+    if(c.type==="str"){
+      x=String(x||""); y=String(y||"");
+      return x.localeCompare(y)*sort.dir;
+    }
+    if(x==null && y==null) return 0;
+    if(x==null) return 1;
+    if(y==null) return -1;
+    return (x-y)*sort.dir;
+  });
+
+  document.getElementById("count").innerHTML=
+    "Showing <b>"+rows.length+"</b> of "+ALL.length+" players";
+
+  if(!rows.length){
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+      +'No players match these filters. Try raising <b>max roster %</b> or clearing the search.</td></tr>';
+    return;
+  }
+
+  let html="";
+  rows.forEach(r=>{
+    const onBye = upcomingWeek!=null && r.bye!=null && r.bye===upcomingWeek;
+    const byeCell = r.bye==null ? '<td class="dim">&ndash;</td>'
+      : (onBye ? '<td><span class="byetag">'+r.bye+'</span></td>' : '<td>'+r.bye+'</td>');
+
+    html += '<tr>'
+      + '<td><span class="pospill" style="background:'+POS_COLOR[r.pos]+'">'+r.pos+'</span></td>'
+      + '<td class="player">'+escapeHtml(r.player)+'</td>'
+      + '<td>'+escapeHtml(r.team)+'</td>'
+      + byeCell
+      + '<td>'+(r.rost==null?'<span class="dim">&ndash;</span>':(r.rost*100).toFixed(1)+"%")+'</td>'
+      + '<td'+(r.lwPts?'':' class="dim"')+'>'+(r.lwPts==null?"&ndash;":r.lwPts.toFixed(1))+'</td>'
+      + '<td'+(r.lwRank?'':' class="dim"')+'>'+(r.lwRank==null?"&ndash;":r.pos+r.lwRank)+'</td>'
+      + '<td class="key">'+(r.l3Ppg==null?"&ndash;":r.l3Ppg.toFixed(1))+'</td>'
+      + '<td'+(r.l3Rank?'':' class="dim"')+'>'+(r.l3Rank==null?"&ndash;":r.pos+r.l3Rank)+'</td>'
+      + '<td'+(r.l3Gp!=null && r.l3Gp<3?' class="thin"':'')+'>'+(r.l3Gp==null?"&ndash;":r.l3Gp)+'</td>'
+      + '</tr>';
+  });
+  body.innerHTML=html;
+}
+
+function stamp(){
+  const d=new Date();
+  document.getElementById("updated").textContent=
+    "Updated "+d.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+}
+
+async function load(force){
+  const url=CONFIG.WEB_URL;
+  const body=document.getElementById("body");
+  if(!url || url.indexOf("PASTE_")===0){
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+      +'Add your published-CSV link in the <b>CONFIG</b> block (<code>WEB_URL</code>) to load the board.</td></tr>';
+    return;
+  }
+  body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">Loading waiver board&hellip;</td></tr>';
+  try{
+    const res=await fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    ALL=toRows(parseCSV(await res.text()));
+    if(ALL.length){
+      upcomingWeek=ALL[0].week;
+      season=ALL[0].season;
+    }
+    const wk = upcomingWeek!=null ? "Week "+upcomingWeek : "";
+    document.getElementById("weekLabel").textContent=[season,wk].filter(Boolean).join(" \u00b7 ") || "\u2014";
+    const byeWrap=document.getElementById("byeWrap");
+    if(upcomingWeek==null){ byeWrap.style.display="none"; }
+    else { document.getElementById("byeLabel").textContent="Hide players on bye (Wk "+upcomingWeek+")"; }
+    stamp();
+    draw();
+  }catch(e){
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+      +'Couldn\'t load the waiver data. Check that the <b>Web_Data</b> sheet is '
+      +'<b>published to the web</b> and the link in <code>WEB_URL</code> is correct.</td></tr>';
+  }
+}
+
+function reload(){ load(true); }
+
+buildHead();
+load();
+</script>
+</body>
+</html>

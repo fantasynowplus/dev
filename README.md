@@ -1,1 +1,1 @@
-This is a development site for new pushes. 
+This is a development site intended for FantasyNow+. This was created by Justin Bauerle with the assistance of Ai in writing code only. Thoughts, ideas, and content are solely at the hands of FantasyNow+'s content creation team. For questions, please email fantasynowplus@gmail.com
