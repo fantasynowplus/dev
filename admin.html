@@ -1430,7 +1430,7 @@ async function convertRecruit(id){
   let matches=[];
   try{const parts=[];if(rec.email)parts.push('email.eq.'+encodeURIComponent(rec.email));if(rec.name)parts.push('name.ilike.*'+encodeURIComponent(rec.name)+'*');if(parts.length)matches=await dbGet('profiles?select=id,name,email,slffid&or=('+parts.join(',')+')&limit=5')||[];}catch(e){}
   const genPw=()=>Math.random().toString(36).slice(2,8)+Math.floor(10+Math.random()*90)+'!';
-  const loginOpts='<option value="none">No login account</option>'+matches.map(m=>'<option value="link:'+m.id+'">Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+'<option value="create">Create a new login</option>';
+  const loginOpts='<option value="" disabled selected>— choose —</option>'+matches.map(m=>'<option value="link:'+m.id+'">Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+'<option value="create">Create a new login</option><option value="none">No login account</option>';
   const today=new Date().toISOString().slice(0,10);
   const suggestedId=await nextSlffId();
   modal({title:'Convert '+rec.name+' to staff',wide:true,saveLabel:'Convert to staff',
@@ -1443,6 +1443,7 @@ async function convertRecruit(id){
     onSave:async(bg)=>{
       const start_date=val(bg,'start_date')||today;
       const login=bg.querySelector('[name="login"]').value;
+      if(!login)throw new Error('Choose a login option');
       const slffid=(val(bg,'slffid')||'').trim();
       if(slffid&&!/^\d+$/.test(slffid))throw new Error('SLFF ID must be numeric');
       const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,department:val(bg,'department')||null,start_date,is_active:true});
@@ -1456,10 +1457,12 @@ async function convertRecruit(id){
       else if(login==='create'){
         const password=val(bg,'password');
         const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name,slffid:slffid||null})});
-        const data=await res.json();
-        if(!res.ok)throw new Error(data.error||'Failed to create login');
-        await dbPatch('staff?id=eq.'+staffId,{profile_id:data.id});
-        if(slffid){try{await dbPatch('profiles?id=eq.'+data.id,{slffid});}catch(e){}}
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok)throw new Error(data.error||('Failed to create login ('+res.status+')'));
+        const newId=data.id||(data.user&&data.user.id)||data.userId||(data.data&&data.data.user&&data.data.user.id);
+        if(!newId)throw new Error('Login created but no user id returned: '+JSON.stringify(data).slice(0,200));
+        const linked=await dbPatch('staff?id=eq.'+staffId,{profile_id:newId});
+        if(slffid){try{await dbPatch('profiles?id=eq.'+newId,{slffid});}catch(e){console.warn('slffid patch failed',e);}}
         pwShown={email:rec.email,password};
       }
       await dbPatch('recruits?id=eq.'+id,{status:'converted',converted_at:new Date().toISOString(),staff_id:staffId});
