@@ -516,7 +516,13 @@ let shownRows=[];
 
 function draw(){
   const body=document.getElementById("body");
-  if(!ALL.length){ return; }
+  if(!ALL.length){
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+      +'The CSV loaded, but no player rows were recognized. Check that <code>Web_Data</code> '
+      +'is the sheet selected in Publish to web, and that its column A reads QB / RB / WR / TE.'
+      +'</td></tr>';
+    return;
+  }
 
   const q=document.getElementById("q").value.trim().toLowerCase();
   const maxRost=parseInt(document.getElementById("rost").value,10)/100;
@@ -762,7 +768,12 @@ async function load(force){
   try{
     const res=await fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now());
     if(!res.ok) throw new Error("HTTP "+res.status);
-    ALL=toRows(parseCSV(await res.text()));
+    const grid=parseCSV(await res.text());
+    ALL=toRows(grid);
+    if(!ALL.length){
+      console.log("Web_Data header row:", grid[0]);
+      console.log("Web_Data first data row:", grid[1]);
+    }
     if(ALL.length){
       upcomingWeek=ALL[0].week;
       season=ALL[0].season;
