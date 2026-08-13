@@ -252,6 +252,7 @@
   .pm-off{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:#c2c7d0;background:#f4f5f8;border:1px solid #e7eaf1;border-radius:5px;padding:1px 4px;margin:0 1px}
 
   .tool-list{display:flex;flex-direction:column}
+  .panel.tool-panel{overflow:visible}
   .tool-row{display:flex;gap:16px;align-items:flex-start;padding:14px 18px;border-top:1px solid var(--line)}
   .tool-row:first-child{border-top:0}
   .tool-row.editing{background:#fbfcfe}
@@ -1113,7 +1114,7 @@ async function loadTools(){
 function renderTools(){
   const c=document.getElementById('content');
   if(!TOOLS.length && !TOOL_DRAFTS.length){
-    c.innerHTML='<div class="empty"><h4>No tools yet</h4><p>Add links to pages like the weekly rankings or waiver wire, and tag which show each one belongs to.</p>'+ifCan('tools','c','<button class="btn btn-primary" onclick="toolAddRow()">+ Add tool</button>')+'</div>';
+    c.innerHTML='<div class="panel tool-panel"><div class="panel-head"><h3>Tools &amp; links</h3><span class="count-pill" style="margin-left:auto">'+TOOLS.length+' link'+(TOOLS.length===1?'':'s')+'</span></div>'+
     return;
   }
   c.innerHTML='<div class="panel"><div class="panel-head"><h3>Tools &amp; links</h3><span class="count-pill" style="margin-left:auto">'+TOOLS.length+' link'+(TOOLS.length===1?'':'s')+'</span></div>'+
