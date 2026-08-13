@@ -12,9 +12,8 @@ layout: null
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy-900:#00102a;
-    --navy-850:#00163a;
-    --navy-800:#002863;
+    --stream-bg:#001738;
+    --header-bg:#002863;
     --panel:rgba(255,255,255,.035);
     --panel-hi:rgba(255,255,255,.06);
     --line:rgba(255,255,255,.09);
@@ -32,11 +31,9 @@ layout: null
 
   *{box-sizing:border-box}
   html,body{margin:0}
+  html{background:var(--stream-bg)}
   body{
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(0,40,99,.55), transparent 60%),
-      linear-gradient(180deg,#00102a 0%, #00163a 100%);
-    background-attachment:fixed;
+    background:var(--stream-bg);
     color:var(--text);
     font-family:"Inter",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -102,6 +99,13 @@ layout: null
   .search input::placeholder{color:#5d719a}
   .search input:focus{outline:none;border-color:var(--aqua)}
 
+  select.pick{
+    background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--text);
+    font-family:"Inter",sans-serif;font-size:14px;padding:8px 12px;border-radius:8px;
+    cursor:pointer;
+  }
+  select.pick:focus{outline:none;border-color:var(--aqua)}
+
   input[type=range]{width:170px;accent-color:var(--orange);cursor:pointer}
 
   .stepper{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.25);
@@ -125,12 +129,12 @@ layout: null
   .count b{color:#fff;font-weight:600}
 
   .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:14px;
-    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+    background:rgba(255,255,255,.02)}
   table{border-collapse:collapse;width:100%;min-width:940px}
 
   thead th{
     position:sticky;top:0;z-index:3;
-    background:#03153a;
+    background:var(--header-bg);
     border-bottom:2px solid var(--orange);
     padding:12px 10px;font-family:"Oswald";font-weight:600;
     text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);
@@ -203,6 +207,18 @@ layout: null
   </div>
 
   <div class="filters">
+    <div class="field">
+      <label for="limit">Show</label>
+      <select class="pick" id="limit" onchange="draw()">
+        <option value="10" selected>10 players</option>
+        <option value="15">15 players</option>
+        <option value="20">20 players</option>
+        <option value="25">25 players</option>
+        <option value="50">50 players</option>
+        <option value="0">All</option>
+      </select>
+    </div>
+
     <div class="field search">
       <label for="q">Search</label>
       <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
@@ -244,7 +260,7 @@ layout: null
 <script>
 
 const CONFIG = {
-  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv"
+  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pubhtml?gid=1131935259&single=true"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
@@ -373,6 +389,7 @@ function bumpGP(d){
 function resetFilters(){
   document.getElementById("q").value="";
   document.getElementById("rost").value=60;
+  document.getElementById("limit").value="10";
   document.getElementById("hideBye").checked=true;
   minGP=1;
   document.getElementById("gpVal").textContent="1";
@@ -387,6 +404,7 @@ function draw(){
 
   const q=document.getElementById("q").value.trim().toLowerCase();
   const maxRost=parseInt(document.getElementById("rost").value,10)/100;
+  const limit=parseInt(document.getElementById("limit").value,10);
   const hideBye=document.getElementById("hideBye").checked;
   document.getElementById("rostVal").textContent=Math.round(maxRost*100)+"%";
 
@@ -415,17 +433,20 @@ function draw(){
     return (x-y)*sort.dir;
   });
 
-  document.getElementById("count").innerHTML=
-    "Showing <b>"+rows.length+"</b> of "+ALL.length+" players";
+  const shown = limit>0 ? rows.slice(0,limit) : rows;
 
-  if(!rows.length){
+  document.getElementById("count").innerHTML =
+    "Showing <b>"+shown.length+"</b> of "+rows.length+" matching"
+    + (rows.length!==ALL.length ? " &middot; "+ALL.length+" total" : "");
+
+  if(!shown.length){
     body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
       +'No players match these filters. Try raising <b>max roster %</b> or clearing the search.</td></tr>';
     return;
   }
 
   let html="";
-  rows.forEach(r=>{
+  shown.forEach(r=>{
     const onBye = upcomingWeek!=null && r.bye!=null && r.bye===upcomingWeek;
     const byeCell = r.bye==null ? '<td class="dim">&ndash;</td>'
       : (onBye ? '<td><span class="byetag">'+r.bye+'</span></td>' : '<td>'+r.bye+'</td>');
