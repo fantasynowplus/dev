@@ -27,7 +27,7 @@ async function fetchTrending(type, containerId) {
                         <div class="player-name">${p.first_name} ${p.last_name}</div>
                         <div class="player-pos">${p.position} - ${p.team || 'FA'}</div>
                     </div>
-                    <div class="player-count">+${t.count}</div>
+                    <div class="player-count">${type === 'drop' ? '-' : '+'}${t.count}</div>
                 </div>
             `;
         }).join('');
