@@ -5,7 +5,7 @@ const ALL_CHANNELS = [
 ];
 
 const RANKINGS_PLAYLISTS = [
-    'PLG9ZMMQPPOMA', // Main Channel Redraft Rankings
+    'PLUVFeEpJJhZY', // Main Channel Redraft Rankings
     'PLL_4CfGZ4F9I', // Get Tilted Best Ball Rankings
     'PLR9K2bdHCzeQ'  // Dynasty Rankings
 ];
