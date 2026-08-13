@@ -587,7 +587,7 @@ function modal(opts){
       const err=bg.querySelector('#mErr');err.textContent='';
       saveBtn.disabled=true;saveBtn.textContent='Saving…';
       try{ await opts.onSave(bg); close(); }
-      catch(e){ err.textContent=e.message.length>90?'Save failed — check the fields.':e.message; saveBtn.disabled=false;saveBtn.textContent=opts.saveLabel||'Save'; }
+      catch(e){ console.error(e); err.textContent=e.message; saveBtn.disabled=false;saveBtn.textContent=opts.saveLabel||'Save'; }
     };
   }
   if(opts.onReady)opts.onReady(bg);
@@ -784,22 +784,6 @@ function staffColumnsMenu(ev){
     renderStaff(sb?sb.value.toLowerCase():'');
   });
   setTimeout(()=>{ const close=(e)=>{ if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },0);
-}
-
-async function nextSlffId() {
-  try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/next_slff_id`, {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${localStorage.getItem('sb-auth-token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: '{}'
-    });
-    if (!r.ok) return '';
-    return await r.json();
-  } catch { return ''; }
 }
 
 async function createLoginForm(id){
@@ -1429,46 +1413,63 @@ async function convertRecruit(id){
   if(rec.status==='converted'){toast('Already converted',true);return;}
   let matches=[];
   try{const parts=[];if(rec.email)parts.push('email.eq.'+encodeURIComponent(rec.email));if(rec.name)parts.push('name.ilike.*'+encodeURIComponent(rec.name)+'*');if(parts.length)matches=await dbGet('profiles?select=id,name,email,slffid&or=('+parts.join(',')+')&limit=5')||[];}catch(e){}
+  const exact=rec.email?matches.find(m=>(m.email||'').toLowerCase()===rec.email.toLowerCase()):null;
   const genPw=()=>Math.random().toString(36).slice(2,8)+Math.floor(10+Math.random()*90)+'!';
-  const loginOpts='<option value="" disabled selected>— choose —</option>'+matches.map(m=>'<option value="link:'+m.id+'">Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+'<option value="create">Create a new login</option><option value="none">No login account</option>';
+  const suggestedId=(exact&&exact.slffid)?exact.slffid:await nextSlffId();
+  const loginOpts='<option value="create"'+(exact?'':' selected')+'>Create a new login</option>'+
+    matches.map(m=>'<option value="link:'+m.id+'"'+((exact&&exact.id===m.id)?' selected':'')+'>Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+
+    '<option value="none">No login account</option>';
   const today=new Date().toISOString().slice(0,10);
-  const suggestedId=await nextSlffId();
   modal({title:'Convert '+rec.name+' to staff',wide:true,saveLabel:'Convert to staff',
-    body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">Creates a staff record from this recruit'+(matches.length?' — found '+matches.length+' possible existing profile'+(matches.length>1?'s':'')+' by name/email. Link one to avoid a duplicate login.':'.')+'</p>'+
+    body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">'+(exact?'Found an existing login for '+esc(exact.email)+' — it will be linked instead of creating a duplicate.':'No existing login matches this recruit, so a new one will be created.')+'</p>'+
       '<div class="form-grid"><div class="field"><label>Start date</label><input name="start_date" type="date" value="'+today+'"></div>'+
       '<div class="field"><label>Department</label><select name="department"><option value="">— none —</option><option>Administration</option><option>Content</option><option>Partnership</option><option>Social Media</option></select></div>'+
       '<div class="field"><label>Login account</label><select name="login">'+loginOpts+'</select></div>'+
       '<div class="field"><label>SLFF ID</label><input name="slffid" value="'+esc(suggestedId)+'" placeholder="auto"></div>'+
       '<div class="field full"><label>Temp password (only used if creating a new login)</label><input name="password" value="'+genPw()+'"></div></div>',
     onSave:async(bg)=>{
-      const start_date=val(bg,'start_date')||today;
-      const login=bg.querySelector('[name="login"]').value;
-      if(!login)throw new Error('Choose a login option');
-      const slffid=(val(bg,'slffid')||'').trim();
-      if(slffid&&!/^\d+$/.test(slffid))throw new Error('SLFF ID must be numeric');
-      const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,department:val(bg,'department')||null,start_date,is_active:true});
-      const staffId=staffRow[0].id;let pwShown=null;
-      if(login.startsWith('link:')){
-        const pid=login.slice(5);
-        await dbPatch('staff?id=eq.'+staffId,{profile_id:pid});
-        const existing=matches.find(m=>m.id===pid);
-        if(slffid&&existing&&!existing.slffid){try{await dbPatch('profiles?id=eq.'+pid,{slffid});}catch(e){}}
-      }
-      else if(login==='create'){
-        const password=val(bg,'password');
-        const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name,slffid:slffid||null})});
-        const data=await res.json().catch(()=>({}));
-        if(!res.ok)throw new Error(data.error||('Failed to create login ('+res.status+')'));
-        const newId=data.id||(data.user&&data.user.id)||data.userId||(data.data&&data.data.user&&data.data.user.id);
-        if(!newId)throw new Error('Login created but no user id returned: '+JSON.stringify(data).slice(0,200));
-        const linked=await dbPatch('staff?id=eq.'+staffId,{profile_id:newId});
-        if(slffid){try{await dbPatch('profiles?id=eq.'+newId,{slffid});}catch(e){console.warn('slffid patch failed',e);}}
-        pwShown={email:rec.email,password};
-      }
-      await dbPatch('recruits?id=eq.'+id,{status:'converted',converted_at:new Date().toISOString(),staff_id:staffId});
-      document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
-      RECRUITS=await dbGet(RECRUIT_SELECT)||[];renderRecruits('');toast(rec.name+' converted to staff');
-      if(pwShown)modal({title:'Login created',footer:false,body:'<p style="line-height:1.6">Share these with <strong>'+esc(rec.name)+'</strong>:</p>'+detailRow('Email',esc(pwShown.email))+detailRow('Temp password','<span class="mono">'+esc(pwShown.password)+'</span>')});
+      if(bg.dataset.busy==='1')return;
+      bg.dataset.busy='1';
+      try{
+        const fresh=await dbGet('recruits?select=status,staff_id&id=eq.'+id);
+        const cur=fresh&&fresh[0];
+        if(cur&&cur.status==='converted')throw new Error('This recruit has already been converted');
+        const start_date=val(bg,'start_date')||today;
+        const login=bg.querySelector('[name="login"]').value;
+        const slffid=(val(bg,'slffid')||'').trim();
+        if(slffid&&!/^\d+$/.test(slffid))throw new Error('SLFF ID must be numeric');
+
+        let profileId=null,pwShown=null;
+        if(login.startsWith('link:')){
+          profileId=login.slice(5);
+          const ex=matches.find(m=>m.id===profileId);
+          if(slffid&&ex&&!ex.slffid){try{await dbPatch('profiles?id=eq.'+profileId,{slffid});}catch(e){console.warn('slffid patch failed',e);}}
+        }else if(login==='create'){
+          if(!rec.email)throw new Error('This recruit has no email — add one before creating a login');
+          const password=val(bg,'password')||genPw();
+          const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name,slffid:slffid||null})});
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok)throw new Error(data.error||('Failed to create login ('+res.status+')'));
+          if(!data.id)throw new Error('create-user returned no id: '+JSON.stringify(data).slice(0,150));
+          profileId=data.id;
+          if(!data.existing)pwShown={email:rec.email,password};
+        }
+
+        let staffId=cur&&cur.staff_id?cur.staff_id:null;
+        if(!staffId&&rec.email){
+          try{const d=await dbGet('staff?select=id&email=eq.'+encodeURIComponent(rec.email)+'&limit=1');if(d&&d[0])staffId=d[0].id;}catch(e){}
+        }
+        const staffBody={name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,
+          department:val(bg,'department')||null,start_date,is_active:true,profile_id:profileId};
+        if(staffId)await dbPatch('staff?id=eq.'+staffId,staffBody);
+        else{const r=await dbPost('staff',staffBody);staffId=r[0].id;}
+
+        await dbPatch('recruits?id=eq.'+id,{status:'converted',converted_at:new Date().toISOString(),staff_id:staffId});
+        document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
+        RECRUITS=await dbGet(RECRUIT_SELECT)||[];renderRecruits('');
+        toast(rec.name+' converted to staff');
+        if(pwShown)modal({title:'Login created',footer:false,body:'<p style="line-height:1.6">Share these with <strong>'+esc(rec.name)+'</strong>:</p>'+detailRow('Email',esc(pwShown.email))+detailRow('Temp password','<span class="mono">'+esc(pwShown.password)+'</span>')});
+      }catch(e){ bg.dataset.busy=''; throw e; }
     }});
 }
 
