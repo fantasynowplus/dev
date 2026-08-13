@@ -14,6 +14,7 @@ layout: null
   :root{
     --stream-bg:#001738;
     --header-bg:#002863;
+    --card-bg:#00204d;
     --panel:rgba(255,255,255,.035);
     --panel-hi:rgba(255,255,255,.06);
     --line:rgba(255,255,255,.09);
@@ -40,6 +41,7 @@ layout: null
     min-height:100vh;
     font-variant-numeric:tabular-nums;
   }
+  body.locked{overflow:hidden}
 
   .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
 
@@ -154,7 +156,9 @@ layout: null
     font-size:15px;letter-spacing:.01em}
   tbody td.key{color:var(--aqua);font-weight:700}
   tbody td.dim{color:#4a5c7d}
-  tbody tr:hover td{background:rgba(255,255,255,.035)}
+  tbody tr.row{cursor:pointer}
+  tbody tr.row:hover td{background:rgba(255,255,255,.05)}
+  tbody tr.row:hover td.player{color:var(--orange)}
   tbody td.thin{color:var(--t3)}
 
   .pospill{
@@ -173,11 +177,86 @@ layout: null
   .state b{color:#fff;font-weight:600}
   .state code{color:var(--aqua);background:rgba(66,244,176,.08);padding:2px 6px;border-radius:5px}
 
+  .backdrop{
+    position:fixed;inset:0;z-index:50;display:none;
+    background:rgba(0,8,22,.78);
+    align-items:flex-start;justify-content:center;
+    padding:40px 20px;overflow-y:auto;
+  }
+  .backdrop.open{display:flex}
+
+  .card{
+    width:100%;max-width:760px;background:var(--card-bg);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+
+  .cardtop{display:flex;gap:20px;padding:22px 24px;align-items:center;
+    background:var(--header-bg);border-bottom:2px solid var(--orange);position:relative}
+  .shot{
+    width:96px;height:96px;border-radius:12px;flex:none;overflow:hidden;
+    background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;
+  }
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .shot .initials{font-family:"Oswald";font-weight:700;font-size:30px;color:var(--muted)}
+
+  .who{min-width:0;flex:1}
+  .who h2{
+    margin:0 0 4px;font-family:"Oswald";font-weight:700;font-size:30px;
+    line-height:1.1;color:#fff;letter-spacing:.01em;
+  }
+  .who .sub{font-size:13px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+  .who .sub .dot{opacity:.4;margin:0 7px}
+
+  .closex{
+    position:absolute;top:14px;right:16px;background:transparent;border:0;
+    color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:8px;
+  }
+  .closex:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+  .ranks{display:flex;flex-wrap:wrap;gap:26px;padding:18px 24px;
+    border-bottom:1px solid var(--line)}
+  .rank{display:flex;flex-direction:column;gap:3px}
+  .rank .n{font-family:"Oswald";font-weight:700;font-size:24px;color:#fff;line-height:1}
+  .rank .n .u{font-size:14px;color:var(--muted);margin-left:3px}
+  .rank .l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .rank.hi .n{color:var(--aqua)}
+
+  .logwrap{padding:0}
+  .logtitle{
+    padding:16px 24px 10px;font-family:"Oswald";font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted);
+  }
+  .logscroll{overflow-x:auto;max-height:46vh;overflow-y:auto}
+  table.log{border-collapse:collapse;width:100%;min-width:520px}
+  table.log th{
+    position:sticky;top:0;z-index:2;background:#001a40;
+    padding:9px 10px;font-family:"Oswald";font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;font-size:11px;color:var(--muted);
+    text-align:center;white-space:nowrap;border-bottom:1px solid var(--line);
+  }
+  table.log th.wk{width:46px}
+  table.log th.pts,table.log td.pts{color:var(--aqua);font-weight:700}
+  table.log td{
+    padding:8px 10px;text-align:center;font-size:14px;color:#D8E3F7;
+    border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap;
+  }
+  table.log td.wk{color:var(--muted);font-weight:600}
+  table.log tr.byerow td{color:var(--redorange);font-weight:600;letter-spacing:.1em;
+    background:rgba(234,78,61,.07);text-transform:uppercase;font-size:12px}
+  table.log tr.dnp td{color:#4a5c7d}
+  .cardnote{padding:16px 24px;color:var(--muted);font-size:13px;text-align:center}
+
   @media (max-width:640px){
     .wrap{padding:18px 12px 48px}
     .filters{gap:16px;padding:14px}
     .search input{width:100%}
     .reset{margin-left:0}
+    .backdrop{padding:16px 10px}
+    .cardtop{gap:14px;padding:18px}
+    .shot{width:68px;height:68px}
+    .who h2{font-size:23px}
+    .ranks{gap:18px;padding:14px 18px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -257,15 +336,32 @@ layout: null
 
 </div>
 
-<script>
+<div class="backdrop" id="backdrop" onclick="if(event.target===this) closeCard()">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="cardName">
+    <div class="cardtop">
+      <div class="shot" id="cardShot"></div>
+      <div class="who">
+        <h2 id="cardName">&nbsp;</h2>
+        <div class="sub" id="cardSub"></div>
+      </div>
+      <button class="closex" onclick="closeCard()" aria-label="Close">&times;</button>
+    </div>
+    <div class="ranks" id="cardRanks"></div>
+    <div class="logwrap">
+      <div class="logtitle" id="cardLogTitle">Game Log</div>
+      <div class="logscroll" id="cardLog"></div>
+    </div>
+  </div>
+</div>
 
+<script>
 const CONFIG = {
   WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pubhtml?gid=1131935259&single=true"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
               lwPts:5, lwRank:6, l3Ppg:7, l3Rank:8, l3Gp:9,
-              season:10, week:11 };
+              season:10, week:11, sleeperId:12 };
 
 const POS_COLOR = { QB:"var(--qb)", RB:"var(--rb)", WR:"var(--wr)", TE:"var(--te)" };
 
@@ -282,12 +378,27 @@ const COLUMNS = [
   { key:"l3Gp",   label:"L3 GP",   cls:"",       type:"num" }
 ];
 
+const LOG_COLUMNS = {
+  QB:[ {k:"pass_cmp",l:"C"},{k:"pass_att",l:"Att"},{k:"pass_yd",l:"Yds"},
+       {k:"pass_td",l:"TD"},{k:"pass_int",l:"Int"},
+       {k:"rush_att",l:"Car"},{k:"rush_yd",l:"RuYd"},{k:"rush_td",l:"RuTD"} ],
+  RB:[ {k:"rush_att",l:"Car"},{k:"rush_yd",l:"Yds"},{k:"rush_td",l:"TD"},
+       {k:"rec_tgt",l:"Tar"},{k:"rec",l:"Rec"},{k:"rec_yd",l:"ReYd"},{k:"rec_td",l:"ReTD"},
+       {k:"fum_lost",l:"FL"} ],
+  WR:[ {k:"rec_tgt",l:"Tar"},{k:"rec",l:"Rec"},{k:"rec_yd",l:"Yds"},{k:"rec_td",l:"TD"},
+       {k:"rush_att",l:"Car"},{k:"rush_yd",l:"RuYd"},{k:"rush_td",l:"RuTD"} ],
+  TE:[ {k:"rec_tgt",l:"Tar"},{k:"rec",l:"Rec"},{k:"rec_yd",l:"Yds"},{k:"rec_td",l:"TD"},
+       {k:"fum_lost",l:"FL"} ]
+};
+
 let ALL = [];
 let upcomingWeek = null;
 let season = "";
 let pos = "ALL";
 let minGP = 1;
 let sort = { key:"l3Ppg", dir:-1 };
+let schedule = null;
+const logCache = {};
 
 function parseCSV(text){
   const rows=[]; let row=[], cur="", q=false;
@@ -345,9 +456,11 @@ function toRows(raw){
       l3Rank:num(r[COL.l3Rank]),
       l3Gp:num(r[COL.l3Gp]),
       season:(r[COL.season]||"").trim(),
-      week:num(r[COL.week])
+      week:num(r[COL.week]),
+      sleeperId:(r[COL.sleeperId]||"").trim()
     });
   });
+  out.slice().sort((a,b)=>(b.l3Ppg||0)-(a.l3Ppg||0)).forEach((r,i)=>{ r.ovr=i+1; });
   return out;
 }
 
@@ -398,6 +511,8 @@ function resetFilters(){
   setPos("ALL");
 }
 
+let shownRows=[];
+
 function draw(){
   const body=document.getElementById("body");
   if(!ALL.length){ return; }
@@ -433,25 +548,25 @@ function draw(){
     return (x-y)*sort.dir;
   });
 
-  const shown = limit>0 ? rows.slice(0,limit) : rows;
+  shownRows = limit>0 ? rows.slice(0,limit) : rows;
 
   document.getElementById("count").innerHTML =
-    "Showing <b>"+shown.length+"</b> of "+rows.length+" matching"
+    "Showing <b>"+shownRows.length+"</b> of "+rows.length+" matching"
     + (rows.length!==ALL.length ? " &middot; "+ALL.length+" total" : "");
 
-  if(!shown.length){
+  if(!shownRows.length){
     body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
       +'No players match these filters. Try raising <b>max roster %</b> or clearing the search.</td></tr>';
     return;
   }
 
   let html="";
-  shown.forEach(r=>{
+  shownRows.forEach((r,i)=>{
     const onBye = upcomingWeek!=null && r.bye!=null && r.bye===upcomingWeek;
     const byeCell = r.bye==null ? '<td class="dim">&ndash;</td>'
       : (onBye ? '<td><span class="byetag">'+r.bye+'</span></td>' : '<td>'+r.bye+'</td>');
 
-    html += '<tr>'
+    html += '<tr class="row" onclick="openCard('+i+')">'
       + '<td><span class="pospill" style="background:'+POS_COLOR[r.pos]+'">'+r.pos+'</span></td>'
       + '<td class="player">'+escapeHtml(r.player)+'</td>'
       + '<td>'+escapeHtml(r.team)+'</td>'
@@ -465,6 +580,167 @@ function draw(){
       + '</tr>';
   });
   body.innerHTML=html;
+}
+
+function initials(name){
+  const p=name.split(/\s+/).filter(Boolean);
+  return ((p[0]||"")[0]||"")+((p[p.length-1]||"")[0]||"");
+}
+
+function openCard(i){
+  const r=shownRows[i];
+  if(!r) return;
+
+  document.getElementById("cardName").textContent=r.player;
+  document.getElementById("cardSub").innerHTML=
+    escapeHtml(r.team||"FA")+'<span class="dot">&middot;</span>'+r.pos
+    +(r.bye!=null?'<span class="dot">&middot;</span>Bye '+r.bye:"");
+
+  const shot=document.getElementById("cardShot");
+  if(r.sleeperId){
+    shot.innerHTML='<img src="https://sleepercdn.com/content/nfl/players/'+encodeURIComponent(r.sleeperId)
+      +'.jpg" alt="" onerror="this.parentNode.innerHTML=\'<span class=&quot;initials&quot;>'
+      +escapeHtml(initials(r.player))+'</span>\'">';
+  }else{
+    shot.innerHTML='<span class="initials">'+escapeHtml(initials(r.player))+'</span>';
+  }
+
+  document.getElementById("cardRanks").innerHTML=
+      rankBlock(r.l3Rank!=null?r.pos+r.l3Rank:"\u2014", "Pos rank (L3)", true)
+    + rankBlock(r.ovr?"#"+r.ovr:"\u2014", "Overall (L3)", false)
+    + rankBlock(r.rost!=null?(r.rost*100).toFixed(0)+'<span class="u">%</span>':"\u2014", "Rostered", false)
+    + rankBlock(r.l3Ppg!=null?r.l3Ppg.toFixed(1):"\u2014", "L3 PPG", true)
+    + rankBlock(r.lwPts!=null?r.lwPts.toFixed(1):"\u2014", "Last game", false);
+
+  document.getElementById("cardLogTitle").textContent =
+    (r.season?r.season+" ":"")+"Game Log";
+  document.getElementById("cardLog").innerHTML=
+    '<div class="cardnote">Loading game log&hellip;</div>';
+
+  document.getElementById("backdrop").classList.add("open");
+  document.body.classList.add("locked");
+
+  loadLog(r);
+}
+
+function rankBlock(value,label,hi){
+  return '<div class="rank'+(hi?" hi":"")+'"><span class="n">'+value+'</span>'
+       + '<span class="l">'+label+'</span></div>';
+}
+
+function closeCard(){
+  document.getElementById("backdrop").classList.remove("open");
+  document.body.classList.remove("locked");
+}
+
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeCard(); });
+
+function normalizeLog(raw){
+  const out=[];
+  const push=(k,entry)=>{
+    if(!entry||typeof entry!=="object") return;
+    const stats=entry.stats||entry;
+    const wk=parseInt(entry.week!=null?entry.week:k,10);
+    if(!wk) return;
+    const opp=entry.opponent||entry.opp||null;
+    out.push({week:wk,opp:opp,stats:stats||{}});
+  };
+  if(Array.isArray(raw)) raw.forEach((e,i)=>push(i+1,e));
+  else if(raw&&typeof raw==="object") Object.keys(raw).forEach(k=>push(k,raw[k]));
+  return out.filter(x=>x.stats).sort((a,b)=>a.week-b.week);
+}
+
+async function getSchedule(yr){
+  if(schedule!==null) return schedule;
+  try{
+    const res=await fetch("https://api.sleeper.app/schedule/nfl/regular/"+yr);
+    if(!res.ok) throw 0;
+    const games=await res.json();
+    const map={};
+    (Array.isArray(games)?games:[]).forEach(g=>{
+      const wk=g.week, h=g.home||g.home_team, a=g.away||g.away_team;
+      if(!wk||!h||!a) return;
+      map[h+"|"+wk]="vs "+a;
+      map[a+"|"+wk]="@ "+h;
+    });
+    schedule=map;
+  }catch(e){ schedule={}; }
+  return schedule;
+}
+
+async function loadLog(r){
+  const target=document.getElementById("cardLog");
+  if(!r.sleeperId){
+    target.innerHTML='<div class="cardnote">Game log unavailable for this player.</div>';
+    return;
+  }
+  const yr=r.season||new Date().getFullYear();
+  const key=r.sleeperId+"|"+yr;
+
+  try{
+    if(!logCache[key]){
+      const url="https://api.sleeper.com/stats/nfl/player/"+encodeURIComponent(r.sleeperId)
+              + "?season="+encodeURIComponent(yr)+"&season_type=regular&grouping=week";
+      const res=await fetch(url);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      logCache[key]=normalizeLog(await res.json());
+    }
+    const log=logCache[key];
+    const sched=await getSchedule(yr);
+    renderLog(r,log,sched);
+  }catch(e){
+    target.innerHTML='<div class="cardnote">Couldn\'t load the game log from Sleeper.</div>';
+  }
+}
+
+function renderLog(r,log,sched){
+  const target=document.getElementById("cardLog");
+  const cols=LOG_COLUMNS[r.pos]||LOG_COLUMNS.WR;
+  const byWeek={};
+  log.forEach(e=>{ byWeek[e.week]=e; });
+
+  const maxWeek=Math.max(
+    upcomingWeek||0,
+    log.length?log[log.length-1].week:0,
+    r.bye||0
+  );
+  if(!maxWeek){
+    target.innerHTML='<div class="cardnote">No games played yet this season.</div>';
+    return;
+  }
+
+  let head='<tr><th class="wk">Wk</th><th>Opp</th><th class="pts">Pts</th>';
+  cols.forEach(c=>{ head+='<th>'+c.l+'</th>'; });
+  head+='</tr>';
+
+  let rows="";
+  for(let w=1; w<=maxWeek; w++){
+    if(r.bye!=null && w===r.bye){
+      rows+='<tr class="byerow"><td class="wk">'+w+'</td>'
+           +'<td colspan="'+(cols.length+2)+'">Bye</td></tr>';
+      continue;
+    }
+    const e=byWeek[w];
+    const opp=(e&&e.opp) ? e.opp : (sched[(r.team||"")+"|"+w]||"\u2014");
+    if(!e){
+      rows+='<tr class="dnp"><td class="wk">'+w+'</td><td>'+escapeHtml(opp)+'</td>'
+           +'<td class="pts">&ndash;</td>';
+      cols.forEach(()=>{ rows+='<td>&ndash;</td>'; });
+      rows+='</tr>';
+      continue;
+    }
+    const s=e.stats||{};
+    const pts=(s.pts_ppr!=null)?(+s.pts_ppr).toFixed(1):"&ndash;";
+    rows+='<tr><td class="wk">'+w+'</td><td>'+escapeHtml(opp)+'</td>'
+         +'<td class="pts">'+pts+'</td>';
+    cols.forEach(c=>{
+      const v=s[c.k];
+      rows+='<td>'+(v==null||v===0?(v===0?"0":"&ndash;"):(Math.round(v*10)/10))+'</td>';
+    });
+    rows+='</tr>';
+  }
+
+  target.innerHTML='<table class="log"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>';
 }
 
 function stamp(){
