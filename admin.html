@@ -786,6 +786,22 @@ function staffColumnsMenu(ev){
   setTimeout(()=>{ const close=(e)=>{ if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },0);
 }
 
+async function nextSlffId() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/next_slff_id`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${localStorage.getItem('sb-auth-token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: '{}'
+    });
+    if (!r.ok) return '';
+    return await r.json();
+  } catch { return ''; }
+}
+
 async function createLoginForm(id){
   const rows = await dbGet('staff?select=id,name,email,profile_id&id=eq.'+id); const staff=rows&&rows[0]; if(!staff) return;
   if(staff.profile_id){ toast('This person already has a login',true); return; }
@@ -1400,32 +1416,50 @@ async function recruitDetail(id){
       ((r.status!=='converted'&&can('staff','c'))?'<div style="margin-top:16px"><button class="btn btn-primary btn-sm" onclick=\'document.querySelectorAll(".modal-bg").forEach(x=>x.remove());convertRecruit("'+r.id+'")\'>Convert to staff</button></div>':'')});
 }
 function recruitDelete(id){const r=RECRUITS.find(x=>x.id===id);confirmDelete(esc(r.name),async()=>{await dbDel('recruits?id=eq.'+id);RECRUITS=RECRUITS.filter(x=>x.id!==id);renderRecruits('');toast('Recruit removed');});}
+async function nextSlffId(){
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/next_slff_id',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok)return '';
+    return await r.json()||'';
+  }catch(e){return '';}
+}
+
 async function convertRecruit(id){
   const rows=await dbGet('recruits?select=*&id=eq.'+id);const rec=rows&&rows[0];if(!rec)return;
   if(rec.status==='converted'){toast('Already converted',true);return;}
   let matches=[];
-  try{const parts=[];if(rec.email)parts.push('email.eq.'+encodeURIComponent(rec.email));if(rec.name)parts.push('name.ilike.*'+encodeURIComponent(rec.name)+'*');if(parts.length)matches=await dbGet('profiles?select=id,name,email&or=('+parts.join(',')+')&limit=5')||[];}catch(e){}
+  try{const parts=[];if(rec.email)parts.push('email.eq.'+encodeURIComponent(rec.email));if(rec.name)parts.push('name.ilike.*'+encodeURIComponent(rec.name)+'*');if(parts.length)matches=await dbGet('profiles?select=id,name,email,slffid&or=('+parts.join(',')+')&limit=5')||[];}catch(e){}
   const genPw=()=>Math.random().toString(36).slice(2,8)+Math.floor(10+Math.random()*90)+'!';
   const loginOpts='<option value="none">No login account</option>'+matches.map(m=>'<option value="link:'+m.id+'">Link existing: '+esc(m.name||m.email)+(m.email?' ('+esc(m.email)+')':'')+'</option>').join('')+'<option value="create">Create a new login</option>';
   const today=new Date().toISOString().slice(0,10);
+  const suggestedId=await nextSlffId();
   modal({title:'Convert '+rec.name+' to staff',wide:true,saveLabel:'Convert to staff',
     body:'<p style="margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.5">Creates a staff record from this recruit'+(matches.length?' — found '+matches.length+' possible existing profile'+(matches.length>1?'s':'')+' by name/email. Link one to avoid a duplicate login.':'.')+'</p>'+
       '<div class="form-grid"><div class="field"><label>Start date</label><input name="start_date" type="date" value="'+today+'"></div>'+
       '<div class="field"><label>Department</label><select name="department"><option value="">— none —</option><option>Administration</option><option>Content</option><option>Partnership</option><option>Social Media</option></select></div>'+
       '<div class="field"><label>Login account</label><select name="login">'+loginOpts+'</select></div>'+
+      '<div class="field"><label>SLFF ID</label><input name="slffid" value="'+esc(suggestedId)+'" placeholder="auto"></div>'+
       '<div class="field full"><label>Temp password (only used if creating a new login)</label><input name="password" value="'+genPw()+'"></div></div>',
     onSave:async(bg)=>{
       const start_date=val(bg,'start_date')||today;
       const login=bg.querySelector('[name="login"]').value;
+      const slffid=(val(bg,'slffid')||'').trim();
+      if(slffid&&!/^\d+$/.test(slffid))throw new Error('SLFF ID must be numeric');
       const staffRow=await dbPost('staff',{name:rec.name,email:rec.email,phone:rec.phone,dob:rec.dob||null,role:rec.role,department:val(bg,'department')||null,start_date,is_active:true});
       const staffId=staffRow[0].id;let pwShown=null;
-      if(login.startsWith('link:')){ await dbPatch('staff?id=eq.'+staffId,{profile_id:login.slice(5)}); }
+      if(login.startsWith('link:')){
+        const pid=login.slice(5);
+        await dbPatch('staff?id=eq.'+staffId,{profile_id:pid});
+        const existing=matches.find(m=>m.id===pid);
+        if(slffid&&existing&&!existing.slffid){try{await dbPatch('profiles?id=eq.'+pid,{slffid});}catch(e){}}
+      }
       else if(login==='create'){
         const password=val(bg,'password');
-        const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name})});
+        const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name,slffid:slffid||null})});
         const data=await res.json();
         if(!res.ok)throw new Error(data.error||'Failed to create login');
         await dbPatch('staff?id=eq.'+staffId,{profile_id:data.id});
+        if(slffid){try{await dbPatch('profiles?id=eq.'+data.id,{slffid});}catch(e){}}
         pwShown={email:rec.email,password};
       }
       await dbPatch('recruits?id=eq.'+id,{status:'converted',converted_at:new Date().toISOString(),staff_id:staffId});
