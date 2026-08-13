@@ -1115,6 +1115,7 @@ function renderTools(){
   const c=document.getElementById('content');
   if(!TOOLS.length && !TOOL_DRAFTS.length){
     c.innerHTML='<div class="panel tool-panel"><div class="panel-head"><h3>Tools &amp; links</h3><span class="count-pill" style="margin-left:auto">'+TOOLS.length+' link'+(TOOLS.length===1?'':'s')+'</span></div>'+
+    '<div class="tool-list">'+
     return;
   }
   c.innerHTML='<div class="panel"><div class="panel-head"><h3>Tools &amp; links</h3><span class="count-pill" style="margin-left:auto">'+TOOLS.length+' link'+(TOOLS.length===1?'':'s')+'</span></div>'+
