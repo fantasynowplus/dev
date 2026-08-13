@@ -11,17 +11,15 @@ layout: null
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* ---- FantasyNow+ brand palette, dark board ---- */
   :root{
     --stream-bg:#001738;
     --header-bg:#002863;
     --panel:rgba(255,255,255,.035);
-    --panel:rgba(255,255,255,.035);
     --panel-hi:rgba(255,255,255,.06);
     --line:rgba(255,255,255,.09);
-    --orange:#FFA515;        /* brand */
-    --aqua:#42F4B0;          /* brand */
-    --redorange:#EA4E3D;     /* brand */
+    --orange:#FFA515;
+    --aqua:#42F4B0;
+    --redorange:#EA4E3D;
     --text:#EAF1FF;
     --muted:#8FA4C6;
 
@@ -31,10 +29,9 @@ layout: null
 
   *{box-sizing:border-box}
   html,body{margin:0}
+  html{background:var(--stream-bg)}
   body{
-    background:
-      var(--stream-bg);
-    background-attachment:fixed;
+    background:var(--stream-bg);
     color:var(--text);
     font-family:"Inter",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -44,7 +41,6 @@ layout: null
 
   .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
 
-  /* ---- top bar ---- */
   .topbar{
     display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;
     padding-bottom:18px;margin-bottom:22px;
@@ -69,7 +65,6 @@ layout: null
   }
   .title .pos{color:var(--orange)}
 
-  /* ---- position toggle ---- */
   .toggle{display:inline-flex;gap:6px;background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:5px}
   .toggle button{
@@ -87,14 +82,13 @@ layout: null
     font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer}
   .refresh:hover{color:#fff;border-color:var(--muted)}
 
-  /* ---- board ---- */
   .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:14px;
-    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+    background:rgba(255,255,255,.02)}
   table{border-collapse:collapse;width:100%;min-width:980px}
 
   thead th{
     position:sticky;top:0;z-index:3;
-    background:#03153a;
+    background:var(--header-bg);
     border-bottom:2px solid var(--orange);
     padding:12px 10px;font-family:"Oswald";font-weight:600;
     text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);
@@ -122,9 +116,8 @@ layout: null
     font-family:"Oswald";font-weight:700;font-size:14px;color:#04122b;
   }
 
-  /* tier divider rows */
   tr.tier td{
-    padding:10px 16px;background:#020e26;
+    padding:10px 16px;background:#000E22;
     border-top:1px solid rgba(255,255,255,.06);
     border-bottom:1px solid rgba(255,255,255,.06);
   }
@@ -176,11 +169,7 @@ layout: null
 </div>
 
 <script>
-/* ============================================================
-   SETUP - paste your two published-CSV links here.
-   In the Sheet: File > Share > Publish to web > choose the RB
-   sheet > Comma-separated values (.csv) > Publish. Repeat for WR.
-   ============================================================ */
+
 const CONFIG = {
   RB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=2073640362&single=true&output=csv",
   WR_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=378173209&single=true&output=csv"
