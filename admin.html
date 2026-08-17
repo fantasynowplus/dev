@@ -250,6 +250,16 @@
   td.pm{white-space:nowrap;text-align:center}
   .pm-on{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:var(--green);background:color-mix(in srgb,var(--green) 14%,#fff);border:1px solid color-mix(in srgb,var(--green) 30%,#fff);border-radius:5px;padding:1px 4px;margin:0 1px}
   .pm-off{display:inline-block;font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:#c2c7d0;background:#f4f5f8;border:1px solid #e7eaf1;border-radius:5px;padding:1px 4px;margin:0 1px}
+  .perm-matrix tr.pm-group td{background:#f7f8fb;font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:7px 10px}
+  .role-matrix{width:100%;border-collapse:collapse}
+  .role-matrix th{background:#f7f8fb;padding:14px 16px;text-align:center;vertical-align:top;border-bottom:1px solid var(--line)}
+  .role-matrix th:first-child{text-align:left;position:sticky;left:0;z-index:2;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .role-matrix td{padding:11px 16px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+  .role-matrix td:first-child{text-align:left;font-size:13.5px;font-weight:600;color:var(--ink);position:sticky;left:0;background:#fff;z-index:1}
+  .role-matrix tbody tr:hover td{background:#fafbfd}
+  .role-matrix tr.role-group td{background:#f7f8fb;font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 16px}
+  .role-name{font-family:'Archivo';font-size:14.5px;font-weight:800;color:var(--navy)}
+  .role-desc{font-size:11.5px;font-weight:500;color:var(--muted);line-height:1.45;margin:4px auto 0;max-width:180px}
 
   .tool-list{display:flex;flex-direction:column}
   .panel.tool-panel{overflow:visible}
@@ -345,6 +355,10 @@
   .onb-t{font-size:14px;font-weight:600;color:var(--ink)}
   .onb-item.done .onb-t{text-decoration:line-through;color:var(--muted)}
   .onb-d{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:3px}
+  tr.tbl-group td{background:#f7f8fb;font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 14px}
+  .btn:disabled{opacity:.35;cursor:default}
+  .tpl-move{display:flex;gap:4px}
+  .tpl-move button{padding:2px 8px;line-height:1.4;font-size:13px}
 </style>
 </head>
 <body>
@@ -375,10 +389,10 @@
       <div class="nav-label">Overview</div>
       <button data-go="dashboard" class="active">Dashboard</button>
       <div class="nav-label">People</div>
+      <button data-go="subscribers">Subscribers</button>
       <button class="nav-link" data-go="recruitment" onclick="go('recruitment')">Recruitment</button>
       <button data-go="onboarding">Onboarding</button>
       <button data-go="staff">Staff</button>
-      <button data-go="subscribers">Subscribers</button>
       <button data-go="my_onboarding" id="navMyOnboarding" style="display:none">My Onboarding</button>
       <div class="nav-label">Content</div>
       <button data-go="shows">Shows</button>
@@ -440,6 +454,22 @@ let MY_STAFF_ID = null;
 
 let PERMS = {};
 let ROLES = [];
+const RESOURCE_GROUPS = [
+  {label:'People', keys:['staff','recruitment','onboarding','onboarding_template','subscribers']},
+  {label:'Content', keys:['shows','tools','channels','youtube']},
+  {label:'Work', keys:['board']},
+  {label:'Access', keys:['roles']}
+];
+function resourceGroups(){
+  const seen={};
+  const groups=RESOURCE_GROUPS.map(g=>{
+    const keys=g.keys.filter(k=>{ if(RESOURCES[k]){ seen[k]=1; return true; } return false; });
+    return {label:g.label, keys};
+  }).filter(g=>g.keys.length);
+  const rest=Object.keys(RESOURCES).filter(k=>!seen[k]);
+  if(rest.length) groups.push({label:'Other', keys:rest});
+  return groups;
+}
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment',
   onboarding:'Onboarding', onboarding_template:'Onboarding template',
@@ -763,25 +793,39 @@ async function loadRoles(){
   if(!can('roles','r')){ document.getElementById('content').innerHTML='<div class="empty"><h4>No access</h4><p>You don\'t have permission to manage roles.</p></div>'; return; }
   topAction(ifCan('roles','c','<button class="btn btn-primary" onclick="roleForm()">+ New role</button>'));
   ROLES = await dbGet('roles?select=*&order=name.asc')||[];
+  if(!ROLES.length){
+    document.getElementById('content').innerHTML='<div class="empty"><h4>No roles yet</h4><p>Create a role and choose what it can do in each section.</p>'+ifCan('roles','c','<button class="btn btn-primary" onclick="roleForm()">+ New role</button>')+'</div>';
+    return;
+  }
   const cell=(perm,k,a)=> (perm&&perm[k]&&perm[k][a])?'<span class="pm-on">'+a.toUpperCase()+'</span>':'<span class="pm-off">'+a.toUpperCase()+'</span>';
+  const head='<tr><th>Section</th>'+ROLES.map(r=>'<th>'+
+      '<div class="role-name">'+esc(r.name)+'</div>'+
+      (r.description?'<div class="role-desc">'+esc(r.description)+'</div>':'')+
+      ((can('roles','u')||can('roles','d'))?'<div style="display:flex;gap:6px;justify-content:center;margin-top:9px">'+
+        ifCan('roles','u','<button class="btn btn-ghost btn-sm" onclick=\'roleForm("'+r.id+'")\'>Edit</button>')+
+        ifCan('roles','d','<button class="btn btn-danger btn-sm" onclick=\'roleDelete("'+r.id+'")\'>Delete</button>')+'</div>':'')+
+    '</th>').join('')+'</tr>';
+  const body=resourceGroups().map(g=>
+    '<tr class="role-group"><td colspan="'+(ROLES.length+1)+'">'+esc(g.label)+'</td></tr>'+
+    g.keys.map(k=>'<tr><td>'+esc(RESOURCES[k])+'</td>'+
+      ROLES.map(r=>'<td>'+['c','r','u','d'].map(a=>cell(r.permissions,k,a)).join('')+'</td>').join('')+
+    '</tr>').join('')
+  ).join('');
   document.getElementById('content').innerHTML =
-    (ROLES.length? '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Role</th>'+
-      Object.values(RESOURCES).map(n=>'<th>'+n+'</th>').join('')+'<th></th></tr></thead><tbody>'+
-      ROLES.map(r=>'<tr><td><strong>'+esc(r.name)+'</strong>'+(r.description?'<div style="font-size:12px;color:var(--muted)">'+esc(r.description)+'</div>':'')+'</td>'+
-        Object.keys(RESOURCES).map(k=>'<td class="pm">'+['c','r','u','d'].map(a=>cell(r.permissions,k,a)).join('')+'</td>').join('')+
-        '<td><div class="row-actions">'+ifCan('roles','u','<button class="btn btn-ghost btn-sm" onclick=\'roleForm("'+r.id+'")\'>Edit</button>')+ifCan('roles','d','<button class="btn btn-danger btn-sm" onclick=\'roleDelete("'+r.id+'")\'>Delete</button>')+'</div></td></tr>').join('')+
-      '</tbody></table></div></div>'
-      : '<div class="empty"><h4>No roles yet</h4><p>Create a role and choose what it can do in each section.</p>'+ifCan('roles','c','<button class="btn btn-primary" onclick="roleForm()">+ New role</button>')+'</div>');
+    '<div class="panel"><div class="table-wrap"><table class="role-matrix"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>';
 }
 
 function roleForm(id){
   const r = id? ROLES.find(x=>x.id===id) : {permissions:{}};
   const perm = r.permissions||{};
-  const rows = Object.keys(RESOURCES).map(k=>{
-    const p = perm[k]||{};
-    return '<tr><td style="font-weight:600">'+RESOURCES[k]+'</td>'+
-      ['c','r','u','d'].map(a=>'<td style="text-align:center"><input type="checkbox" data-res="'+k+'" data-act="'+a+'"'+(p[a]?' checked':'')+'></td>').join('')+'</tr>';
-  }).join('');
+  const rows = resourceGroups().map(g=>
+    '<tr class="pm-group"><td colspan="5">'+esc(g.label)+'</td></tr>'+
+    g.keys.map(k=>{
+      const p = perm[k]||{};
+      return '<tr><td style="font-weight:600">'+RESOURCES[k]+'</td>'+
+        ['c','r','u','d'].map(a=>'<td style="text-align:center"><input type="checkbox" data-res="'+k+'" data-act="'+a+'"'+(p[a]?' checked':'')+'></td>').join('')+'</tr>';
+    }).join('')
+  ).join('');
   modal({title:id?'Edit role':'New role',wide:true,saveLabel:id?'Save role':'Create role',
     body:'<div class="form-grid"><div class="field"><label>Role name</label><input name="name" value="'+esc(r.name||'')+'"></div>'+
       '<div class="field"><label>Description</label><input name="description" value="'+esc(r.description||'')+'"></div></div>'+
@@ -1875,25 +1919,58 @@ async function onbComplete(staffId,complete){
   }
 }
 
+function tplGroups(){
+  const groups=[], idx={};
+  ONB_TPL.forEach(t=>{
+    const c=t.category||'Other';
+    if(idx[c]===undefined){ idx[c]=groups.length; groups.push({label:c,items:[]}); }
+    groups[idx[c]].items.push(t);
+  });
+  return groups;
+}
+
 function onbTemplateHtml(){
-  const body=ONB_TPL.length? ONB_TPL.map(t=>{
-    const resp = t.responsible_mode==='new_hire' ? 'The new hire'
-      : (t.responsible_mode==='specific' ? (onbStaffName(t.responsible_staff_id)||'—') : '—');
-    return '<tr><td class="mono" style="color:var(--muted)">'+(t.sort_order||0)+'</td>'+
-      '<td><strong>'+esc(t.title)+'</strong>'+(t.description?'<div style="font-size:12px;color:var(--muted)">'+esc(t.description)+'</div>':'')+'</td>'+
-      '<td>'+(t.category?'<span class="chip">'+esc(t.category)+'</span>':'—')+'</td>'+
-      '<td>'+(t.is_required?badge('Required','var(--orange)'):badge('Optional','var(--muted)'))+'</td>'+
-      '<td>'+esc(resp)+'</td>'+
-      '<td>'+(t.is_active?badge('Active','var(--green)'):badge('Off','var(--muted)'))+'</td>'+
-      '<td><div class="row-actions">'+
-        ifCan('onboarding_template','u','<button class="btn btn-ghost btn-sm" onclick=\'tplForm("'+t.id+'")\'>Edit</button>')+
-        ifCan('onboarding_template','d','<button class="btn btn-danger btn-sm" onclick=\'tplDelete("'+t.id+'")\'>Delete</button>')+
-      '</div></td></tr>';
-  }).join('')
-  : '<tr><td colspan="7"><div class="empty"><h4>No template steps yet</h4><p>Build the base checklist that everyone gets when they join.</p>'+ifCan('onboarding_template','c','<button class="btn btn-primary" onclick="tplForm()">+ Add step</button>')+'</div></td></tr>';
+  const canOrder=can('onboarding_template','u');
+  const body=ONB_TPL.length? tplGroups().map(g=>
+    '<tr class="tbl-group"><td colspan="6">'+esc(g.label)+'</td></tr>'+
+    g.items.map((t,i)=>{
+      const resp = t.responsible_mode==='new_hire' ? 'The new hire'
+        : (t.responsible_mode==='specific' ? (onbStaffName(t.responsible_staff_id)||'—') : '—');
+      const move = canOrder
+        ? '<div class="tpl-move"><button class="btn btn-ghost btn-sm"'+(i===0?' disabled':'')+' onclick=\'tplMove("'+t.id+'",-1)\' title="Move up">&uarr;</button>'+
+          '<button class="btn btn-ghost btn-sm"'+(i===g.items.length-1?' disabled':'')+' onclick=\'tplMove("'+t.id+'",1)\' title="Move down">&darr;</button></div>'
+        : '';
+      return '<tr><td style="width:1%">'+move+'</td>'+
+        '<td><strong>'+esc(t.title)+'</strong>'+(t.description?'<div style="font-size:12px;color:var(--muted)">'+esc(t.description)+'</div>':'')+'</td>'+
+        '<td>'+(t.is_required?badge('Required','var(--orange)'):badge('Optional','var(--muted)'))+'</td>'+
+        '<td>'+esc(resp)+'</td>'+
+        '<td>'+(t.is_active?badge('Active','var(--green)'):badge('Off','var(--muted)'))+'</td>'+
+        '<td><div class="row-actions">'+
+          ifCan('onboarding_template','u','<button class="btn btn-ghost btn-sm" onclick=\'tplForm("'+t.id+'")\'>Edit</button>')+
+          ifCan('onboarding_template','d','<button class="btn btn-danger btn-sm" onclick=\'tplDelete("'+t.id+'")\'>Delete</button>')+
+        '</div></td></tr>';
+    }).join('')
+  ).join('')
+  : '<tr><td colspan="6"><div class="empty"><h4>No template steps yet</h4><p>Build the base checklist that everyone gets when they join.</p>'+ifCan('onboarding_template','c','<button class="btn btn-primary" onclick="tplForm()">+ Add step</button>')+'</div></td></tr>';
   return '<div class="panel"><div class="panel-head"><h3>Base checklist</h3>'+
       '<span style="margin-left:auto;font-size:12.5px;color:var(--muted)">Adding a step here gives it to everyone still in onboarding</span></div>'+
-    '<div class="table-wrap"><table><thead><tr><th>#</th><th>Step</th><th>Category</th><th>Type</th><th>Responsible</th><th>Status</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div></div>';
+    '<div class="table-wrap"><table><thead><tr><th></th><th>Step</th><th>Type</th><th>Responsible</th><th>Status</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div></div>';
+}
+
+async function tplMove(id,dir){
+  const t=ONB_TPL.find(x=>x.id===id); if(!t) return;
+  const cat=t.category||'Other';
+  const list=ONB_TPL.filter(x=>(x.category||'Other')===cat);
+  const i=list.findIndex(x=>x.id===id), j=i+dir;
+  if(j<0||j>=list.length) return;
+  list.splice(j,0,list.splice(i,1)[0]);
+  try{
+    for(let k=0;k<list.length;k++){
+      const want=(k+1)*10;
+      if(list[k].sort_order!==want) await dbPatch('onboarding_template_items?id=eq.'+list[k].id,{sort_order:want});
+    }
+  }catch(e){ toast(e.message,true); }
+  await loadOnboarding();
 }
 
 function tplForm(id){
@@ -1921,12 +1998,16 @@ function tplForm(id){
       const r=bg.querySelector('[name="resp"]').value;
       const body={
         title, description:val(bg,'description')||null, category:val(bg,'category')||null,
-        sort_order: parseInt(val(bg,'sort_order')||'0',10)||0,
         is_required: bg.querySelector('[name="is_required"]').value==='true',
         is_active: bg.querySelector('[name="is_active"]').value==='true',
         responsible_mode: (r==='unassigned'||r==='new_hire')?r:'specific',
         responsible_staff_id: (r==='unassigned'||r==='new_hire')?null:r
       };
+      const movedCategory = !id || (t.category||null)!==body.category;
+      if(movedCategory){
+        const sibs=ONB_TPL.filter(x=>x.id!==id && (x.category||null)===body.category);
+        body.sort_order = sibs.length ? Math.max.apply(null,sibs.map(x=>x.sort_order||0))+10 : 10;
+      }
       if(id) await dbPatch('onboarding_template_items?id=eq.'+id,body);
       else await dbPost('onboarding_template_items',body);
       await loadOnboarding();
