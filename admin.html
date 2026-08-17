@@ -1795,6 +1795,7 @@ function onbDetailBody(staffId,items,row){
   const optional=items.length-reqTot;
   const completed = row && row.onboarding_status==='completed';
   let html='<div style="margin-bottom:8px">'+
+    (row&&row.email?'<div style="font-size:13px;color:var(--muted);margin:-6px 0 14px">'+esc(row.email)+'</div>':'')+
     (completed?'<div style="margin-bottom:12px">'+badge('Onboarding complete','var(--green)')+'</div>':'')+
     onbBar(reqDone,reqTot)+
     '<div style="font-size:12.5px;color:var(--muted);margin-top:7px">'+reqDone+' of '+reqTot+' required steps done'+(optional>0?' · '+optional+' optional':'')+'</div></div>';
