@@ -49,12 +49,14 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json(400, { error: 'Invalid JSON body' }); }
+
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
   const name = String(body.name || '').trim();
   let slffid = body.slffid == null ? '' : String(body.slffid).trim();
+
   if (!email || !password) return json(400, { error: 'Email and password are required' });
-  if (password.length < 6) return json(400, { error: 'Password must be at least 6 characters' });
+  if (password.length < 8) return json(400, { error: 'Password must be at least 8 characters' });
   if (slffid && !/^\d+$/.test(slffid)) return json(400, { error: 'SLFF ID must be numeric' });
 
   let newId: string;
@@ -98,7 +100,16 @@ Deno.serve(async (req) => {
   if (slffid) payload.slffid = slffid;
 
   const { error: upErr } = await admin.from('profiles').upsert(payload, { onConflict: 'id' });
-  if (upErr) return json(200, { id: newId, existing, slffid, warning: 'User created, but profile update failed: ' + upErr.message });
 
-  return json(200, { id: newId, existing, slffid });
+  const result: Record<string, unknown> = {
+    ok: true,
+    id: newId,
+    user_id: newId,
+    email,
+    existing,
+    slffid,
+  };
+  if (upErr) result.warning = 'User created, but profile update failed: ' + upErr.message;
+
+  return json(200, result);
 });

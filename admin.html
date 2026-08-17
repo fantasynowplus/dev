@@ -359,6 +359,20 @@
   .btn:disabled{opacity:.35;cursor:default}
   .tpl-move{display:flex;gap:4px}
   .tpl-move button{padding:2px 8px;line-height:1.4;font-size:13px}
+
+  .org-wrap{overflow-x:auto;padding:10px 4px 24px}
+  .org-roots{display:flex;gap:30px;align-items:flex-start;justify-content:center;min-width:min-content}
+  .org-node{display:flex;flex-direction:column;align-items:center;position:relative}
+  .org-card{width:180px;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 12px;text-align:center;cursor:pointer;position:relative;z-index:1}
+  .org-card:hover{border-color:var(--navy-3)}
+  .org-avatar{width:34px;height:34px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;font-family:'Archivo'}
+  .org-name{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.3}
+  .org-role{font-size:12px;color:var(--ink);margin-top:3px;line-height:1.35}
+  .org-dept{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+  .org-children{display:flex;justify-content:center;gap:18px;padding-top:32px;position:relative;min-width:min-content}
+  .org-children::before{content:'';position:absolute;top:0;left:50%;margin-left:-1px;width:2px;height:16px;background:var(--line-2)}
+  .org-children::after{content:'';position:absolute;top:15px;left:90px;right:90px;height:2px;background:var(--line-2)}
+  .org-children>.org-node::before{content:'';position:absolute;top:-17px;left:50%;margin-left:-1px;width:2px;height:17px;background:var(--line-2)}
 </style>
 </head>
 <body>
@@ -393,6 +407,7 @@
       <button class="nav-link" data-go="recruitment" onclick="go('recruitment')">Recruitment</button>
       <button data-go="onboarding">Onboarding</button>
       <button data-go="staff">Staff</button>
+      <button data-go="org">Org chart</button>
       <button data-go="my_onboarding" id="navMyOnboarding" style="display:none">My Onboarding</button>
       <div class="nav-label">Content</div>
       <button data-go="shows">Shows</button>
@@ -431,7 +446,7 @@ const GATE_LEVEL = 7;
 
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
-  onboarding:'Onboarding', my_onboarding:'My Onboarding',
+  onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart',
   shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 const STATUS = {
@@ -455,7 +470,7 @@ let MY_STAFF_ID = null;
 let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
-  {label:'People', keys:['staff','recruitment','onboarding','onboarding_template','subscribers']},
+  {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
   {label:'Content', keys:['shows','tools','channels','youtube']},
   {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
@@ -472,7 +487,7 @@ function resourceGroups(){
 }
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment',
-  onboarding:'Onboarding', onboarding_template:'Onboarding template',
+  onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart',
   channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions'
 };
 function can(resource, action){
@@ -643,7 +658,7 @@ function go(name){
     return;
   }
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
-    onboarding:loadOnboarding, my_onboarding:loadMyOnboarding,
+    onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
     shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles}[name];
   fn().catch(err=>{
     document.getElementById('content').innerHTML =
@@ -914,14 +929,16 @@ async function createLoginForm(id){
       });
       const data=await res.json();
       if(!res.ok) throw new Error(data.error||'Failed to create login');
-      await dbPatch('staff?id=eq.'+staff.id,{profile_id:data.id});
+      const newId=data.id||data.user_id;
+      if(!newId) throw new Error('create-user returned no id: '+JSON.stringify(data).slice(0,150));
+      await dbPatch('staff?id=eq.'+staff.id,{profile_id:newId});
       STAFF = await dbGet('staff?select=*&order=name.asc')||[];
       document.querySelectorAll('.modal-bg').forEach(m=>m.remove());
       renderStaff('');
       toast('Login created for '+staff.name);
       modal({title:'Login created', footer:false,
         body:'<p style="line-height:1.6;font-size:14px">Share these with <strong>'+esc(staff.name)+'</strong>:</p>'+
-          detailRow('Email', esc(email))+detailRow('Temp password','<span class="mono">'+esc(password)+'</span>')+
+          detailRow('Email', esc(data.email||email))+detailRow('Temp password','<span class="mono">'+esc(data.password||password)+'</span>')+
           '<p style="color:var(--muted);font-size:13px;margin-top:12px">They can log in right away and change their password later.</p>'});
     }});
 }
@@ -959,6 +976,8 @@ async function staffForm(id){
       f('email','Email','email',s.email)+ f('phone','Phone','text',s.phone)+
       f('department','Department','text',s.department)+
       '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(s.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(s.is_active===false?' selected':'')+'>Inactive</option></select></div>'+
+      '<div class="field"><label>Reports to</label><select name="manager_id"><option value="">— nobody —</option>'+
+        STAFF.filter(x=>x.id!==id).map(x=>'<option value="'+x.id+'"'+(s.manager_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+
       f('dob','Date of birth','date',s.dob)+ f('start_date','Start date','date',s.start_date)+
       roleField+ f('address','Address','text',s.address,{full:true})+ f('notes','Notes','textarea',s.notes,{full:true})+
     '</div>'+
@@ -966,7 +985,7 @@ async function staffForm(id){
       (hostedShows.length? '<div style="margin-top:6px">'+hostedShows.map(sh=>'<span class="chip">'+esc(sh.name)+'</span>').join('')+'</div>'
         : '<div style="font-size:13px;color:var(--muted);margin-top:4px">Not hosting any shows yet — assign them in the Shows section.</div>')+'</div>' : ''),
     onSave:async(bg)=>{
-      const body={name:val(bg,'name'),role:val(bg,'role'),email:val(bg,'email'),phone:val(bg,'phone'),
+      const body={name:val(bg,'name'),role:val(bg,'role'),email:val(bg,'email'),phone:val(bg,'phone'),manager_id: bg.querySelector('[name="manager_id"]').value||null,
         department:val(bg,'department'),address:val(bg,'address'),notes:val(bg,'notes'),
         dob:val(bg,'dob')||null,start_date:val(bg,'start_date')||null,
         is_active: bg.querySelector('[name="is_active"]').value==='true'};
@@ -1705,9 +1724,10 @@ async function convertRecruit(id){
           const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('sb-auth-token'),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:rec.email,password,name:rec.name,slffid:slffid||null})});
           const data=await res.json().catch(()=>({}));
           if(!res.ok)throw new Error(data.error||('Failed to create login ('+res.status+')'));
-          if(!data.id)throw new Error('create-user returned no id: '+JSON.stringify(data).slice(0,150));
-          profileId=data.id;
-          if(!data.existing)pwShown={email:rec.email,password};
+          const newId=data.id||data.user_id;
+          if(!newId)throw new Error('create-user returned no id: '+JSON.stringify(data).slice(0,150));
+          profileId=newId;
+          if(!data.existing)pwShown={email:data.email||rec.email,password:data.password||password};
         }
 
         let staffId=cur&&cur.staff_id?cur.staff_id:null;
@@ -1726,6 +1746,54 @@ async function convertRecruit(id){
         if(pwShown)modal({title:'Login created',footer:false,body:'<p style="line-height:1.6">Share these with <strong>'+esc(rec.name)+'</strong>:</p>'+detailRow('Email',esc(pwShown.email))+detailRow('Temp password','<span class="mono">'+esc(pwShown.password)+'</span>')});
       }catch(e){ bg.dataset.busy=''; throw e; }
     }});
+}
+
+/* ---------------- ORG CHART ---------------- */
+let ORG=[];
+
+async function loadOrg(){
+  ORG = await rpc('org_chart')||[];
+  renderOrg();
+}
+
+function orgCard(s){
+  return '<div class="org-card" onclick=\'viewStaff("'+s.id+'")\'>'+
+    '<div class="org-avatar" style="background:'+accentFor(s.name)+'">'+initials(s.name)+'</div>'+
+    '<div class="org-name">'+esc(s.name)+'</div>'+
+    (s.job_title?'<div class="org-role">'+esc(s.job_title)+'</div>':'')+
+    (s.department?'<div class="org-dept">'+esc(s.department)+'</div>':'')+
+  '</div>';
+}
+
+function renderOrg(){
+  const people=ORG.filter(s=>s.is_active!==false);
+  if(!people.length){
+    document.getElementById('content').innerHTML='<div class="empty"><h4>No staff to chart</h4><p>Add active staff, then set who each person reports to on their staff record.</p></div>';
+    return;
+  }
+  const byId={}; people.forEach(s=>byId[s.id]=s);
+  const kids={};
+  people.forEach(s=>{
+    const key=(s.manager_id && byId[s.manager_id] && s.manager_id!==s.id) ? s.manager_id : '__root';
+    (kids[key]=kids[key]||[]).push(s);
+  });
+  const seen={};
+  const node=(s)=>{
+    if(seen[s.id]) return '';
+    seen[s.id]=1;
+    const ch=kids[s.id]||[];
+    return '<div class="org-node">'+orgCard(s)+
+      (ch.length?'<div class="org-children">'+ch.map(node).join('')+'</div>':'')+'</div>';
+  };
+  let html=(kids['__root']||[]).map(node).join('');
+  const stranded=people.filter(s=>!seen[s.id]);
+  if(stranded.length) html+=stranded.map(node).join('');
+  const unmanaged=(kids['__root']||[]).length;
+  document.getElementById('content').innerHTML=
+    '<div class="panel" style="padding:4px 0"><div class="org-wrap"><div class="org-roots">'+html+'</div></div></div>'+
+    '<div style="font-size:12.5px;color:var(--muted);margin-top:12px;text-align:center">'+
+      people.length+' active staff'+(unmanaged>1?' · '+unmanaged+' with no manager set — edit a staff record and set "Reports to" to place them':'')+
+    '</div>';
 }
 
 /* ---------------- ONBOARDING ---------------- */
