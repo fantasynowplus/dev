@@ -363,16 +363,32 @@
   .org-wrap{overflow-x:auto;padding:10px 4px 24px}
   .org-roots{display:flex;gap:30px;align-items:flex-start;justify-content:center;min-width:min-content}
   .org-node{display:flex;flex-direction:column;align-items:center;position:relative}
+  .org-node.stack{align-items:flex-start}
   .org-card{width:180px;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px 12px;text-align:center;cursor:pointer;position:relative;z-index:1}
   .org-card:hover{border-color:var(--navy-3)}
   .org-avatar{width:34px;height:34px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;font-family:'Archivo'}
   .org-name{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.3}
   .org-role{font-size:12px;color:var(--ink);margin-top:3px;line-height:1.35}
   .org-dept{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
-  .org-children{display:flex;justify-content:center;gap:18px;padding-top:32px;position:relative;min-width:min-content}
-  .org-children::before{content:'';position:absolute;top:0;left:50%;margin-left:-1px;width:2px;height:16px;background:var(--line-2)}
-  .org-children::after{content:'';position:absolute;top:15px;left:90px;right:90px;height:2px;background:var(--line-2)}
-  .org-children>.org-node::before{content:'';position:absolute;top:-17px;left:50%;margin-left:-1px;width:2px;height:17px;background:var(--line-2)}
+  .org-children{display:flex;justify-content:center;gap:20px;padding-top:20px;position:relative;min-width:min-content}
+  .org-children::before{content:'';position:absolute;top:0;left:50%;margin-left:-1px;width:2px;height:20px;background:var(--line-2)}
+  .org-children>.org-node{padding-top:20px}
+  .org-children>.org-node::before{content:'';position:absolute;top:0;left:50%;margin-left:-1px;width:2px;height:20px;background:var(--line-2)}
+  .org-children>.org-node::after{content:'';position:absolute;top:0;left:-11px;right:-11px;height:2px;background:var(--line-2)}
+  .org-children>.org-node:first-child::after{left:50%}
+  .org-children>.org-node:last-child::after{right:50%}
+  .org-children>.org-node:only-child::after{display:none}
+  .org-children>.org-node.stack::before{left:90px;margin-left:-1px}
+  .org-children>.org-node.stack:first-child::after{left:90px}
+  .org-children>.org-node.stack:last-child::after{right:auto;left:-11px;width:101px}
+  .org-children.stacked{flex-direction:column;align-items:flex-start;gap:0;padding-top:0;padding-left:20px}
+  .org-children.stacked::before{display:none}
+  .org-children.stacked>.org-node{padding:0 0 14px 18px;border-left:2px solid var(--line-2);align-items:flex-start}
+  .org-children.stacked>.org-node::before{content:'';position:absolute;top:34px;left:0;margin-left:0;width:20px;height:2px;background:var(--line-2)}
+  .org-children.stacked>.org-node::after{display:none}
+  .org-children.stacked>.org-node:last-child{border-left:0;padding-left:20px;padding-bottom:0}
+  .org-children.stacked>.org-node:last-child::before{left:2px;width:18px}
+  .org-children.stacked>.org-node:last-child::after{content:'';display:block;position:absolute;top:0;left:0;width:2px;height:36px;background:var(--line-2)}
 
   .org-team{width:180px;box-sizing:border-box;background:var(--navy);border:1px solid var(--navy);border-radius:10px;padding:10px 12px;text-align:center;position:relative;z-index:1;cursor:pointer}
   .org-team:hover{background:#00376f}
@@ -1815,24 +1831,26 @@ function orgChartHtml(){
   });
 
   const seen={}, teamSeen={};
-  const personNode=(s)=>{
+    const personNode=(s,stacked)=>{
     if(seen[s.id]) return '';
     seen[s.id]=1;
-    const ch=(teamsByLead[s.id]||[]).map(teamNode).join('')+(reports[s.id]||[]).map(personNode).join('');
-    return '<div class="org-node">'+orgCard(s)+(ch?'<div class="org-children">'+ch+'</div>':'')+'</div>';
+    const ch=(teamsByLead[s.id]||[]).map(t=>teamNode(t)).join('')+(reports[s.id]||[]).map(x=>personNode(x,stacked)).join('');
+    return '<div class="org-node'+(ch&&stacked?' stack':'')+'">'+orgCard(s)+
+      (ch?'<div class="org-children'+(stacked?' stacked':'')+'">'+ch+'</div>':'')+'</div>';
   };
   const teamNode=(t)=>{
     if(teamSeen[t.id]) return '';
     teamSeen[t.id]=1;
     const mem=membersByTeam[t.id]||[];
-    const ch=mem.map(personNode).join('');
-    return '<div class="org-node">'+orgTeamCard(t,mem.length)+(ch?'<div class="org-children">'+ch+'</div>':'')+'</div>';
+    const ch=mem.map(x=>personNode(x,true)).join('');
+    return '<div class="org-node'+(ch?' stack':'')+'">'+orgTeamCard(t,mem.length)+
+      (ch?'<div class="org-children stacked">'+ch+'</div>':'')+'</div>';
   };
 
-  let html=(reports['__root']||[]).map(personNode).join('');
-  html+=teams.filter(t=>!teamSeen[t.id] && (membersByTeam[t.id]||[]).length).map(teamNode).join('');
+    let html=(reports['__root']||[]).map(x=>personNode(x)).join('');
+  html+=teams.filter(t=>!teamSeen[t.id] && (membersByTeam[t.id]||[]).length).map(t=>teamNode(t)).join('');
   const stranded=people.filter(s=>!seen[s.id]);
-  if(stranded.length) html+=stranded.map(personNode).join('');
+  if(stranded.length) html+=stranded.map(x=>personNode(x)).join('');
 
   const unmanaged=(reports['__root']||[]).length;
   return '<div class="panel" style="padding:4px 0"><div class="org-wrap"><div class="org-roots">'+html+'</div></div></div>'+
