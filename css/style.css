@@ -52,7 +52,8 @@ nav a { position: relative; text-decoration: none; color: var(--text-light); fon
 nav a::after { content: ""; position: absolute; left: 0; bottom: 0; width: 0; height: 2px; background: var(--bright-orange); transition: width 0.2s ease; }
 nav a:hover { color: var(--bright-orange); }
 nav a:hover::after { width: 100%; }
-.btn-login { background-color: var(--bright-orange); color: var(--deep-blue) !important; padding: 10px 20px; border-radius: 0; font-weight: 700; clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); }
+.btn-login,
+.btn-staff { background-color: var(--bright-orange); color: var(--deep-blue) !important; padding: 10px 20px; border-radius: 0; font-weight: 700; clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); }
 .btn-login::after { display: none; }
 
 /* Robust Ticker */
@@ -229,11 +230,13 @@ header nav {
 @media(max-width:700px){.fnplus-promo{flex-direction:column}.fnplus-promo-logo{flex-basis:auto}.fnplus-promo-btn{margin:16px}}
 
 .btn-staff {
+  background: #002863;
+  color: #FFA515;
+  border: 2px solid #FFA515;
+  margin-right: 10px;
+}
+
+.btn-staff:hover {
   background: #FFA515;
   color: #002863;
-  border-color: #FFA515;
-}
-.btn-staff:hover {
-  background: #ED9405;
-  border-color: #ED9405;
 }

@@ -37,7 +37,7 @@
       if (nav.querySelector('.btn-staff')) return;
       const a = document.createElement('a');
       a.href = ADMIN_URL;
-      a.className = 'btn-login btn-staff';
+      a.className = 'btn-staff';
       a.textContent = LABEL;
       const loginBtn = nav.querySelector('.btn-login');
       if (loginBtn) loginBtn.insertAdjacentElement('beforebegin', a);
