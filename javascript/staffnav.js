@@ -32,21 +32,24 @@
     } catch (e) { return false; }
   }
 
-  function inject() {
-    document.querySelectorAll('.desktop-nav, .mobile-nav').forEach(function (nav) {
-      if (nav.querySelector('.btn-staff')) return;
-      const a = document.createElement('a');
-      a.href = ADMIN_URL;
-      a.className = 'btn-staff';
-      a.textContent = LABEL;
-      const loginBtn = nav.querySelector('.btn-login');
-      if (loginBtn) loginBtn.insertAdjacentElement('beforebegin', a);
-      else nav.appendChild(a);
-    });
-  }
+    function inject() {
+        document.querySelectorAll('.desktop-nav, .mobile-nav').forEach(function (nav) {
+            if (nav.querySelector('.staff-link')) return;
+            const links = Array.prototype.slice.call(nav.querySelectorAll('a')).filter(function (el) {
+            return !el.classList.contains('btn-login') && !el.classList.contains('staff-link');
+            });
+            const last = links[links.length - 1];
+            const a = document.createElement('a');
+            a.href = ADMIN_URL;
+            a.textContent = LABEL;
+            a.className = (last ? last.className + ' ' : '') + 'staff-link';
+            if (last) last.insertAdjacentElement('afterend', a);
+            else nav.appendChild(a);
+        });
+    }
 
   async function run() {
-    document.querySelectorAll('.btn-staff').forEach(function (el) { el.remove(); });
+    document.querySelectorAll('.staff-link').forEach(function (el) { el.remove(); });
     if (await isStaff()) inject();
   }
 
