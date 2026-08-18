@@ -102,9 +102,17 @@ def fetch_odds_api() -> list[tuple[Game, str, str]]:
     if not ODDS_API_KEY:
         return []
 
+    now = dt.datetime.now(dt.timezone.utc)
+    days_to_tue = (1 - now.weekday()) % 7 or 7
+    week_end = (now + dt.timedelta(days=days_to_tue)).replace(
+        hour=8, minute=0, second=0, microsecond=0)
+    commence_to = week_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     base = "https://api.the-odds-api.com/v4/sports/{sport}/odds"
     params = ("?regions=us&markets=h2h,spreads,totals"
-              "&oddsFormat=american&dateFormat=iso&apiKey=" + ODDS_API_KEY)
+              "&oddsFormat=american&dateFormat=iso"
+              "&commenceTimeTo=" + commence_to +
+              "&apiKey=" + ODDS_API_KEY)
 
     events = []
     for sport in ("americanfootball_nfl_preseason", "americanfootball_nfl"):
