@@ -33,6 +33,33 @@ layout: null
 
   .nm-board { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
 
+  .nm-filters {
+    display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end;
+    margin-top: 22px; padding: 16px 18px; background: #101828;
+    border: 1px solid #1d2740; border-radius: 10px;
+  }
+  .nm-field { display: flex; flex-direction: column; gap: 5px; }
+  .nm-field label {
+    font-family: var(--font-display); font-size: .68rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: #6b7890;
+  }
+  .nm-field select {
+    background: #0d1524; color: #d6deee; border: 1px solid #23304d;
+    border-radius: 6px; padding: 8px 10px; font-size: .85rem; font-family: inherit;
+    min-width: 132px; cursor: pointer;
+  }
+  .nm-field select:focus { outline: none; border-color: var(--bright-orange); }
+  .nm-filters .nm-count {
+    margin-left: auto; align-self: center; color: #7d8aa5; font-size: .82rem;
+    font-family: var(--font-display); letter-spacing: .02em;
+  }
+  .nm-reset {
+    background: none; border: 1px solid #23304d; color: #8a97b3; cursor: pointer;
+    border-radius: 6px; padding: 8px 12px; font-size: .78rem; font-family: var(--font-display);
+    text-transform: uppercase; letter-spacing: .06em; align-self: flex-end;
+  }
+  .nm-reset:hover { border-color: var(--bright-orange); color: #d6deee; }
+
   .nm-card {
     position: relative; display: grid;
     grid-template-columns: 1fr 240px; gap: 26px;
@@ -107,16 +134,6 @@ layout: null
   .nm-note b { color: #c9d2e6; }
   .nm-disc { margin-top: 14px; padding-top: 14px; border-top: 1px solid #1d2740; color: #6b7890; font-size: .78rem; }
 
-  @media (max-width: 720px) {
-    .nm-head h1 { font-size: 2rem; }
-    .nm-card { grid-template-columns: 1fr; gap: 0; }
-    .nm-edge { border-left: none; border-top: 1px solid #23304d; padding-left: 0; padding-top: 16px; margin-top: 16px; flex-direction: row; align-items: center; gap: 14px; }
-    .nm-edge .cap { display: none; }
-    .nm-edge .num { margin-left: auto; }
-    .nm-legend { margin-left: 0; width: 100%; }
-    .nm-kick { display: none; }
-  }
-
   .nm-gate { display: none; margin-top: 26px; }
   .nm-gate-inner {
     max-width: 520px; margin: 0 auto; text-align: center;
@@ -151,6 +168,16 @@ layout: null
   .nm-gate-note b { color: #c9d2e6; }
   .nm-gate-note a { color: var(--bright-orange); text-decoration: none; font-weight: 600; }
   .nm-gate-note a:hover { text-decoration: underline; }
+
+  @media (max-width: 720px) {
+    .nm-head h1 { font-size: 2rem; }
+    .nm-card { grid-template-columns: 1fr; gap: 0; }
+    .nm-edge { border-left: none; border-top: 1px solid #23304d; padding-left: 0; padding-top: 16px; margin-top: 16px; flex-direction: row; align-items: center; gap: 14px; }
+    .nm-edge .cap { display: none; }
+    .nm-edge .num { margin-left: auto; }
+    .nm-legend { margin-left: 0; width: 100%; }
+    .nm-kick { display: none; }
+  }
 </style>
 
 <main class="nm-wrap">
@@ -178,6 +205,37 @@ layout: null
         <span class="nm-key"><span class="nm-swatch market"></span> Market</span>
         <span class="nm-key"><span class="nm-swatch edge"></span> Edge</span>
       </span>
+    </div>
+
+    <div id="nm-filters" class="nm-filters" style="display:none;">
+      <div class="nm-field">
+        <label for="f-sort">Sort by</label>
+        <select id="f-sort">
+          <option value="kickoff">Kickoff (game order)</option>
+          <option value="edge">Top edge</option>
+          <option value="total">Total (high→low)</option>
+          <option value="spread">Closest spread</option>
+        </select>
+      </div>
+      <div class="nm-field">
+        <label for="f-slate">Day</label>
+        <select id="f-slate"><option value="">All days</option></select>
+      </div>
+      <div class="nm-field">
+        <label for="f-team">Team</label>
+        <select id="f-team"><option value="">All teams</option></select>
+      </div>
+      <div class="nm-field">
+        <label for="f-edge">Min edge</label>
+        <select id="f-edge">
+          <option value="0">Any</option>
+          <option value="2.5">2.5+ pts</option>
+          <option value="5">5+ pts</option>
+          <option value="7.5">7.5+ pts</option>
+        </select>
+      </div>
+      <button id="f-reset" class="nm-reset">Reset</button>
+      <span id="f-count" class="nm-count"></span>
     </div>
 
     <div id="nm-board" class="nm-board"></div>
@@ -292,6 +350,73 @@ layout: null
       '</div>';
   }
 
+  var ALL_GAMES = [];
+  var filters = { sort: "kickoff", slate: "", team: "", minEdge: 0 };
+
+  var SLATE_ORDER = ["THU", "TNF", "FRI", "SAT", "SUN", "SNF", "MNF", "TUE", "WED"];
+
+  function populateFilters(games) {
+    var teamMap = {};
+    var slatesSeen = {};
+    games.forEach(function (g) {
+      teamMap[g.home] = 1; teamMap[g.away] = 1;
+      if (g.slate) slatesSeen[g.slate] = 1;
+    });
+
+    var teamSel = document.getElementById("f-team");
+    var names = Object.keys(teamMap).sort();
+    teamSel.innerHTML = '<option value="">All teams</option>' +
+      names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join("");
+
+    var slateSel = document.getElementById("f-slate");
+    var present = SLATE_ORDER.filter(function (s) { return slatesSeen[s]; });
+    slateSel.innerHTML = '<option value="">All days</option>' +
+      present.map(function (s) { return '<option value="' + s + '">' + s + '</option>'; }).join("");
+  }
+
+  function applyFilters() {
+    var list = ALL_GAMES.slice();
+    if (filters.slate) list = list.filter(function (g) { return g.slate === filters.slate; });
+    if (filters.team) list = list.filter(function (g) { return g.home === filters.team || g.away === filters.team; });
+    if (filters.minEdge) list = list.filter(function (g) { return g.best_bet_edge >= filters.minEdge; });
+
+    list.sort(function (a, b) {
+      switch (filters.sort) {
+        case "edge": return b.best_bet_edge - a.best_bet_edge;
+        case "total": return b.total_line - a.total_line;
+        case "spread": return Math.abs(a.home_spread) - Math.abs(b.home_spread);
+        default: return new Date(a.kickoff || 0) - new Date(b.kickoff || 0);
+      }
+    });
+
+    var countEl = document.getElementById("f-count");
+    if (countEl) countEl.textContent = "Showing " + list.length + " of " + ALL_GAMES.length;
+
+    if (!list.length) {
+      board.innerHTML = "";
+      statusEl.style.display = "block";
+      statusEl.textContent = "No games match these filters.";
+      return;
+    }
+    statusEl.style.display = "none";
+    board.innerHTML = list.map(card).join("");
+  }
+
+  function wireFilters() {
+    document.getElementById("f-sort").addEventListener("change", function (e) { filters.sort = e.target.value; applyFilters(); });
+    document.getElementById("f-slate").addEventListener("change", function (e) { filters.slate = e.target.value; applyFilters(); });
+    document.getElementById("f-team").addEventListener("change", function (e) { filters.team = e.target.value; applyFilters(); });
+    document.getElementById("f-edge").addEventListener("change", function (e) { filters.minEdge = parseFloat(e.target.value) || 0; applyFilters(); });
+    document.getElementById("f-reset").addEventListener("click", function () {
+      filters = { sort: "kickoff", slate: "", team: "", minEdge: 0 };
+      document.getElementById("f-sort").value = "kickoff";
+      document.getElementById("f-slate").value = "";
+      document.getElementById("f-team").value = "";
+      document.getElementById("f-edge").value = "0";
+      applyFilters();
+    });
+  }
+
   function loadBoard() {
     var token = localStorage.getItem("sb-auth-token");
     fetch(DATA_URL, { headers: { apikey: ANON_KEY, Authorization: "Bearer " + token } })
@@ -300,14 +425,17 @@ layout: null
         var data = rows && rows[0] && rows[0].data;
         if (!data) throw new Error("no data");
         updatedEl.textContent = "Updated " + fmtUpdated(data.generated_at) +
-          "  ·  " + data.count + " game" + (data.count === 1 ? "" : "s") + "  ·  ranked by edge";
+          "  ·  " + data.count + " game" + (data.count === 1 ? "" : "s");
 
         if (!data.games || !data.games.length) {
           statusEl.innerHTML = "No games on the board right now. The model runs every morning and posts the day's slate here once lines are up.";
           return;
         }
-        statusEl.style.display = "none";
-        board.innerHTML = data.games.map(card).join("");
+        ALL_GAMES = data.games;
+        populateFilters(ALL_GAMES);
+        wireFilters();
+        document.getElementById("nm-filters").style.display = "flex";
+        applyFilters();
       })
       .catch(function () {
         updatedEl.textContent = "";
