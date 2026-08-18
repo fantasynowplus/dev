@@ -1,3 +1,4 @@
+const FEED_PROXY = 'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/yt?id=';
 const ALL_CHANNELS = [
     'UCCW6qFFB7ezwJk1cLPjPHDg', // main channel
     'UCYVj7kCSQ5iogXUGoVV5uqA', // Get Tilted
@@ -16,19 +17,35 @@ function setActiveButton(buttonElement) {
 }
 
 async function fetchFeedItems(sourceId) {
-    const isChannel = sourceId.startsWith('UC');
-    const rss = isChannel
-        ? `https://www.youtube.com/feeds/videos.xml?channel_id=${sourceId}`
-        : `https://www.youtube.com/feeds/videos.xml?playlist_id=${sourceId}`;
-
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}`;
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (data.status !== 'ok' || !Array.isArray(data.items)) {
-        throw new Error(data.message || 'Feed returned no items');
+    const cacheKey = 'yt_feed_' + sourceId;
+    try {
+        const response = await fetch(FEED_PROXY + encodeURIComponent(sourceId));
+        if (!response.ok) throw new Error('Proxy returned ' + response.status);
+        const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+        if (xml.querySelector('parsererror')) throw new Error('Feed was not valid XML');
+        const YT_NS = 'http://www.youtube.com/xml/schemas/2015';
+        const MEDIA_NS = 'http://search.yahoo.com/mrss/';
+        const items = [...xml.querySelectorAll('entry')].map(entry => {
+            const link = entry.querySelector('link')?.getAttribute('href') || '';
+            const vid = entry.getElementsByTagNameNS(YT_NS, 'videoId')[0]?.textContent
+                || (link.match(/(?:[?&]v=|\/shorts\/)([\w-]{11})/) || [])[1] || '';
+            const feedThumb = entry.getElementsByTagNameNS(MEDIA_NS, 'thumbnail')[0]?.getAttribute('url');
+            return {
+                title: entry.querySelector('title')?.textContent || '',
+                link: link,
+                pubDate: entry.querySelector('published')?.textContent || '',
+                thumbnail: feedThumb || (vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : ''),
+                vid: vid
+            };
+        });
+        if (!items.length) throw new Error('Feed returned no items');
+        try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch (e) {}
+        return items;
+    } catch (err) {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return JSON.parse(cached);
+        throw err;
     }
-    return data.items;
 }
 
 function renderVideos(videos) {
@@ -36,7 +53,8 @@ function renderVideos(videos) {
     container.innerHTML = videos.map(v => `
             <div class="video-card">
                 <a href="${v.link}" target="_blank" rel="noopener">
-                    <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}">
+                                        <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}"
+                         onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${v.vid}/oardefault.jpg';">
                 </a>
                 <div class="video-info">
                     <h3 class="video-title">${v.title}</h3>

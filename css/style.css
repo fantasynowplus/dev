@@ -227,3 +227,13 @@ header nav {
 .fnplus-promo-btn{flex:0 0 auto;align-self:center;margin:0 40px;background:#FFA515;color:#3a3a3a;font-weight:800;font-size:22px;letter-spacing:.5px;padding:14px 40px;border-radius:6px;transition:background .15s ease}
 .fnplus-promo:hover .fnplus-promo-btn{background:#d4832a}
 @media(max-width:700px){.fnplus-promo{flex-direction:column}.fnplus-promo-logo{flex-basis:auto}.fnplus-promo-btn{margin:16px}}
+
+.btn-staff {
+  background: #FFA515;
+  color: #002863;
+  border-color: #FFA515;
+}
+.btn-staff:hover {
+  background: #ED9405;
+  border-color: #ED9405;
+}

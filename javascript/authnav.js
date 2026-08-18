@@ -68,6 +68,7 @@
     var lf = $('fnLoginForm');
     if (lf) lf.addEventListener('submit', async function (e) {
       e.preventDefault();
+      try { sessionStorage.removeItem('fnp_is_staff'); } catch (e) {}
       try { await auth.login($('fnLoginEmail').value, $('fnLoginPassword').value); location.reload(); }
       catch (err) { msg($('fnAuthMsg'), err.message, 'error'); }
     });
