@@ -5,47 +5,29 @@ layout: null
 
 <main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
     <h1 style="text-align: center;">Tools & Graphics</h1>
-    <p style="text-align: center; color: #ffffff; margin-bottom: 40px;">Level up your teams with these free tools from FantasyNow+</p>
+    <p style="text-align: center; color: #ffffff; margin-bottom: 24px;">Level up your teams with these free tools from FantasyNow+</p>
 
-    <!-- Row 1: My Leagues + Trade Calculator -->
-    <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 30px;">
-        <div class="tool-card">
-            <h3>My Leagues</h3>
-            <p>Link your Sleeper account and see all your leagues in one place — format, scoring, and contender insights.</p>
-            <a href="my-leagues" class="tool-card-link">Open Tool</a>
-        </div>
-
-        <div class="tool-card">
-            <h3>Trade Calculator</h3>
-            <p>Value any trade on our rankings — players and rookie picks, for dynasty or redraft.</p>
-            <a href="trade-calculator" class="tool-card-link">Open Tool</a>
-        </div>
-    </div>
-
-    <!-- Row 2: graphics -->
-    <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-        <div class="tool-card">
-            <h3>SFB Draft Graphic</h3>
-            <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
-            <a href="sfb-roster" class="tool-card-link">Open Tool</a>
-        </div>
-
-        <div class="tool-card">
-            <h3>League Flex Graphic</h3>
-            <p>Transform your draft results into a single roster view for quick trash-talk.</p>
-            <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
-        </div>
-
-        <div class="tool-card">
-            <h3>Dynasty Rookie Recap</h3>
-            <p>High-impact graphic highlighting your rookie haul and pick value. </p>
-            <a href="rookie-recap" class="tool-card-link">Open Tool</a>
-        </div>
-    </div>
+    {% include tools-subnav.html %}
 
     <style>
+    .tools-section { margin-top: 44px; scroll-margin-top: 90px; }
+    .tools-section:first-of-type { margin-top: 8px; }
+    .tools-section-head { margin-bottom: 18px; }
+    .tools-section-head h2 {
+        font-family: "Barlow Condensed", sans-serif; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .03em; font-size: 1.7rem; color: #eef2fb; margin: 0;
+    }
+    .tools-section-head p { color: #94a1bd; margin: 6px 0 0; line-height: 1.5; font-size: .95rem; }
+    .tool-lock {
+        display: inline-flex; align-items: center; gap: 6px; font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .72rem;
+        color: #f0b429; background: rgba(240,180,41,.12); border: 1px solid rgba(240,180,41,.3);
+        padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
+    }
+    .tool-card-link.disabled { background: #2a3450; color: #8a97b3; cursor: default; pointer-events: none; }
+
     .dgf-feature{
-        margin-top:40px;
+        margin-top:0;
         border:1px solid #2a3450;
         border-radius:16px;
         background:linear-gradient(135deg,#161d2e 0%,#0f1420 100%);
@@ -89,29 +71,93 @@ layout: null
     }
     .dgf-pdf:hover{background:#f0b429;color:#1a1204;}
     .dgf-pdf-date{display:block;color:#7d8aa5;font-size:.78rem;font-weight:500;letter-spacing:0;text-transform:none;}
-    </style>
 
-    <section class="dgf-feature">
-        <div class="dgf-inner">
-            <div>
-                <span class="dgf-badge">New</span>
-                <h2>Live Draft Guide</h2>
-                <p>Our analysts' rankings, live on draft night. Track every pick as it happens, see best-available and bye-week guidance in real time, or run a mock draft to rehearse your board before you're on the clock.</p>
-                <ul class="dgf-list">
-                    <li>Live assist, mock draft, and full rankings in one board</li>
-                    <li>Snake, linear, and third-round-reversal formats</li>
-                    <li>Updates automatically from our ranking sheet</li>
-                </ul>
+    .staff-badge{
+        display:inline-block;font-family:"Barlow Condensed",sans-serif;font-weight:700;
+        text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;
+        color:#002863;background:#FFA515;padding:2px 9px;border-radius:999px;margin-bottom:10px;
+    }
+    </style>
+    <section id="draft" class="tools-section">
+        <div class="dgf-feature">
+            <div class="dgf-inner">
+                <div>
+                    <span class="dgf-badge">New</span>
+                    <h2>Live Draft Guide</h2>
+                    <p>Our analysts' rankings, live on draft night. Track every pick as it happens, see best-available and bye-week guidance in real time, or run a mock draft to rehearse your board before you're on the clock.</p>
+                    <ul class="dgf-list">
+                        <li>Live assist, mock draft, and full rankings in one board</li>
+                        <li>Snake, linear, and third-round-reversal formats</li>
+                        <li>Updates automatically from our ranking sheet</li>
+                    </ul>
+                </div>
+                <div class="dgf-cta">
+                    <a href="draft-guide" class="tool-card-link">Open Draft Guide</a>
+                    {% assign pdfs = site.static_files | where: "extname", ".pdf" %}
+                    {% for f in pdfs %}{% if f.path contains "/assets/" %}{% assign guide = f %}{% break %}{% endif %}{% endfor %}
+                    {% if guide %}
+                    <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
+                        <i class="fa-solid fa-file-arrow-down"></i> Download PDF
+                    </a>
+                    {% endif %}
+                </div>
             </div>
-            <div class="dgf-cta">
-                <a href="draft-guide" class="tool-card-link">Open Draft Guide</a>
-                {% assign pdfs = site.static_files | where: "extname", ".pdf" %}
-                {% for f in pdfs %}{% if f.path contains "/assets/" %}{% assign guide = f %}{% break %}{% endif %}{% endfor %}
-                {% if guide %}
-                <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download PDF
-                </a>
-                {% endif %}
+        </div>
+    </section>
+    <section id="leagues" class="tools-section">
+        <div class="tools-section-head"><h2>Leagues &amp; Trades</h2></div>
+        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div class="tool-card">
+                <h3>My Leagues</h3>
+                <p>Link your Sleeper account and see all your leagues in one place — format, scoring, and contender insights.</p>
+                <a href="my-leagues" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <h3>Trade Calculator</h3>
+                <p>Value any trade on our rankings — players and rookie picks, for dynasty or redraft.</p>
+                <a href="trade-calculator" class="tool-card-link">Open Tool</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="graphics" class="tools-section">
+        <div class="tools-section-head"><h2>Graphics</h2></div>
+        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div class="tool-card">
+                <h3>SFB Draft Graphic</h3>
+                <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
+                <a href="sfb-roster" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <h3>League Flex Graphic</h3>
+                <p>Transform your draft results into a single roster view for quick trash-talk.</p>
+                <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <h3>Dynasty Rookie Recap</h3>
+                <p>High-impact graphic highlighting your rookie haul and pick value.</p>
+                <a href="rookie-recap" class="tool-card-link">Open Tool</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="betting" class="tools-section">
+        <div class="tools-section-head">
+            <h2>Sports Betting &amp; DFS</h2>
+            <p>Model-driven betting and DFS tools. Free with a FantasyNow+ account — anyone can look, log in to see the numbers.</p>
+        </div>
+        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div class="tool-card">
+                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
+                <h3>NFL Simulator</h3>
+                <p>20,000 simulations per game, lined up against the sportsbook — see where our model disagrees with the market, updated every morning.</p>
+                <a href="nfl-simulator" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
+                <h3>DFS Lineup Tools</h3>
+                <p>Projections and a lineup optimizer for daily fantasy slates. In the works — check back soon.</p>
+                <span class="tool-card-link disabled">Coming soon</span>
             </div>
         </div>
     </section>
