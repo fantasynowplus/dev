@@ -301,8 +301,8 @@
   }
 
   /* ---------- live picks ---------- */
-    function setPick(matchupId, staffId, side, clear) {
-    var key = matchupId + staffId;
+  function setPick(matchupId, pickerId, side, clear) {
+    var key = matchupId + pickerId;
     if (busy[key]) return;
     var tok = authToken();
     if (!tok) return;
@@ -310,27 +310,27 @@
 
     var m = BOARD.matchups.filter(function (x) { return x.id === matchupId; })[0];
     if (m) {
-      m.picks = (m.picks || []).filter(function (p) { return p.picker_id !== staffId; });
+      m.picks = (m.picks || []).filter(function (p) { return p.picker_id !== pickerId; });
       if (!clear) {
-        var a = ANALYSTS.filter(function (x) { return x.id === staffId; })[0];
-        m.picks.push({ staff_id: staffId, name: a ? a.name : '', pick: side, on_air: true });
+        var a = ANALYSTS.filter(function (x) { return x.picker_id === pickerId; })[0];
+        m.picks.push({ picker_id: pickerId, name: a ? a.name : '', pick: side, on_air: true });
       }
       render();
     }
 
     var req = clear
-      ? fetch(SB_URL + '/rest/v1/ss_picks?matchup_id=eq.' + matchupId + '&staff_id=eq.' + staffId, {
+      ? fetch(SB_URL + '/rest/v1/ss_picks?matchup_id=eq.' + matchupId + '&picker_id=eq.' + pickerId, {
           method: 'DELETE',
           headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
         })
-      : fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,staff_id', {
+      : fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,picker_id', {
           method: 'POST',
           headers: {
             apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json',
             Prefer: 'resolution=merge-duplicates,return=minimal'
           },
           body: JSON.stringify({
-            matchup_id: matchupId, staff_id: staffId, pick: side,
+            matchup_id: matchupId, picker_id: pickerId, pick: side,
             updated_at: new Date().toISOString()
           })
         });
