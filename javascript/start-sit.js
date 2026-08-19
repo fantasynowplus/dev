@@ -35,6 +35,13 @@
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
+    function withTimeout(p, ms, fallback) {
+    return Promise.race([
+      p,
+      new Promise(function (res) { setTimeout(function () { res(fallback); }, ms || 6000); })
+    ]);
+  }
+
   function sbCfg() {
     return {
       url: (typeof SUPABASE_URL !== 'undefined') ? SUPABASE_URL : '',
@@ -85,9 +92,10 @@
           STATE.week   = Number(d.week);
           return;
         }
-        return fetch('https://api.sleeper.app/v1/state/nfl')
-          .then(function (r) { return r.json(); })
-          .catch(function () { return {}; })
+        return withTimeout(
+          fetch('https://api.sleeper.app/v1/state/nfl')
+            .then(function (r) { return r.json(); })
+            .catch(function () { return {}; }), 6000, {})
           .then(function (s) {
             var fallback = Number(s.display_week || s.week) || 1;
             STATE.season = qsSeason || (d && Number(d.season)) || Number(s.season) || new Date().getFullYear();
@@ -183,8 +191,8 @@
     return (m.picks || []).filter(function (p) { return p.on_air; });
   }
   function bothIn(m) {
-    var need = ANALYSTS.length || 2;
-    return analystPicks(m).length >= need;
+    if (!ANALYSTS.length) return true;
+    return analystPicks(m).length >= ANALYSTS.length;
   }
 
   function pickersHtml(m, side) {
@@ -246,7 +254,7 @@
     var waiting = ANALYSTS.filter(function (a) {
       return !picked.some(function (p) { return p.picker_id === a.picker_id; });
     });
-    var note = !ANALYSTS.length ? 'No analysts flagged'
+    var note = !ANALYSTS.length ? 'No pickers set'
       : m.winner ? 'Final'
       : (waiting.length ? 'On the clock<br>' + waiting.map(function (a) { return esc(firstName(a.name)); }).join(' &middot; ')
                         : 'Both locked in');
@@ -342,7 +350,7 @@
 
   function checkOperator() {
     var tok = authToken();
-    if (!tok || !ANALYSTS.length) return Promise.resolve();
+    if (!tok) return Promise.resolve();
     return fetch(SB_URL + '/rest/v1/ss_matchups?select=id&limit=1', {
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
     }).then(function (r) {
