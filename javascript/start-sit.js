@@ -1,59 +1,54 @@
-/* ============================================================
-   Start/Sit Showdown — public stream board
-   Reads ss_board / ss_standings / ss_week_results (anon RPCs).
-   Staff who can write get an operator bar for picking live.
-   ============================================================ */
 (function () {
   'use strict';
 
-  /* ---------- tunables ---------- */
-  var POLL_MS      = 15000;   // board refresh cadence during a stream
-  var RECENT_GAMES = 3;       // stat chips per player
+  var POLL_MS      = 12000;
+  var RECENT_GAMES = 3;
   var DVP_URL      = 'data/dvp.json';
+  var POSITIONS    = ['QB', 'RB', 'WR', 'TE'];
 
-  var SB_URL_OVERRIDE = '';
-  var SB_KEY_OVERRIDE = '';
-
-  var SB_URL = '';
-  var SB_KEY = '';
-
-  function resolveConfig() {
-    function pick(name, override) {
-      if (override) return override;
-      try { if (window[name]) return window[name]; } catch (e) {}
-      try { var v = (0, eval)(name); if (v) return v; } catch (e) {}   // top-level const/let
-      try { if (window.auth && window.auth[name]) return window.auth[name]; } catch (e) {}
-      return '';
-    }
-    SB_URL = pick('SUPABASE_URL', SB_URL_OVERRIDE);
-    SB_KEY = pick('SUPABASE_ANON_KEY', SB_KEY_OVERRIDE);
-  }
-
-  var STATE   = { season: null, week: null };
-  var BOARD   = { week: null, matchups: [] };
-  var ANALYSTS = [];          // [{id,name}]
-  var DVP     = null;
-  var STATS   = {};           // player_id -> [{week, pts}]
+  var SB_URL = '', SB_KEY = '';
+  var STATE    = { season: null, week: null };
+  var BOARD    = { week: null, matchups: [] };
+  var ANALYSTS = [];
+  var DVP      = null;
+  var STATS    = {};
   var CAN_EDIT = false;
-  var TAB     = 'board';
-  var timer   = null;
+  var current  = 'QB';
+  var busy     = {};
 
-  /* ---------- tiny helpers ---------- */
+  /* ---------- helpers ---------- */
   function el(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function initials(name) {
-    return String(name || '').trim().split(/\s+/).slice(0, 2)
+  function initials(n) {
+    return String(n || '').trim().split(/\s+/).slice(0, 2)
       .map(function (p) { return p.charAt(0); }).join('').toUpperCase();
   }
-  function num(v, d) { var n = Number(v); return isFinite(n) ? n.toFixed(d == null ? 1 : d) : '\u2014'; }
+  function firstName(n) { return String(n || '').trim().split(/\s+/)[0] || n; }
+  function num(v, d) { var x = Number(v); return isFinite(x) ? x.toFixed(d == null ? 1 : d) : '\u2014'; }
   function ordinal(n) {
     n = Number(n); if (!isFinite(n)) return '';
     var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function sbCfg() {
+    return {
+      url: (typeof SUPABASE_URL !== 'undefined') ? SUPABASE_URL : '',
+      key: (typeof SUPABASE_ANON_KEY !== 'undefined') ? SUPABASE_ANON_KEY : '',
+      token: localStorage.getItem('sb-auth-token')
+    };
+  }
+  function authToken() {
+    var raw = sbCfg().token;
+    if (!raw) return null;
+    try {
+      var t = JSON.parse(raw);
+      return t.access_token || (t.currentSession && t.currentSession.access_token) || null;
+    } catch (e) { return raw; }
   }
 
   function rpc(name, body) {
@@ -67,27 +62,16 @@
     });
   }
 
-  function authToken() {
-    try {
-      var raw = localStorage.getItem('sb-auth-token');
-      if (!raw) return null;
-      var t = JSON.parse(raw);
-      return t.access_token || t.currentSession && t.currentSession.access_token || null;
-    } catch (e) { return null; }
+  function logoUrl(t) {
+    return t ? 'https://sleepercdn.com/images/team_logos/nfl/' + String(t).toLowerCase() + '.png' : '';
   }
-
-  /* ---------- assets ---------- */
-  function logoUrl(team) {
-    if (!team) return '';
-    return 'https://sleepercdn.com/images/team_logos/nfl/' + String(team).toLowerCase() + '.png';
-  }
-  function shotUrl(espnId, sleeperId) {
-    if (espnId) return 'https://a.espncdn.com/i/headshots/nfl/players/full/' + espnId + '.png';
-    if (sleeperId) return 'https://sleepercdn.com/content/nfl/players/thumb/' + sleeperId + '.jpg';
+  function shotUrl(espn, sleeper) {
+    if (espn) return 'https://a.espncdn.com/i/headshots/nfl/players/full/' + espn + '.png';
+    if (sleeper) return 'https://sleepercdn.com/content/nfl/players/thumb/' + sleeper + '.jpg';
     return '';
   }
 
-  /* ---------- data loads ---------- */
+  /* ---------- loads ---------- */
   function loadState() {
     var qs = new URLSearchParams(location.search);
     return fetch('https://api.sleeper.app/v1/state/nfl')
@@ -96,10 +80,8 @@
       .then(function (s) {
         var fallback = Number(s.display_week || s.week) || 1;
         STATE.season = Number(qs.get('season')) || Number(s.season) || new Date().getFullYear();
-
         var forced = Number(qs.get('week'));
         if (forced) { STATE.week = forced; return; }
-
         return rpc('ss_current_week', { p_season: STATE.season })
           .then(function (w) { STATE.week = Number(w) || fallback; })
           .catch(function () { STATE.week = fallback; });
@@ -114,22 +96,27 @@
   }
 
   function loadAnalysts() {
-    return rpc('ss_analysts').then(function (rows) { ANALYSTS = rows || []; })
+    return rpc('ss_analysts')
+      .then(function (r) { ANALYSTS = r || []; })
       .catch(function () { ANALYSTS = []; });
   }
 
-  function loadBoard() {
+  function loadBoard(silent) {
     return rpc('ss_board', { p_season: STATE.season, p_week: STATE.week })
       .then(function (j) {
         BOARD = j || { week: null, matchups: [] };
         BOARD.matchups = BOARD.matchups || [];
-        renderWeek();
-        if (TAB === 'board') renderBoard();
+        stamp();
+        render();
         loadRecentStats();
+      })
+      .catch(function (e) {
+        if (!silent) el('stage').innerHTML =
+          '<div class="state">Couldn\u2019t load the board. Confirm the Start/Sit SQL has been run.</div>';
+        throw e;
       });
   }
 
-  /* Per-player weekly log — small payloads, unlike the 5MB players file. */
   function loadRecentStats() {
     var ids = [];
     BOARD.matchups.forEach(function (m) {
@@ -140,225 +127,203 @@
     if (!ids.length) return;
 
     Promise.all(ids.map(function (id) {
-      var url = 'https://api.sleeper.app/stats/nfl/player/' + id +
-                '?season_type=regular&season=' + STATE.season + '&grouping=week';
-      return fetch(url).then(function (r) { return r.ok ? r.json() : null; })
+      return fetch('https://api.sleeper.app/stats/nfl/player/' + id +
+                   '?season_type=regular&season=' + STATE.season + '&grouping=week')
+        .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           var log = [];
-          if (j) {
-            Object.keys(j).forEach(function (w) {
-              var row = j[w], st = row && (row.stats || row);
-              var pts = st && st.pts_ppr;
-              if (pts != null && Number(w) < STATE.week) log.push({ week: Number(w), pts: Number(pts) });
-            });
-          }
+          if (j) Object.keys(j).forEach(function (w) {
+            var row = j[w], st = row && (row.stats || row);
+            if (st && st.pts_ppr != null && Number(w) < STATE.week) {
+              log.push({ week: Number(w), pts: Number(st.pts_ppr) });
+            }
+          });
           log.sort(function (a, b) { return b.week - a.week; });
           STATS[id] = log.slice(0, RECENT_GAMES);
         })
         .catch(function () { STATS[id] = []; });
-    })).then(function () { if (TAB === 'board') renderBoard(); });
+    })).then(render);
   }
 
-  /* ---------- rendering: matchups ---------- */
-  function renderWeek() {
-    var st = BOARD.week && BOARD.week.status;
-    var label = 'Week ' + STATE.week + ' \u00b7 ' + STATE.season;
-    if (st === 'locked') label += ' \u00b7 Picks locked';
-    if (st === 'scored') label += ' \u00b7 Final';
-    el('ssWeek').textContent = label;
+  /* ---------- render ---------- */
+  function matchupFor(pos) {
+    return BOARD.matchups.filter(function (m) { return m.pos === pos; })[0] || null;
   }
 
-  function dvpFor(oppTeam, pos) {
-    if (!DVP || !DVP.defense || !oppTeam) return null;
-    var code = String(oppTeam).replace(/[^A-Za-z]/g, '').toUpperCase();
-    var d = DVP.defense[code];
-    return d && d[pos] ? d[pos] : null;
-  }
-
-  function dvpHtml(oppTeam, pos) {
-    var d = dvpFor(oppTeam, pos);
+  function dvpHtml(opp, pos) {
+    if (!DVP || !DVP.defense || !opp) return '';
+    var code = String(opp).replace(/[^A-Za-z]/g, '').toUpperCase();
+    var d = DVP.defense[code] && DVP.defense[code][pos];
     if (!d) return '';
     var cls = d.rank <= 10 ? 'soft' : (d.rank >= 23 ? 'tough' : 'mid');
-    var code = String(oppTeam).replace(/[^A-Za-z]/g, '').toUpperCase();
-    return '<div class="ss-dvp">' + esc(code) + ' allows <b>' + num(d.ppg) + '</b> PPG to ' + esc(pos) +
+    return '<div class="dvp">' + esc(code) + ' allows <b>' + num(d.ppg) + '</b> PPG to ' + esc(pos) +
            's<span class="rk ' + cls + '">' + ordinal(d.rank) + ' most</span></div>';
   }
 
-  function statsHtml(playerId) {
-    var log = STATS[playerId];
+  function statsHtml(pid) {
+    var log = STATS[pid];
     if (!log || !log.length) return '';
-    return '<div class="ss-stats">' + log.map(function (g) {
-      return '<div class="ss-chip"><b>' + num(g.pts) + '</b><span>Wk ' + g.week + '</span></div>';
+    return '<div class="stats">' + log.map(function (g) {
+      return '<div class="chip"><b>' + num(g.pts) + '</b><span>Wk ' + g.week + '</span></div>';
     }).join('') + '</div>';
   }
 
+  function analystPicks(m) {
+    return (m.picks || []).filter(function (p) { return p.analyst; });
+  }
+  function bothIn(m) {
+    var need = ANALYSTS.length || 2;
+    return analystPicks(m).length >= need;
+  }
+
   function picksHtml(m, side) {
-    var picks = m.picks || [];
-    var analysts = picks.filter(function (p) { return p.analyst; });
-    var bothIn = ANALYSTS.length ? analysts.length >= ANALYSTS.length : analysts.length >= 2;
-    var out = '';
-
-    if (m.revealed) {
-      analysts.filter(function (p) { return p.pick === side; }).forEach(function (p) {
-        out += '<span class="ss-analyst">' + esc(p.name) + '</span>';
-      });
-    } else if (analysts.length) {
-      out += '<span class="ss-hidden">' + analysts.length + ' locked in</span>';
-    }
-
-    if (m.revealed && bothIn) {
-      var crowd = picks.filter(function (p) { return !p.analyst && p.pick === side; });
-      if (crowd.length) {
-        out += '<span class="ss-crowd">' + crowd.map(function (p) {
-          return '<span class="ss-av" title="' + esc(p.name) + '">' + esc(initials(p.name)) + '</span>';
-        }).join('') + '<span class="ss-crowd-n">' + crowd.length + ' staff</span></span>';
+    var out = analystPicks(m).filter(function (p) { return p.pick === side; })
+      .map(function (p) { return '<span class="abadge">' + esc(p.name) + '</span>'; }).join('');
+    var crowd = '';
+    if (bothIn(m)) {
+      var others = (m.picks || []).filter(function (p) { return !p.analyst && p.pick === side; });
+      if (others.length) {
+        crowd = '<div class="crowd">' + others.map(function (p) {
+          return '<span class="av" title="' + esc(p.name) + '">' + esc(initials(p.name)) + '</span>';
+        }).join('') + '<span class="crowd-n">' + others.length + ' staff</span></div>';
       }
     }
-    return '<div class="ss-picks">' + out + '</div>';
+    return '<div class="picks">' + out + '</div>' + crowd;
+  }
+
+  function opHtml(m, side) {
+    if (!ANALYSTS.length) return '';
+    return '<div class="opbar">' + ANALYSTS.map(function (a) {
+      var mine = (m.picks || []).filter(function (p) { return p.staff_id === a.id; })[0];
+      var on = mine && mine.pick === side;
+      return '<button class="opbtn' + (on ? ' on' : '') + '" data-m="' + m.id +
+             '" data-staff="' + a.id + '" data-side="' + side + '">' + esc(firstName(a.name)) + '</button>';
+    }).join('') + '</div>';
   }
 
   function sideHtml(m, side) {
-    var p = {
-      name:  m[side + '_name'],
-      team:  m[side + '_team'],
-      opp:   m[side + '_opp'],
-      pts:   m[side + '_points'],
-      pid:   m[side + '_player_id'],
-      espn:  m[side + '_espn_id']
-    };
-    var cls = 'ss-side ' + side;
+    var name = m[side + '_name'], team = m[side + '_team'], opp = m[side + '_opp'];
+    var pts = m[side + '_points'], pid = m[side + '_player_id'], espn = m[side + '_espn_id'];
+
+    var cls = 'side ' + side;
     if (m.winner === side) cls += ' win';
     else if (m.winner && m.winner !== 'tie') cls += ' lose';
 
-    var opp = p.opp ? (/^[@vs]/i.test(p.opp) ? p.opp : 'vs ' + p.opp) : '';
-    var shot = shotUrl(p.espn, p.pid);
+    var oppTxt = opp ? (/^[@v]/i.test(opp) ? opp : 'vs ' + opp) : '';
+    var shot = shotUrl(espn, pid);
+    var fb = pid ? 'https://sleepercdn.com/content/nfl/players/thumb/' + pid + '.jpg' : '';
 
     return '<div class="' + cls + '">' +
-      (p.team ? '<img class="ss-logo" src="' + logoUrl(p.team) + '" alt="" aria-hidden="true">' : '') +
-      '<div class="ss-idrow">' +
-        (shot ? '<img class="ss-shot" src="' + shot + '" alt="" data-fallback="' +
-                (p.pid ? 'https://sleepercdn.com/content/nfl/players/thumb/' + p.pid + '.jpg' : '') + '">'
-              : '<div class="ss-shot"></div>') +
+      (team ? '<img class="logo" src="' + logoUrl(team) + '" alt="" aria-hidden="true">' : '') +
+      '<div class="idrow">' +
+        (shot ? '<img class="shot" src="' + shot + '" alt="" data-fallback="' + fb + '">'
+              : '<div class="shot"></div>') +
         '<div>' +
-          '<h3 class="ss-name">' + esc(p.name) + '</h3>' +
-          '<p class="ss-meta">' + esc(m.pos) + (p.team ? ' \u00b7 ' + esc(p.team) : '') + '</p>' +
-          (opp ? '<span class="ss-opp">' + esc(opp) + '</span>' : '') +
+          '<h2 class="pname">' + esc(name) + '</h2>' +
+          '<p class="pmeta">' + esc(m.pos) + (team ? ' \u00b7 ' + esc(team) : '') + '</p>' +
+          (oppTxt ? '<span class="opp">' + esc(oppTxt) + '</span>' : '') +
         '</div>' +
       '</div>' +
-      statsHtml(p.pid) +
-      dvpHtml(p.opp, m.pos) +
-      (p.pts != null ? '<div class="ss-score">' + num(p.pts) + '</div>' : '') +
+      statsHtml(pid) +
+      dvpHtml(opp, m.pos) +
+      (pts != null ? '<div class="final">' + num(pts) + '</div>' : '') +
       picksHtml(m, side) +
+      opHtml(m, side) +
     '</div>';
   }
 
-  function opHtml(m) {
-    var btns = ANALYSTS.map(function (a) {
-      var mine = (m.picks || []).filter(function (p) { return p.staff_id === a.id; })[0];
-      return ['a', 'b'].map(function (s) {
-        var on = mine && mine.pick === s;
-        return '<button class="ss-opbtn' + (on ? ' live' : '') + '" data-act="pick" data-m="' + m.id +
-               '" data-staff="' + a.id + '" data-side="' + s + '">' +
-               esc(a.name) + ' \u2192 ' + esc(m[s + '_name'] || s.toUpperCase()) + '</button>';
-      }).join('');
-    }).join('<span class="ss-opsep"></span>');
-
-    return '<div class="ss-op">' + btns +
-      '<span class="ss-opsep"></span>' +
-      '<button class="ss-opbtn' + (m.revealed ? ' live' : '') + '" data-act="reveal" data-m="' + m.id +
-      '" data-val="' + (m.revealed ? '0' : '1') + '">' +
-      (m.revealed ? 'Hide picks' : 'Reveal picks') + '</button></div>';
+  function centerHtml(m) {
+    var picked = analystPicks(m);
+    var waiting = ANALYSTS.filter(function (a) {
+      return !picked.some(function (p) { return p.staff_id === a.id; });
+    });
+    var note = m.winner ? 'Final'
+      : (waiting.length ? 'On the clock<br>' + waiting.map(function (a) { return esc(firstName(a.name)); }).join(' &middot; ')
+                        : 'Both locked in');
+    return '<div class="center">' +
+      '<span class="posmark" style="background:var(--' + esc(m.pos) + ')">' + esc(m.pos) + '</span>' +
+      '<span class="vs">VS</span>' +
+      '<span class="waiting">' + note + '</span>' +
+    '</div>';
   }
 
-  function renderBoard() {
-    var wrap = el('ssBoard');
-    if (!BOARD.matchups.length) {
-      wrap.innerHTML = '<p class="ss-note">No matchups posted for <b>Week ' + STATE.week +
-        '</b> yet. Add them in the admin dashboard and they\u2019ll appear here.</p>';
+  function render() {
+    var stage = el('stage');
+
+    if (current === 'ST') { renderStandings(stage); return; }
+
+    el('subTitle').innerHTML = 'Week ' + STATE.week + ' &middot; <span class="pos">' + esc(current) + '</span>';
+
+    var m = matchupFor(current);
+    if (!m) {
+      stage.innerHTML = '<div class="state">No <b>' + esc(current) + '</b> matchup set for Week ' +
+        STATE.week + ' yet.<br>Add it in the admin dashboard and it\u2019ll appear here.</div>';
       return;
     }
-    wrap.innerHTML = BOARD.matchups.map(function (m) {
-      var state = m.winner ? 'Final' : (m.revealed ? 'Picks revealed' : 'Picks hidden');
-      return '<section class="ss-card">' +
-        '<div class="ss-cardhead">' +
-          '<span class="ss-pos ss-pos-' + esc(m.pos) + '"><i></i>' + esc(m.pos) + '</span>' +
-          '<span class="ss-state">' + state + '</span>' +
-        '</div>' +
-        '<div class="ss-duel">' + sideHtml(m, 'a') + '<div class="ss-vs">VS</div>' + sideHtml(m, 'b') + '</div>' +
-        opHtml(m) +
-      '</section>';
-    }).join('');
+    stage.innerHTML = '<div class="duel">' + sideHtml(m, 'a') + centerHtml(m) + sideHtml(m, 'b') + '</div>';
   }
 
-  /* ---------- rendering: standings ---------- */
-  function renderStandings() {
+  function renderStandings(stage) {
+    el('subTitle').innerHTML = 'Season ' + STATE.season + ' &middot; <span class="pos">Standings</span>';
+    stage.innerHTML = '<div class="state">Loading standings&hellip;</div>';
     rpc('ss_standings', { p_season: STATE.season }).then(function (rows) {
-      var body = el('ssStandBody');
       if (!rows || !rows.length) {
-        body.innerHTML = '<tr><td colspan="4" class="ss-note">No scored picks yet this season.</td></tr>';
+        stage.innerHTML = '<div class="state">No scored picks yet this season.</div>';
         return;
       }
-      body.innerHTML = rows.map(function (r, i) {
-        var rec = r.wins + ' - ' + r.losses + (r.ties ? ' - ' + r.ties : '');
-        return '<tr class="' + (r.analyst ? 'analyst' : '') + '">' +
-          '<td class="rank num">' + (i + 1) + '</td>' +
-          '<td class="who">' + esc(r.name) + '</td>' +
-          '<td class="num">' + esc(rec) + '</td>' +
-          '<td class="num">' + (r.pct == null ? '\u2014' : Number(r.pct).toFixed(3)) + '</td>' +
-        '</tr>';
-      }).join('');
+      stage.innerHTML = '<div class="scroller"><table><thead><tr>' +
+        '<th style="width:64px">#</th><th class="who">Name</th><th>W</th><th>L</th><th>Win %</th>' +
+        '</tr></thead><tbody>' + rows.map(function (r, i) {
+          return '<tr class="' + (r.analyst ? 'analyst' : '') + '">' +
+            '<td>' + (i + 1) + '</td><td class="who">' + esc(r.name) + '</td>' +
+            '<td>' + r.wins + '</td><td>' + r.losses + '</td>' +
+            '<td class="pct">' + (r.pct == null ? '\u2014' : Number(r.pct).toFixed(3)) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
     }).catch(function () {
-      el('ssStandBody').innerHTML = '<tr><td colspan="4" class="ss-note">Standings unavailable right now.</td></tr>';
+      stage.innerHTML = '<div class="state">Standings unavailable right now.</div>';
     });
-
-    rpc('ss_week_results', { p_season: STATE.season, p_week: STATE.week }).then(function (rows) {
-      if (!rows || !rows.length) return;
-      el('ssWeekResultsHead').hidden = false;
-      el('ssWeekResults').hidden = false;
-      el('ssWeekBody').innerHTML = rows.map(function (r, i) {
-        return '<tr class="' + (r.analyst ? 'analyst' : '') + '">' +
-          '<td class="rank num">' + (i + 1) + '</td>' +
-          '<td class="who">' + esc(r.name) + '</td>' +
-          '<td class="num">' + r.wins + ' - ' + r.losses + (r.ties ? ' - ' + r.ties : '') + '</td>' +
-        '</tr>';
-      }).join('');
-    }).catch(function () {});
   }
 
-  /* ---------- operator actions ---------- */
-  function setPick(matchupId, staffId, side) {
+  function stamp() {
+    var d = new Date();
+    el('updated').textContent = 'Updated ' +
+      d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  /* ---------- live picks ---------- */
+  function setPick(matchupId, staffId, side, btn) {
+    var key = matchupId + staffId;
+    if (busy[key]) return;
     var tok = authToken();
     if (!tok) return;
-    return fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,staff_id', {
+    busy[key] = true;
+
+    /* optimistic: the operator sees it land instantly */
+    var m = BOARD.matchups.filter(function (x) { return x.id === matchupId; })[0];
+    if (m) {
+      m.picks = (m.picks || []).filter(function (p) { return p.staff_id !== staffId; });
+      var a = ANALYSTS.filter(function (x) { return x.id === staffId; })[0];
+      m.picks.push({ staff_id: staffId, name: a ? a.name : '', pick: side, analyst: true });
+      render();
+    }
+
+    fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,staff_id', {
       method: 'POST',
       headers: {
-        apikey: SB_KEY,
-        Authorization: 'Bearer ' + tok,
-        'Content-Type': 'application/json',
+        apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json',
         Prefer: 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify({ matchup_id: matchupId, staff_id: staffId, pick: side, updated_at: new Date().toISOString() })
+      body: JSON.stringify({
+        matchup_id: matchupId, staff_id: staffId, pick: side,
+        updated_at: new Date().toISOString()
+      })
     }).then(function (r) {
       if (!r.ok) throw new Error('pick ' + r.status);
-      return loadBoard();
-    });
-  }
-
-  function setReveal(matchupId, val) {
-    var tok = authToken();
-    if (!tok) return;
-    return fetch(SB_URL + '/rest/v1/ss_matchups?id=eq.' + matchupId, {
-      method: 'PATCH',
-      headers: {
-        apikey: SB_KEY,
-        Authorization: 'Bearer ' + tok,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify({ revealed: val === '1' })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('reveal ' + r.status);
-      return loadBoard();
+    }).catch(function (e) {
+      console.error('[start-sit] pick failed', e);
+    }).then(function () {
+      busy[key] = false;
+      return loadBoard(true);
     });
   }
 
@@ -368,47 +333,55 @@
     return fetch(SB_URL + '/rest/v1/ss_matchups?select=id&limit=1', {
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
     }).then(function (r) {
-      if (r.ok) { CAN_EDIT = true; document.body.classList.add('op'); }
+      if (r.ok) { CAN_EDIT = true; document.body.classList.add('op'); render(); }
     }).catch(function () {});
   }
 
   /* ---------- wiring ---------- */
-  function showTab(name) {
-    TAB = name;
-    el('tabBoard').classList.toggle('on', name === 'board');
-    el('tabStand').classList.toggle('on', name === 'standings');
-    el('ssBoard').hidden = name !== 'board';
-    el('ssStandings').hidden = name !== 'standings';
-    if (name === 'board') renderBoard(); else renderStandings();
-  }
+  window.show = function (pos) {
+    current = pos;
+    POSITIONS.concat(['ST']).forEach(function (p) {
+      var b = el('tab-' + p);
+      if (!b) return;
+      var on = p === pos;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on);
+    });
+    render();
+  };
+
+  window.reload = function () { STATS = {}; loadBoard().then(loadRecentStats); };
 
   function bind() {
-    el('tabBoard').addEventListener('click', function () { showTab('board'); });
-    el('tabStand').addEventListener('click', function () { showTab('standings'); });
-
     document.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('.ss-opbtn');
+      var b = e.target.closest && e.target.closest('.opbtn');
       if (!b || !CAN_EDIT) return;
-      if (b.dataset.act === 'pick') setPick(b.dataset.m, b.dataset.staff, b.dataset.side);
-      if (b.dataset.act === 'reveal') setReveal(b.dataset.m, b.dataset.val);
+      setPick(b.dataset.m, b.dataset.staff, b.dataset.side, b);
     });
 
-    // headshot fallback: ESPN -> Sleeper thumb -> blank circle
+    document.addEventListener('keydown', function (e) {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      var i = ['1', '2', '3', '4'].indexOf(e.key);
+      if (i >= 0) window.show(POSITIONS[i]);
+      if (e.key === '5') window.show('ST');
+    });
+
     document.addEventListener('error', function (e) {
       var img = e.target;
-      if (!img || img.className !== 'ss-shot') return;
+      if (!img || img.className !== 'shot') return;
       var fb = img.dataset.fallback;
       if (fb) { img.dataset.fallback = ''; img.src = fb; }
       else { img.removeAttribute('src'); }
     }, true);
   }
 
-    function start() {
-        resolveConfig();
-        if (!SB_URL || !SB_KEY) {
-            el('ssBoard').innerHTML = '<p class="ss-note">Supabase config didn\u2019t load. ' +
-                'Check that <b>javascript/auth.js</b> sets SUPABASE_URL and SUPABASE_ANON_KEY.</p>';
-            return;
+  function start() {
+    var cfg = sbCfg();
+    SB_URL = cfg.url; SB_KEY = cfg.key;
+    if (!SB_URL || !SB_KEY) {
+      el('stage').innerHTML = '<div class="state">Supabase config didn\u2019t load. ' +
+        'Check that <b>javascript/auth.js</b> is present on this page.</div>';
+      return;
     }
     bind();
     loadState()
@@ -416,16 +389,11 @@
       .then(function () { return loadBoard(); })
       .then(checkOperator)
       .then(function () {
-        if (CAN_EDIT) renderBoard();
-        timer = setInterval(function () {
-          if (!document.hidden) loadBoard();
+        setInterval(function () {
+          if (!document.hidden && current !== 'ST') loadBoard(true).catch(function () {});
         }, POLL_MS);
       })
-      .catch(function (err) {
-        console.error('[start-sit]', err);
-        el('ssBoard').innerHTML = '<p class="ss-note">Couldn\u2019t load the board. ' +
-          'Confirm the Start/Sit SQL has been run.</p>';
-      });
+      .catch(function (err) { console.error('[start-sit]', err); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
