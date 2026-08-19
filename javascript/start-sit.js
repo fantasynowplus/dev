@@ -15,7 +15,6 @@
   var CAN_EDIT = false;
   var current  = 'QB';
   var busy     = {};
-  var FORCE_SEASON = 2025;   // set to null when the real season starts
 
   /* ---------- helpers ---------- */
   function el(id) { return document.getElementById(id); }
@@ -80,8 +79,7 @@
       .catch(function () { return {}; })
       .then(function (s) {
         var fallback = Number(s.display_week || s.week) || 1;
-        // STATE.season = Number(qs.get('season')) || Number(s.season) || new Date().getFullYear(); // ADD THIS BACK LATER AND DELETE LINE BELOW //
-        STATE.season = Number(qs.get('season')) || FORCE_SEASON || Number(s.season) || new Date().getFullYear();
+        STATE.season = Number(qs.get('season')) || Number(s.season) || new Date().getFullYear();
         var forced = Number(qs.get('week'));
         if (forced) { STATE.week = forced; return; }
         return rpc('ss_current_week', { p_season: STATE.season })
