@@ -453,7 +453,6 @@
       <button data-go="youtube">YouTube Stats</button>
       <button data-go="shows">Shows</button>
       <button data-go="tools">Tools &amp; links</button>
-      <button onclick="go('startsit')">Start/Sit Showdown</button>
       <div class="nav-label">Work</div>
       <button data-go="board">Project Board</button>
       <div class="nav-label">Access</div>
@@ -699,7 +698,9 @@ function go(name){
   }
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
-    shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles}[name];
+    shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles,
+    startsit:loadStartsit}[name];
+    
   fn().catch(err=>{
     document.getElementById('content').innerHTML =
       '<div class="empty"><h4>Couldn\'t load this</h4><p>'+esc(err.message)+'</p></div>';
@@ -1277,6 +1278,7 @@ function toolViewRow(t,i){
       '<div class="tr-chips">'+(shows.length?shows.map(s=>'<span class="chip chip-link" onclick=\'viewShow("'+s.id+'")\'>'+esc(s.name)+'</span>').join(''):'<span style="font-size:12.5px;color:var(--muted)">No show assigned</span>')+'</div>'+
     '</div>'+
     '<div class="tr-acts">'+
+      ((/start-sit/i.test(t.url||'') && can('startsit','r'))?'<button class="btn btn-primary btn-sm" onclick="go(\'startsit\')">Manage</button>':'')+
       '<a class="btn btn-navy btn-sm" href="'+esc(t.url)+'" target="_blank" rel="noopener">Open</a>'+
       ifCan('tools','u','<button class="btn btn-ghost btn-sm" title="Move up"'+(i===0?' disabled':'')+' onclick=\'toolMove("'+t.id+'",-1)\'>&uarr;</button><button class="btn btn-ghost btn-sm" title="Move down"'+(i===TOOLS.length-1?' disabled':'')+' onclick=\'toolMove("'+t.id+'",1)\'>&darr;</button>')+
       ifCan('tools','u','<button class="btn btn-ghost btn-sm" onclick=\'toolEdit("'+t.id+'")\'>Edit</button>')+
@@ -1527,6 +1529,16 @@ var SS = { season: null, week: null, weekRow: null, matchups: [], tab: 'matchups
 
 function ssPosList() { return ['QB', 'RB', 'WR', 'TE']; }
 
+function ssVal(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
+function ssUpsertPick(matchupId, staffId, side) {
+  return api('ss_picks?on_conflict=matchup_id,staff_id', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ matchup_id: matchupId, staff_id: staffId, pick: side, updated_at: new Date().toISOString() })
+  });
+}
+
 function ssFetchState() {
   if (SS.season) return Promise.resolve();
   return fetch('https://api.sleeper.app/v1/state/nfl')
@@ -1605,7 +1617,7 @@ function ssPlayerWeekPts(playerId, season, week) {
 /* ---------- load ---------- */
 
 function loadStartsit() {
-  ssFetchState().then(ssLoadWeek);
+  return ssFetchState().then(ssLoadWeek);
 }
 
 function ssLoadWeek() {
@@ -1640,7 +1652,7 @@ function renderStartsit() {
 
   var body = '<div class="panel">' +
     '<div class="panel-head">' +
-      '<div class="onb-tabs">' + tabs.map(function (t) {
+      '<div class="toolbar"><button class="btn btn-ghost btn-sm" onclick="go(\'tools\')">&larr; Tools</button>' + tabs.map(function (t) {
         return '<button class="btn btn-sm' + (SS.tab === t[0] ? ' btn-primary' : ' btn-ghost') +
                '" onclick="ssTab(\'' + t[0] + '\')">' + t[1] + '</button>';
       }).join('') + '</div>' +
@@ -1653,14 +1665,14 @@ function renderStartsit() {
     '<div id="ssBody"></div>' +
   '</div>';
 
-  document.getElementById('view').innerHTML = body;
+  document.getElementById('content').innerHTML = body;
   document.getElementById('ssSeason').addEventListener('change', ssJump);
   ssRenderTab();
 }
 
 function ssStatusPill() {
   var s = SS.weekRow.status;
-  var color = s === 'scored' ? 'green' : (s === 'locked' ? 'yellow' : 'aqua');
+  var color = s === 'scored' ? 'var(--green)' : (s === 'locked' ? 'var(--orange)' : 'var(--navy)');
   var next = s === 'open' ? 'locked' : (s === 'locked' ? 'scored' : 'open');
   return badge(s, color) +
     ifCan('startsit', 'u', '<button class="btn btn-sm btn-ghost" onclick="ssSetStatus(\'' + next +
@@ -1670,7 +1682,7 @@ function ssStatusPill() {
 function ssTab(t) { SS.tab = t; renderStartsit(); }
 
 function ssJump() {
-  SS.season = Number(val('ssSeason')) || SS.season;
+  SS.season = Number(document.getElementById('ssSeason').value) || SS.season;
   SS.week = Number(document.getElementById('ssWeekSel').value) || SS.week;
   SS.sched = null;
   ssLoadWeek();
@@ -1765,12 +1777,12 @@ function ssMatchupForm(pos, id) {
     onSave: function () {
       var payload = {
         week_id: SS.weekRow.id, pos: pos, sort_order: ssPosList().indexOf(pos),
-        a_player_id: val('ss_a_id') || null, a_espn_id: val('ss_a_espn') || null,
-        a_name: val('ss_a_q'), a_team: val('ss_a_team') || null, a_opp: val('ss_a_opp') || null,
-        b_player_id: val('ss_b_id') || null, b_espn_id: val('ss_b_espn') || null,
-        b_name: val('ss_b_q'), b_team: val('ss_b_team') || null, b_opp: val('ss_b_opp') || null
+        a_player_id: ssVal('ss_a_id') || null, a_espn_id: ssVal('ss_a_espn') || null,
+        a_name: ssVal('ss_a_q'), a_team: ssVal('ss_a_team') || null, a_opp: ssVal('ss_a_opp') || null,
+        b_player_id: ssVal('ss_b_id') || null, b_espn_id: ssVal('ss_b_espn') || null,
+        b_name: ssVal('ss_b_q'), b_team: ssVal('ss_b_team') || null, b_opp: ssVal('ss_b_opp') || null
       };
-      if (!payload.a_name || !payload.b_name) { toast('Pick both players first'); return false; }
+      if (!payload.a_name || !payload.b_name) throw new Error('Pick both players first.');
       var p = m ? dbPatch('ss_matchups?id=eq.' + m.id, payload) : dbPost('ss_matchups', payload);
       return p.then(function () { toast('Matchup saved'); return ssLoadWeek(); });
     }
@@ -1838,9 +1850,7 @@ function ssRenderMyPicks(b) {
 }
 
 function ssMyPick(matchupId, side) {
-  dbPost('ss_picks?on_conflict=matchup_id,staff_id',
-    { matchup_id: matchupId, staff_id: MY_STAFF_ID, pick: side, updated_at: new Date().toISOString() },
-    { Prefer: 'resolution=merge-duplicates,return=minimal' })
+  ssUpsertPick(matchupId, MY_STAFF_ID, side)
     .then(function () { return ssLoadWeek(); })
     .catch(function () { toast('Couldn\u2019t save that pick'); });
 }
@@ -1953,9 +1963,7 @@ function ssRenderPickGrid() {
 
 function ssGridPick(matchupId, staffId, side) {
   var p = side
-    ? dbPost('ss_picks?on_conflict=matchup_id,staff_id',
-        { matchup_id: matchupId, staff_id: staffId, pick: side, updated_at: new Date().toISOString() },
-        { Prefer: 'resolution=merge-duplicates,return=minimal' })
+    ? ssUpsertPick(matchupId, staffId, side)
     : dbDel('ss_picks?matchup_id=eq.' + matchupId + '&staff_id=eq.' + staffId);
   p.then(function () { return ssLoadWeek(); }).catch(function () { toast('Couldn\u2019t save that pick'); });
 }
