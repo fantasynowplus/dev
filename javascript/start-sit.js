@@ -94,8 +94,15 @@
       .then(function (r) { return r.json(); })
       .catch(function () { return {}; })
       .then(function (s) {
+        var fallback = Number(s.display_week || s.week) || 1;
         STATE.season = Number(qs.get('season')) || Number(s.season) || new Date().getFullYear();
-        STATE.week   = Number(qs.get('week'))   || Number(s.display_week || s.week) || 1;
+
+        var forced = Number(qs.get('week'));
+        if (forced) { STATE.week = forced; return; }
+
+        return rpc('ss_current_week', { p_season: STATE.season })
+          .then(function (w) { STATE.week = Number(w) || fallback; })
+          .catch(function () { STATE.week = fallback; });
       });
   }
 
