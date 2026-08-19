@@ -32,7 +32,9 @@
 </style>
 <div class="tools-subnav">
     <a href="tools" class="{% if page.url == '/tools.html' %}active{% endif %}">All Tools</a>
-    <a href="sfb-roster" class="{% if page.url == '/sfb-roster.html' %}active{% endif %}">SFB Draft Graphic</a>
-    <a href="fantasy-roster" class="{% if page.url == '/fantasy-roster.html' %}active{% endif %}">League Flex Graphic</a>
-    <a href="rookie-recap" class="{% if page.url == '/rookie-recap.html' %}active{% endif %}">Dynasty Rookie Recap</a>
+    <a href="my-leagues" class="{% if page.url == '/my-leagues.html' %}active{% endif %}">My Leagues</a>
+    <a href="trade-calculator" class="{% if page.url == '/trade-calculator.html' %}active{% endif %}">Trade Calculator</a>
+    <a href="tools#graphics" class="{% if page.url == '/sfb-roster.html' or page.url == '/fantasy-roster.html' or page.url == '/rookie-recap.html' %}active{% endif %}">Graphics</a>
+    <a href="draft-guide" class="{% if page.url == '/draft-guide.html' %}active{% endif %}">Draft Guide</a>
+    <a href="tools#betting" class="{% if page.url == '/nfl-simulator.html' %}active{% endif %}">Sports Betting &amp; DFS</a>
 </div>
