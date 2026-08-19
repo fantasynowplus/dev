@@ -1,0 +1,199 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start/Sit Showdown | FantasyNow+</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#001738; --navy:#002863; --orange:#FFA515; --white:#FFFFFF;
+  --aqua:#42F4B0; --red:#EA4E3D; --muted:#8fa2c4; --line:#153158;
+  --panel:#04203f; --panel-2:#062a52;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--white);
+  font-family:'Inter',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.ss-wrap{max-width:1500px;margin:0 auto;padding:26px 24px 60px}
+
+/* ---------- header ---------- */
+.ss-top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.ss-eyebrow{font-family:'Inter';font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);margin:0 0 4px}
+.ss-title{font-family:'Oswald';font-size:52px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1;margin:0}
+.ss-week{font-family:'Oswald';font-size:20px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:8px 0 0}
+.ss-tabs{display:flex;gap:8px}
+.ss-tab{
+  font-family:'Oswald';font-size:15px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  background:transparent;color:var(--muted);border:1px solid var(--line);
+  padding:10px 20px;border-radius:2px;cursor:pointer;transition:.15s;
+}
+.ss-tab:hover{color:var(--white);border-color:#26497e}
+.ss-tab.on{background:var(--orange);border-color:var(--orange);color:#001738}
+.ss-tab:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+
+/* ---------- matchup card ---------- */
+.ss-card{border:1px solid var(--line);background:var(--panel);border-radius:3px;margin-bottom:18px;overflow:hidden}
+.ss-cardhead{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 16px;background:var(--navy);border-bottom:1px solid var(--line);
+}
+.ss-pos{font-family:'Oswald';font-size:19px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+.ss-pos i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px;vertical-align:1px}
+.ss-pos-QB i{background:#e5578a} .ss-pos-RB i{background:#3fb98a}
+.ss-pos-WR i{background:#4b8fe0} .ss-pos-TE i{background:#e08a4b}
+.ss-state{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+.ss-duel{display:grid;grid-template-columns:1fr 76px 1fr;align-items:stretch}
+.ss-vs{
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald';font-size:22px;font-weight:700;letter-spacing:.08em;
+  color:var(--orange);background:var(--panel-2);
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+}
+
+/* ---------- player side ---------- */
+.ss-side{position:relative;padding:20px 22px 18px;min-height:250px;display:flex;flex-direction:column;overflow:hidden;transition:.25s}
+.ss-side .ss-logo{
+  position:absolute;right:-30px;top:-22px;width:210px;height:210px;
+  object-fit:contain;opacity:.10;pointer-events:none;filter:grayscale(.2);
+}
+.ss-side.b .ss-logo{right:auto;left:-30px}
+.ss-side.win{background:linear-gradient(180deg,rgba(66,244,176,.10),transparent 70%);box-shadow:inset 0 0 0 1px rgba(66,244,176,.35)}
+.ss-side.lose{opacity:.5}
+
+.ss-idrow{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
+.ss-side.b .ss-idrow{flex-direction:row-reverse;text-align:right}
+.ss-shot{
+  width:92px;height:92px;flex:0 0 92px;border-radius:50%;
+  background:var(--panel-2) center/cover no-repeat;border:2px solid var(--line);
+  object-fit:cover;object-position:top center;
+}
+.ss-name{font-family:'Oswald';font-size:31px;font-weight:600;line-height:1.02;margin:0;letter-spacing:.01em}
+.ss-meta{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:7px 0 0}
+.ss-opp{display:inline-block;margin-top:9px;font-family:'Oswald';font-size:15px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--white);background:var(--panel-2);border:1px solid var(--line);padding:4px 11px;border-radius:2px}
+
+.ss-stats{display:flex;gap:8px;margin-top:16px;position:relative;z-index:1;flex-wrap:wrap}
+.ss-side.b .ss-stats{justify-content:flex-end}
+.ss-chip{background:var(--panel-2);border:1px solid var(--line);border-radius:2px;padding:6px 10px;min-width:64px;text-align:center}
+.ss-chip b{display:block;font-family:'Oswald';font-size:17px;font-weight:600}
+.ss-chip span{display:block;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+.ss-dvp{margin-top:14px;position:relative;z-index:1;font-size:12px;color:var(--muted);line-height:1.45}
+.ss-side.b .ss-dvp{text-align:right}
+.ss-dvp b{color:var(--white);font-weight:700}
+.ss-dvp .rk{font-weight:700;padding:1px 6px;border-radius:2px;margin-left:6px}
+.ss-dvp .rk.soft{background:rgba(66,244,176,.16);color:var(--aqua)}
+.ss-dvp .rk.tough{background:rgba(234,78,61,.18);color:#ff8b7d}
+.ss-dvp .rk.mid{background:rgba(255,165,21,.16);color:var(--orange)}
+
+.ss-score{position:absolute;bottom:16px;right:22px;font-family:'Oswald';font-size:40px;font-weight:700;line-height:1;z-index:1}
+.ss-side.b .ss-score{right:auto;left:22px}
+.ss-side.win .ss-score{color:var(--aqua)}
+
+/* ---------- picks ---------- */
+.ss-picks{margin-top:auto;padding-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
+.ss-side.b .ss-picks{justify-content:flex-end}
+.ss-analyst{
+  font-family:'Oswald';font-size:15px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--orange);color:#001738;padding:6px 14px;border-radius:2px;
+  animation:pop .35s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes pop{from{transform:scale(.75);opacity:0}to{transform:scale(1);opacity:1}}
+.ss-crowd{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.ss-av{
+  width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid #2b4f85;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;letter-spacing:.02em;color:#bcd0ee;
+}
+.ss-crowd-n{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ss-hidden{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#4a6591}
+
+/* ---------- operator controls ---------- */
+.ss-op{display:none;gap:6px;flex-wrap:wrap;padding:10px 16px;background:#031a35;border-top:1px solid var(--line)}
+body.op .ss-op{display:flex}
+.ss-opbtn{
+  font-family:'Inter';font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:transparent;color:#9db4d8;border:1px solid var(--line);
+  padding:6px 12px;border-radius:2px;cursor:pointer;
+}
+.ss-opbtn:hover{border-color:var(--orange);color:var(--orange)}
+.ss-opbtn.live{background:var(--red);border-color:var(--red);color:#fff}
+.ss-opbtn:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+.ss-opsep{width:1px;background:var(--line);margin:0 4px}
+
+/* ---------- standings ---------- */
+.ss-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line)}
+.ss-table th{
+  font-family:'Oswald';font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  text-align:left;padding:12px 16px;background:var(--navy);color:var(--white);
+  border-bottom:2px solid var(--orange);position:sticky;top:0;
+}
+.ss-table td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:16px}
+.ss-table tbody tr:hover{background:var(--panel-2)}
+.ss-table .num{font-family:'Oswald';font-size:19px;font-weight:600}
+.ss-table .rank{color:var(--muted);width:56px}
+.ss-table .who{font-family:'Oswald';font-size:22px;font-weight:600;letter-spacing:.02em}
+.ss-table tr.analyst .who{color:var(--orange)}
+.ss-table tr.analyst .who::after{content:'ANALYST';font-family:'Inter';font-size:9px;font-weight:800;letter-spacing:.16em;background:rgba(255,165,21,.16);color:var(--orange);padding:3px 7px;border-radius:2px;margin-left:10px;vertical-align:3px}
+.ss-sub{font-family:'Oswald';font-size:17px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:34px 0 12px}
+
+.ss-note{color:var(--muted);font-size:14px;padding:26px 4px;line-height:1.6}
+.ss-note b{color:var(--white)}
+[hidden]{display:none !important}
+
+@media (max-width:900px){
+  .ss-title{font-size:34px}
+  .ss-duel{grid-template-columns:1fr}
+  .ss-vs{padding:8px 0;border:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .ss-side{min-height:0}
+  .ss-side.b .ss-idrow{flex-direction:row;text-align:left}
+  .ss-side.b .ss-stats,.ss-side.b .ss-picks{justify-content:flex-start}
+  .ss-side.b .ss-dvp{text-align:left}
+  .ss-score{position:static;margin-top:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="ss-wrap">
+  <div class="ss-top">
+    <div>
+      <p class="ss-eyebrow">FantasyNow+ Live</p>
+      <h1 class="ss-title">Start/Sit Showdown</h1>
+      <p class="ss-week" id="ssWeek">Loading week&hellip;</p>
+    </div>
+    <div class="ss-tabs">
+      <button class="ss-tab on" id="tabBoard" type="button">This Week</button>
+      <button class="ss-tab" id="tabStand" type="button">Standings</button>
+    </div>
+  </div>
+
+  <div id="ssBoard"><p class="ss-note">Loading this week&rsquo;s matchups&hellip;</p></div>
+
+  <div id="ssStandings" hidden>
+    <table class="ss-table">
+      <thead><tr><th class="rank">#</th><th>Name</th><th>Record</th><th>Win %</th></tr></thead>
+      <tbody id="ssStandBody"></tbody>
+    </table>
+    <h2 class="ss-sub" id="ssWeekResultsHead" hidden>This Week</h2>
+    <table class="ss-table" id="ssWeekResults" hidden>
+      <thead><tr><th class="rank">#</th><th>Name</th><th>Record</th></tr></thead>
+      <tbody id="ssWeekBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="javascript/auth.js"></script>
+<script src="javascript/start-sit.js"></script>
+</body>
+</html>
