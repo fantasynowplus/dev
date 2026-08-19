@@ -1524,6 +1524,7 @@ async function snapshotForm(){
    ============================================================ */
 
 var SS = { season: null, week: null, weekRow: null, matchups: [], tab: 'matchups', staff: [], players: null, sched: null };
+var SS_FORCE_SEASON = 2025;   // set to null when the real season starts
 
 /* ---------- shared ---------- */
 
@@ -1545,7 +1546,8 @@ function ssFetchState() {
     .then(function (r) { return r.json(); })
     .catch(function () { return {}; })
     .then(function (s) {
-      SS.season = Number(s.season) || new Date().getFullYear();
+      // SS.season = Number(s.season) || new Date().getFullYear(); // FIX LATAER AND DELETE LINE BELOW //
+      SS.season = SS_FORCE_SEASON || Number(s.season) || new Date().getFullYear();
       SS.week = Number(s.display_week || s.week) || 1;
     });
 }
