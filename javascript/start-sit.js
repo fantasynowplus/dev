@@ -9,7 +9,7 @@
   var SB_URL = '', SB_KEY = '';
   var STATE    = { season: null, week: null };
   var BOARD    = { week: null, matchups: [] };
-  var ANALYSTS = [];
+  var ANALYSTS = [];   // on-air pickers for this week
   var DVP      = null;
   var STATS    = {};
   var CAN_EDIT = false;
@@ -72,19 +72,30 @@
   }
 
   /* ---------- loads ---------- */
-  function loadState() {
+    function loadState() {
     var qs = new URLSearchParams(location.search);
-    return fetch('https://api.sleeper.app/v1/state/nfl')
-      .then(function (r) { return r.json(); })
-      .catch(function () { return {}; })
-      .then(function (s) {
-        var fallback = Number(s.display_week || s.week) || 1;
-        STATE.season = Number(qs.get('season')) || Number(s.season) || new Date().getFullYear();
-        var forced = Number(qs.get('week'));
-        if (forced) { STATE.week = forced; return; }
-        return rpc('ss_current_week', { p_season: STATE.season })
-          .then(function (w) { STATE.week = Number(w) || fallback; })
-          .catch(function () { STATE.week = fallback; });
+    var qsSeason = Number(qs.get('season'));
+    var qsWeek   = Number(qs.get('week'));
+
+    return rpc('ss_display_target').catch(function () { return null; })
+      .then(function (rows) {
+        var d = rows && rows[0];
+        if (d && !qsSeason && !qsWeek) {
+          STATE.season = Number(d.season);
+          STATE.week   = Number(d.week);
+          return;
+        }
+        return fetch('https://api.sleeper.app/v1/state/nfl')
+          .then(function (r) { return r.json(); })
+          .catch(function () { return {}; })
+          .then(function (s) {
+            var fallback = Number(s.display_week || s.week) || 1;
+            STATE.season = qsSeason || (d && Number(d.season)) || Number(s.season) || new Date().getFullYear();
+            if (qsWeek) { STATE.week = qsWeek; return; }
+            return rpc('ss_current_week', { p_season: STATE.season })
+              .then(function (w) { STATE.week = Number(w) || fallback; })
+              .catch(function () { STATE.week = fallback; });
+          });
       });
   }
 
@@ -96,7 +107,7 @@
   }
 
   function loadAnalysts() {
-    return rpc('ss_analysts')
+    return rpc('ss_onair', { p_season: STATE.season, p_week: STATE.week })
       .then(function (r) { ANALYSTS = r || []; })
       .catch(function () { ANALYSTS = []; });
   }
@@ -169,36 +180,35 @@
   }
 
   function analystPicks(m) {
-    return (m.picks || []).filter(function (p) { return p.analyst; });
+    return (m.picks || []).filter(function (p) { return p.on_air; });
   }
   function bothIn(m) {
     var need = ANALYSTS.length || 2;
     return analystPicks(m).length >= need;
   }
 
-  function picksHtml(m, side) {
-    var out = analystPicks(m).filter(function (p) { return p.pick === side; })
-      .map(function (p) { return '<span class="abadge">' + esc(p.name) + '</span>'; }).join('');
+  function pickersHtml(m, side) {
+    var rows = ANALYSTS.map(function (a) {
+      var mine = (m.picks || []).filter(function (p) { return p.picker_id === a.picker_id; })[0];
+      var on = mine && mine.pick === side;
+      return '<div class="pk' + (on ? ' on' : '') + '" role="switch" tabindex="0"' +
+        ' aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + esc(a.name) + '"' +
+        ' data-m="' + m.id + '" data-staff="' + a.picker_id + '" data-side="' + side + '"' +
+        ' data-on="' + (on ? '1' : '0') + '">' +
+        '<span class="pk-name">' + esc(firstName(a.name)) + '</span>' +
+        '<span class="pk-track"><span class="pk-knob"></span></span></div>';
+    }).join('');
+
     var crowd = '';
     if (bothIn(m)) {
-      var others = (m.picks || []).filter(function (p) { return !p.analyst && p.pick === side; });
+      var others = (m.picks || []).filter(function (p) { return !p.on_air && p.pick === side; });
       if (others.length) {
         crowd = '<div class="crowd">' + others.map(function (p) {
           return '<span class="av" title="' + esc(p.name) + '">' + esc(initials(p.name)) + '</span>';
         }).join('') + '<span class="crowd-n">' + others.length + ' staff</span></div>';
       }
     }
-    return '<div class="picks">' + out + '</div>' + crowd;
-  }
-
-  function opHtml(m, side) {
-    if (!ANALYSTS.length) return '';
-    return '<div class="opbar">' + ANALYSTS.map(function (a) {
-      var mine = (m.picks || []).filter(function (p) { return p.staff_id === a.id; })[0];
-      var on = mine && mine.pick === side;
-      return '<button class="opbtn' + (on ? ' on' : '') + '" data-m="' + m.id +
-             '" data-staff="' + a.id + '" data-side="' + side + '">' + esc(firstName(a.name)) + '</button>';
-    }).join('') + '</div>';
+    return '<div class="pickers">' + rows + '</div>' + crowd;
   }
 
   function sideHtml(m, side) {
@@ -227,15 +237,14 @@
       statsHtml(pid) +
       dvpHtml(opp, m.pos) +
       (pts != null ? '<div class="final">' + num(pts) + '</div>' : '') +
-      picksHtml(m, side) +
-      opHtml(m, side) +
+        pickersHtml(m, side) +
     '</div>';
   }
 
   function centerHtml(m) {
     var picked = analystPicks(m);
     var waiting = ANALYSTS.filter(function (a) {
-      return !picked.some(function (p) { return p.staff_id === a.id; });
+      return !picked.some(function (p) { return p.picker_id === a.picker_id; });
     });
     var note = !ANALYSTS.length ? 'No analysts flagged'
       : m.winner ? 'Final'
@@ -292,40 +301,43 @@
   }
 
   /* ---------- live picks ---------- */
-  function setPick(matchupId, staffId, side, btn) {
+    function setPick(matchupId, staffId, side, clear) {
     var key = matchupId + staffId;
     if (busy[key]) return;
     var tok = authToken();
     if (!tok) return;
     busy[key] = true;
 
-    /* optimistic: the operator sees it land instantly */
     var m = BOARD.matchups.filter(function (x) { return x.id === matchupId; })[0];
     if (m) {
-      m.picks = (m.picks || []).filter(function (p) { return p.staff_id !== staffId; });
-      var a = ANALYSTS.filter(function (x) { return x.id === staffId; })[0];
-      m.picks.push({ staff_id: staffId, name: a ? a.name : '', pick: side, analyst: true });
+      m.picks = (m.picks || []).filter(function (p) { return p.picker_id !== staffId; });
+      if (!clear) {
+        var a = ANALYSTS.filter(function (x) { return x.id === staffId; })[0];
+        m.picks.push({ staff_id: staffId, name: a ? a.name : '', pick: side, on_air: true });
+      }
       render();
     }
 
-    fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,staff_id', {
-      method: 'POST',
-      headers: {
-        apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates,return=minimal'
-      },
-      body: JSON.stringify({
-        matchup_id: matchupId, staff_id: staffId, pick: side,
-        updated_at: new Date().toISOString()
-      })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('pick ' + r.status);
-    }).catch(function (e) {
-      console.error('[start-sit] pick failed', e);
-    }).then(function () {
-      busy[key] = false;
-      return loadBoard(true);
-    });
+    var req = clear
+      ? fetch(SB_URL + '/rest/v1/ss_picks?matchup_id=eq.' + matchupId + '&staff_id=eq.' + staffId, {
+          method: 'DELETE',
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
+        })
+      : fetch(SB_URL + '/rest/v1/ss_picks?on_conflict=matchup_id,staff_id', {
+          method: 'POST',
+          headers: {
+            apikey: SB_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json',
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify({
+            matchup_id: matchupId, staff_id: staffId, pick: side,
+            updated_at: new Date().toISOString()
+          })
+        });
+
+    req.then(function (r) { if (!r.ok) throw new Error('pick ' + r.status); })
+      .catch(function (e) { console.error('[start-sit] pick failed', e); })
+      .then(function () { busy[key] = false; return loadBoard(true); });
   }
 
   function checkOperator() {
@@ -354,10 +366,17 @@
   window.reload = function () { STATS = {}; loadBoard().then(loadRecentStats); };
 
   function bind() {
+        function flip(t) {
+      if (!t || !CAN_EDIT) return;
+      setPick(t.dataset.m, t.dataset.staff, t.dataset.side, t.dataset.on === '1');
+    }
     document.addEventListener('click', function (e) {
-      var b = e.target.closest && e.target.closest('.opbtn');
-      if (!b || !CAN_EDIT) return;
-      setPick(b.dataset.m, b.dataset.staff, b.dataset.side, b);
+      flip(e.target.closest && e.target.closest('.pk'));
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target.closest && e.target.closest('.pk');
+      if (t) { e.preventDefault(); flip(t); }
     });
 
     document.addEventListener('keydown', function (e) {

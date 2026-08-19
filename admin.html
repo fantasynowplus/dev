@@ -1523,7 +1523,7 @@ async function snapshotForm(){
    START/SIT SHOWDOWN 
    ============================================================ */
 
-var SS = { season: null, week: null, weekRow: null, matchups: [], tab: 'matchups', staff: [], players: null, sched: null };
+var SS = { season: null, week: null, weekRow: null, matchups: [], tab: 'matchups', staff: [], players: null, sched: null, pickers: [] };
 
 
 /* ---------- shared ---------- */
@@ -1532,11 +1532,11 @@ function ssPosList() { return ['QB', 'RB', 'WR', 'TE']; }
 
 function ssVal(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
 
-function ssUpsertPick(matchupId, staffId, side) {
-  return api('ss_picks?on_conflict=matchup_id,staff_id', {
+function ssUpsertPick(matchupId, pickerId, side) {
+  return api('ss_picks?on_conflict=matchup_id,picker_id', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ matchup_id: matchupId, staff_id: staffId, pick: side, updated_at: new Date().toISOString() })
+    body: JSON.stringify({ matchup_id: matchupId, picker_id: pickerId, pick: side, updated_at: new Date().toISOString() })
   });
 }
 
@@ -1625,9 +1625,14 @@ function ssLoadWeek() {
     .then(function (rows) {
       SS.weekRow = (rows && rows[0]) || null;
       if (!SS.weekRow) { SS.matchups = []; return; }
-      return dbGet('ss_matchups?select=*,picks:ss_picks(id,staff_id,pick)&week_id=eq.' +
+      return dbGet('ss_matchups?select=*,picks:ss_picks(id,picker_id,pick)&week_id=eq.' +
                    SS.weekRow.id + '&order=sort_order.asc')
-        .then(function (m) { SS.matchups = m || []; });
+        .then(function (m) {
+          SS.matchups = m || [];
+          return dbGet('ss_week_pickers?select=*,staff(id,name)&week_id=eq.' +
+                       SS.weekRow.id + '&order=sort_order.asc');
+        })
+        .then(function (p) { SS.pickers = p || []; });
     })
     .then(function () { return ssLoadStaff(); })
     .then(renderStartsit)
@@ -1644,7 +1649,7 @@ function ssLoadStaff() {
 /* ---------- render ---------- */
 
 function renderStartsit() {
-  var tabs = [['matchups', 'Matchups'], ['picks', 'My picks'], ['scoring', 'Scoring'], ['standings', 'Standings']];
+  var tabs = [['matchups', 'Matchups'], ['pickers', 'Pickers'], ['picks', 'My picks'], ['scoring', 'Scoring'], ['standings', 'Standings']];
   var weeks = [];
   for (var w = 1; w <= 18; w++) {
     weeks.push('<option value="' + w + '"' + (w === SS.week ? ' selected' : '') + '>Week ' + w + '</option>');
@@ -1676,7 +1681,16 @@ function ssStatusPill() {
   var next = s === 'open' ? 'locked' : (s === 'locked' ? 'scored' : 'open');
   return badge(s, color) +
     ifCan('startsit', 'u', '<button class="btn btn-sm btn-ghost" onclick="ssSetStatus(\'' + next +
-      '\')">Set ' + next + '</button>');
+      '\')">Set ' + next + '</button>') +
+    (SS.weekRow.is_display
+      ? badge('On site', '#0f9d76')
+      : ifCan('startsit', 'u', '<button class="btn btn-sm btn-ghost" onclick="ssSetDisplay()">Show on site</button>'));
+}
+
+function ssSetDisplay() {
+  rpc('ss_set_display_week', { p_week_id: SS.weekRow.id })
+    .then(function () { toast('Week ' + SS.week + ' is now live on the site'); return ssLoadWeek(); })
+    .catch(function () { toast('Couldn\u2019t set the display week', true); });
 }
 
 function ssTab(t) { SS.tab = t; renderStartsit(); }
@@ -1697,6 +1711,7 @@ function ssRenderTab() {
     return;
   }
   if (SS.tab === 'matchups') return ssRenderMatchups(b);
+  if (SS.tab === 'pickers') return ssRenderPickers(b);
   if (SS.tab === 'picks') return ssRenderMyPicks(b);
   if (SS.tab === 'scoring') return ssRenderScoring(b);
   if (SS.tab === 'standings') return ssRenderStandings(b);
@@ -1831,12 +1846,14 @@ function ssMatchupDelete(id) {
 
 function ssRenderMyPicks(b) {
   if (!MY_STAFF_ID) { b.innerHTML = '<div class="empty">Your login isn\u2019t linked to a staff record yet.</div>'; return; }
+  if (!ssMyPicker()) { b.innerHTML = '<div class="empty">You\u2019re not on the picker list for Week ' + SS.week + '. Add yourself in the Pickers tab.</div>'; return; }
   if (!SS.matchups.length) { b.innerHTML = '<div class="empty">No matchups set for this week yet.</div>'; return; }
   var locked = SS.weekRow.status !== 'open';
 
   b.innerHTML = (locked ? '<div class="empty">Week ' + SS.week + ' is ' + esc(SS.weekRow.status) + ' \u2014 picks are closed.</div>' : '') +
     SS.matchups.map(function (m) {
-      var mine = (m.picks || []).filter(function (p) { return p.staff_id === MY_STAFF_ID; })[0];
+      var me = ssMyPicker();
+      var mine = (m.picks || []).filter(function (p) { return p.picker_id === me.id; })[0];
       return '<div class="ss-pickrow">' +
         '<span class="ss-pickpos">' + esc(m.pos) + '</span>' +
         ['a', 'b'].map(function (s) {
@@ -1849,8 +1866,14 @@ function ssRenderMyPicks(b) {
     }).join('');
 }
 
+function ssMyPicker() {
+  return SS.pickers.filter(function (p) { return p.staff_id === MY_STAFF_ID; })[0] || null;
+}
+
 function ssMyPick(matchupId, side) {
-  ssUpsertPick(matchupId, MY_STAFF_ID, side)
+  var me = ssMyPicker();
+  if (!me) { toast('You\u2019re not a picker this week', true); return; }
+  ssUpsertPick(matchupId, me.id, side)
     .then(function () { return ssLoadWeek(); })
     .catch(function () { toast('Couldn\u2019t save that pick'); });
 }
@@ -1940,10 +1963,10 @@ function ssRenderPickGrid() {
     return '<th>' + esc(m.pos) + '</th>';
   }).join('') + '<th>W-L</th></tr>';
 
-  var rows = SS.staff.map(function (s) {
+  var rows = SS.pickers.map(function (s) {
     var w = 0, l = 0;
     var cells = SS.matchups.map(function (m) {
-      var p = (m.picks || []).filter(function (x) { return x.staff_id === s.id; })[0];
+      var p = (m.picks || []).filter(function (x) { return x.picker_id === s.id; })[0];
       if (p && m.winner && m.winner !== 'tie') { if (m.winner === p.pick) w++; else l++; }
       if (!editable) {
         return '<td>' + (p ? esc(m[p.pick + '_name']) : '<span class="muted">\u2014</span>') + '</td>';
@@ -1954,17 +1977,17 @@ function ssRenderPickGrid() {
         '<option value="b"' + (p && p.pick === 'b' ? ' selected' : '') + '>' + esc(m.b_name) + '</option>' +
         '</select></td>';
     }).join('');
-    return '<tr' + (s.is_showdown_analyst ? ' class="analyst"' : '') + '><td>' + esc(s.name) + '</td>' +
+    return '<tr' + (s.on_air ? ' class="analyst"' : '') + '><td>' + esc(s.staff ? s.staff.name : s.guest_name) + '</td>' +
       cells + '<td class="mono">' + w + ' - ' + l + '</td></tr>';
   }).join('');
 
   g.innerHTML = '<div class="table-wrap"><table><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>';
 }
 
-function ssGridPick(matchupId, staffId, side) {
+function ssGridPick(matchupId, pickerId, side) {
   var p = side
-    ? ssUpsertPick(matchupId, staffId, side)
-    : dbDel('ss_picks?matchup_id=eq.' + matchupId + '&staff_id=eq.' + staffId);
+    ? ssUpsertPick(matchupId, pickerId, side)
+    : dbDel('ss_picks?matchup_id=eq.' + matchupId + '&picker_id=eq.' + staffId);
   p.then(function () { return ssLoadWeek(); }).catch(function () { toast('Couldn\u2019t save that pick'); });
 }
 

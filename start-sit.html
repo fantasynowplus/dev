@@ -125,14 +125,24 @@ layout: null
   .side.a .final{right:30px}
   .side.b .final{left:30px}
   .side.win .final{color:var(--aqua)}
-
-  .picks{margin-top:auto;padding-top:22px;display:flex;gap:9px;flex-wrap:wrap;
-    align-items:center;position:relative;z-index:1;min-height:44px}
-  .side.b .picks{justify-content:flex-end}
-  .abadge{font-family:"Oswald";font-weight:600;font-size:17px;letter-spacing:.1em;
-    text-transform:uppercase;background:var(--orange);color:#04122b;
-    padding:8px 16px;border-radius:8px;animation:pop .35s cubic-bezier(.2,1.3,.4,1)}
-  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .pickers{margin-top:auto;padding-top:22px;display:flex;flex-direction:column;gap:11px;
+    position:relative;z-index:2;align-items:flex-start}
+  .side.b .pickers{align-items:flex-end}
+  .pk{display:flex;align-items:center;gap:14px;user-select:none;border-radius:8px}
+  .side.b .pk{flex-direction:row-reverse}
+  body.op .pk{cursor:pointer}
+  .pk-name{font-family:"Oswald";font-weight:600;font-size:18px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);transition:color .2s;min-width:92px}
+  .side.b .pk-name{text-align:right}
+  .pk.on .pk-name{color:#fff}
+  .pk-track{position:relative;width:76px;height:34px;border-radius:999px;flex:0 0 76px;
+    background:var(--panel-hi);border:1px solid var(--line);transition:background .22s,border-color .22s}
+  .pk.on .pk-track{background:var(--orange);border-color:var(--orange)}
+  .pk-knob{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;
+    background:#8FA4C6;transition:transform .24s cubic-bezier(.2,1.1,.4,1),background .22s}
+  .pk.on .pk-knob{transform:translateX(42px);background:#04122b}
+  body.op .pk:hover .pk-track{border-color:var(--muted)}
+  .pk:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
   .crowd{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:10px;
     width:100%;position:relative;z-index:1}
   .side.b .crowd{justify-content:flex-end}
@@ -140,16 +150,6 @@ layout: null
     border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;
     font-size:11px;font-weight:800;color:#cfe0fb}
   .crowd-n{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-
-  .opbar{display:none;gap:8px;margin-top:14px;position:relative;z-index:2;flex-wrap:wrap}
-  .side.b .opbar{justify-content:flex-end}
-  body.op .opbar{display:flex}
-  .opbtn{font-family:"Oswald";font-weight:600;font-size:14px;letter-spacing:.1em;
-    text-transform:uppercase;background:transparent;color:var(--muted);
-    border:1px solid var(--line);padding:8px 16px;border-radius:8px;cursor:pointer;transition:.15s}
-  .opbtn:hover{color:#fff;border-color:var(--muted)}
-  .opbtn.on{background:var(--aqua);border-color:var(--aqua);color:#04122b}
-  .opbtn:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
 
   .center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
     background:#000E22;border-left:1px solid var(--line);border-right:1px solid var(--line);padding:20px 8px}
@@ -183,7 +183,10 @@ layout: null
       border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px}
     .side{min-height:0;padding:24px 20px}
     .side.b .idrow{flex-direction:row;text-align:left}
-    .side.b .stats,.side.b .picks,.side.b .crowd,.side.b .opbar{justify-content:flex-start}
+    .side.b .stats,.side.b .crowd{justify-content:flex-start}
+    .side.b .pickers{align-items:flex-start}
+    .side.b .pk{flex-direction:row}
+    .side.b .pk-name{text-align:left}    .side.b .stats,.side.b .picks,.side.b .crowd,.side.b .opbar{justify-content:flex-start}
     .side.b .dvp{text-align:left}
     .pname{font-size:30px}
     .final{position:static;margin-top:14px}
