@@ -11,8 +11,23 @@
   var RECENT_GAMES = 3;       // stat chips per player
   var DVP_URL      = 'data/dvp.json';
 
-  var SB_URL = window.SUPABASE_URL || '';
-  var SB_KEY = window.SUPABASE_ANON_KEY || '';
+  var SB_URL_OVERRIDE = '';
+  var SB_KEY_OVERRIDE = '';
+
+  var SB_URL = '';
+  var SB_KEY = '';
+
+  function resolveConfig() {
+    function pick(name, override) {
+      if (override) return override;
+      try { if (window[name]) return window[name]; } catch (e) {}
+      try { var v = (0, eval)(name); if (v) return v; } catch (e) {}   // top-level const/let
+      try { if (window.auth && window.auth[name]) return window.auth[name]; } catch (e) {}
+      return '';
+    }
+    SB_URL = pick('SUPABASE_URL', SB_URL_OVERRIDE);
+    SB_KEY = pick('SUPABASE_ANON_KEY', SB_KEY_OVERRIDE);
+  }
 
   var STATE   = { season: null, week: null };
   var BOARD   = { week: null, matchups: [] };
@@ -381,11 +396,12 @@
     }, true);
   }
 
-  function start() {
-    if (!SB_URL || !SB_KEY) {
-      el('ssBoard').innerHTML = '<p class="ss-note">Supabase config didn\u2019t load. ' +
-        'Check that <b>javascript/auth.js</b> sets SUPABASE_URL and SUPABASE_ANON_KEY.</p>';
-      return;
+    function start() {
+        resolveConfig();
+        if (!SB_URL || !SB_KEY) {
+            el('ssBoard').innerHTML = '<p class="ss-note">Supabase config didn\u2019t load. ' +
+                'Check that <b>javascript/auth.js</b> sets SUPABASE_URL and SUPABASE_ANON_KEY.</p>';
+            return;
     }
     bind();
     loadState()
