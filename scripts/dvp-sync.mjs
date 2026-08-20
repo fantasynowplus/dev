@@ -25,8 +25,78 @@ async function j(url, { raw = false } = {}) {
   }
 }
 
-/* team -> opponent for one week */
-async function schedule(season, week) {
+/* ------------------------------------------------------------
+   Season schedule -> { week: { TEAM: OPPONENT } }
+
+   ESPN's scoreboard 403s from CI (Akamai blocks datacenter IPs),
+   so the primary source is nflverse's games.csv on raw.github,
+   which is reachable from Actions and covers every season at once.
+   ESPN stays as a per-week fallback for local runs.
+   ------------------------------------------------------------ */
+
+const NFLVERSE = 'https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv';
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else if (c !== '\r') cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+async function scheduleFromNflverse(season) {
+  const r = await fetch(NFLVERSE, { headers: { 'User-Agent': UA } });
+  if (!r.ok) throw new Error(`${r.status} nflverse games.csv`);
+  const rows = parseCsv(await r.text());
+  if (!rows.length) throw new Error('empty games.csv');
+
+  const head = rows[0].map((h) => h.trim().toLowerCase());
+  const col = (...names) => {
+    for (const n of names) { const i = head.indexOf(n); if (i >= 0) return i; }
+    return -1;
+  };
+  const cSeason = col('season');
+  const cWeek   = col('week');
+  const cType   = col('game_type', 'season_type', 'type');
+  const cHome   = col('home_team', 'home');
+  const cAway   = col('away_team', 'away');
+
+  if ([cSeason, cWeek, cHome, cAway].some((i) => i < 0)) {
+    throw new Error(`games.csv columns not recognised: ${head.slice(0, 12).join(',')}`);
+  }
+
+  const byWeek = {};
+  let games = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const r2 = rows[i];
+    if (!r2 || r2.length < head.length - 2) continue;
+    if (Number(r2[cSeason]) !== season) continue;
+    if (cType >= 0 && !/^(reg|regular)$/i.test(String(r2[cType]).trim())) continue;
+    const w = Number(r2[cWeek]);
+    if (!w || w > 18) continue;
+    const h = norm(r2[cHome]), a = norm(r2[cAway]);
+    if (!h || !a) continue;
+    byWeek[w] ??= {};
+    byWeek[w][h] = a;
+    byWeek[w][a] = h;
+    games++;
+  }
+  if (!games) throw new Error(`no ${season} regular-season games in games.csv`);
+  console.log(`  nflverse: ${games} games across ${Object.keys(byWeek).length} weeks`);
+  return byWeek;
+}
+
+/* per-week ESPN fallback */
+async function scheduleFromEspn(season, week) {
   const url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard' +
               `?dates=${season}&seasontype=2&week=${week}`;
   const map = {};
@@ -42,9 +112,20 @@ async function schedule(season, week) {
       map[h] = a; map[a] = h;
     }
   } catch (e) {
-    console.warn(`  week ${week} schedule unavailable: ${e.message}`);
+    console.warn(`  week ${week} ESPN schedule unavailable: ${e.message.split('\n')[0]}`);
   }
   return map;
+}
+
+async function loadSchedule(season, through) {
+  try {
+    return await scheduleFromNflverse(season);
+  } catch (e) {
+    console.warn(`  nflverse unavailable (${e.message}); falling back to ESPN`);
+    const byWeek = {};
+    for (let w = 1; w <= through; w++) byWeek[w] = await scheduleFromEspn(season, w);
+    return byWeek;
+  }
 }
 
 async function main() {
@@ -98,15 +179,17 @@ async function main() {
     if (recent) acc[team][pos].l3 += pts;
   };
 
+  console.log('Fetching schedule…');
+  const schedule = await loadSchedule(season, through);
+
   for (let w = 1; w <= through; w++) {
     const recent = w > through - L3;
-    const [sched, stats] = await Promise.all([
-      schedule(season, w),
-      j(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${w}`).catch((e) => {
-        console.warn(`  week ${w} stats unavailable: ${e.message}`);
+    const sched = schedule[w] || {};
+    const stats = await j(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${w}`)
+      .catch((e) => {
+        console.warn(`  week ${w} stats unavailable: ${e.message.split('\n')[0]}`);
         return {};
-      })
-    ]);
+      });
 
     for (const team of Object.keys(sched)) {
       games[team] ??= { all: 0, l3: 0 };
