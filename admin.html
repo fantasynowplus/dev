@@ -397,22 +397,103 @@
   .org-team-name{font-family:'Archivo';font-size:12.5px;font-weight:800;color:#fff;letter-spacing:.02em;line-height:1.3}
   .org-team-count{font-size:11px;color:rgba(255,255,255,.72);margin-top:3px}
 
+  /* ============================================================
+     Start/Sit admin + staff headshots
+     Replaces the previous admin-startsit.css block entirely.
+     ============================================================ */
+
+  /* ---- shared layout inside the Start/Sit panel ---- */
+  .ss-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:14px 18px;border-bottom:1px solid var(--line);background:#fbfcfe}
+  .ss-bar .grow{flex:1}
+  .ss-pad{padding:18px}
+  .ss-note{margin:0;padding:14px 18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:13px;line-height:1.55}
+  .ss-sub{margin:24px 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  .ss-sub:first-child{margin-top:0}
+  .field-inline{padding:6px 8px}
+
+  /* ---- player search inside the matchup modal ---- */
   .ss-search{width:100%}
   .ss-results{position:relative}
-  .ss-hit{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-top:none;padding:8px 10px;cursor:pointer;font-size:14px}
+  .ss-hit{display:block;width:100%;text-align:left;background:#fff;
+    border:1px solid var(--line);border-top:none;padding:9px 11px;
+    cursor:pointer;font-size:14px}
+  .ss-hit:first-child{border-top:1px solid var(--line);border-radius:6px 6px 0 0}
+  .ss-hit:last-child{border-radius:0 0 6px 6px}
   .ss-hit:hover{background:#fff6e5}
-  .ss-picked{font-size:12px;margin:4px 0 6px}
-  .ss-pickrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
-  .ss-pickpos{font-weight:800;width:44px;color:var(--navy)}
-  .ss-pickrow .btn{flex:1;justify-content:center}
-  .ss-scorerow{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
-  .ss-scoreside{display:flex;align-items:center;gap:8px;flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;cursor:pointer}
+  .ss-picked{font-size:12px;margin:5px 0 7px;min-height:16px}
+
+  /* ---- My picks ---- */
+  .ss-picks{display:flex;flex-direction:column;gap:10px}
+  .ss-pickrow{display:grid;grid-template-columns:46px 1fr auto 1fr;align-items:center;
+    gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  .ss-pickpos{font-weight:800;font-size:13px;letter-spacing:.06em;color:var(--navy)}
+  .ss-pickrow .btn{width:100%;justify-content:center}
+  .ss-or{font-size:11px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+
+  /* ---- Scoring ---- */
+  .ss-card{border:1px solid var(--line);border-radius:9px;background:#fff;
+    margin-bottom:12px;overflow:hidden}
+  .ss-cardhead{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:9px 14px;background:#f6f8fb;border-bottom:1px solid var(--line)}
+  .ss-cardhead b{font-size:13px;letter-spacing:.08em;color:var(--navy)}
+  .ss-scorerow{display:flex;align-items:center;gap:10px;padding:12px 14px;flex-wrap:wrap}
+  .ss-scoreside{display:flex;align-items:center;gap:9px;flex:1;min-width:210px;
+    padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+  .ss-scoreside:hover{border-color:#c9d6e8}
   .ss-scoreside.win{border-color:var(--green);background:#f2fbf7}
-  .ss-scorename{flex:1;font-weight:600}
-  .ss-scorepts{width:78px;text-align:right}
-  .ss-sub{margin:26px 0 10px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .ss-scoreside.tie-opt{flex:0 0 auto;min-width:0}
+  .ss-scorename{flex:1;font-weight:600;font-size:14px}
+  .ss-scorepts{width:76px;text-align:right}
+  .ss-vs{font-size:11px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+
+  /* ---- picker / standings tables ---- */
+  .ss-av{width:26px;height:26px;border-radius:50%;flex:0 0 26px;
+    object-fit:cover;object-position:top center;
+    background:var(--navy);color:#fff;display:inline-flex;
+    align-items:center;justify-content:center;font-size:10px;font-weight:800}
+  .ss-who{display:flex;align-items:center;gap:10px}
   tr.analyst td:first-child{font-weight:800;color:var(--orange)}
-  .field-inline{padding:6px 8px}
+
+  /* ---- headshots ---- */
+  img.mini-avatar,img.avatar,img.org-avatar,img.ss-av{
+    object-fit:cover;object-position:top center}
+  .hs-wrap{display:flex;align-items:center;gap:15px;margin-bottom:16px;
+    padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .hs-img{width:74px;height:74px;border-radius:50%;flex:0 0 74px;
+    object-fit:cover;object-position:top center;
+    border:1px solid var(--line);background:#eef2f8}
+  .hs-none{width:74px;height:74px;border-radius:50%;flex:0 0 74px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--navy);color:#fff;font-size:23px;font-weight:800}
+  .hs-side{min-width:0}
+  .hs-lbl{font-size:11px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .hs-link{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .hs-url{font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:#f3f6fa;border:1px solid var(--line);border-radius:6px;padding:6px 9px;
+    max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---- toolbar / header spacing ---- */
+  .ss-head{display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;row-gap:10px}
+  .ss-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .ss-when{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ss-when select{padding:6px 8px}
+  .ss-sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+
+  /* row actions need breathing room between buttons */
+  #ssBody .row-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+
+  /* My picks — centered, sized buttons instead of full-bleed */
+  .ss-pickrow{padding:12px 16px;gap:14px}
+  .ss-pickrow .btn{width:auto;min-width:170px;max-width:100%;justify-self:center}
+  .ss-pickpos{padding-left:2px}
 </style>
 </head>
 <body>
@@ -1687,6 +1768,9 @@ function ssLoadStaff() {
 
 /* ---------- shell ---------- */
 
+/* Add a year here when the time comes. */
+var SS_SEASONS = [2025, 2026];
+
 function renderStartsit() {
   var canManage = can('startsit', 'u');
   var tabs = [];
@@ -1695,20 +1779,31 @@ function renderStartsit() {
   if (canManage) tabs.push(['scoring', 'Scoring']);
   tabs.push(['standings', 'Standings']);
   if (!tabs.some(function (t) { return t[0] === SS.tab; })) SS.tab = 'picks';
+
+  var seasons = SS_SEASONS.slice();
+  if (seasons.indexOf(SS.season) < 0) seasons.push(SS.season);
+  seasons.sort(function (a, b) { return b - a; });
+
   var weeks = [];
   for (var w = 1; w <= 18; w++) {
     weeks.push('<option value="' + w + '"' + (w === SS.week ? ' selected' : '') + '>Week ' + w + '</option>');
   }
 
   document.getElementById('content').innerHTML = '<div class="panel">' +
-    '<div class="panel-head">' +
-      '<div class="toolbar"><button class="btn btn-ghost btn-sm" onclick="go(\'tools\')">&larr; Tools</button>' +
+    '<div class="panel-head ss-head">' +
+      '<div class="ss-tabs">' +
+        '<button class="btn btn-ghost btn-sm" onclick="go(\'tools\')">&larr; Tools</button>' +
         tabs.map(function (t) {
           return '<button class="btn btn-sm' + (SS.tab === t[0] ? ' btn-primary' : ' btn-ghost') +
                  '" onclick="ssTab(\'' + t[0] + '\')">' + t[1] + '</button>';
-        }).join('') + '</div>' +
-      '<div class="toolbar">' +
-        '<input id="ssSeason" class="field-inline" style="width:88px" value="' + SS.season + '">' +
+        }).join('') +
+      '</div>' +
+      '<div class="ss-when">' +
+        '<select id="ssSeason" onchange="ssJump()">' +
+          seasons.map(function (y) {
+            return '<option value="' + y + '"' + (y === SS.season ? ' selected' : '') + '>' + y + '</option>';
+          }).join('') +
+        '</select>' +
         '<select id="ssWeekSel" onchange="ssJump()">' + weeks.join('') + '</select>' +
         (SS.weekRow ? ssStatusPill() : '') +
       '</div>' +
@@ -1716,7 +1811,6 @@ function renderStartsit() {
     '<div id="ssBody"></div>' +
   '</div>';
 
-  document.getElementById('ssSeason').addEventListener('change', ssJump);
   ssRenderTab();
 }
 
@@ -1792,7 +1886,7 @@ function ssRenderMatchups(b) {
     return '<tr>' +
       '<td><b>' + pos + '</b></td>' +
       '<td>' + esc(m.a_name) + ' <span class="muted">' + esc(m.a_team || '') + ' ' + esc(m.a_opp || '') + '</span></td>' +
-      '<td class="muted">vs</td>' +
+      '<td class="ss-vs">vs</td>' +
       '<td>' + esc(m.b_name) + ' <span class="muted">' + esc(m.b_team || '') + ' ' + esc(m.b_opp || '') + '</span></td>' +
       '<td class="row-actions">' +
         ifCan('startsit', 'u', '<button class="btn btn-sm btn-ghost" onclick="ssMatchupForm(\'' + pos + '\',\'' + m.id + '\')">Edit</button>') +
@@ -1801,7 +1895,8 @@ function ssRenderMatchups(b) {
   }).join('');
 
   b.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
-    '<th style="width:70px">Pos</th><th>Player A</th><th style="width:40px"></th><th>Player B</th><th style="width:150px"></th>' +
+    '<th style="width:70px">Pos</th><th>Player A</th><th style="width:44px"></th>' +
+    '<th>Player B</th><th style="width:170px"></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
@@ -1891,15 +1986,24 @@ function ssMatchupDelete(id) {
 /* ---------- tab: pickers ---------- */
 
 function ssRenderPickers(b) {
-  var staffOpts = SS.staff
-    .filter(function (s) { return !SS.pickers.some(function (p) { return p.staff_id === s.id; }); })
+  if (!SS.pickers) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">SS.pickers isn\u2019t loaded.</div></div>';
+    return;
+  }
+  var canAdd = can('startsit', 'c');
+  var missing = SS.staff.filter(function (s) {
+    return !SS.pickers.some(function (p) { return p.staff_id === s.id; });
+  });
+
+  var staffOpts = missing
     .map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; })
     .join('');
 
   var rows = SS.pickers.map(function (p) {
-    var nm = p.staff ? p.staff.name : p.guest_name;
+    var person = p.staff || { name: p.guest_name };
     return '<tr>' +
-      '<td><b>' + esc(nm) + '</b></td>' +
+      '<td><div class="ss-who">' + avatarHtml(person, 'ss-av') +
+        '<b>' + esc(person.name) + '</b></div></td>' +
       '<td>' + (p.staff_id ? badge('Staff', 'var(--navy)') : badge('Guest', 'var(--orange)')) + '</td>' +
       '<td>' + (p.on_air ? badge('On air', 'var(--green)') : '<span class="muted">Submits picks</span>') + '</td>' +
       '<td class="row-actions">' +
@@ -1910,23 +2014,42 @@ function ssRenderPickers(b) {
   }).join('');
 
   b.innerHTML =
-    ifCan('startsit', 'c',
-      '<div class="toolbar" style="padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap">' +
-        '<select id="ssAddStaff"><option value="">Add staff picker\u2026</option>' + staffOpts + '</select>' +
-        '<button class="btn btn-sm btn-primary" onclick="ssAddStaffPicker()">Add</button>' +
-        '<span style="width:14px"></span>' +
-        '<input id="ssAddGuest" placeholder="Guest name" style="width:190px">' +
-        '<button class="btn btn-sm btn-primary" onclick="ssAddGuestPicker()">Add guest</button>' +
-        '<span style="flex:1"></span>' +
-        '<button class="btn btn-sm btn-ghost" onclick="ssCopyPickers()">Copy from Week ' + (SS.week - 1) + '</button>' +
-      '</div>') +
+    (canAdd
+      ? '<div class="ss-bar">' +
+          '<select id="ssAddStaff"><option value="">Add staff picker\u2026</option>' + staffOpts + '</select>' +
+          '<button class="btn btn-sm btn-primary" onclick="ssAddStaffPicker()">Add</button>' +
+          '<button class="btn btn-sm btn-ghost" onclick="ssAddAllPickers()"' +
+            (missing.length ? '' : ' disabled') + '>Add all' +
+            (missing.length ? ' (' + missing.length + ')' : '') + '</button>' +
+          '<span class="ss-sep"></span>' +
+          '<input id="ssAddGuest" placeholder="Guest name" style="width:180px">' +
+          '<button class="btn btn-sm btn-primary" onclick="ssAddGuestPicker()">Add guest</button>' +
+          '<span class="grow"></span>' +
+          '<button class="btn btn-sm btn-ghost" onclick="ssCopyPickers()">Copy from Week ' + (SS.week - 1) + '</button>' +
+        '</div>'
+      : '') +
     (SS.pickers.length
       ? '<div class="table-wrap"><table><thead><tr>' +
-          '<th>Picker</th><th style="width:110px">Type</th><th style="width:170px">Role</th><th style="width:220px"></th>' +
+          '<th>Picker</th><th style="width:110px">Type</th><th style="width:170px">Role</th>' +
+          '<th style="width:240px"></th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>'
-      : '<div class="empty">No pickers set for Week ' + SS.week + ' yet. Add staff or a guest above.</div>') +
-    '<p class="muted" style="padding:12px 16px;margin:0">On-air pickers appear under the VS on the stream page and pick live. ' +
+      : '<div class="ss-pad"><div class="empty">No pickers set for Week ' + SS.week +
+        (canAdd ? ' yet. Add staff or a guest above.' : '.') + '</div></div>') +
+    '<p class="ss-note">On-air pickers appear under the VS on the stream page and pick live. ' +
       'Everyone else submits in advance. All guests share one line in the season standings.</p>';
+}
+
+function ssAddAllPickers() {
+  var missing = SS.staff.filter(function (s) {
+    return !SS.pickers.some(function (p) { return p.staff_id === s.id; });
+  });
+  if (!missing.length) { toast('Everyone is already a picker'); return; }
+  var base = SS.pickers.length;
+  dbPost('ss_week_pickers', missing.map(function (s, i) {
+    return { week_id: SS.weekRow.id, staff_id: s.id, sort_order: base + i };
+  }))
+    .then(function () { toast(missing.length + ' pickers added'); return ssLoadWeek(); })
+    .catch(function () { toast('Couldn\u2019t add everyone', true); });
 }
 
 function ssAddStaffPicker() {
@@ -1974,30 +2097,45 @@ function ssMyPicker() {
 }
 
 function ssRenderMyPicks(b) {
-  if (!MY_STAFF_ID) { b.innerHTML = '<div class="empty">Your login isn\u2019t linked to a staff record yet.</div>'; return; }
-  var me = ssMyPicker();
-  if (!me) {
-    b.innerHTML = '<div class="empty">You\u2019re not on the picker list for Week ' + SS.week +
-      '. Add yourself in the Pickers tab.</div>';
+  if (!MY_STAFF_ID) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">Your login isn\u2019t linked to a staff record yet.</div></div>';
     return;
   }
-  if (!SS.matchups.length) { b.innerHTML = '<div class="empty">No matchups set for this week yet.</div>'; return; }
+  var me = ssMyPicker();
+  if (!me) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">You\u2019re not on the picker list for Week ' +
+      SS.week + '. Ask an admin to add you in the Pickers tab.</div></div>';
+    return;
+  }
+  if (!SS.matchups.length) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">No matchups set for this week yet.</div></div>';
+    return;
+  }
   var locked = SS.weekRow.status !== 'open';
+  var made = SS.matchups.filter(function (m) {
+    return (m.picks || []).some(function (p) { return p.picker_id === me.id; });
+  }).length;
 
-  b.innerHTML = (locked ? '<div class="empty">Week ' + SS.week + ' is ' + esc(SS.weekRow.status) +
-      ' \u2014 picks are closed.</div>' : '') +
-    SS.matchups.map(function (m) {
-      var mine = (m.picks || []).filter(function (p) { return p.picker_id === me.id; })[0];
-      return '<div class="ss-pickrow">' +
-        '<span class="ss-pickpos">' + esc(m.pos) + '</span>' +
-        ['a', 'b'].map(function (s) {
-          var on = mine && mine.pick === s;
-          return '<button class="btn' + (on ? ' btn-primary' : ' btn-ghost') + '"' +
-            (locked ? ' disabled' : '') +
-            ' onclick="ssMyPick(\'' + m.id + '\',\'' + s + '\')">' + esc(m[s + '_name']) + '</button>';
-        }).join('<span class="muted">or</span>') +
-      '</div>';
-    }).join('');
+  b.innerHTML =
+    '<div class="ss-bar">' +
+      '<b style="font-size:13px;color:var(--navy)">' + made + ' of ' + SS.matchups.length + ' picks made</b>' +
+      '<span class="grow"></span>' +
+      (locked ? badge('Picks closed', 'var(--muted)') : badge('Open', 'var(--green)')) +
+    '</div>' +
+    '<div class="ss-pad"><div class="ss-picks">' +
+      SS.matchups.map(function (m) {
+        var mine = (m.picks || []).filter(function (p) { return p.picker_id === me.id; })[0];
+        return '<div class="ss-pickrow">' +
+          '<span class="ss-pickpos">' + esc(m.pos) + '</span>' +
+          ['a', 'b'].map(function (s) {
+            var on = mine && mine.pick === s;
+            return '<button class="btn btn-sm' + (on ? ' btn-primary' : ' btn-ghost') + '"' +
+              (locked ? ' disabled' : '') +
+              ' onclick="ssMyPick(\'' + m.id + '\',\'' + s + '\')">' + esc(m[s + '_name']) + '</button>';
+          }).join('<span class="ss-or">or</span>') +
+        '</div>';
+      }).join('') +
+    '</div></div>';
 }
 
 function ssMyPick(matchupId, side) {
@@ -2011,11 +2149,15 @@ function ssMyPick(matchupId, side) {
 /* ---------- tab: scoring ---------- */
 
 function ssRenderScoring(b) {
-  if (!SS.matchups.length) { b.innerHTML = '<div class="empty">No matchups set for this week yet.</div>'; return; }
+  if (!SS.matchups.length) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">No matchups set for this week yet.</div></div>';
+    return;
+  }
 
   var cards = SS.matchups.map(function (m) {
-    return '<div class="panel"><div class="panel-head"><b>' + esc(m.pos) + '</b>' +
-      '<button class="btn btn-sm btn-ghost" onclick="ssPullPoints(\'' + m.id + '\')">Pull points</button></div>' +
+    return '<div class="ss-card">' +
+      '<div class="ss-cardhead"><b>' + esc(m.pos) + '</b>' +
+        '<button class="btn btn-sm btn-ghost" onclick="ssPullPoints(\'' + m.id + '\')">Pull points</button></div>' +
       '<div class="ss-scorerow">' +
         ['a', 'b'].map(function (s) {
           return '<label class="ss-scoreside' + (m.winner === s ? ' win' : '') + '">' +
@@ -2024,18 +2166,21 @@ function ssRenderScoring(b) {
             '<input class="ss-scorepts" id="pts_' + m.id + '_' + s + '" value="' +
               (m[s + '_points'] == null ? '' : m[s + '_points']) + '" placeholder="0.0">' +
           '</label>';
-        }).join('<span class="muted">vs</span>') +
-        '<label class="ss-scoreside"><input type="radio" name="w_' + m.id + '" value="tie"' +
+        }).join('<span class="ss-vs">vs</span>') +
+        '<label class="ss-scoreside tie-opt"><input type="radio" name="w_' + m.id + '" value="tie"' +
           (m.winner === 'tie' ? ' checked' : '') + '><span class="muted">Tie</span></label>' +
       '</div></div>';
   }).join('');
 
   b.innerHTML =
-    '<div class="toolbar">' +
-      '<button class="btn btn-ghost" onclick="ssPullAll()">Pull all points from Sleeper</button>' +
-      ifCan('startsit', 'u', '<button class="btn btn-primary" onclick="ssSaveScores()">Save results</button>') +
-    '</div>' + cards +
-    '<h3 class="ss-sub">Everyone\u2019s picks</h3><div id="ssGrid"></div>';
+    '<div class="ss-bar">' +
+      '<button class="btn btn-sm btn-ghost" onclick="ssPullAll()">Pull all points from Sleeper</button>' +
+      '<span class="grow"></span>' +
+      ifCan('startsit', 'u', '<button class="btn btn-sm btn-primary" onclick="ssSaveScores()">Save results</button>') +
+    '</div>' +
+    '<div class="ss-pad">' + cards +
+      '<h3 class="ss-sub">Everyone\u2019s picks</h3><div id="ssGrid"></div>' +
+    '</div>';
 
   ssRenderPickGrid();
 }
@@ -2095,10 +2240,11 @@ function ssRenderPickGrid() {
   var editable = can('startsit', 'u');
   var head = '<tr><th>Picker</th>' + SS.matchups.map(function (m) {
     return '<th>' + esc(m.pos) + '</th>';
-  }).join('') + '<th>W-L</th></tr>';
+  }).join('') + '<th style="width:80px">W-L</th></tr>';
 
   var rows = SS.pickers.map(function (s) {
     var w = 0, l = 0;
+    var person = s.staff || { name: s.guest_name };
     var cells = SS.matchups.map(function (m) {
       var p = (m.picks || []).filter(function (x) { return x.picker_id === s.id; })[0];
       if (p && m.winner && m.winner !== 'tie') { if (m.winner === p.pick) w++; else l++; }
@@ -2111,9 +2257,9 @@ function ssRenderPickGrid() {
         '<option value="b"' + (p && p.pick === 'b' ? ' selected' : '') + '>' + esc(m.b_name) + '</option>' +
         '</select></td>';
     }).join('');
-    return '<tr' + (s.on_air ? ' class="analyst"' : '') + '><td>' +
-      esc(s.staff ? s.staff.name : s.guest_name) + '</td>' + cells +
-      '<td class="mono">' + w + ' - ' + l + '</td></tr>';
+    return '<tr' + (s.on_air ? ' class="analyst"' : '') + '>' +
+      '<td><div class="ss-who">' + avatarHtml(person, 'ss-av') + esc(person.name) + '</div></td>' +
+      cells + '<td class="mono">' + w + ' - ' + l + '</td></tr>';
   }).join('');
 
   g.innerHTML = '<div class="table-wrap"><table><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>';
@@ -2130,18 +2276,26 @@ function ssGridPick(matchupId, pickerId, side) {
 /* ---------- tab: standings ---------- */
 
 function ssRenderStandings(b) {
-  b.innerHTML = '<div class="empty">Loading standings\u2026</div>';
+  b.innerHTML = '<div class="ss-pad"><div class="empty">Loading standings\u2026</div></div>';
   rpc('ss_standings', { p_season: SS.season }).then(function (rows) {
-    if (!rows || !rows.length) { b.innerHTML = '<div class="empty">No scored picks yet this season.</div>'; return; }
+    if (!rows || !rows.length) {
+      b.innerHTML = '<div class="ss-pad"><div class="empty">No scored picks yet this season.</div></div>';
+      return;
+    }
     b.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
-      '<th style="width:56px">#</th><th>Name</th><th>W</th><th>L</th><th>Win %</th>' +
+      '<th style="width:56px">#</th><th>Name</th><th style="width:70px">W</th>' +
+      '<th style="width:70px">L</th><th style="width:90px">Win %</th>' +
       '</tr></thead><tbody>' + rows.map(function (r, i) {
+        var person = SS.staff.filter(function (s) { return s.id === r.key; })[0] || { name: r.name };
         return '<tr' + (r.analyst ? ' class="analyst"' : '') + '>' +
-          '<td class="mono">' + (i + 1) + '</td><td>' + esc(r.name) + '</td>' +
+          '<td class="mono">' + (i + 1) + '</td>' +
+          '<td><div class="ss-who">' + avatarHtml(person, 'ss-av') + esc(r.name) + '</div></td>' +
           '<td class="mono">' + r.wins + '</td><td class="mono">' + r.losses + '</td>' +
           '<td class="mono">' + (r.pct == null ? '\u2014' : Number(r.pct).toFixed(3)) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
-  }).catch(function () { b.innerHTML = '<div class="empty">Standings unavailable.</div>'; });
+  }).catch(function () {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">Standings unavailable.</div></div>';
+  });
 }
 
 /* ---------------- PROJECT BOARD ---------------- */
