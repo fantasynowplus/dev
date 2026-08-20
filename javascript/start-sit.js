@@ -16,6 +16,8 @@
   var current  = 'QB';
   var busy     = {};
 
+  var TEAM_ALIAS = { WSH: 'WAS', JAC: 'JAX', LA: 'LAR', SD: 'LAC', OAK: 'LV', ARZ: 'ARI' };
+
   /* ---------- helpers ---------- */
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -28,15 +30,15 @@
       .map(function (p) { return p.charAt(0); }).join('').toUpperCase();
   }
   function firstName(n) { return String(n || '').trim().split(/\s+/)[0] || n; }
-  function lastName(n) {
-    var p = String(n || '').trim().split(/\s+/);
-    return p.length > 1 ? p[p.length - 1] : p[0];
-  }
   function num(v, d) { var x = Number(v); return isFinite(x) ? x.toFixed(d == null ? 1 : d) : '\u2014'; }
   function ordinal(n) {
     n = Number(n); if (!isFinite(n)) return '';
     var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+  function normTeam(t) {
+    var c = String(t || '').replace(/[^A-Za-z]/g, '').toUpperCase();
+    return TEAM_ALIAS[c] || c;
   }
   function withTimeout(p, ms, fallback) {
     return Promise.race([p, new Promise(function (res) {
@@ -78,12 +80,6 @@
     if (espn) return 'https://a.espncdn.com/i/headshots/nfl/players/full/' + espn + '.png';
     if (sleeper) return 'https://sleepercdn.com/content/nfl/players/thumb/' + sleeper + '.jpg';
     return '';
-  }
-
-  var TEAM_ALIAS = { WSH: 'WAS', JAC: 'JAX', LA: 'LAR', SD: 'LAC', OAK: 'LV', ARZ: 'ARI' };
-  function normTeam(t) {
-    var c = String(t || '').replace(/[^A-Za-z]/g, '').toUpperCase();
-    return TEAM_ALIAS[c] || c;
   }
 
   /* ---------- loads ---------- */
@@ -144,6 +140,29 @@
       });
   }
 
+  /* one season's weekly log; maxWeek null = every week */
+  function fetchLog(pid, season, maxWeek) {
+    return withTimeout(
+      fetch('https://api.sleeper.app/stats/nfl/player/' + pid +
+            '?season_type=regular&season=' + season + '&grouping=week')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; }), 8000, null)
+      .then(function (j) {
+        var log = [];
+        if (j) Object.keys(j).forEach(function (w) {
+          var row = j[w];
+          var st = row && (row.stats || row);
+          if (!st || st.pts_ppr == null) return;
+          if (maxWeek != null && Number(w) >= maxWeek) return;
+          log.push({
+            season: season, week: Number(w), pts: Number(st.pts_ppr),
+            opp: (row && (row.opponent || row.opp)) || '', st: st
+          });
+        });
+        return log;
+      });
+  }
+
   function loadRecentStats() {
     var ids = [];
     BOARD.matchups.forEach(function (m) {
@@ -154,32 +173,21 @@
     if (!ids.length) return;
 
     Promise.all(ids.map(function (id) {
-      return withTimeout(
-        fetch('https://api.sleeper.app/stats/nfl/player/' + id +
-              '?season_type=regular&season=' + STATE.season + '&grouping=week')
-          .then(function (r) { return r.ok ? r.json() : null; })
-          .catch(function () { return null; }), 8000, null)
-        .then(function (j) {
-          var log = [];
-          if (j) Object.keys(j).forEach(function (w) {
-            var row = j[w];
-            var st = row && (row.stats || row);
-            if (!st || st.pts_ppr == null || Number(w) >= STATE.week) return;
-            log.push({
-              week: Number(w),
-              pts: Number(st.pts_ppr),
-              opp: row && (row.opponent || row.opp) || '',
-              st: st
-            });
-          });
-          log.sort(function (a, b) { return b.week - a.week; });
-          STATS[id] = log.slice(0, RECENT_GAMES);
+      return fetchLog(id, STATE.season, STATE.week)
+        .then(function (cur) {
+          if (cur.length >= RECENT_GAMES) return cur;
+          return fetchLog(id, STATE.season - 1, null)
+            .then(function (prev) { return cur.concat(prev); });
+        })
+        .then(function (all) {
+          all.sort(function (a, b) { return b.season - a.season || b.week - a.week; });
+          STATS[id] = all.slice(0, 10);
         })
         .catch(function () { STATS[id] = []; });
     })).then(render);
   }
 
-  /* ---------- render: game log ---------- */
+  /* ---------- game log ---------- */
   function statLine(pos, st) {
     function v(k) { return Number(st[k] || 0); }
     var out = [];
@@ -207,27 +215,39 @@
     if (!log) return '<div class="glog-empty">Loading recent games\u2026</div>';
     if (!log.length) return '<div class="glog-empty">No games played yet this season.</div>';
 
-    var avg = log.reduce(function (t, g) { return t + g.pts; }, 0) / log.length;
-    var gapTo = STATE.week - 1;
-    var gap = log[0].season === STATE.season && log[0].week < gapTo;
-    var note = gap
-      ? '<span style="color:#5f77a0;font-weight:600;letter-spacing:.06em"> \u00b7 did not play Wk ' +
-        (log[0].week + 1) + (gapTo > log[0].week + 1 ? '\u2013' + gapTo : '') + '</span>'
-      : '';
-    return '<table class="glog"><caption>Last ' + log.length + ' games played' + note + '</caption>' +
+    var rows = [], w;
+    for (w = STATE.week - RECENT_GAMES; w <= STATE.week - 1; w++) {
+      if (w < 1) continue;
+      var g = log.filter(function (x) { return x.season === STATE.season && x.week === w; })[0];
+      rows.push(g || { week: w, dnp: true });
+    }
+    var played = rows.filter(function (r) { return !r.dnp; });
+    if (!played.length) { rows = log.slice(0, RECENT_GAMES); played = rows; }
+    rows.reverse();
+
+    var avg = played.reduce(function (t, g) { return t + g.pts; }, 0) / played.length;
+
+    return '<table class="glog"><caption>Last ' + rows.length + ' weeks</caption>' +
       '<thead><tr><th>Wk</th><th>Opp</th><th>Line</th><th class="n">PPR</th></tr></thead><tbody>' +
-      log.map(function (g) {
-        return '<tr><td class="wk">' + g.week + '</td>' +
+      rows.map(function (g) {
+        if (g.dnp) {
+          return '<tr class="dnp"><td class="wk">' + g.week + '</td>' +
+            '<td class="line" colspan="2">Did not play</td><td class="n">\u2014</td></tr>';
+        }
+        return '<tr><td class="wk">' + g.week +
+          (g.season !== STATE.season
+            ? '<span style="font-size:9px;color:#5f77a0;margin-left:3px">\u2019' +
+              String(g.season).slice(2) + '</span>' : '') + '</td>' +
           '<td class="line">' + esc(g.opp || '\u2014') + '</td>' +
           '<td class="line">' + esc(statLine(pos, g.st)) + '</td>' +
           '<td class="n">' + num(g.pts) + '</td></tr>';
       }).join('') +
-      '<tr class="avg"><td class="lbl" colspan="3">' + log.length + '-game average</td>' +
-      '<td class="n">' + num(avg) + '</td></tr>' +
-      '</tbody></table>';
+      '<tr class="avg"><td class="lbl" colspan="3">Average \u00b7 ' + played.length +
+        ' game' + (played.length === 1 ? '' : 's') + '</td>' +
+      '<td class="n">' + num(avg) + '</td></tr></tbody></table>';
   }
 
-  /* ---------- render: defense vs position ---------- */
+  /* ---------- defense vs position ---------- */
   function dvpHtml(opp, pos) {
     if (!DVP || !DVP.defense || !opp) return '';
     var code = normTeam(opp);
@@ -250,20 +270,36 @@
     '</div>';
   }
 
-  /* ---------- render: sides ---------- */
+  /* ---------- picks ---------- */
   function onAirPicks(m) {
     return (m.picks || []).filter(function (p) { return p.on_air; });
   }
   function allIn(m) {
-    if (!ONAIR.length) return true;
+    if (!ONAIR.length) return false;
     return onAirPicks(m).length >= ONAIR.length;
+  }
+  function pickOf(m, pickerId) {
+    return (m.picks || []).filter(function (p) { return p.picker_id === pickerId; })[0] || null;
+  }
+
+  /* stacked bars — one per on-air picker who chose this side */
+  function barsHtml(m, side) {
+    var mine = ONAIR.filter(function (a) {
+      var p = pickOf(m, a.picker_id);
+      return p && p.pick === side;
+    });
+    if (!mine.length) return '';
+    return '<div class="bars">' + mine.map(function (a, i) {
+      return '<div class="pickbar' + (a.guest ? ' guest' : '') + '" style="--d:' + (i * 0.12) + 's">' +
+        '<span>' + esc(firstName(a.name)) + '</span></div>';
+    }).join('') + '</div>';
   }
 
   function crowdHtml(m, side) {
     if (!allIn(m)) return '';
     var others = (m.picks || []).filter(function (p) { return !p.on_air && p.pick === side; });
     if (!others.length) return '';
-    return '<div class="crowd"><span class="crowd-l">' + others.length + ' staff</span>' +
+    return '<div class="crowd"><span class="crowd-l">' + others.length + ' also picking</span>' +
       others.map(function (p) {
         return '<span class="av" title="' + esc(p.name) + '">' + esc(initials(p.name)) + '</span>';
       }).join('') + '</div>';
@@ -273,7 +309,8 @@
     var name = m[side + '_name'], team = m[side + '_team'], opp = m[side + '_opp'];
     var pts = m[side + '_points'], pid = m[side + '_player_id'], espn = m[side + '_espn_id'];
 
-    var cls = 'side ' + side;
+    var picked = onAirPicks(m).some(function (p) { return p.pick === side; });
+    var cls = 'side ' + side + (picked ? ' picked' : '');
     if (m.winner === side) cls += ' win';
     else if (m.winner && m.winner !== 'tie') cls += ' lose';
 
@@ -294,9 +331,33 @@
         '</div>' +
       '</div>' +
       glogHtml(pid, m.pos) +
-      dvpHtml(opp, m.pos) +
-      crowdHtml(m, side) +
+      (allIn(m) ? '' : dvpHtml(opp, m.pos)) +
+      '<div class="sidefoot">' + crowdHtml(m, side) + barsHtml(m, side) + '</div>' +
     '</div>';
+  }
+
+  /* ---------- center column ---------- */
+  function chev(dir) {
+    var d = dir === 'a' ? 'M9 2 L3.5 8 L9 14' : 'M3 2 L8.5 8 L3 14';
+    return '<svg viewBox="0 0 12 16" width="11" height="15">' +
+      '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+      'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  function arrow(dir) { return chev(dir) + chev(dir) + chev(dir); }
+
+  function ctlHtml(m) {
+    if (!ONAIR.length) return '';
+    return '<div class="ctl">' + ONAIR.map(function (a) {
+      var p = pickOf(m, a.picker_id);
+      return '<div class="ctl-row' + (p ? ' done' : '') + '" data-m="' + m.id +
+             '" data-picker="' + a.picker_id + '">' +
+        '<button class="ctl-arrow' + (p && p.pick === 'a' ? ' on' : '') + '" data-side="a" ' +
+          'aria-label="' + esc(a.name) + ' picks ' + esc(m.a_name) + '">' + arrow('a') + '</button>' +
+        '<span class="ctl-name">' + esc(firstName(a.name)) + '</span>' +
+        '<button class="ctl-arrow' + (p && p.pick === 'b' ? ' on' : '') + '" data-side="b" ' +
+          'aria-label="' + esc(a.name) + ' picks ' + esc(m.b_name) + '">' + arrow('b') + '</button>' +
+      '</div>';
+    }).join('') + '</div>';
   }
 
   function centerHtml(m) {
@@ -306,38 +367,19 @@
     });
     var note = !ONAIR.length ? 'No pickers set'
       : m.winner ? 'Final'
-      : (waiting.length ? 'On the clock<br>' + waiting.map(function (a) { return esc(firstName(a.name)); }).join(' &middot; ')
-                        : 'All picks in');
+      : (waiting.length ? 'On the clock' : 'All picks in');
+
     return '<div class="center">' +
       '<span class="posmark" style="background:var(--' + esc(m.pos) + ')">' + esc(m.pos) + '</span>' +
       '<span class="vs">VS</span>' +
       '<span class="waiting">' + note + '</span>' +
+      ctlHtml(m) +
     '</div>';
   }
 
-  /* ---------- render: pick rail ---------- */
-  function railHtml(m) {
-    if (!ONAIR.length) return '';
-    var rows = ONAIR.map(function (a) {
-      var mine = (m.picks || []).filter(function (p) { return p.picker_id === a.picker_id; })[0];
-      var cls = 'rail-chip' + (a.guest ? ' guest' : '');
-      var to = '';
-      if (mine) {
-        cls += ' picked to-' + mine.pick;
-        to = '<span class="to">' + esc(lastName(m[mine.pick + '_name'])) + '</span>';
-      }
-      return '<div class="rail-row" data-m="' + m.id + '" data-picker="' + a.picker_id + '">' +
-        '<div class="rail-track">' +
-          '<button class="rail-zone a" data-side="a" aria-label="' + esc(a.name) + ' picks ' + esc(m.a_name) + '"></button>' +
-          '<button class="rail-zone b" data-side="b" aria-label="' + esc(a.name) + ' picks ' + esc(m.b_name) + '"></button>' +
-          '<span class="' + cls + '" data-clear="1">' +
-            '<span class="who">' + esc(firstName(a.name)) + '</span>' + to +
-          '</span>' +
-        '</div></div>';
-    }).join('');
-
-    return '<div class="rail"><div class="rail-h">On-air picks</div>' + rows +
-      '<div class="rail-hint">Click a side to set a pick \u00b7 click the name to clear</div></div>';
+  /* ---------- render ---------- */
+  function matchupFor(pos) {
+    return BOARD.matchups.filter(function (m) { return m.pos === pos; })[0] || null;
   }
 
   function render() {
@@ -352,13 +394,8 @@
         STATE.week + ' yet.<br>Add it in the admin dashboard and it\u2019ll appear here.</div>';
       return;
     }
-    stage.innerHTML =
-      '<div class="duel">' + sideHtml(m, 'a') + centerHtml(m) + sideHtml(m, 'b') + '</div>' +
-      railHtml(m);
-  }
-
-  function matchupFor(pos) {
-    return BOARD.matchups.filter(function (m) { return m.pos === pos; })[0] || null;
+    stage.innerHTML = '<div class="duel">' +
+      sideHtml(m, 'a') + centerHtml(m) + sideHtml(m, 'b') + '</div>';
   }
 
   function renderStandings(stage) {
@@ -457,14 +494,13 @@
   function bind() {
     document.addEventListener('click', function (e) {
       if (!CAN_EDIT || !e.target.closest) return;
-      var row = e.target.closest('.rail-row');
+      var btn = e.target.closest('.ctl-arrow');
+      if (!btn) return;
+      var row = btn.closest('.ctl-row');
       if (!row) return;
-
-      var chip = e.target.closest('.rail-chip');
-      if (chip) { setPick(row.dataset.m, row.dataset.picker, null, true); return; }
-
-      var zone = e.target.closest('.rail-zone');
-      if (zone) setPick(row.dataset.m, row.dataset.picker, zone.dataset.side, false);
+      /* clicking the side already chosen clears it */
+      var clear = btn.classList.contains('on');
+      setPick(row.dataset.m, row.dataset.picker, btn.dataset.side, clear);
     });
 
     document.addEventListener('keydown', function (e) {
