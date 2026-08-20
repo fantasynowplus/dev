@@ -82,6 +82,12 @@
     return '';
   }
 
+    function avatarSrc(v) {
+    if (!v) return '';
+    if (/^https?:\/\//i.test(v)) return v;
+    return v.indexOf('/') >= 0 ? v.replace(/^\/+/, '') : 'assets/staff/' + v;
+  }
+
   /* ---------- loads ---------- */
   function loadState() {
     var qs = new URLSearchParams(location.search);
@@ -301,7 +307,11 @@
     if (!others.length) return '';
     return '<div class="crowd"><span class="crowd-l">' + others.length + ' also picking</span>' +
       others.map(function (p) {
-        return '<span class="av" title="' + esc(p.name) + '">' + esc(initials(p.name)) + '</span>';
+        var src = avatarSrc(p.headshot);
+        var ini = esc(initials(p.name));
+        return src
+          ? '<img class="av" src="' + esc(src) + '" alt="" title="' + esc(p.name) + '" data-ini="' + ini + '">'
+          : '<span class="av" title="' + esc(p.name) + '">' + ini + '</span>';
       }).join('') + '</div>';
   }
 
@@ -531,10 +541,20 @@
 
     document.addEventListener('error', function (e) {
       var img = e.target;
-      if (!img || img.className !== 'shot') return;
-      var fb = img.dataset.fallback;
-      if (fb) { img.dataset.fallback = ''; img.src = fb; }
-      else { img.removeAttribute('src'); }
+      if (!img || img.tagName !== 'IMG') return;
+      if (img.className === 'shot') {
+        var fb = img.dataset.fallback;
+        if (fb) { img.dataset.fallback = ''; img.src = fb; }
+        else { img.removeAttribute('src'); }
+        return;
+      }
+      if (img.className === 'av' && img.dataset.ini) {
+        var sp = document.createElement('span');
+        sp.className = 'av';
+        sp.title = img.title;
+        sp.textContent = img.dataset.ini;
+        img.replaceWith(sp);
+      }
     }, true);
   }
 
