@@ -146,7 +146,8 @@ body.op .oplamp{display:inline-block}
 .side.b .crowd-l{text-align:right}
 .av{width:29px;height:29px;border-radius:50%;background:var(--panel-hi);
   border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;
-  font-size:10.5px;font-weight:800;color:#cfe0fb}
+  font-size:10.5px;font-weight:800;color:#cfe0fb;flex:0 0 29px}
+img.av{display:block;object-fit:cover;object-position:top center}
 
 .bars{margin:0 -28px}
 .pickbar{--glow:255,165,21;
