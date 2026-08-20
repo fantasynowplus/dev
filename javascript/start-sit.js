@@ -194,26 +194,31 @@
   }
 
   /* ---------- game log ---------- */
+  /* yards on the top line, scores and giveaways underneath */
   function statLine(pos, st) {
     function v(k) { return Number(st[k] || 0); }
-    var out = [];
+    var yards = [], plays = [];
+
     if (pos === 'QB') {
-      out.push(v('pass_yd') + ' pass');
-      if (v('rush_yd')) out.push(v('rush_yd') + ' rush');
-      var td = v('pass_td') + v('rush_td');
-      if (td) out.push(td + ' TD');
-      if (v('pass_int')) out.push(v('pass_int') + ' INT');
+      yards.push(v('pass_yd') + ' pass');
+      if (v('rush_yd')) yards.push(v('rush_yd') + ' rush');
+      if (v('pass_td')) plays.push(v('pass_td') + ' pass TD');
+      if (v('rush_td')) plays.push(v('rush_td') + ' rush TD');
+      if (v('pass_int')) plays.push(v('pass_int') + ' INT');
     } else if (pos === 'RB') {
-      out.push(v('rush_yd') + ' rush');
-      if (v('rec')) out.push(v('rec') + '-' + v('rec_yd') + ' rec');
-      var td2 = v('rush_td') + v('rec_td');
-      if (td2) out.push(td2 + ' TD');
+      yards.push(v('rush_yd') + ' rush');
+      if (v('rec')) yards.push(v('rec') + '-' + v('rec_yd') + ' rec');
+      var rtd = v('rush_td') + v('rec_td');
+      if (rtd) plays.push(rtd + ' TD');
     } else {
-      out.push(v('rec') + ' rec');
-      out.push(v('rec_yd') + ' yd');
-      if (v('rec_td')) out.push(v('rec_td') + ' TD');
+      yards.push(v('rec') + ' rec');
+      yards.push(v('rec_yd') + ' yd');
+      if (v('rec_td')) plays.push(v('rec_td') + ' TD');
     }
-    return out.join(' \u00b7 ');
+    if (v('fum_lost')) plays.push(v('fum_lost') + ' FUM');
+
+    return '<span class="ln-y">' + esc(yards.join(' \u00b7 ')) + '</span>' +
+      (plays.length ? '<span class="ln-p">' + esc(plays.join(' \u00b7 ')) + '</span>' : '');
   }
 
   function glogHtml(pid, pos) {
@@ -245,7 +250,7 @@
             ? '<span style="font-size:9px;color:#5f77a0;margin-left:3px">\u2019' +
               String(g.season).slice(2) + '</span>' : '') + '</td>' +
           '<td class="line">' + esc(g.opp || '\u2014') + '</td>' +
-          '<td class="line">' + esc(statLine(pos, g.st)) + '</td>' +
+          '<td class="line">' + statLine(pos, g.st) + '</td>' +
           '<td class="n">' + num(g.pts) + '</td></tr>';
       }).join('') +
       '<tr class="avg"><td class="lbl" colspan="3">Average \u00b7 ' + played.length +
