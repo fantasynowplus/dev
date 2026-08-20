@@ -382,6 +382,20 @@
     return BOARD.matchups.filter(function (m) { return m.pos === pos; })[0] || null;
   }
 
+  var lastSig = '';
+  function boardSig(m) {
+    return [
+      current, CAN_EDIT, !!DVP, STATE.season, STATE.week,
+      m ? m.id : '', m ? m.winner : '',
+      m ? [m.a_points, m.b_points].join(',') : '',
+      m ? (m.picks || []).map(function (p) { return p.picker_id + ':' + p.pick; }).sort().join('|') : '',
+      m ? [m.a_player_id, m.b_player_id].map(function (id) {
+            var l = STATS[id]; return id + '#' + (l ? l.length : '-');
+          }).join(',') : '',
+      ONAIR.map(function (a) { return a.picker_id; }).join(',')
+    ].join('~');
+  }
+
   function render() {
     var stage = el('stage');
     if (current === 'ST') { renderStandings(stage); return; }
@@ -389,6 +403,11 @@
     el('subTitle').innerHTML = 'Week ' + STATE.week + ' &middot; <span class="pos">' + esc(current) + '</span>';
 
     var m = matchupFor(current);
+
+    var sig = boardSig(m);
+    if (sig === lastSig) return;   // nothing changed — don't restart animations
+    lastSig = sig;
+
     if (!m) {
       stage.innerHTML = '<div class="state">No <b>' + esc(current) + '</b> matchup set for Week ' +
         STATE.week + ' yet.<br>Add it in the admin dashboard and it\u2019ll appear here.</div>';
