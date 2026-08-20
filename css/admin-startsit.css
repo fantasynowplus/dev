@@ -74,3 +74,19 @@ img.mini-avatar,img.avatar,img.org-avatar,img.ss-av{
 .hs-url{font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   background:#f3f6fa;border:1px solid var(--line);border-radius:6px;padding:6px 9px;
   max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- toolbar / header spacing ---- */
+.ss-head{display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;row-gap:10px}
+.ss-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ss-when{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ss-when select{padding:6px 8px}
+.ss-sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+
+/* row actions need breathing room between buttons */
+#ssBody .row-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+
+/* My picks — centered, sized buttons instead of full-bleed */
+.ss-pickrow{padding:12px 16px;gap:14px}
+.ss-pickrow .btn{width:auto;min-width:170px;max-width:100%;justify-self:center}
+.ss-pickpos{padding-left:2px}

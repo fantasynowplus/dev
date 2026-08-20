@@ -1,3 +1,77 @@
+/* Add a year here when the time comes. */
+var SS_SEASONS = [2025, 2026];
+
+function renderStartsit() {
+  var canManage = can('startsit', 'u');
+  var tabs = [];
+  if (canManage) tabs.push(['matchups', 'Matchups']);
+  tabs.push(['pickers', 'Pickers'], ['picks', 'My picks']);
+  if (canManage) tabs.push(['scoring', 'Scoring']);
+  tabs.push(['standings', 'Standings']);
+  if (!tabs.some(function (t) { return t[0] === SS.tab; })) SS.tab = 'picks';
+
+  var seasons = SS_SEASONS.slice();
+  if (seasons.indexOf(SS.season) < 0) seasons.push(SS.season);
+  seasons.sort(function (a, b) { return b - a; });
+
+  var weeks = [];
+  for (var w = 1; w <= 18; w++) {
+    weeks.push('<option value="' + w + '"' + (w === SS.week ? ' selected' : '') + '>Week ' + w + '</option>');
+  }
+
+  document.getElementById('content').innerHTML = '<div class="panel">' +
+    '<div class="panel-head ss-head">' +
+      '<div class="ss-tabs">' +
+        '<button class="btn btn-ghost btn-sm" onclick="go(\'tools\')">&larr; Tools</button>' +
+        tabs.map(function (t) {
+          return '<button class="btn btn-sm' + (SS.tab === t[0] ? ' btn-primary' : ' btn-ghost') +
+                 '" onclick="ssTab(\'' + t[0] + '\')">' + t[1] + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="ss-when">' +
+        '<select id="ssSeason" onchange="ssJump()">' +
+          seasons.map(function (y) {
+            return '<option value="' + y + '"' + (y === SS.season ? ' selected' : '') + '>' + y + '</option>';
+          }).join('') +
+        '</select>' +
+        '<select id="ssWeekSel" onchange="ssJump()">' + weeks.join('') + '</select>' +
+        (SS.weekRow ? ssStatusPill() : '') +
+      '</div>' +
+    '</div>' +
+    '<div id="ssBody"></div>' +
+  '</div>';
+
+  ssRenderTab();
+}
+
+/* ---------- Matchups ---------- */
+
+function ssRenderMatchups(b) {
+  var rows = ssPosList().map(function (pos) {
+    var m = SS.matchups.filter(function (x) { return x.pos === pos; })[0];
+    if (!m) {
+      return '<tr><td><b>' + pos + '</b></td><td colspan="3" class="muted">Not set</td>' +
+        '<td class="row-actions">' + ifCan('startsit', 'c',
+          '<button class="btn btn-sm btn-primary" onclick="ssMatchupForm(\'' + pos + '\')">Add</button>') +
+        '</td></tr>';
+    }
+    return '<tr>' +
+      '<td><b>' + pos + '</b></td>' +
+      '<td>' + esc(m.a_name) + ' <span class="muted">' + esc(m.a_team || '') + ' ' + esc(m.a_opp || '') + '</span></td>' +
+      '<td class="ss-vs">vs</td>' +
+      '<td>' + esc(m.b_name) + ' <span class="muted">' + esc(m.b_team || '') + ' ' + esc(m.b_opp || '') + '</span></td>' +
+      '<td class="row-actions">' +
+        ifCan('startsit', 'u', '<button class="btn btn-sm btn-ghost" onclick="ssMatchupForm(\'' + pos + '\',\'' + m.id + '\')">Edit</button>') +
+        ifCan('startsit', 'd', '<button class="btn btn-sm btn-danger" onclick="ssMatchupDelete(\'' + m.id + '\')">Delete</button>') +
+      '</td></tr>';
+  }).join('');
+
+  b.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+    '<th style="width:70px">Pos</th><th>Player A</th><th style="width:44px"></th>' +
+    '<th>Player B</th><th style="width:170px"></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
 /* ---------- My picks ---------- */
 
 function ssRenderMyPicks(b) {
@@ -31,10 +105,9 @@ function ssRenderMyPicks(b) {
         var mine = (m.picks || []).filter(function (p) { return p.picker_id === me.id; })[0];
         return '<div class="ss-pickrow">' +
           '<span class="ss-pickpos">' + esc(m.pos) + '</span>' +
-          ['a', 'b'].map(function (s, i) {
+          ['a', 'b'].map(function (s) {
             var on = mine && mine.pick === s;
-            return (i === 1 ? '' : '') +
-              '<button class="btn' + (on ? ' btn-primary' : ' btn-ghost') + '"' +
+            return '<button class="btn btn-sm' + (on ? ' btn-primary' : ' btn-ghost') + '"' +
               (locked ? ' disabled' : '') +
               ' onclick="ssMyPick(\'' + m.id + '\',\'' + s + '\')">' + esc(m[s + '_name']) + '</button>';
           }).join('<span class="ss-or">or</span>') +
@@ -51,9 +124,11 @@ function ssRenderPickers(b) {
     return;
   }
   var canAdd = can('startsit', 'c');
+  var missing = SS.staff.filter(function (s) {
+    return !SS.pickers.some(function (p) { return p.staff_id === s.id; });
+  });
 
-  var staffOpts = SS.staff
-    .filter(function (s) { return !SS.pickers.some(function (p) { return p.staff_id === s.id; }); })
+  var staffOpts = missing
     .map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; })
     .join('');
 
@@ -76,7 +151,10 @@ function ssRenderPickers(b) {
       ? '<div class="ss-bar">' +
           '<select id="ssAddStaff"><option value="">Add staff picker\u2026</option>' + staffOpts + '</select>' +
           '<button class="btn btn-sm btn-primary" onclick="ssAddStaffPicker()">Add</button>' +
-          '<span style="width:10px"></span>' +
+          '<button class="btn btn-sm btn-ghost" onclick="ssAddAllPickers()"' +
+            (missing.length ? '' : ' disabled') + '>Add all' +
+            (missing.length ? ' (' + missing.length + ')' : '') + '</button>' +
+          '<span class="ss-sep"></span>' +
           '<input id="ssAddGuest" placeholder="Guest name" style="width:180px">' +
           '<button class="btn btn-sm btn-primary" onclick="ssAddGuestPicker()">Add guest</button>' +
           '<span class="grow"></span>' +
@@ -86,12 +164,25 @@ function ssRenderPickers(b) {
     (SS.pickers.length
       ? '<div class="table-wrap"><table><thead><tr>' +
           '<th>Picker</th><th style="width:110px">Type</th><th style="width:170px">Role</th>' +
-          (canAdd ? '<th style="width:220px"></th>' : '<th></th>') +
+          '<th style="width:240px"></th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>'
       : '<div class="ss-pad"><div class="empty">No pickers set for Week ' + SS.week +
         (canAdd ? ' yet. Add staff or a guest above.' : '.') + '</div></div>') +
     '<p class="ss-note">On-air pickers appear under the VS on the stream page and pick live. ' +
       'Everyone else submits in advance. All guests share one line in the season standings.</p>';
+}
+
+function ssAddAllPickers() {
+  var missing = SS.staff.filter(function (s) {
+    return !SS.pickers.some(function (p) { return p.staff_id === s.id; });
+  });
+  if (!missing.length) { toast('Everyone is already a picker'); return; }
+  var base = SS.pickers.length;
+  dbPost('ss_week_pickers', missing.map(function (s, i) {
+    return { week_id: SS.weekRow.id, staff_id: s.id, sort_order: base + i };
+  }))
+    .then(function () { toast(missing.length + ' pickers added'); return ssLoadWeek(); })
+    .catch(function () { toast('Couldn\u2019t add everyone', true); });
 }
 
 /* ---------- Scoring ---------- */
@@ -133,7 +224,7 @@ function ssRenderScoring(b) {
   ssRenderPickGrid();
 }
 
-/* ---------- pick grid (headshots in the first column) ---------- */
+/* ---------- pick grid ---------- */
 
 function ssRenderPickGrid() {
   var g = document.getElementById('ssGrid');
@@ -170,7 +261,7 @@ function ssRenderPickGrid() {
   g.innerHTML = '<div class="table-wrap"><table><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>';
 }
 
-/* ---------- Standings (padding + headshots) ---------- */
+/* ---------- Standings ---------- */
 
 function ssRenderStandings(b) {
   b.innerHTML = '<div class="ss-pad"><div class="empty">Loading standings\u2026</div></div>';
