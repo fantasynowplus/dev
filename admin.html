@@ -78,6 +78,7 @@
   .side-foot .who{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .avatar{width:34px;height:34px;border-radius:50%;background:var(--orange);color:var(--navy);
     display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Archivo';flex:none}
+  img.avatar{display:block;object-fit:cover;object-position:top center}
   .side-foot .name{font-size:13px;font-weight:600;color:#fff;line-height:1.2}
   .side-foot .lvl{font-size:11px;color:#8ea3c9}
   .logout{width:100%;background:rgba(234,78,61,.14);color:#ffb3ab;border:1px solid rgba(234,78,61,.3);
@@ -689,7 +690,22 @@ async function boot(){
   document.getElementById('gate').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('meName').textContent = ME.name || ME.email || 'Admin';
-  document.getElementById('meAvatar').textContent = initials(ME.name||ME.email);
+  const meAv = document.getElementById('meAvatar');
+  meAv.textContent = initials(ME.name||ME.email);
+  if(MY_STAFF_ID){
+    dbGet('staff?select=headshot&id=eq.'+MY_STAFF_ID).then(r=>{
+      const hs = r && r[0] && r[0].headshot;
+      const src = headshotSrc(hs);
+      if(!src) return;
+      const img = document.createElement('img');
+      img.className = 'avatar';
+      img.id = 'meAvatar';
+      img.src = src;
+      img.alt = '';
+      img.dataset.ini = initials(ME.name||ME.email);
+      meAv.replaceWith(img);
+    }).catch(()=>{});
+  }
   document.getElementById('logoutBtn').onclick = ()=>{ if(window.auth&&auth.logout)auth.logout(); else {localStorage.removeItem('sb-auth-token');location.href='index.html';} };
 
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
