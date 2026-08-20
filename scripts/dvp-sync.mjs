@@ -50,7 +50,11 @@ async function main() {
   const idx = new Map();
   for (const [id, p] of Object.entries(players)) {
     if (p?.position && POS.includes(p.position) && p.team) {
-      idx.set(id, { pos: p.position, team: norm(p.team) });
+  const season = Number(process.env.SEASON) || Number(state.season);
+  // a past season is complete; only the live season is capped by the current week
+  const through = season < Number(state.season)
+    ? 18
+    : Math.max(0, Number(state.week || state.display_week || 1) - 1);
     }
   }
   console.log(`  ${idx.size} skill players`);
@@ -122,6 +126,11 @@ async function main() {
     updated: new Date().toISOString(),
     defense
   };
+
+  if (!Object.keys(defense).length) {
+    console.error('No performances found — refusing to write an empty file.');
+    process.exit(1);
+  }
 
   await mkdir('data', { recursive: true });
   await writeFile(OUT, JSON.stringify(payload, null, 2) + '\n');
