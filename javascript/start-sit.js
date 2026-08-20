@@ -80,6 +80,12 @@
     return '';
   }
 
+  var TEAM_ALIAS = { WSH: 'WAS', JAC: 'JAX', LA: 'LAR', SD: 'LAC', OAK: 'LV', ARZ: 'ARI' };
+  function normTeam(t) {
+    var c = String(t || '').replace(/[^A-Za-z]/g, '').toUpperCase();
+    return TEAM_ALIAS[c] || c;
+  }
+
   /* ---------- loads ---------- */
   function loadState() {
     var qs = new URLSearchParams(location.search);
@@ -202,7 +208,13 @@
     if (!log.length) return '<div class="glog-empty">No games played yet this season.</div>';
 
     var avg = log.reduce(function (t, g) { return t + g.pts; }, 0) / log.length;
-    return '<table class="glog"><caption>Last ' + log.length + ' games</caption>' +
+    var gapTo = STATE.week - 1;
+    var gap = log[0].season === STATE.season && log[0].week < gapTo;
+    var note = gap
+      ? '<span style="color:#5f77a0;font-weight:600;letter-spacing:.06em"> \u00b7 did not play Wk ' +
+        (log[0].week + 1) + (gapTo > log[0].week + 1 ? '\u2013' + gapTo : '') + '</span>'
+      : '';
+    return '<table class="glog"><caption>Last ' + log.length + ' games played' + note + '</caption>' +
       '<thead><tr><th>Wk</th><th>Opp</th><th>Line</th><th class="n">PPR</th></tr></thead><tbody>' +
       log.map(function (g) {
         return '<tr><td class="wk">' + g.week + '</td>' +
@@ -218,7 +230,7 @@
   /* ---------- render: defense vs position ---------- */
   function dvpHtml(opp, pos) {
     if (!DVP || !DVP.defense || !opp) return '';
-    var code = String(opp).replace(/[^A-Za-z]/g, '').toUpperCase();
+    var code = normTeam(opp);
     var d = DVP.defense[code] && DVP.defense[code][pos];
     if (!d) return '';
 

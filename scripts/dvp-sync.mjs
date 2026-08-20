@@ -3,6 +3,8 @@ import { writeFile, mkdir } from 'node:fs/promises';
 const POS  = ['QB', 'RB', 'WR', 'TE'];
 const OUT  = 'data/dvp.json';
 const L3   = 3;
+const ALIAS = { WSH: 'WAS', JAC: 'JAX', LA: 'LAR', SD: 'LAC', OAK: 'LV', ARZ: 'ARI' };
+const norm = (t) => ALIAS[String(t || '').toUpperCase()] || String(t || '').toUpperCase();
 
 const j = async (url) => {
   const r = await fetch(url);
@@ -22,8 +24,8 @@ async function schedule(season, week) {
       const home = c?.competitors?.find((x) => x.homeAway === 'home');
       const away = c?.competitors?.find((x) => x.homeAway === 'away');
       if (!home || !away) continue;
-      const h = (home.team.abbreviation || '').toUpperCase();
-      const a = (away.team.abbreviation || '').toUpperCase();
+      const h = norm(home.team.abbreviation);
+      const a = norm(away.team.abbreviation);
       map[h] = a; map[a] = h;
     }
   } catch (e) {
@@ -48,7 +50,7 @@ async function main() {
   const idx = new Map();
   for (const [id, p] of Object.entries(players)) {
     if (p?.position && POS.includes(p.position) && p.team) {
-      idx.set(id, { pos: p.position, team: p.team.toUpperCase() });
+      idx.set(id, { pos: p.position, team: norm(p.team) });
     }
   }
   console.log(`  ${idx.size} skill players`);
