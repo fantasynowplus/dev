@@ -1,0 +1,38 @@
+name: Game picks sync
+
+on:
+  schedule:
+    # 11:00 UTC daily = 6am ET / 7am EDT. The display week only advances on
+    # Wednesday or later once lines exist; the other runs fill in late lines
+    # and write final scores so standings grade.
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'Season override (blank = current)'
+        required: false
+        type: string
+      force_display:
+        description: 'Advance the display week now, ignoring the Wednesday gate'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SEASON: ${{ inputs.season }}
+          FORCE_DISPLAY: ${{ inputs.force_display && '1' || '' }}
+        run: node scripts/gamepicks-sync.mjs
