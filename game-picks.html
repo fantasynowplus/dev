@@ -1,0 +1,394 @@
+---
+layout: default
+title: Staff Game Picks
+permalink: /game-picks/
+---
+
+{% include tools-subnav.html %}
+
+<style>
+#gpx {
+  --gpx-line: rgba(0, 40, 99, .14);
+  --gpx-navy: #002863;
+  --gpx-orange: #f4761f;
+  --gpx-aqua: #35c4c4;
+  --gpx-muted: #6b7a90;
+  --gpx-win: #1f9d63;
+  --gpx-loss: #c0402f;
+  --gpx-cream: #fff6e5;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px 60px;
+}
+
+#gpx .gpx-head {
+  align-items: flex-end;
+  border-bottom: 2px solid var(--gpx-navy);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 26px 0 14px;
+}
+
+#gpx h1 {
+  font-family: 'Barlow Condensed', 'Oswald', sans-serif;
+  font-size: 40px;
+  letter-spacing: .01em;
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+#gpx .gpx-sub {
+  color: var(--gpx-muted);
+  font-size: 14px;
+  margin: 6px 0 0;
+  max-width: 620px;
+}
+
+#gpx .gpx-spacer { flex: 1 1 auto; }
+
+#gpx .gpx-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#gpx select {
+  background: #fff;
+  border: 1px solid var(--gpx-line);
+  border-radius: 6px;
+  color: var(--gpx-navy);
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 10px;
+}
+
+#gpx .gpx-tabs {
+  border-bottom: 1px solid var(--gpx-line);
+  display: flex;
+  gap: 4px;
+  margin: 18px 0 22px;
+}
+
+#gpx .gpx-tab {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--gpx-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  padding: 10px 16px;
+  text-transform: uppercase;
+}
+
+#gpx .gpx-tab:hover { color: var(--gpx-navy); }
+
+#gpx .gpx-tab.on {
+  border-bottom-color: var(--gpx-orange);
+  color: var(--gpx-navy);
+}
+
+#gpx .gpx-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+#gpx .gpx-game {
+  background: #fff;
+  border: 1px solid var(--gpx-line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#gpx .gpx-when {
+  align-items: center;
+  background: var(--gpx-cream);
+  border-bottom: 1px solid var(--gpx-line);
+  color: var(--gpx-muted);
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  letter-spacing: .04em;
+  padding: 8px 14px;
+  text-transform: uppercase;
+}
+
+#gpx .gpx-state {
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+}
+
+#gpx .gpx-state.live { background: rgba(192, 64, 47, .12); color: var(--gpx-loss); }
+#gpx .gpx-state.final { background: rgba(0, 40, 99, .1); color: var(--gpx-navy); }
+#gpx .gpx-state.open { background: rgba(53, 196, 196, .16); color: #0d6d6d; }
+
+#gpx .gpx-teams { padding: 12px 14px 4px; }
+
+#gpx .gpx-side {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+#gpx .gpx-side img { height: 30px; width: 30px; object-fit: contain; }
+
+#gpx .gpx-abbr {
+  font-family: 'Barlow Condensed', 'Oswald', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+#gpx .gpx-line {
+  color: var(--gpx-muted);
+  font-size: 13px;
+  margin-left: auto;
+  text-align: right;
+}
+
+#gpx .gpx-score {
+  font-family: 'Barlow Condensed', 'Oswald', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin-left: 12px;
+  min-width: 34px;
+  text-align: right;
+}
+
+#gpx .gpx-side.beat .gpx-abbr,
+#gpx .gpx-side.beat .gpx-score { color: var(--gpx-navy); }
+#gpx .gpx-side.lost { opacity: .5; }
+
+#gpx .gpx-total {
+  border-top: 1px dashed var(--gpx-line);
+  color: var(--gpx-muted);
+  font-size: 12.5px;
+  margin: 8px 14px 0;
+  padding-top: 8px;
+}
+
+#gpx .gpx-mine {
+  border-top: 1px solid var(--gpx-line);
+  margin-top: 10px;
+  padding: 10px 14px;
+}
+
+#gpx .gpx-mrow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+#gpx .gpx-mlabel {
+  color: var(--gpx-muted);
+  font-size: 11px;
+  letter-spacing: .05em;
+  min-width: 48px;
+  text-transform: uppercase;
+}
+
+#gpx .gpx-opt {
+  background: #fff;
+  border: 1px solid var(--gpx-line);
+  border-radius: 7px;
+  color: var(--gpx-navy);
+  cursor: pointer;
+  flex: 1 1 0;
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 8px;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+
+#gpx .gpx-opt:hover:not(:disabled) { border-color: var(--gpx-orange); }
+#gpx .gpx-opt:disabled { cursor: default; opacity: .45; }
+
+#gpx .gpx-opt.on {
+  background: var(--gpx-orange);
+  border-color: var(--gpx-orange);
+  color: #fff;
+  font-weight: 600;
+}
+
+#gpx .gpx-picks {
+  border-top: 1px solid var(--gpx-line);
+  margin-top: auto;
+  padding: 10px 14px 12px;
+}
+
+#gpx .gpx-ptitle {
+  color: var(--gpx-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+#gpx .gpx-prow {
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 40, 99, .07);
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 0;
+}
+
+#gpx .gpx-prow:last-child { border-bottom: 0; }
+
+#gpx .gpx-av {
+  align-items: center;
+  background: var(--gpx-navy);
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  flex: 0 0 24px;
+  font-size: 10px;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  overflow: hidden;
+  width: 24px;
+}
+
+#gpx .gpx-av img { height: 100%; width: 100%; object-fit: cover; }
+
+#gpx .gpx-pname { flex: 1 1 auto; font-weight: 600; }
+
+#gpx .gpx-tag {
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+#gpx .gpx-tag.w { background: rgba(31, 157, 99, .14); color: var(--gpx-win); }
+#gpx .gpx-tag.l { background: rgba(192, 64, 47, .12); color: var(--gpx-loss); }
+#gpx .gpx-tag.n { background: rgba(0, 40, 99, .07); color: var(--gpx-muted); }
+
+#gpx .gpx-crowd .gpx-av { background: var(--gpx-aqua); color: #06222a; }
+#gpx .gpx-crowd .gpx-pname { color: #0d6d6d; }
+
+#gpx .gpx-sealed {
+  color: var(--gpx-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+#gpx .gpx-tally { border-top: 1px solid var(--gpx-line); padding: 10px 14px; }
+
+#gpx table {
+  background: #fff;
+  border: 1px solid var(--gpx-line);
+  border-collapse: collapse;
+  border-radius: 10px;
+  font-size: 14px;
+  overflow: hidden;
+  width: 100%;
+}
+
+#gpx thead th {
+  background: var(--gpx-navy);
+  color: #f5f5f5;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  padding: 10px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+#gpx tbody td {
+  border-bottom: 1px solid rgba(0, 40, 99, .07);
+  padding: 9px 10px;
+}
+
+#gpx tbody tr:nth-child(even) td { background: var(--gpx-cream); }
+#gpx tbody tr:last-child td { border-bottom: 0; }
+
+#gpx tr.gpx-fan td { background: rgba(53, 196, 196, .1); font-weight: 600; }
+
+#gpx .gpx-msg {
+  color: var(--gpx-muted);
+  padding: 40px 0;
+  text-align: center;
+}
+
+#gpx .gpx-cta {
+  background: var(--gpx-cream);
+  border: 1px solid var(--gpx-line);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+}
+
+#gpx .gpx-cta button {
+  background: var(--gpx-orange);
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  margin-left: 10px;
+  padding: 8px 16px;
+}
+
+#gpx .gpx-disc {
+  border-top: 1px solid var(--gpx-line);
+  color: var(--gpx-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 34px;
+  padding-top: 16px;
+}
+
+@media (max-width: 700px) {
+  #gpx h1 { font-size: 32px; }
+  #gpx .gpx-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div id="gpx">
+  <div class="gpx-head">
+    <div>
+      <h1>Staff Game Picks</h1>
+      <p class="gpx-sub">
+        Every FantasyNow+ analyst picks the moneyline, the spread and the total
+        on every game. Picks stay sealed until kickoff. Log in and you can play
+        along — your record is yours alone, and the crowd rides as one line in
+        the standings.
+      </p>
+    </div>
+    <span class="gpx-spacer"></span>
+    <div class="gpx-controls">
+      <select id="gpx-week"></select>
+      <select id="gpx-season"></select>
+    </div>
+  </div>
+
+  <div class="gpx-tabs" id="gpx-tabs"></div>
+  <div id="gpx-body"><div class="gpx-msg">Loading picks…</div></div>
+
+  <p class="gpx-disc">
+    Odds shown are the line of record captured when the week opened and may not
+    reflect current market prices. For entertainment purposes only. Must be 21+
+    and present in a state where wagering is legal. If you or someone you know
+    has a gambling problem, call 1-800-GAMBLER.
+  </p>
+</div>
+
+<script src="{{ '/javascript/game-picks.js' | relative_url }}"></script>
