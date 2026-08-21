@@ -1,21 +1,3 @@
-// scripts/gamepicks-sync.mjs
-//
-// Seeds gp_weeks / gp_games for the upcoming NFL week, freezes the line of
-// record from the-odds-api, writes final scores back so standings grade, and
-// advances the display week on Wednesday once lines exist.
-//
-// Node 20+, no dependencies (same shape as scripts/dvp-sync.mjs).
-//
-// Env:
-//   SUPABASE_URL                 required
-//   SUPABASE_SERVICE_ROLE_KEY    required
-//   ODDS_API_KEY                 required (same key the simulator uses)
-//   SEASON                       optional override
-//   FORCE_DISPLAY                optional "1" to advance the display week now
-//
-// Run daily. It is idempotent: re-running never re-freezes a line that was
-// already taken and never moves the display week backwards.
-
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ODDS_KEY = process.env.ODDS_API_KEY;
@@ -75,7 +57,8 @@ async function getJson(url, opts = {}) {
     const body = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText} for ${url}\n${body.slice(0, 400)}`);
   }
-  return res.status === 204 ? null : res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 function sb(path, opts = {}) {
