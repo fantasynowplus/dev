@@ -72,6 +72,16 @@ function gpKick(iso) {
   });
 }
 
+function gpFallbackLabel(w) {
+  if (w === -4) return 'Hall of Fame';
+  if (w < 0) return 'Preseason ' + (w + 4);
+  if (w === 19) return 'Wild Card';
+  if (w === 20) return 'Divisional';
+  if (w === 21) return 'Conference';
+  if (w === 22) return 'Super Bowl';
+  return 'Week ' + w;
+}
+
 const gpNum = (n) => (n == null || n === '' ? '' : Number(n));
 const gpSigned = (n) => (n == null ? '—' : (n > 0 ? '+' + n : String(n)));
 const gpLocked = (g) => !GP.weekRow || GP.weekRow.status !== 'open' || new Date(g.kickoff) <= new Date();
@@ -155,9 +165,9 @@ function gpRender() {
 
   const weekOpts = GP.weeks.length
     ? GP.weeks.map((w) =>
-        `<option value="${w.week}"${w.week === GP.week ? ' selected' : ''}>Week ${w.week}${w.is_display ? ' • on site' : ''}</option>`
+        `<option value="${w.week}"${w.week === GP.week ? ' selected' : ''}>${gpEsc(w.label || gpFallbackLabel(w.week))}${w.is_display ? ' • on site' : ''}</option>`
       ).join('')
-    : `<option value="${GP.week}" selected>Week ${GP.week}</option>`;
+    : `<option value="${GP.week}" selected>${gpEsc(gpFallbackLabel(GP.week))}</option>`;
 
   host.innerHTML = `
     <div class="gp-bar">
@@ -459,7 +469,7 @@ async function gpRenderStandings() {
 
     const weekOpts = ['<option value="">Full season</option>']
       .concat(GP.weeks.map((w) =>
-        `<option value="${w.week}"${String(w.week) === String(GP.standWeek) ? ' selected' : ''}>Week ${w.week}</option>`
+        `<option value="${w.week}"${String(w.week) === String(GP.standWeek) ? ' selected' : ''}>${gpEsc(w.label || ('Week ' + w.week))}</option>`
       )).join('');
 
     const trs = rows.length

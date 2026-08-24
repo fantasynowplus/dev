@@ -15,9 +15,6 @@
     timer: null,
   };
 
-  // Drop your Tallysight embed in here to put an odds tile on each game card.
-  // Leave enabled false and nothing renders. render(el, game) is called once
-  // per card after the markup is in the DOM.
   var TALLYSIGHT = {
     enabled: false,
     render: function (el, game) {
@@ -25,6 +22,8 @@
       //   + game.away_team + '-' + game.home_team + '"></div>';
     },
   };
+
+  var SEASONS = [2026];
 
   // --------------------------------------------------------------- config
 
@@ -200,10 +199,7 @@
           && GPX.weeks.length) {
         GPX.week = GPX.weeks[GPX.weeks.length - 1].week;
       }
-      var now = new Date();
-      var top = now.getMonth() + 1 >= 3 ? now.getFullYear() : now.getFullYear() - 1;
-      GPX.seasons = [];
-      for (var y = top; y >= top - 4; y--) GPX.seasons.push(y);
+      GPX.seasons = SEASONS.slice();
       renderControls();
     });
   }
@@ -248,15 +244,21 @@
     ws.innerHTML = GPX.weeks.length
       ? GPX.weeks.map(function (w) {
           return '<option value="' + w.week + '"'
-            + (w.week === GPX.week ? ' selected' : '') + '>Week ' + w.week
+            + (w.week === GPX.week ? ' selected' : '') + '>'
+            + esc(w.label || ('Week ' + w.week))
             + (w.is_display ? ' • current' : '') + '</option>';
         }).join('')
       : '<option>Week ' + GPX.week + '</option>';
 
-    ss.innerHTML = GPX.seasons.map(function (y) {
-      return '<option value="' + y + '"'
-        + (y === GPX.season ? ' selected' : '') + '>' + y + '</option>';
-    }).join('');
+    if (GPX.seasons.length < 2) {
+      ss.style.display = 'none';
+    } else {
+      ss.style.display = '';
+      ss.innerHTML = GPX.seasons.map(function (y) {
+        return '<option value="' + y + '"'
+          + (y === GPX.season ? ' selected' : '') + '>' + y + '</option>';
+      }).join('');
+    }
 
     ws.onchange = function () {
       GPX.week = parseInt(this.value, 10);
@@ -269,8 +271,9 @@
   }
 
   function render() {
+    var wk = GPX.weeks.filter(function (w) { return w.week === GPX.week; })[0];
     var tabs = [
-      { k: 'board', label: 'Week ' + GPX.week },
+      { k: 'board', label: (wk && wk.label) || ('Week ' + GPX.week) },
       { k: 'standings', label: 'Standings' },
     ];
     if (loggedIn()) tabs.push({ k: 'me', label: 'My record' });
