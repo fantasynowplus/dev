@@ -1,3 +1,25 @@
+// scripts/gamepicks-sync.mjs
+//
+// Seeds gp_weeks / gp_games for the upcoming NFL week, freezes the line of
+// record from the-odds-api, writes final scores back so standings grade, and
+// advances the display week on Wednesday once lines exist.
+//
+// Covers preseason, regular season and playoffs on one week axis:
+//   -4 HOF, -3/-2/-1 preseason, 1..18 regular, 19..22 playoffs.
+//
+// Schedule + scores come from nflverse games.csv for the regular season and
+// playoffs, and from ESPN's public scoreboard for the preseason, which
+// nflverse does not carry at all.
+//
+// Node 20+, no dependencies.
+//
+// Env:
+//   SUPABASE_URL                 required
+//   SUPABASE_SERVICE_ROLE_KEY    required
+//   ODDS_API_KEY                 required (same key the simulator uses)
+//   SEASON                       optional override
+//   FORCE_DISPLAY                optional "1" to advance the display week now
+
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ODDS_KEY = process.env.ODDS_API_KEY;
@@ -70,8 +92,21 @@ function weekLabel(w) {
 
 // ------------------------------------------------------------- utilities
 
+// ESPN rejects default datacenter user-agents with a 403, so every outbound
+// request carries a browser-ish UA.
+const UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+
 async function getJson(url, opts = {}) {
-  const res = await fetch(url, opts);
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      'User-Agent': UA,
+      Accept: 'application/json, text/plain, */*',
+      ...(opts.headers || {}),
+    },
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText} for ${url}\n${body.slice(0, 400)}`);
@@ -199,7 +234,7 @@ async function loadPreseason(season) {
     const url = `${ESPN_URL}?dates=${season}&seasontype=1&week=${w}`;
     let data;
     try {
-      data = await getJson(url);
+      data = await getJson(url, { headers: { Referer: 'https://www.espn.com/' } });
     } catch (err) {
       console.warn(`ESPN preseason week ${w} failed: ${err.message}`);
       continue;
@@ -408,7 +443,8 @@ async function advanceDisplay(weekRow, games) {
 
   const current = await sbGet('gp_weeks?is_display=eq.true&select=*');
   const cur = current[0];
-  if (cur && cur.season === weekRow.season && cur.week > weekRow.week) {
+  if (!FORCE_DISPLAY && cur && cur.season === weekRow.season
+      && cur.week > weekRow.week) {
     console.log(`Display week manually set ahead (${weekLabel(cur.week)}) — leaving it.`);
     return false;
   }
