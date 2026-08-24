@@ -591,6 +591,44 @@
     .gp-markets{gap:10px}
     .gp-mkt{flex:1 1 100%}
   }
+
+.cal-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0}
+.cal-toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
+.cal-month{font-weight:700;font-size:16px;min-width:170px;text-align:center}
+.cal-legend{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:12px;color:var(--muted)}
+.cal-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--line);gap:1px}
+.cal-dow{background:var(--navy);color:#fff;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 6px;text-align:center;font-weight:700}
+.cal-cell{background:#fff;min-height:118px;padding:6px 6px 8px;display:flex;flex-direction:column;gap:4px}
+.cal-cell.out{background:#fafafa}
+.cal-cell.out .cal-date{color:#c4c4c4}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--orange)}
+.cal-date{font-size:12px;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.cal-add{opacity:0;border:0;background:none;color:var(--navy);font-size:15px;line-height:1;cursor:pointer;padding:0 2px}
+.cal-cell:hover .cal-add{opacity:.6}
+.cal-add:hover{opacity:1!important}
+.cal-ev{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--ev,var(--navy));background:#f4f6fa;border-radius:5px;padding:4px 6px;font:inherit;font-size:11.5px;line-height:1.3;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-ev:hover{background:#eaeef6}
+.cal-ev.pre{background:#f6f7f8;border-left-style:dashed}
+.cal-ev.canceled{opacity:.5;text-decoration:line-through}
+.cal-ev .cal-t{font-weight:700;color:var(--navy);margin-right:4px}
+.cal-more{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px;text-align:left}
+.cal-day{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
+.cal-day h4{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cal-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.cal-row:first-of-type{border-top:0}
+.cal-row:hover{background:#fafbfd}
+.cal-when{width:88px;flex:none;font-weight:700;color:var(--navy);font-size:13px}
+.cal-body{flex:1;min-width:0}
+.cal-title{font-weight:600}
+.cal-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:1px}
+.tag-live{background:#fdece9;color:#EA4E3D}
+.tag-pre{background:#e7fbf3;color:#0b7a58}
+.tag-status{background:#eef1f6;color:var(--muted)}
+.ppl-pick{max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}
+.ppl-pick label{display:flex;gap:8px;align-items:center;padding:3px 2px;font-size:13.5px;cursor:pointer}
+.ser-when{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -629,13 +667,14 @@
       <button data-go="my_onboarding" id="navMyOnboarding" style="display:none">My Onboarding</button>
       <div class="nav-label">Content</div>
       <button data-go="channels">Channels</button>
-      <button data-go="youtube">YouTube Stats</button>
       <button data-go="shows">Shows</button>
-      <button data-go="tools">Tools &amp; links</button>
+      <button class="nav-btn" data-nav="calendar" onclick="go('calendar')">Content calendar</button>
       <button data-go="gamepicks">Game Picks</button>
       <button data-go="startsit">Start/Sit Showdown</button>
       <div class="nav-label">Work</div>
       <button data-go="board">Project Board</button>
+      <button data-go="youtube">YouTube Stats</button>
+      <button data-go="tools">Tools &amp; links</button>
       <div class="nav-label">Access</div>
       <button data-go="roles">Roles &amp; permissions</button>
     </nav>
@@ -668,7 +707,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -693,7 +732,7 @@ let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
   {label:'Content', keys:['shows','tools','channels','youtube', 'startsit', 'gamepicks']},
-  {label:'Work', keys:['board']},
+  {label:'Work', keys:['calendar','board']},
   {label:'Access', keys:['roles']}
 ];
 function resourceGroups(){
@@ -709,7 +748,7 @@ function resourceGroups(){
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment', 
   onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart',
-  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks'
+  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar'
 };
 function can(resource, action){
   if(ME && ME.admin_level >= 9) return true;
@@ -917,7 +956,7 @@ function go(name){
   }
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
-    shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles,
+    shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles, calendar:loadCalendar,
     startsit:loadStartsit, gamepicks:loadGamePicks}[name];
     
   fn().catch(err=>{
@@ -1439,6 +1478,495 @@ async function showForm(id){
 
 function showDelete(id){const s=SHOWS.find(x=>x.id===id);confirmDelete(esc(s.name),async()=>{
   await dbDel('shows?id=eq.'+id);SHOWS=SHOWS.filter(x=>x.id!==id);renderShows('');toast('Show removed');});}
+
+/* ---------- Content calendar ---------- */
+const CAL_TARGET = '#view';
+function calMount(html){ document.querySelector(CAL_TARGET).innerHTML = html; }
+
+const EV_SELECT = 'id,title,show_id,channel_id,series_id,format,status,starts_at,duration_minutes,location,video_url,notes,'
+  + 'show:shows(id,name,channel_id),channel:channels(id,name),'
+  + 'people:event_people(id,role,staff_id,guest_id,staff:staff(id,name),guest:guests(id,name))';
+const SER_SELECT = 'id,title,show_id,format,freq,dow,day_of_month,start_time,duration_minutes,tz,starts_on,ends_on,is_active,notes,show:shows(id,name)';
+
+let CAL_TAB = 'month';
+let CAL_MONTH = (function(){ const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d; })();
+let CAL_EVENTS = [], CAL_SERIES = [], CAL_GUESTS = [], CAL_SHOWS = [], CAL_CHANNELS = [], CAL_STAFF = [];
+let CAL_FILTER = { show:'', channel:'', format:'' };
+const CAL_EXPAND = {};
+
+const calv = id => (document.getElementById(id)?.value || '').trim();
+const calChecked = sel => Array.from(document.querySelectorAll(sel)).filter(c=>c.checked).map(c=>c.value);
+const DOW = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function calDayKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function calTime(iso){ return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+function calLongDay(d){ return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}); }
+function calTitle(e){ return e.title || e.show?.name || 'Untitled'; }
+function calHosts(e){ return (e.people||[]).filter(p=>p.role==='host'||p.role==='cohost'); }
+function calGuestsOf(e){ return (e.people||[]).filter(p=>p.role==='guest'); }
+
+async function loadCalendar(){
+  const from = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()-1, 1).toISOString();
+  const to   = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()+3, 1).toISOString();
+  const safe = p => p.catch(()=>[]);
+  const [evs, series, guests, shows, chans, staff] = await Promise.all([
+    safe(dbGet(`content_events?select=${EV_SELECT}&starts_at=gte.${from}&starts_at=lt.${to}&order=starts_at.asc`)),
+    safe(dbGet(`content_series?select=${SER_SELECT}&order=title.asc`)),
+    safe(dbGet('guests?select=id,name,org,email,handle,notes&order=name.asc')),
+    safe(dbGet('shows?select=id,name,channel_id&order=name.asc')),
+    safe(dbGet('channels?select=id,name&order=name.asc')),
+    safe(dbGet('staff?select=id,name&is_active=eq.true&order=name.asc'))
+  ]);
+  CAL_EVENTS = evs; CAL_SERIES = series; CAL_GUESTS = guests;
+  CAL_SHOWS = shows; CAL_CHANNELS = chans; CAL_STAFF = staff;
+  renderCalendar();
+}
+
+function calTab(t){ CAL_TAB = t; renderCalendar(); }
+function calSetFilter(k, v){ CAL_FILTER[k] = v; renderCalendar(); }
+function calShift(n){
+  CAL_MONTH = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()+n, 1);
+  loadCalendar();
+}
+function calToday(){
+  const d = new Date(); d.setDate(1); d.setHours(0,0,0,0);
+  CAL_MONTH = d; loadCalendar();
+}
+
+function calFiltered(){
+  return CAL_EVENTS.filter(e =>
+    (!CAL_FILTER.show    || e.show_id === CAL_FILTER.show) &&
+    (!CAL_FILTER.channel || (e.channel_id || e.show?.channel_id) === CAL_FILTER.channel) &&
+    (!CAL_FILTER.format  || e.format === CAL_FILTER.format));
+}
+
+function renderCalendar(){
+  const tabs = [['month','Calendar'],['list','Upcoming'],['series','Recurring'],['guests','Guests']];
+  const add = CAL_TAB === 'series' ? ifCan('calendar','c','<button class="btn btn-primary" onclick="seriesForm()">+ Add recurring show</button>')
+            : CAL_TAB === 'guests' ? ifCan('calendar','c','<button class="btn btn-primary" onclick="guestForm()">+ Add guest</button>')
+            : ifCan('calendar','c','<button class="btn btn-primary" onclick="eventForm()">+ Add episode</button>');
+  const body = CAL_TAB === 'month'  ? calMonthHtml()
+             : CAL_TAB === 'list'   ? calListHtml()
+             : CAL_TAB === 'series' ? calSeriesHtml()
+             : calGuestsHtml();
+  calMount(`<div class="panel">
+    <div class="panel-head"><h2>Content calendar</h2>${add}</div>
+    <div class="onb-tabs">${tabs.map(([k,l])=>`<button class="${CAL_TAB===k?'on':''}" onclick="calTab('${k}')">${l}</button>`).join('')}</div>
+    ${body}
+  </div>`);
+}
+
+function calFilterBar(withNav){
+  const opt = (list, sel) => list.map(x=>`<option value="${x.id}" ${sel===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
+  return `<div class="cal-toolbar">
+    ${withNav ? `<button class="btn btn-ghost btn-sm" onclick="calShift(-1)">‹</button>
+      <span class="cal-month">${CAL_MONTH.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span>
+      <button class="btn btn-ghost btn-sm" onclick="calShift(1)">›</button>
+      <button class="btn btn-ghost btn-sm" onclick="calToday()">Today</button>` : ''}
+    <select onchange="calSetFilter('show',this.value)"><option value="">All shows</option>${opt(CAL_SHOWS, CAL_FILTER.show)}</select>
+    <select onchange="calSetFilter('channel',this.value)"><option value="">All channels</option>${opt(CAL_CHANNELS, CAL_FILTER.channel)}</select>
+    <select onchange="calSetFilter('format',this.value)">
+      <option value="">Live + pre-recorded</option>
+      <option value="live" ${CAL_FILTER.format==='live'?'selected':''}>Live only</option>
+      <option value="prerecorded" ${CAL_FILTER.format==='prerecorded'?'selected':''}>Pre-recorded only</option>
+    </select>
+    <span class="cal-legend"><span><i style="background:#EA4E3D"></i>Live</span><span><i style="background:#42F4B0"></i>Pre-recorded</span></span>
+  </div>`;
+}
+
+function calMonthHtml(){
+  const y = CAL_MONTH.getFullYear(), m = CAL_MONTH.getMonth();
+  const first = new Date(y, m, 1);
+  const days = new Date(y, m+1, 0).getDate();
+  const weeks = Math.ceil((first.getDay() + days) / 7);
+  const start = new Date(y, m, 1 - first.getDay());
+  const todayKey = calDayKey(new Date());
+  const byDay = {};
+  calFiltered().forEach(e => { const k = calDayKey(new Date(e.starts_at)); (byDay[k] = byDay[k] || []).push(e); });
+
+  let cells = '';
+  for (let i = 0; i < weeks*7; i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+    const key = calDayKey(d);
+    const list = byDay[key] || [];
+    const show = CAL_EXPAND[key] ? list : list.slice(0,3);
+    cells += `<div class="cal-cell ${d.getMonth()!==m?'out':''} ${key===todayKey?'today':''}">
+      <div class="cal-date"><span>${d.getDate()}</span>
+        ${ifCan('calendar','c',`<button class="cal-add" title="Add episode" onclick="eventForm(null,'${key}')">+</button>`)}</div>
+      ${show.map(e=>`<button class="cal-ev ${e.format==='live'?'live':'pre'} ${e.status==='canceled'?'canceled':''}"
+          style="--ev:${e.format==='live'?'#EA4E3D':'#42F4B0'}" onclick="eventDetail('${e.id}')">
+          <span class="cal-t">${calTime(e.starts_at)}</span>${esc(calTitle(e))}</button>`).join('')}
+      ${list.length>3 && !CAL_EXPAND[key] ? `<button class="cal-more" onclick="calExpand('${key}')">+${list.length-3} more</button>` : ''}
+    </div>`;
+  }
+  return calFilterBar(true) + `<div class="cal-grid">
+    ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+    ${cells}</div>`;
+}
+function calExpand(k){ CAL_EXPAND[k] = true; renderCalendar(); }
+
+function calListHtml(){
+  const now = Date.now();
+  const list = calFiltered().filter(e => new Date(e.starts_at).getTime() > now - 6*3600e3)
+                            .sort((a,b)=> new Date(a.starts_at) - new Date(b.starts_at));
+  if (!list.length) return calFilterBar(false) + '<div class="empty">Nothing scheduled ahead.</div>';
+  const byDay = {};
+  list.forEach(e => { const k = calDayKey(new Date(e.starts_at)); (byDay[k] = byDay[k] || []).push(e); });
+  return calFilterBar(false) + Object.keys(byDay).sort().map(k => {
+    const d = new Date(k + 'T12:00:00');
+    return `<div class="cal-day"><h4>${calLongDay(d)}</h4>${byDay[k].map(calRowHtml).join('')}</div>`;
+  }).join('');
+}
+
+function calRowHtml(e){
+  const hosts = calHosts(e).map(p => p.staff?.name || p.guest?.name).filter(Boolean);
+  const gs = calGuestsOf(e).map(p => p.guest?.name || p.staff?.name).filter(Boolean);
+  return `<div class="cal-row" onclick="eventDetail('${e.id}')">
+    <div class="cal-when">${calTime(e.starts_at)}</div>
+    <div class="cal-body">
+      <div class="cal-title">${esc(calTitle(e))}
+        <span class="tag ${e.format==='live'?'tag-live':'tag-pre'}">${e.format==='live'?'Live':'Pre-rec'}</span>
+        ${e.status!=='scheduled'?`<span class="tag tag-status">${esc(e.status)}</span>`:''}</div>
+      <div class="cal-meta">
+        ${e.show?esc(e.show.name):'No show'}${e.channel?' · '+esc(e.channel.name):''}
+        ${hosts.length?' · Host: '+esc(hosts.join(', ')):''}
+        ${gs.length?' · Guests: '+esc(gs.join(', ')):''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ----- event create / edit ----- */
+function eventForm(id, dayKey){
+  const e = id ? CAL_EVENTS.find(x=>x.id===id) : null;
+  const d = e ? new Date(e.starts_at) : (dayKey ? new Date(dayKey+'T19:00:00') : new Date());
+  const dv = calDayKey(d);
+  const tv = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const hostIds = e ? calHosts(e).map(p=>p.staff_id).filter(Boolean) : [];
+  const guestIds = e ? calGuestsOf(e).map(p=>p.guest_id).filter(Boolean) : [];
+  const opts = (list, sel) => list.map(x=>`<option value="${x.id}" ${sel===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
+
+  const m = modal({
+    title: e ? 'Edit episode' : 'Add episode',
+    wide: true,
+    saveLabel: 'Save episode',
+    body: `<div class="form-grid">
+      <div class="field full"><label>Episode title</label>
+        <input id="evTitle" value="${e?esc(e.title||''):''}" placeholder="Leave blank to use the show name"></div>
+      <div class="field"><label>Show</label>
+        <select id="evShow" onchange="evShowPick(this.value)"><option value="">— none —</option>${opts(CAL_SHOWS, e?.show_id)}</select></div>
+      <div class="field"><label>Channel</label>
+        <select id="evChannel"><option value="">— none —</option>${opts(CAL_CHANNELS, e?.channel_id || e?.show?.channel_id)}</select></div>
+      <div class="field"><label>Type</label>
+        <select id="evFormat">
+          <option value="live" ${e?.format!=='prerecorded'?'selected':''}>Live</option>
+          <option value="prerecorded" ${e?.format==='prerecorded'?'selected':''}>Pre-recorded</option>
+        </select></div>
+      <div class="field"><label>Status</label>
+        <select id="evStatus">${['scheduled','recorded','published','canceled'].map(s=>
+          `<option value="${s}" ${e?.status===s?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}</select></div>
+      <div class="field"><label>Date</label><input type="date" id="evDate" value="${dv}"></div>
+      <div class="field"><label>Start time</label><input type="time" id="evTime" value="${tv}"></div>
+      <div class="field"><label>Length (min)</label><input type="number" id="evLen" min="5" step="5" value="${e?e.duration_minutes:60}"></div>
+      <div class="field"><label>Location / studio</label><input id="evLoc" value="${e?esc(e.location||''):''}"></div>
+      <div class="field full"><label>Video / stream link</label><input id="evUrl" value="${e?esc(e.video_url||''):''}"></div>
+      <div class="field"><label>Hosts (staff)</label>
+        <div class="ppl-pick">${CAL_STAFF.length?CAL_STAFF.map(s=>
+          `<label><input type="checkbox" class="evHost" value="${s.id}" ${hostIds.includes(s.id)?'checked':''}>${esc(s.name)}</label>`).join(''):'<div class="empty">No staff visible.</div>'}</div></div>
+      <div class="field"><label>Guests</label>
+        <div class="ppl-pick" id="evGuestPick">${CAL_GUESTS.length?CAL_GUESTS.map(g=>
+          `<label><input type="checkbox" class="evGuest" value="${g.id}" ${guestIds.includes(g.id)?'checked':''}>${esc(g.name)}${g.org?' <span class="mono">· '+esc(g.org)+'</span>':''}</label>`).join(''):'<div class="empty">No guests yet.</div>'}</div>
+        ${ifCan('calendar','c','<button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="guestQuickAdd()">+ New guest</button>')}</div>
+      <div class="field full"><label>Notes</label><textarea id="evNotes" rows="3">${e?esc(e.notes||''):''}</textarea></div>
+    </div>`,
+    onSave: async () => {
+      const date = calv('evDate'), time = calv('evTime');
+      if (!date || !time) return toast('Pick a date and time');
+      const payload = {
+        title: calv('evTitle') || null,
+        show_id: calv('evShow') || null,
+        channel_id: calv('evChannel') || null,
+        format: calv('evFormat'),
+        status: calv('evStatus'),
+        starts_at: new Date(`${date}T${time}`).toISOString(),
+        duration_minutes: parseInt(calv('evLen')||'60', 10),
+        location: calv('evLoc') || null,
+        video_url: calv('evUrl') || null,
+        notes: calv('evNotes') || null
+      };
+      const hosts = calChecked('.evHost'), guests = calChecked('.evGuest');
+      let eid = id;
+      if (id){
+        await dbPatch(`content_events?id=eq.${id}`, payload);            // db call
+      } else {
+        const ins = await dbPost('content_events', payload);
+        eid = Array.isArray(ins) ? ins[0]?.id : ins?.id;
+      }
+      if (eid){
+        await dbDel(`event_people?event_id=eq.${eid}`);                  // db call
+        const rows = hosts.map(s=>({event_id:eid, role:'host', staff_id:s}))
+          .concat(guests.map(g=>({event_id:eid, role:'guest', guest_id:g})));
+        if (rows.length) await dbPost('event_people', rows);
+      }
+      toast('Episode saved');
+      if (m.close) m.close();
+      loadCalendar();
+    }
+  });
+}
+
+function evShowPick(showId){
+  const s = CAL_SHOWS.find(x=>x.id===showId);
+  const sel = document.getElementById('evChannel');
+  if (s && s.channel_id && sel && !sel.value) sel.value = s.channel_id;
+}
+
+async function guestQuickAdd(){
+  const name = prompt('Guest name');
+  if (!name) return;
+  const ins = await dbPost('guests', { name: name.trim() });
+  const g = Array.isArray(ins) ? ins[0] : ins;
+  if (!g?.id) return toast('Could not add guest');
+  CAL_GUESTS.push({ id:g.id, name:g.name });
+  CAL_GUESTS.sort((a,b)=>a.name.localeCompare(b.name));
+  const pick = document.getElementById('evGuestPick');
+  if (pick) pick.insertAdjacentHTML('beforeend',
+    `<label><input type="checkbox" class="evGuest" value="${g.id}" checked>${esc(g.name)}</label>`);
+}
+
+/* ----- event detail (cross-links) ----- */
+async function eventDetail(id){
+  const rows = await dbGet(`content_events?select=${EV_SELECT}&id=eq.${id}`);
+  const e = rows[0];
+  if (!e) return toast('Episode not found');
+  const chip = (label, fn) => `<button class="chip chip-link" onclick="${fn}">${esc(label)}</button>`;
+  const hosts = calHosts(e).map(p => p.staff
+      ? chip(p.staff.name, `viewStaff('${p.staff.id}')`)
+      : chip(p.guest?.name || '—', `guestDetail('${p.guest_id}')`)).join(' ') || '<span class="mono">—</span>';
+  const gs = calGuestsOf(e).map(p => p.guest
+      ? chip(p.guest.name, `guestDetail('${p.guest.id}')`)
+      : chip(p.staff?.name || '—', `viewStaff('${p.staff_id}')`)).join(' ') || '<span class="mono">—</span>';
+  const when = new Date(e.starts_at);
+
+  const m = modal({
+    title: calTitle(e),
+    wide: true,
+    footer: false,
+    body: `<div>
+      <p class="mono">${calLongDay(when)} · ${calTime(e.starts_at)} · ${e.duration_minutes} min</p>
+      <p><span class="tag ${e.format==='live'?'tag-live':'tag-pre'}">${e.format==='live'?'Live':'Pre-recorded'}</span>
+         <span class="tag tag-status">${esc(e.status)}</span>
+         ${e.series_id?'<span class="tag tag-status">Recurring</span>':''}</p>
+      ${detailRow('Show', e.show ? chip(e.show.name, `viewShow('${e.show.id}')`) : '—')}
+      ${detailRow('Channel', e.channel ? chip(e.channel.name, `viewChannel('${e.channel.id}')`) : '—')}
+      ${detailRow('Hosts', hosts)}
+      ${detailRow('Guests', gs)}
+      ${detailRow('Location', esc(e.location||'—'))}
+      ${detailRow('Link', e.video_url?`<a href="${esc(e.video_url)}" target="_blank" rel="noopener">${esc(e.video_url)}</a>`:'—')}
+      ${detailRow('Notes', esc(e.notes||'—'))}
+      <div class="row-actions" style="margin-top:14px">
+        ${ifCan('calendar','u',`<button class="btn btn-primary btn-sm" onclick="calCloseThen(()=>eventForm('${e.id}'))">Edit</button>`)}
+        ${ifCan('calendar','d',`<button class="btn btn-danger btn-sm" onclick="eventDelete('${e.id}')">Delete</button>`)}
+      </div>
+    </div>`
+  });
+  window.__calModal = m;
+}
+function calCloseThen(fn){ if (window.__calModal?.close) window.__calModal.close(); fn(); }
+
+async function eventDelete(id){
+  if (!confirm('Delete this episode?')) return;
+  await dbDel(`content_events?id=eq.${id}`);                            // db call
+  if (window.__calModal?.close) window.__calModal.close();
+  toast('Episode deleted');
+  loadCalendar();
+}
+
+/* ----- recurring series ----- */
+function calSeriesHtml(){
+  if (!CAL_SERIES.length) return '<div class="empty">No recurring shows yet. Add one to auto-fill the calendar.</div>';
+  return `<div class="table-wrap"><table><thead><tr>
+      <th>Series</th><th>Show</th><th>Type</th><th>Repeats</th><th>Runs</th><th></th>
+    </tr></thead><tbody>${CAL_SERIES.map(s=>`<tr>
+      <td><strong>${esc(s.title)}</strong>${s.is_active?'':' <span class="tag tag-status">Paused</span>'}</td>
+      <td>${s.show?esc(s.show.name):'—'}</td>
+      <td><span class="tag ${s.format==='live'?'tag-live':'tag-pre'}">${s.format==='live'?'Live':'Pre-rec'}</span></td>
+      <td class="ser-when">${calFreqText(s)}</td>
+      <td class="ser-when">${fmtDate(s.starts_on)}${s.ends_on?' – '+fmtDate(s.ends_on):' – ongoing'}</td>
+      <td class="row-actions">
+        ${ifCan('calendar','c',`<button class="btn btn-ghost btn-sm" onclick="seriesGenerate('${s.id}',false)">Generate</button>`)}
+        ${ifCan('calendar','u',`<button class="btn btn-ghost btn-sm" onclick="seriesForm('${s.id}')">Edit</button>`)}
+        ${ifCan('calendar','d',`<button class="btn btn-danger btn-sm" onclick="seriesDelete('${s.id}')">Delete</button>`)}
+      </td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function calFreqText(s){
+  const t = s.start_time ? s.start_time.slice(0,5) : '';
+  if (s.freq === 'daily') return `Every day at ${t}`;
+  if (s.freq === 'monthly') return `Monthly on day ${s.day_of_month||'—'} at ${t}`;
+  return `${s.freq==='biweekly'?'Every other':'Every'} ${DOW[s.dow??0]} at ${t}`;
+}
+
+function seriesForm(id){
+  const s = id ? CAL_SERIES.find(x=>x.id===id) : null;
+  const opts = list => list.map(x=>`<option value="${x.id}" ${s?.show_id===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
+  const m = modal({
+    title: s ? 'Edit recurring show' : 'New recurring show',
+    wide: true,
+    saveLabel: 'Save & generate',
+    body: `<div class="form-grid">
+      <div class="field full"><label>Series title</label><input id="srTitle" value="${s?esc(s.title):''}" placeholder="e.g. Monday Night Waivers"></div>
+      <div class="field"><label>Show</label><select id="srShow"><option value="">— none —</option>${opts(CAL_SHOWS)}</select></div>
+      <div class="field"><label>Type</label><select id="srFormat">
+        <option value="live" ${s?.format!=='prerecorded'?'selected':''}>Live</option>
+        <option value="prerecorded" ${s?.format==='prerecorded'?'selected':''}>Pre-recorded</option></select></div>
+      <div class="field"><label>Repeats</label><select id="srFreq" onchange="srFreqToggle()">
+        ${['weekly','biweekly','daily','monthly'].map(f=>`<option value="${f}" ${s?.freq===f?'selected':''}>${f[0].toUpperCase()+f.slice(1)}</option>`).join('')}</select></div>
+      <div class="field" id="srDowWrap"><label>Day of week</label><select id="srDow">
+        ${DOW.map((d,i)=>`<option value="${i}" ${(s?.dow??1)===i?'selected':''}>${d}</option>`).join('')}</select></div>
+      <div class="field" id="srDomWrap" style="display:none"><label>Day of month</label>
+        <input type="number" id="srDom" min="1" max="31" value="${s?.day_of_month||1}"></div>
+      <div class="field"><label>Start time (CT)</label><input type="time" id="srTime" value="${s?s.start_time.slice(0,5):'19:00'}"></div>
+      <div class="field"><label>Length (min)</label><input type="number" id="srLen" min="5" step="5" value="${s?s.duration_minutes:60}"></div>
+      <div class="field"><label>First date</label><input type="date" id="srStart" value="${s?s.starts_on:calDayKey(new Date())}"></div>
+      <div class="field"><label>End date (optional)</label><input type="date" id="srEnd" value="${s?.ends_on||''}"></div>
+      <div class="field"><label>Active</label><select id="srActive">
+        <option value="true" ${s?.is_active!==false?'selected':''}>Yes</option>
+        <option value="false" ${s?.is_active===false?'selected':''}>Paused</option></select></div>
+      <div class="field full"><label>Notes</label><textarea id="srNotes" rows="2">${s?esc(s.notes||''):''}</textarea></div>
+      ${s?`<div class="field full"><label><input type="checkbox" id="srReset"> Rebuild future episodes (wipes upcoming occurrences of this series and re-creates them)</label></div>`:''}
+    </div>`,
+    onSave: async () => {
+      const payload = {
+        title: calv('srTitle'),
+        show_id: calv('srShow') || null,
+        format: calv('srFormat'),
+        freq: calv('srFreq'),
+        dow: calv('srFreq')==='monthly' || calv('srFreq')==='daily' ? null : parseInt(calv('srDow'),10),
+        day_of_month: calv('srFreq')==='monthly' ? parseInt(calv('srDom'),10) : null,
+        start_time: calv('srTime'),
+        duration_minutes: parseInt(calv('srLen')||'60',10),
+        starts_on: calv('srStart'),
+        ends_on: calv('srEnd') || null,
+        is_active: calv('srActive') === 'true',
+        notes: calv('srNotes') || null
+      };
+      if (!payload.title) return toast('Give the series a title');
+      let sid = id;
+      if (id){
+        await dbPatch(`content_series?id=eq.${id}`, payload);           // db call
+      } else {
+        const ins = await dbPost('content_series', payload);
+        sid = Array.isArray(ins) ? ins[0]?.id : ins?.id;
+      }
+      const reset = !!document.getElementById('srReset')?.checked;
+      if (sid) await seriesGenerate(sid, reset, true);
+      if (m.close) m.close();
+      loadCalendar();
+    },
+    onReady: () => srFreqToggle()
+  });
+}
+
+function srFreqToggle(){
+  const f = calv('srFreq');
+  const dow = document.getElementById('srDowWrap'), dom = document.getElementById('srDomWrap');
+  if (dow) dow.style.display = (f==='weekly'||f==='biweekly') ? '' : 'none';
+  if (dom) dom.style.display = (f==='monthly') ? '' : 'none';
+}
+
+async function seriesGenerate(id, reset, quiet){
+  try {
+    const n = await rpc('generate_series_events', { p_series:id, p_through:null, p_reset:!!reset });
+    toast(`${n||0} episode${n===1?'':'s'} scheduled`);
+  } catch(err){ toast('Could not generate episodes'); }
+  if (!quiet) loadCalendar();
+}
+
+async function seriesDelete(id){
+  if (!confirm('Delete this recurring show? Episodes already on the calendar are kept.')) return;
+  await dbDel(`content_series?id=eq.${id}`);                            // db call
+  toast('Recurring show deleted');
+  loadCalendar();
+}
+
+/* ----- guests ----- */
+function calGuestsHtml(){
+  if (!CAL_GUESTS.length) return '<div class="empty">No guests yet.</div>';
+  const count = {};
+  CAL_EVENTS.forEach(e => calGuestsOf(e).forEach(p => { if (p.guest_id) count[p.guest_id] = (count[p.guest_id]||0)+1; }));
+  return `<div class="table-wrap"><table><thead><tr>
+      <th>Name</th><th>Org</th><th>Contact</th><th>Appearances</th><th></th>
+    </tr></thead><tbody>${CAL_GUESTS.map(g=>`<tr>
+      <td><button class="chip chip-link" onclick="guestDetail('${g.id}')">${esc(g.name)}</button></td>
+      <td>${esc(g.org||'—')}</td>
+      <td class="mono">${esc(g.email||g.handle||'—')}</td>
+      <td>${count[g.id]||0}</td>
+      <td class="row-actions">
+        ${ifCan('calendar','u',`<button class="btn btn-ghost btn-sm" onclick="guestForm('${g.id}')">Edit</button>`)}
+        ${ifCan('calendar','d',`<button class="btn btn-danger btn-sm" onclick="guestDelete('${g.id}')">Delete</button>`)}
+      </td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function guestForm(id){
+  const g = id ? CAL_GUESTS.find(x=>x.id===id) : null;
+  const m = modal({
+    title: g ? 'Edit guest' : 'Add guest',
+    saveLabel: 'Save guest',
+    body: `<div class="form-grid">
+      <div class="field full"><label>Name</label><input id="gsName" value="${g?esc(g.name):''}"></div>
+      <div class="field"><label>Organization</label><input id="gsOrg" value="${g?esc(g.org||''):''}"></div>
+      <div class="field"><label>Handle</label><input id="gsHandle" value="${g?esc(g.handle||''):''}" placeholder="@"></div>
+      <div class="field"><label>Email</label><input id="gsEmail" value="${g?esc(g.email||''):''}"></div>
+      <div class="field"><label>Phone</label><input id="gsPhone" value="${g?esc(g.phone||''):''}"></div>
+      <div class="field full"><label>Notes</label><textarea id="gsNotes" rows="3">${g?esc(g.notes||''):''}</textarea></div>
+    </div>`,
+    onSave: async () => {
+      const payload = { name: calv('gsName'), org: calv('gsOrg')||null, handle: calv('gsHandle')||null,
+        email: calv('gsEmail')||null, phone: calv('gsPhone')||null, notes: calv('gsNotes')||null };
+      if (!payload.name) return toast('Name is required');
+      if (id) await dbPatch(`guests?id=eq.${id}`, payload);             // db call
+      else    await dbPost('guests', payload);
+      toast('Guest saved');
+      if (m.close) m.close();
+      loadCalendar();
+    }
+  });
+}
+
+async function guestDelete(id){
+  if (!confirm('Delete this guest? They will be removed from any episodes.')) return;
+  await dbDel(`guests?id=eq.${id}`);                                    // db call
+  toast('Guest deleted');
+  loadCalendar();
+}
+
+async function guestDetail(id){
+  const [rows, apps] = await Promise.all([
+    dbGet(`guests?select=*&id=eq.${id}`),
+    dbGet(`event_people?select=role,event:content_events(id,title,starts_at,format,show:shows(id,name))&guest_id=eq.${id}`).catch(()=>[])
+  ]);
+  const g = rows[0];
+  if (!g) return toast('Guest not found');
+  const list = apps.filter(a=>a.event).sort((a,b)=> new Date(b.event.starts_at) - new Date(a.event.starts_at));
+  const m = modal({
+    title: g.name,
+    footer: false,
+    body: `<div>
+      ${detailRow('Organization', esc(g.org||'—'))}
+      ${detailRow('Handle', esc(g.handle||'—'))}
+      ${detailRow('Email', esc(g.email||'—'))}
+      ${detailRow('Phone', esc(g.phone||'—'))}
+      ${detailRow('Notes', esc(g.notes||'—'))}
+      ${detailRow('Appearances', list.length ? list.map(a=>
+        `<button class="chip chip-link" onclick="calCloseThen(()=>eventDetail('${a.event.id}'))">${esc(a.event.title||a.event.show?.name||'Episode')} · ${fmtDate(a.event.starts_at)}</button>`).join(' ') : '—')}
+      <div class="row-actions" style="margin-top:14px">
+        ${ifCan('calendar','u',`<button class="btn btn-primary btn-sm" onclick="calCloseThen(()=>guestForm('${g.id}'))">Edit</button>`)}
+      </div>
+    </div>`
+  });
+  window.__calModal = m;
+}
 
 /* ---------------- TOOLS & LINKS ---------------- */
 let TOOLS=[], TOOL_SHOWS=[], TOOL_DRAFTS=[];
