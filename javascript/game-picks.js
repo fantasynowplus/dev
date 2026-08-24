@@ -1,11 +1,3 @@
-// javascript/game-picks.js
-// Public picks board for the Sports Betting & DFS section.
-//
-// Anon sees staff picks and the Fan Picks consensus, revealed per game at
-// kickoff. Logged-in users additionally get their own pick controls and a
-// private record tab. Everything is enforced server-side by RLS — this file
-// only decides what to draw.
-
 (function () {
   'use strict';
 
@@ -51,11 +43,13 @@
   }
 
   function loggedIn() {
-    return !!(window.auth && auth.isAuthenticated && auth.isAuthenticated());
+    return typeof auth !== 'undefined'
+      && auth.isAuthenticated && auth.isAuthenticated();
   }
 
   function myProfileId() {
-    return (window.auth && auth.user && auth.user.id) || null;
+    return (typeof auth !== 'undefined' && auth.user
+      && (auth.user.sub || auth.user.id)) || null;
   }
 
   function withTimeout(p, ms) {
@@ -315,9 +309,9 @@
 
     var lb = document.getElementById('gpx-login');
     if (lb) lb.onclick = function () {
-      var m = document.getElementById('loginBackdrop');
-      if (m) m.classList.add('show');
-      else location.href = '/login.html';
+      var nav = document.querySelector('.btn-login');
+      if (nav) nav.click();
+      else location.href = 'login.html';
     };
 
     Array.prototype.forEach.call(
@@ -477,8 +471,7 @@
       Array.prototype.forEach.call(group.querySelectorAll('.gpx-opt'), function (b) {
         b.classList.toggle('on', b.dataset.val === (prev[field] || null));
       });
-      alert('That pick did not save. ' + (started({ kickoff: 0 }) ? '' : '')
-        + 'If the game has kicked off, picks are closed.');
+      alert('That pick did not save. If the game has kicked off, picks are closed.');
       console.error(err);
     }).then(function () { GPX.busy[key] = false; });
   }

@@ -494,6 +494,103 @@
   .ss-pickrow{padding:12px 16px;gap:14px}
   .ss-pickrow .btn{width:auto;min-width:170px;max-width:100%;justify-self:center}
   .ss-pickpos{padding-left:2px}
+
+  .gp-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:14px 18px;border-bottom:1px solid var(--line);background:#fbfcfe}
+  .gp-bar-in{padding:12px 18px;background:#fff}
+  .gp-bar label{display:inline-flex;align-items:center;gap:8px;font-size:11px;
+    font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .gp-spacer{flex:1 1 auto}
+
+  .gp-in{background:#fff;border:1px solid var(--line);border-radius:7px;
+    color:var(--navy);font:inherit;font-size:13.5px;padding:7px 10px}
+  .gp-in:focus{outline:none;border-color:var(--orange)}
+  .gp-in-sm{width:104px}
+  .gp-in-xs{width:60px;text-align:center;padding:6px 4px}
+
+  .gp-tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .gp-tab{background:#fff;border:1px solid var(--line);border-radius:999px;
+    color:var(--muted);cursor:pointer;font:inherit;font-size:13px;
+    font-weight:600;padding:6px 15px}
+  .gp-tab:hover{border-color:#c9d6e8;color:var(--navy)}
+  .gp-tab.on{background:var(--orange);border-color:var(--orange);color:#fff}
+
+  .gp-chip{background:#fff;border:1px solid var(--line);border-radius:999px;
+    color:var(--navy);cursor:pointer;font:inherit;font-size:11px;font-weight:700;
+    letter-spacing:.07em;padding:6px 13px;text-transform:uppercase}
+  .gp-chip:disabled{cursor:default;opacity:.6}
+  .gp-chip.on{background:var(--green);border-color:var(--green);color:#fff}
+  .gp-chip.gp-muted{color:var(--muted);cursor:default}
+  .gp-status.gp-open{border-color:var(--green);color:var(--green)}
+  .gp-status.gp-locked{border-color:var(--orange);color:var(--orange)}
+  .gp-status.gp-scored{border-color:var(--line);color:var(--muted)}
+
+  .gp-card{border:1px solid var(--line);border-radius:9px;background:#fff;
+    margin:18px;overflow:hidden}
+  .gp-pad{padding:22px 18px;color:var(--muted)}
+  .gp-err{color:var(--red)}
+  .gp-note{margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:#fbfcfe;color:var(--muted);font-size:13px;line-height:1.55}
+  .gp-note b{color:var(--navy)}
+  .gp-count{color:var(--muted);font-size:12.5px}
+
+  .gp-table{border-collapse:collapse;font-size:13.5px;width:100%}
+  .gp-table th{background:#f7f8fb;border-bottom:1px solid var(--line);
+    color:var(--muted);font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:10.5px;font-weight:600;letter-spacing:.07em;padding:10px;
+    text-align:left;text-transform:uppercase;white-space:nowrap}
+  .gp-table td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:middle}
+  .gp-table tbody tr:last-child td{border-bottom:0}
+  .gp-table tbody tr:hover{background:#fbfcfe}
+  .gp-kick,.gp-frozen{color:var(--muted);white-space:nowrap}
+  .gp-match{white-space:nowrap;font-weight:600;color:var(--navy)}
+
+  .gp-lock{background:#fff2e4;border-radius:5px;color:var(--orange);
+    font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 7px;
+    text-transform:uppercase}
+
+  .gp-btn{background:#fff;border:1px solid var(--line);border-radius:7px;
+    color:var(--navy);cursor:pointer;font:inherit;font-size:12.5px;
+    font-weight:600;padding:6px 13px}
+  .gp-btn:hover:not(:disabled){border-color:var(--orange);color:var(--orange)}
+  .gp-btn:disabled{opacity:.55;cursor:default}
+
+  .gp-picklist{display:flex;flex-direction:column}
+  .gp-pickrow{align-items:center;border-bottom:1px solid var(--line);display:grid;
+    gap:14px;grid-template-columns:124px 156px 1fr;padding:12px 16px}
+  .gp-pickrow:last-child{border-bottom:0}
+  .gp-pickrow.off{opacity:.5}
+  .gp-when{color:var(--muted);display:flex;flex-direction:column;font-size:12px;gap:5px}
+  .gp-teams{align-items:center;display:flex;gap:8px;font-size:15px;
+    font-weight:700;color:var(--navy)}
+  .gp-at{color:var(--muted);font-weight:400}
+
+  .gp-markets{display:flex;flex-wrap:wrap;gap:16px}
+  .gp-mkt{align-items:center;display:flex;gap:6px}
+  .gp-mkt.off{opacity:.4}
+  .gp-mlabel{color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    min-width:44px;text-transform:uppercase}
+  .gp-opt{background:#fff;border:1px solid var(--line);border-radius:7px;
+    color:var(--navy);cursor:pointer;font:inherit;font-size:12.5px;min-width:76px;
+    padding:7px 10px;transition:background .15s,border-color .15s,color .15s}
+  .gp-opt:hover:not(:disabled){border-color:var(--orange);background:#fff8f1}
+  .gp-opt:disabled{cursor:default;opacity:.45}
+  .gp-opt.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700}
+
+  .gp-rank{color:var(--muted);width:34px}
+  .gp-who{font-weight:700;color:var(--navy)}
+  .gp-fan td{background:#f0fbfb}
+  .gp-fan .gp-who{color:var(--aqua)}
+  .gp-tag{background:#e4f7f7;border-radius:5px;color:var(--aqua);font-size:10px;
+    font-weight:700;letter-spacing:.06em;margin-left:8px;padding:2px 6px;
+    text-transform:uppercase}
+
+  @media (max-width:860px){
+    .gp-pickrow{gap:8px;grid-template-columns:1fr}
+    .gp-when{flex-direction:row;gap:10px}
+    .gp-markets{gap:10px}
+    .gp-mkt{flex:1 1 100%}
+  }
 </style>
 </head>
 <body>
@@ -535,6 +632,7 @@
       <button data-go="youtube">YouTube Stats</button>
       <button data-go="shows">Shows</button>
       <button data-go="tools">Tools &amp; links</button>
+      <button data-go="gamepicks">Game Picks</button>
       <div class="nav-label">Work</div>
       <button data-go="board">Project Board</button>
       <div class="nav-label">Access</div>
@@ -568,7 +666,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -592,7 +690,7 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
-  {label:'Content', keys:['shows','tools','channels','youtube', 'startsit']},
+  {label:'Content', keys:['shows','tools','channels','youtube', 'startsit', 'gamepicks']},
   {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
 ];
@@ -609,7 +707,7 @@ function resourceGroups(){
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment', 
   onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart',
-  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown'
+  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks'
 };
 function can(resource, action){
   if(ME && ME.admin_level >= 9) return true;
@@ -818,7 +916,7 @@ function go(name){
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
     shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles,
-    startsit:loadStartsit}[name];
+    startsit:loadStartsit, gamepicks:loadGamePicks}[name];
     
   fn().catch(err=>{
     document.getElementById('content').innerHTML =

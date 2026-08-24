@@ -1,12 +1,3 @@
-// admin-gamepicks-section.js
-// Paste this block into admin.html near loadTools / the Start/Sit section.
-// Entry point is loadGamePicks(); wire it to the 'gamepicks' resource nav item
-// the same way loadStartSit() is wired to 'startsit'.
-//
-// ASSUMPTIONS TO VERIFY against your admin.html (same list as the Start/Sit
-// section): dbGet('table?query'), dbPatch('table?id=eq.x', obj), sbCfg(),
-// can(resource, action), and MY_PROFILE_ID below.
-
 const GP = {
   season: null,
   week: null,
@@ -21,10 +12,10 @@ const GP = {
   busy: {},
 };
 
-// The logged-in user's profiles.id. gp_picks is keyed on profile, not staff,
-// because fans use the same table.
+
 function gpMyProfileId() {
-  return (window.auth && auth.user && auth.user.id) || null;
+  if (typeof ME !== 'undefined' && ME && ME.id) return ME.id;
+  return (typeof auth !== 'undefined' && auth.user && auth.user.sub) || null;
 }
 
 const gpCan = (a) => (typeof can === 'function' ? can('gamepicks', a) : true);
@@ -94,8 +85,9 @@ function gpSpreadLabel(g, side) {
 // ------------------------------------------------------------- data
 
 async function loadGamePicks() {
+  document.getElementById('content').innerHTML =
+    '<div class="panel"><div id="gp-root"></div></div>';
   const host = document.getElementById('gp-root');
-  if (!host) return;
   host.innerHTML = '<div class="gp-pad">Loading game picks…</div>';
 
   try {
