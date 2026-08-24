@@ -95,6 +95,19 @@ def _get(url: str) -> list:
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode())
 
+def _first_slate(games: list, window_days: int = 7) -> list:
+    """Keep only the next slate: every game within window_days of the earliest
+    upcoming kickoff. The 16-day fetch guarantees we find games even across a
+    gap week; this trims it back so two weeks don't land on the page at once."""
+    dated = [(g, k, b) for (g, k, b) in games if k]
+    if not dated:
+        return games
+
+    def parse(k):
+        return dt.datetime.fromisoformat(k.replace("Z", "+00:00"))
+
+    cutoff = min(parse(k) for (_, k, _) in dated) + dt.timedelta(days=window_days)
+    return [(g, k, b) for (g, k, b) in dated if parse(k) <= cutoff]
 
 def fetch_odds_api() -> list[tuple[Game, str, str]]:
     """Returns [(Game, kickoff_iso, book_key)] from the-odds-api.com.
@@ -103,10 +116,9 @@ def fetch_odds_api() -> list[tuple[Game, str, str]]:
         return []
 
     now = dt.datetime.now(dt.timezone.utc)
-    days_to_tue = (1 - now.weekday()) % 7 or 7
-    week_end = (now + dt.timedelta(days=days_to_tue)).replace(
-        hour=8, minute=0, second=0, microsecond=0)
-    commence_to = week_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+    horizon_days = int(os.environ.get("NFL_SIM_HORIZON_DAYS", "16"))
+    horizon = now + dt.timedelta(days=horizon_days)
+    commence_to = horizon.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     base = "https://api.the-odds-api.com/v4/sports/{sport}/odds"
     params = ("?regions=us&markets=h2h,spreads,totals"
@@ -141,7 +153,7 @@ def fetch_odds_api() -> list[tuple[Game, str, str]]:
             continue
         seen.add(eid)
         out.append((g, ev.get("commence_time", ""), book["key"]))
-    return out
+    return _first_slate(out)
 
 ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?limit=100"
 
