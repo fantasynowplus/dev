@@ -7,12 +7,13 @@ const GP = {
   staff: [],
   picks: {},
   who: null,
-  tab: 'games',
+  tab: 'picks',
   standWeek: '',
   busy: {},
 };
 
-
+// The logged-in user's profiles.id. gp_picks is keyed on profile, not staff,
+// because fans use the same table.
 function gpMyProfileId() {
   if (typeof ME !== 'undefined' && ME && ME.id) return ME.id;
   return (typeof auth !== 'undefined' && auth.user && auth.user.sub) || null;
@@ -152,9 +153,9 @@ function gpRender() {
   if (!host) return;
 
   const tabs = [
-    { k: 'games', label: 'Games & lines', need: 'u' },
     { k: 'picks', label: 'Picks', need: 'r' },
     { k: 'standings', label: 'Standings', need: 'r' },
+    { k: 'games', label: 'Games & lines', need: 'd' },
   ].filter((t) => gpCan(t.need));
 
   if (!tabs.some((t) => t.k === GP.tab)) GP.tab = tabs.length ? tabs[0].k : null;
@@ -210,7 +211,7 @@ function gpRender() {
 function gpStatusHtml() {
   if (!GP.weekRow) return '<span class="gp-chip gp-muted">No week row yet</span>';
   const s = GP.weekRow.status;
-  const canEdit = gpCan('u');
+  const canEdit = gpCan('d');
   return `
     <button class="gp-chip gp-status gp-${s}"${canEdit ? '' : ' disabled'} id="gp-status">${s}</button>
     <button class="gp-chip${GP.weekRow.is_display ? ' on' : ''}"${canEdit ? '' : ' disabled'} id="gp-display">
@@ -469,7 +470,7 @@ async function gpRenderStandings() {
 
     const weekOpts = ['<option value="">Full season</option>']
       .concat(GP.weeks.map((w) =>
-        `<option value="${w.week}"${String(w.week) === String(GP.standWeek) ? ' selected' : ''}>${gpEsc(w.label || ('Week ' + w.week))}</option>`
+        `<option value="${w.week}"${String(w.week) === String(GP.standWeek) ? ' selected' : ''}>${gpEsc(w.label || gpFallbackLabel(w.week))}</option>`
       )).join('');
 
     const trs = rows.length

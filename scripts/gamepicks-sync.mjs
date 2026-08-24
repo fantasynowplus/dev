@@ -1,25 +1,3 @@
-// scripts/gamepicks-sync.mjs
-//
-// Seeds gp_weeks / gp_games for the upcoming NFL week, freezes the line of
-// record from the-odds-api, writes final scores back so standings grade, and
-// advances the display week on Wednesday once lines exist.
-//
-// Covers preseason, regular season and playoffs on one week axis:
-//   -4 HOF, -3/-2/-1 preseason, 1..18 regular, 19..22 playoffs.
-//
-// Schedule + scores come from nflverse games.csv for the regular season and
-// playoffs, and from ESPN's public scoreboard for the preseason, which
-// nflverse does not carry at all.
-//
-// Node 20+, no dependencies.
-//
-// Env:
-//   SUPABASE_URL                 required
-//   SUPABASE_SERVICE_ROLE_KEY    required
-//   ODDS_API_KEY                 required (same key the simulator uses)
-//   SEASON                       optional override
-//   FORCE_DISPLAY                optional "1" to advance the display week now
-
 const SB_URL = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ODDS_KEY = process.env.ODDS_API_KEY;
@@ -34,15 +12,6 @@ const GAMES_CSV =
   'https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv';
 const ODDS_URL =
   'https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds';
-const ESPN_URL =
-  'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
-
-// ESPN numbers preseason weeks 1..4 where 1 is the Hall of Fame Game. We store
-// them as -4..-1 so they sort ahead of Week 1. If ESPN ever renumbers, this
-// single offset is the only thing to change.
-const PRE_OFFSET = -5;
-const PRE_WEEKS = [1, 2, 3, 4];
-
 // Postseason rounds already carry weeks 19-22 in games.csv.
 const KEEP_TYPES = new Set(['REG', 'WC', 'DIV', 'CON', 'SB']);
 
@@ -81,8 +50,6 @@ const norm = (t) => {
 };
 
 function weekLabel(w) {
-  if (w === -4) return 'Hall of Fame';
-  if (w < 0) return 'Preseason ' + (w + 4);
   if (w === 19) return 'Wild Card';
   if (w === 20) return 'Divisional';
   if (w === 21) return 'Conference';
@@ -92,8 +59,8 @@ function weekLabel(w) {
 
 // ------------------------------------------------------------- utilities
 
-// ESPN rejects default datacenter user-agents with a 403, so every outbound
-// request carries a browser-ish UA.
+// Some hosts reject default datacenter user-agents, so outbound requests
+// carry a browser-ish UA.
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/126.0 Safari/537.36';
@@ -224,52 +191,10 @@ async function loadNflverse(season) {
   return games;
 }
 
-// ------------------------------------------------------- ESPN (preseason)
-// nflverse carries no preseason at all, so the exhibition slate and its
-// scores come from ESPN's public scoreboard instead.
-
-async function loadPreseason(season) {
-  const games = [];
-  for (const w of PRE_WEEKS) {
-    const url = `${ESPN_URL}?dates=${season}&seasontype=1&week=${w}`;
-    let data;
-    try {
-      data = await getJson(url, { headers: { Referer: 'https://www.espn.com/' } });
-    } catch (err) {
-      console.warn(`ESPN preseason week ${w} failed: ${err.message}`);
-      continue;
-    }
-    for (const ev of (data && data.events) || []) {
-      const comp = (ev.competitions && ev.competitions[0]) || {};
-      const cs = comp.competitors || [];
-      const home = cs.find((c) => c.homeAway === 'home');
-      const away = cs.find((c) => c.homeAway === 'away');
-      if (!home || !away) continue;
-      const done = !!(comp.status && comp.status.type && comp.status.type.completed);
-      games.push({
-        week: w + PRE_OFFSET,
-        away: norm(away.team && away.team.abbreviation),
-        home: norm(home.team && home.team.abbreviation),
-        kickoff: ev.date ? new Date(ev.date).toISOString() : null,
-        away_score: done && away.score != null ? Number(away.score) : null,
-        home_score: done && home.score != null ? Number(home.score) : null,
-      });
-    }
-  }
-  return games;
-}
-
 async function loadSchedule(season) {
-  const [reg, pre] = await Promise.all([
-    loadNflverse(season),
-    loadPreseason(season).catch((e) => {
-      console.warn('Preseason load failed entirely: ' + e.message);
-      return [];
-    }),
-  ]);
-  const all = pre.concat(reg);
+  const all = await loadNflverse(season);
   if (!all.length) throw new Error(`no games found for ${season}`);
-  console.log(`Schedule: ${pre.length} preseason, ${reg.length} regular/playoff`);
+  console.log(`Schedule: ${all.length} regular/playoff games`);
   return all;
 }
 
