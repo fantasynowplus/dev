@@ -12,9 +12,18 @@ const GAMES_CSV =
   'https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv';
 const ODDS_URL =
   'https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds';
+const ESPN_URL =
+  'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
 
-// Book priority mirrors the simulator. Pinnacle is absent on the free tier and
-// falls through to DraftKings.
+// ESPN numbers preseason weeks 1..4 where 1 is the Hall of Fame Game. We store
+// them as -4..-1 so they sort ahead of Week 1. If ESPN ever renumbers, this
+// single offset is the only thing to change.
+const PRE_OFFSET = -5;
+const PRE_WEEKS = [1, 2, 3, 4];
+
+// Postseason rounds already carry weeks 19-22 in games.csv.
+const KEEP_TYPES = new Set(['REG', 'WC', 'DIV', 'CON', 'SB']);
+
 const BOOKS = ['pinnacle', 'draftkings', 'fanduel', 'betmgm', 'williamhill_us'];
 
 // ------------------------------------------------------------- team codes
@@ -48,6 +57,16 @@ const norm = (t) => {
   const up = String(t).trim().toUpperCase();
   return ALIAS[up] || up;
 };
+
+function weekLabel(w) {
+  if (w === -4) return 'Hall of Fame';
+  if (w < 0) return 'Preseason ' + (w + 4);
+  if (w === 19) return 'Wild Card';
+  if (w === 20) return 'Divisional';
+  if (w === 21) return 'Conference';
+  if (w === 22) return 'Super Bowl';
+  return 'Week ' + w;
+}
 
 // ------------------------------------------------------------- utilities
 
@@ -89,7 +108,6 @@ const sbPatch = (path, body) =>
     headers: { Prefer: 'return=representation' },
   });
 
-// Split a CSV line, honouring quoted fields.
 function splitCsv(line) {
   const out = [];
   let cur = '';
@@ -106,7 +124,6 @@ function splitCsv(line) {
   return out;
 }
 
-// Offset of a timezone from UTC at a given instant, in ms.
 function tzOffsetMs(tz, date) {
   const dtf = new Intl.DateTimeFormat('en-US', {
     timeZone: tz, hour12: false,
@@ -122,8 +139,6 @@ function tzOffsetMs(tz, date) {
   return asUTC - date.getTime();
 }
 
-// nflverse gameday/gametime are US/Eastern. Convert to a real UTC instant so
-// the per-game kickoff lock is correct in every reader's timezone.
 function etToUtc(day, time) {
   if (!day) return null;
   const [Y, M, D] = day.split('-').map(Number);
@@ -137,9 +152,9 @@ function etToUtc(day, time) {
   return new Date(ms).toISOString();
 }
 
-// -------------------------------------------------------- nflverse schedule
+// ---------------------------------------------- nflverse (regular + playoffs)
 
-async function loadSchedule(season) {
+async function loadNflverse(season) {
   const res = await fetch(GAMES_CSV);
   if (!res.ok) throw new Error(`nflverse games.csv ${res.status}`);
   const text = await res.text();
@@ -161,7 +176,7 @@ async function loadSchedule(season) {
   for (let i = 1; i < lines.length; i++) {
     const f = splitCsv(lines[i]);
     if (+f[C.season] !== season) continue;
-    if (f[C.type] !== 'REG') continue;
+    if (!KEEP_TYPES.has(f[C.type])) continue;
     games.push({
       week: +f[C.week],
       away: norm(f[C.away]),
@@ -171,8 +186,56 @@ async function loadSchedule(season) {
       home_score: f[C.hscore] === '' ? null : +f[C.hscore],
     });
   }
-  if (!games.length) throw new Error(`no REG games found for ${season}`);
   return games;
+}
+
+// ------------------------------------------------------- ESPN (preseason)
+// nflverse carries no preseason at all, so the exhibition slate and its
+// scores come from ESPN's public scoreboard instead.
+
+async function loadPreseason(season) {
+  const games = [];
+  for (const w of PRE_WEEKS) {
+    const url = `${ESPN_URL}?dates=${season}&seasontype=1&week=${w}`;
+    let data;
+    try {
+      data = await getJson(url);
+    } catch (err) {
+      console.warn(`ESPN preseason week ${w} failed: ${err.message}`);
+      continue;
+    }
+    for (const ev of (data && data.events) || []) {
+      const comp = (ev.competitions && ev.competitions[0]) || {};
+      const cs = comp.competitors || [];
+      const home = cs.find((c) => c.homeAway === 'home');
+      const away = cs.find((c) => c.homeAway === 'away');
+      if (!home || !away) continue;
+      const done = !!(comp.status && comp.status.type && comp.status.type.completed);
+      games.push({
+        week: w + PRE_OFFSET,
+        away: norm(away.team && away.team.abbreviation),
+        home: norm(home.team && home.team.abbreviation),
+        kickoff: ev.date ? new Date(ev.date).toISOString() : null,
+        away_score: done && away.score != null ? Number(away.score) : null,
+        home_score: done && home.score != null ? Number(home.score) : null,
+      });
+    }
+  }
+  return games;
+}
+
+async function loadSchedule(season) {
+  const [reg, pre] = await Promise.all([
+    loadNflverse(season),
+    loadPreseason(season).catch((e) => {
+      console.warn('Preseason load failed entirely: ' + e.message);
+      return [];
+    }),
+  ]);
+  const all = pre.concat(reg);
+  if (!all.length) throw new Error(`no games found for ${season}`);
+  console.log(`Schedule: ${pre.length} preseason, ${reg.length} regular/playoff`);
+  return all;
 }
 
 // -------------------------------------------------------------- odds
@@ -240,7 +303,6 @@ async function ensureWeek(season, week) {
     `gp_weeks?season=eq.${season}&week=eq.${week}&select=*`
   );
   if (found.length) return found[0];
-  // ignore-duplicates guards against a concurrent run; never resets status.
   await sbPost('gp_weeks', [{ season, week }],
     'resolution=ignore-duplicates,return=minimal');
   const again = await sbGet(
@@ -251,7 +313,7 @@ async function ensureWeek(season, week) {
 
 async function seedGames(weekRow, schedule) {
   const rows = schedule
-    .filter((g) => g.week === weekRow.week && g.kickoff)
+    .filter((g) => g.week === weekRow.week && g.kickoff && g.away && g.home)
     .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
     .map((g, i) => ({
       week_id: weekRow.id,
@@ -270,8 +332,6 @@ async function seedGames(weekRow, schedule) {
   return sbGet(`gp_games?week_id=eq.${weekRow.id}&select=*`);
 }
 
-// Freeze the line once. A game that already has line_taken is left alone, so
-// everyone is graded against the same number no matter when they picked.
 async function freezeLines(games, odds) {
   let frozen = 0;
   for (const g of games) {
@@ -325,7 +385,7 @@ async function writeScores(season, schedule) {
     );
     if (done && w.status !== 'scored') {
       await sbPatch(`gp_weeks?id=eq.${w.id}`, { status: 'scored' });
-      console.log(`Week ${w.week} complete -> scored`);
+      console.log(`${weekLabel(w.week)} complete -> scored`);
     }
   }
   return updated;
@@ -336,7 +396,7 @@ async function writeScores(season, schedule) {
 async function advanceDisplay(weekRow, games) {
   const withLines = games.filter((g) => g.line_taken).length;
   const enough = games.length && withLines >= Math.ceil(games.length / 2);
-  const isWednesdayOrLater = new Date().getUTCDay() >= 3; // Wed=3
+  const isWednesdayOrLater = new Date().getUTCDay() >= 3;
 
   if (!FORCE_DISPLAY && !(enough && isWednesdayOrLater)) {
     console.log(
@@ -349,14 +409,14 @@ async function advanceDisplay(weekRow, games) {
   const current = await sbGet('gp_weeks?is_display=eq.true&select=*');
   const cur = current[0];
   if (cur && cur.season === weekRow.season && cur.week > weekRow.week) {
-    console.log(`Display week manually set ahead (week ${cur.week}) — leaving it.`);
+    console.log(`Display week manually set ahead (${weekLabel(cur.week)}) — leaving it.`);
     return false;
   }
   if (cur && cur.id === weekRow.id) return false;
 
   if (cur) await sbPatch(`gp_weeks?id=eq.${cur.id}`, { is_display: false });
   await sbPatch(`gp_weeks?id=eq.${weekRow.id}`, { is_display: true });
-  console.log(`Display week -> ${weekRow.season} week ${weekRow.week}`);
+  console.log(`Display week -> ${weekRow.season} ${weekLabel(weekRow.week)}`);
   return true;
 }
 
@@ -371,28 +431,26 @@ async function main() {
   console.log(`Season ${season}, now ${now.toISOString()}`);
   const schedule = await loadSchedule(season);
 
-  // Target week = the earliest week that still has a game yet to kick off.
   const upcoming = schedule
     .filter((g) => g.kickoff && new Date(g.kickoff) > now)
     .sort((a, b) => a.week - b.week || a.kickoff.localeCompare(b.kickoff));
 
   if (!upcoming.length) {
-    console.log('No upcoming REG games — writing scores only.');
+    console.log('No upcoming games — writing scores only.');
     const n = await writeScores(season, schedule);
     console.log(`Scores updated: ${n}`);
     return;
   }
 
   const targetWeek = upcoming[0].week;
-  console.log(`Target week ${targetWeek}`);
+  console.log(`Target: ${weekLabel(targetWeek)} (week ${targetWeek})`);
 
   const weekRow = await ensureWeek(season, targetWeek);
   const games = await seedGames(weekRow, schedule);
-  console.log(`Week ${targetWeek}: ${games.length} games seeded`);
+  console.log(`${weekLabel(targetWeek)}: ${games.length} games seeded`);
 
   const weekGames = schedule.filter((g) => g.week === targetWeek && g.kickoff);
-  const lastKick = weekGames
-    .map((g) => g.kickoff).sort().slice(-1)[0];
+  const lastKick = weekGames.map((g) => g.kickoff).sort().slice(-1)[0];
   const weekEnd = new Date(new Date(lastKick).getTime() + 6 * 3600 * 1000)
     .toISOString();
 
