@@ -94,11 +94,15 @@
 
   function savePick(row) {
     var c = GPX.cfg;
+    var tok = token();
+    if (!tok) {
+      return Promise.reject(new Error('Your session expired — log in again to save picks.'));
+    }
     return fetch(c.url + '/rest/v1/gp_picks?on_conflict=game_id,profile_id', {
       method: 'POST',
       headers: {
         apikey: c.key,
-        Authorization: 'Bearer ' + token(),
+        Authorization: 'Bearer ' + tok,
         'Content-Type': 'application/json',
         Prefer: 'resolution=merge-duplicates,return=representation',
       },

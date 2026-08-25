@@ -40,13 +40,14 @@ async function gpRpc(fn, args) {
 async function gpUpsertPick(row) {
   const cfg = sbCfg();
   const tok = localStorage.getItem('sb-auth-token');
+  if (!tok) throw new Error('Your session expired — log out and back in, then re-enter this pick.');
   const res = await fetch(
     cfg.url + '/rest/v1/gp_picks?on_conflict=game_id,profile_id',
     {
       method: 'POST',
       headers: {
         apikey: cfg.key,
-        Authorization: 'Bearer ' + (tok || cfg.key),
+        Authorization: 'Bearer ' + tok,
         'Content-Type': 'application/json',
         Prefer: 'resolution=merge-duplicates,return=representation',
       },
