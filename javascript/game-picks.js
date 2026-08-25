@@ -9,12 +9,19 @@
     seasons: [],
     games: [],
     mine: {},
+    records: {},
     tab: 'board',
     standWeek: '',
     busy: {},
     timer: null,
   };
 
+  // Add a year here when the time comes. With one season the picker hides.
+  var SEASONS = [2026];
+
+  // Drop your Tallysight embed in here to put an odds tile on each game card.
+  // Leave enabled false and nothing renders. render(el, game) is called once
+  // per card after the markup is in the DOM.
   var TALLYSIGHT = {
     enabled: false,
     render: function (el, game) {
@@ -22,8 +29,6 @@
       //   + game.away_team + '-' + game.home_team + '"></div>';
     },
   };
-
-  var SEASONS = [2026];
 
   // --------------------------------------------------------------- config
 
@@ -117,6 +122,16 @@
     return n > 0 ? '+' + n : String(n);
   }
 
+  function weekLabel(w) {
+    if (w === -4) return 'Hall of Fame';
+    if (w < 0) return 'Preseason ' + (w + 4);
+    if (w === 19) return 'Wild Card';
+    if (w === 20) return 'Divisional';
+    if (w === 21) return 'Conference';
+    if (w === 22) return 'Super Bowl';
+    return 'Week ' + w;
+  }
+
   function logo(abbr) {
     return 'https://sleepercdn.com/images/team_logos/nfl/'
       + String(abbr || '').toLowerCase() + '.png';
@@ -127,10 +142,20 @@
       .slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
   }
 
-    function headshotSrc(v) {
+  function headshotSrc(v) {
     if (!v) return '';
     if (/^https?:\/\//.test(v) || v.charAt(0) === '/') return v;
     return 'assets/staff/' + v;
+  }
+
+  function avatarHtml(name, headshot, cls) {
+    var ini = esc(initials(name));
+    var inner = headshot
+      ? '<img src="' + esc(headshotSrc(headshot)) + '" alt="' + esc(name) + '"'
+        + ' onerror="this.parentNode.textContent=\'' + ini + '\'">'
+      : ini;
+    return '<span class="' + (cls || 'gpx-face') + '" title="' + esc(name) + '">'
+      + inner + '</span>';
   }
 
   function started(g) {
@@ -217,10 +242,13 @@
         ? rpc('gp_my_picks', { p_season: GPX.season, p_week: GPX.week })
             .catch(function () { return []; })
         : Promise.resolve([]),
+      rpc('gp_standings', { p_season: GPX.season }).catch(function () { return []; }),
     ]).then(function (res) {
       GPX.games = res[0] || [];
       GPX.mine = {};
       (res[1] || []).forEach(function (p) { GPX.mine[p.game_id] = p; });
+      GPX.records = {};
+      (res[2] || []).forEach(function (r) { GPX.records[r.key] = r; });
       render();
       startPoll();
     });
@@ -251,10 +279,10 @@
       ? GPX.weeks.map(function (w) {
           return '<option value="' + w.week + '"'
             + (w.week === GPX.week ? ' selected' : '') + '>'
-            + esc(w.label || ('Week ' + w.week))
+            + esc(w.label || weekLabel(w.week))
             + (w.is_display ? ' • current' : '') + '</option>';
         }).join('')
-      : '<option>Week ' + GPX.week + '</option>';
+      : '<option>' + esc(weekLabel(GPX.week)) + '</option>';
 
     if (GPX.seasons.length < 2) {
       ss.style.display = 'none';
@@ -279,7 +307,7 @@
   function render() {
     var wk = GPX.weeks.filter(function (w) { return w.week === GPX.week; })[0];
     var tabs = [
-      { k: 'board', label: (wk && wk.label) || ('Week ' + GPX.week) },
+      { k: 'board', label: (wk && wk.label) || weekLabel(GPX.week) },
       { k: 'standings', label: 'Standings' },
     ];
     if (loggedIn()) tabs.push({ k: 'me', label: 'My record' });
@@ -326,6 +354,11 @@
     Array.prototype.forEach.call(
       body.querySelectorAll('.gpx-opt'),
       function (b) { b.onclick = function () { setPick(b); }; }
+    );
+
+    Array.prototype.forEach.call(
+      body.querySelectorAll('.gpx-seeall'),
+      function (b) { b.onclick = function () { openPicks(b.dataset.more); }; }
     );
 
     if (TALLYSIGHT.enabled) {
@@ -406,49 +439,116 @@
       + '</div>';
   }
 
+  function recordText(key) {
+    var r = GPX.records[key];
+    if (!r || (r.tot_w + r.tot_l) === 0) return '';
+    return r.tot_w + '-' + r.tot_l + ' \u00b7 ' + (Number(r.pct) * 100).toFixed(0) + '%';
+  }
+
   function picksBlock(g) {
     var staff = g.staff_picks || [];
     var fan = g.fan_pick || {};
     var hasFan = !!(fan && (fan.ml || fan.ats || fan.ou));
+    var anyone = staff.length || hasFan;
 
-    if (!staff.length && !hasFan) {
+    if (!anyone) {
       return '<div class="gpx-picks"><div class="gpx-ptitle">Picks</div>'
         + '<div class="gpx-sealed">No picks in yet.</div></div>';
     }
 
-    function row(name, avatar, p, cls) {
-      return '<div class="gpx-prow' + (cls || '') + '">'
-        + '<span class="gpx-av">' + avatar + '</span>'
-        + '<span class="gpx-pname">' + esc(name) + '</span>'
-        + '<span class="gpx-cell">' + pickText(g, 'ml', p.ml) + resultTag(p.ml_res) + '</span>'
-        + '<span class="gpx-cell">' + pickText(g, 'ats', p.ats) + resultTag(p.ats_res) + '</span>'
-        + '<span class="gpx-cell">' + pickText(g, 'ou', p.ou) + resultTag(p.ou_res) + '</span>'
+    function sideBlock(which) {
+      var team = which === 'home' ? g.home_team : g.away_team;
+      var ml = which === 'home' ? g.ml_home : g.ml_away;
+      var backers = staff.filter(function (s) { return s.ml === which; });
+      var faces = backers.map(function (s) {
+        return avatarHtml(s.name, s.headshot);
+      }).join('');
+      if (hasFan && fan.ml === which) {
+        faces += '<span class="gpx-face gpx-face-fan" title="Fan consensus">FP</span>';
+      }
+      var on = backers.length ? ' on' : '';
+      return '<div class="gpx-mlside' + on + '">'
+        + '<div class="gpx-mlteam">' + esc(team)
+        + (ml != null ? ' <span class="gpx-mlodds">' + esc(signed(ml)) + '</span>' : '')
+        + '</div>'
+        + '<div class="gpx-faces">'
+        + (faces || '<span class="gpx-nofaces">&mdash;</span>') + '</div>'
         + '</div>';
     }
 
-    var head = '<div class="gpx-prow gpx-phead">'
-      + '<span class="gpx-av"></span><span class="gpx-pname"></span>'
-      + '<span class="gpx-cell">ML</span>'
-      + '<span class="gpx-cell">Spread</span>'
-      + '<span class="gpx-cell">Total</span></div>';
+    var count = staff.length + (hasFan ? 1 : 0);
 
-    var rows = staff.map(function (s) {
-      var ini = esc(initials(s.name));
-      var av = s.headshot
-        ? '<img src="' + esc(headshotSrc(s.headshot)) + '" alt=""'
-          + ' onerror="this.parentNode.textContent=\'' + ini + '\'">'
-        : ini;
-      return row(s.name, av, s, '');
-    }).join('');
+    return '<div class="gpx-picks">'
+      + '<div class="gpx-phead-row">'
+      + '<div class="gpx-ptitle">Moneyline picks</div>'
+      + '<button class="gpx-seeall" data-more="' + g.game_id + '">'
+      + 'See all ' + count + ' &rsaquo;</button>'
+      + '</div>'
+      + '<div class="gpx-mlgrid">' + sideBlock('away') + sideBlock('home') + '</div>'
+      + '</div>';
+  }
 
-    var fanRow = '';
-    if (hasFan) {
-      var n = Math.max(fan.ml_n || 0, fan.ats_n || 0, fan.ou_n || 0);
-      fanRow = row('Fan Picks (' + n + ')', 'FP', fan, ' gpx-crowd');
+  function openPicks(gameId) {
+    var g = GPX.games.filter(function (x) {
+      return String(x.game_id) === String(gameId);
+    })[0];
+    if (!g) return;
+
+    var staff = g.staff_picks || [];
+    var fan = g.fan_pick || {};
+    var hasFan = !!(fan && (fan.ml || fan.ats || fan.ou));
+
+    function row(name, avatar, p, key, cls) {
+      var rec = recordText(key);
+      return '<div class="gpx-mrow-full' + (cls || '') + '">'
+        + '<div class="gpx-mwho">' + avatar
+        + '<span><b>' + esc(name) + '</b>'
+        + (rec ? '<em>' + esc(rec) + '</em>' : '') + '</span></div>'
+        + '<div class="gpx-mcell"><span>ML</span>'
+        + pickText(g, 'ml', p.ml) + resultTag(p.ml_res) + '</div>'
+        + '<div class="gpx-mcell"><span>Spread</span>'
+        + pickText(g, 'ats', p.ats) + resultTag(p.ats_res) + '</div>'
+        + '<div class="gpx-mcell"><span>Total</span>'
+        + pickText(g, 'ou', p.ou) + resultTag(p.ou_res) + '</div>'
+        + '</div>';
     }
 
-    return '<div class="gpx-picks"><div class="gpx-ptitle">Picks</div>'
-      + head + rows + fanRow + '</div>';
+    var rows = staff.map(function (s) {
+      return row(s.name, avatarHtml(s.name, s.headshot, 'gpx-face gpx-face-lg'),
+                 s, s.staff_id, '');
+    }).join('');
+
+    if (hasFan) {
+      var n = Math.max(fan.ml_n || 0, fan.ats_n || 0, fan.ou_n || 0);
+      rows += row('Fan Picks (' + n + ')',
+        '<span class="gpx-face gpx-face-lg gpx-face-fan">FP</span>',
+        fan, '__fan__', ' gpx-crowd');
+    }
+
+    var el = document.createElement('div');
+    el.className = 'gpx-modal';
+    el.innerHTML = '<div class="gpx-modal-card" role="dialog" aria-modal="true">'
+      + '<div class="gpx-modal-head">'
+      + '<div><b>' + esc(g.away_team) + ' @ ' + esc(g.home_team) + '</b>'
+      + '<em>' + esc(kick(g.kickoff))
+      + (g.spread_home != null ? ' \u00b7 ' + esc(g.home_team + ' ' + signed(g.spread_home)) : '')
+      + (g.total != null ? ' \u00b7 O/U ' + esc(g.total) : '')
+      + '</em></div>'
+      + '<button class="gpx-modal-x" aria-label="Close">&times;</button></div>'
+      + '<div class="gpx-modal-body">'
+      + (rows || '<div class="gpx-sealed">No picks in yet.</div>')
+      + '</div></div>';
+
+    function close() {
+      el.remove();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    el.addEventListener('click', function (e) { if (e.target === el) close(); });
+    el.querySelector('.gpx-modal-x').onclick = close;
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(el);
   }
 
   // ---------------------------------------------------------------- picks
