@@ -614,6 +614,11 @@
 .cal-ev.cal-release{border-left-color:#42F4B0;background:#eafaf3}
 .cal-ev.cal-release .cal-t{color:#0b7a58}
 .cal-k{margin-right:3px}
+.cal-mark{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#eceff3;color:#606060;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:700;text-transform:none;letter-spacing:0}
+.cal-date .cal-mark{flex:1;min-width:0;margin:0 4px}
+.cal-mark[onclick]{cursor:pointer}
+.cal-mark[onclick]:hover{background:#e0e4ea;color:var(--navy)}
+.cal-day h4 .cal-mark{margin-left:6px;vertical-align:1px}
 .cal-ev.canceled{opacity:.5;text-decoration:line-through}
 .cal-ev .cal-t{font-weight:700;color:var(--navy);margin-right:4px}
 .cal-more{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px;text-align:left}
@@ -712,7 +717,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', markers: 'Calendar key dates'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -736,7 +741,7 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
-  {label:'Content', keys:['shows','calendar','tools','channels','youtube', 'startsit', 'gamepicks']},
+  {label:'Content', keys:['shows','calendar','markers','tools','channels','youtube', 'startsit', 'gamepicks']},
   {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
 ];
@@ -1491,11 +1496,11 @@ function calMount(html){ document.querySelector(CAL_TARGET).innerHTML = html; }
 const EV_SELECT = 'id,title,show_id,channel_id,series_id,format,status,starts_at,release_at,duration_minutes,video_url,notes,'
   + 'show:shows(id,name,channel_id),channel:channels(id,name),'
   + 'people:event_people(id,role,staff_id,guest_id,staff:staff(id,name),guest:guests(id,name))';
-const SER_SELECT = 'id,title,show_id,format,freq,dow,day_of_month,start_time,duration_minutes,release_offset_days,release_time,tz,starts_on,ends_on,is_active,notes,show:shows(id,name)';
+const SER_SELECT = 'id,title,show_id,format,freq,dow,day_of_month,start_time,duration_minutes,release_offset_days,release_time,tz,starts_on,ends_on,occurrences,is_active,notes,show:shows(id,name)';
 
 let CAL_TAB = 'month';
 let CAL_MONTH = (function(){ const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d; })();
-let CAL_EVENTS = [], CAL_SERIES = [], CAL_GUESTS = [], CAL_SHOWS = [], CAL_CHANNELS = [], CAL_STAFF = [];
+let CAL_EVENTS = [], CAL_SERIES = [], CAL_GUESTS = [], CAL_SHOWS = [], CAL_CHANNELS = [], CAL_STAFF = [], CAL_MARKERS = [];
 let CAL_FILTER = { show:'', channel:'', format:'' };
 const CAL_EXPAND = {};
 
@@ -1527,6 +1532,16 @@ function etToISO(dateStr, timeStr){
 function calTitle(e){ return e.title || e.show?.name || 'Untitled'; }
 function calHosts(e){ return (e.people||[]).filter(p=>p.role==='host'||p.role==='cohost'); }
 function calGuestsOf(e){ return (e.people||[]).filter(p=>p.role==='guest'); }
+function calMarkersFor(key){
+  return CAL_MARKERS.filter(mk => key >= mk.starts_on && key <= (mk.ends_on || mk.starts_on));
+}
+function calMarkerHtml(key){
+  const ms = calMarkersFor(key);
+  if (!ms.length) return '';
+  const label = ms.map(mk => mk.title).join(' · ');
+  const click = can('markers','u') ? ` onclick="markerForm('${ms[0].id}')"` : '';
+  return `<span class="cal-mark" title="${esc(label)}"${click}>${esc(label)}</span>`;
+}
 function calOccurrences(){
   const out = [];
   calFiltered().forEach(e => {
@@ -1545,20 +1560,21 @@ async function loadCalendar(){
   const from = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()-1, 1).toISOString();
   const to   = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()+3, 1).toISOString();
   const safe = p => p.catch(()=>[]);
-  const [evs, rels, series, guests, shows, chans, staff] = await Promise.all([
+  const [evs, rels, series, guests, shows, chans, staff, marks] = await Promise.all([
     safe(dbGet(`content_events?select=${EV_SELECT}&starts_at=gte.${from}&starts_at=lt.${to}&order=starts_at.asc`)),
     safe(dbGet(`content_events?select=${EV_SELECT}&release_at=gte.${from}&release_at=lt.${to}&order=release_at.asc`)),
     safe(dbGet(`content_series?select=${SER_SELECT}&order=title.asc`)),
     safe(dbGet('guests?select=id,name,org,email,handle,notes&order=name.asc')),
     safe(dbGet('shows?select=id,name,channel_id&order=name.asc')),
     safe(dbGet('channels?select=id,name&order=name.asc')),
-    safe(dbGet('staff?select=id,name&is_active=eq.true&order=name.asc'))
+    safe(dbGet('staff?select=id,name&is_active=eq.true&order=name.asc')),
+    safe(dbGet('calendar_markers?select=id,title,starts_on,ends_on,notes&order=starts_on.asc'))
   ]);
   const seen = {};
   CAL_EVENTS = [];
   evs.concat(rels).forEach(e => { if (!seen[e.id]) { seen[e.id] = 1; CAL_EVENTS.push(e); } });
   CAL_SERIES = series; CAL_GUESTS = guests;
-  CAL_SHOWS = shows; CAL_CHANNELS = chans; CAL_STAFF = staff;
+  CAL_SHOWS = shows; CAL_CHANNELS = chans; CAL_STAFF = staff; CAL_MARKERS = marks;
   renderCalendar();
 }
 
@@ -1582,12 +1598,15 @@ function calFiltered(){
 
 function renderCalendar(){
   const tabs = [['month','Calendar'],['list','Upcoming'],['series','Recurring'],['guests','Guests']];
-  const add = CAL_TAB === 'series' ? ifCan('calendar','c','<button class="btn btn-primary" onclick="seriesForm()">+ Add recurring show</button>')
+  if (can('markers','r')) tabs.push(['markers','Key dates']);
+  const add = CAL_TAB === 'markers' ? ifCan('markers','c','<button class="btn btn-primary" onclick="markerForm()">+ Add key date</button>')
+            : CAL_TAB === 'series' ? ifCan('calendar','c','<button class="btn btn-primary" onclick="seriesForm()">+ Add recurring show</button>')
             : CAL_TAB === 'guests' ? ifCan('calendar','c','<button class="btn btn-primary" onclick="guestForm()">+ Add guest</button>')
             : ifCan('calendar','c','<button class="btn btn-primary" onclick="eventForm()">+ Add episode</button>');
   const body = CAL_TAB === 'month'  ? calMonthHtml()
              : CAL_TAB === 'list'   ? calListHtml()
              : CAL_TAB === 'series' ? calSeriesHtml()
+             : CAL_TAB === 'markers' ? calMarkersHtml()
              : calGuestsHtml();
   topAction(add);
   calMount(`<div class="onb-tabs">${tabs.map(([k,l])=>`<button class="${CAL_TAB===k?'on':''}" onclick="calTab('${k}')">${l}</button>`).join('')}</div>${body}`);
@@ -1629,6 +1648,7 @@ function calMonthHtml(){
     const show = CAL_EXPAND[key] ? list : list.slice(0,3);
     cells += `<div class="cal-cell ${d.getMonth()!==m?'out':''} ${key===todayKey?'today':''}">
       <div class="cal-date"><span>${d.getDate()}</span>
+        ${calMarkerHtml(key)}
         ${ifCan('calendar','c',`<button class="cal-add" title="Add episode" onclick="eventForm(null,'${key}')">+</button>`)}</div>
       ${show.map(o=>`<button class="cal-ev cal-${o.kind} ${o.e.status==='canceled'?'canceled':''}"
           title="${esc(calPairText(o.e))}" onclick="eventDetail('${o.e.id}')">
@@ -1651,7 +1671,7 @@ function calListHtml(){
   list.forEach(o => { const k = calDayKeyET(o.at); (byDay[k] = byDay[k] || []).push(o); });
   return calFilterBar(false) + Object.keys(byDay).sort().map(k => {
     const d = new Date(k + 'T12:00:00Z');
-    return `<div class="cal-day"><h4>${calLongDay(d)}</h4>${byDay[k].map(calRowHtml).join('')}</div>`;
+    return `<div class="cal-day"><h4>${calLongDay(d)} ${calMarkerHtml(k)}</h4>${byDay[k].map(calRowHtml).join('')}</div>`;
   }).join('');
 }
 
@@ -1851,7 +1871,7 @@ function calSeriesHtml(){
       <td>${s.show?esc(s.show.name):'—'}</td>
       <td><span class="tag ${s.format==='live'?'tag-live':'tag-pre'}">${s.format==='live'?'Live':'Pre-rec'}</span></td>
       <td class="ser-when">${calFreqText(s)}</td>
-      <td class="ser-when">${fmtDate(s.starts_on)}${s.ends_on?' – '+fmtDate(s.ends_on):' – ongoing'}</td>
+      <td class="ser-when">${fmtDate(s.starts_on)}${s.occurrences?' · '+s.occurrences+' episodes':s.ends_on?' – '+fmtDate(s.ends_on):' – ongoing'}</td>
       <td class="row-actions">
         ${ifCan('calendar','c',`<button class="btn btn-ghost btn-sm" onclick="seriesGenerate('${s.id}',false)">Generate</button>`)}
         ${ifCan('calendar','u',`<button class="btn btn-ghost btn-sm" onclick="seriesForm('${s.id}')">Edit</button>`)}
@@ -1892,7 +1912,15 @@ function seriesForm(id){
       <div class="field" id="srRelTimeWrap" style="display:none"><label>Release time (ET)</label>
         <input type="time" id="srRelTime" value="${s?.release_time ? s.release_time.slice(0,5) : '12:00'}"></div>
       <div class="field"><label>First date</label><input type="date" id="srStart" value="${s?s.starts_on:calDayKeyET(new Date())}"></div>
-      <div class="field"><label>End date (optional)</label><input type="date" id="srEnd" value="${s?.ends_on||''}"></div>
+      <div class="field"><label>Ends</label><select id="srEndMode" onchange="srFreqToggle()">
+        <option value="never" ${s && (s.occurrences || s.ends_on) ? '' : 'selected'}>Never</option>
+        <option value="count" ${s?.occurrences ? 'selected' : ''}>After a number of episodes</option>
+        <option value="date" ${(s?.ends_on && !s?.occurrences) ? 'selected' : ''}>On a date</option>
+      </select></div>
+      <div class="field" id="srCountWrap" style="display:none"><label>Number of episodes</label>
+        <input type="number" id="srCount" min="1" max="200" value="${s?.occurrences || 10}"></div>
+      <div class="field" id="srEndWrap" style="display:none"><label>End date</label>
+        <input type="date" id="srEnd" value="${s?.ends_on||''}"></div>
       <div class="field"><label>Active</label><select id="srActive">
         <option value="true" ${s?.is_active!==false?'selected':''}>Yes</option>
         <option value="false" ${s?.is_active===false?'selected':''}>Paused</option></select></div>
@@ -1912,7 +1940,8 @@ function seriesForm(id){
         release_offset_days: calv('srFormat')==='prerecorded' ? parseInt(calv('srRelOff')||'0',10) : 0,
         release_time: calv('srFormat')==='prerecorded' ? (calv('srRelTime')||null) : null,
         starts_on: calv('srStart'),
-        ends_on: calv('srEnd') || null,
+        ends_on: calv('srEndMode') === 'date' ? (calv('srEnd') || null) : null,
+        occurrences: calv('srEndMode') === 'count' ? parseInt(calv('srCount')||'1',10) : null,
         is_active: calv('srActive') === 'true',
         notes: calv('srNotes') || null
       };
@@ -1941,6 +1970,10 @@ function srFreqToggle(){
   ['srRelWrap','srRelTimeWrap'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = pre ? '' : 'none';
   });
+  const mode = calv('srEndMode');
+  const cw = document.getElementById('srCountWrap'), ew = document.getElementById('srEndWrap');
+  if (cw) cw.style.display = mode === 'count' ? '' : 'none';
+  if (ew) ew.style.display = mode === 'date' ? '' : 'none';
 }
 
 async function seriesGenerate(id, reset, quiet){
@@ -1955,6 +1988,56 @@ async function seriesDelete(id){
   if (!confirm('Delete this recurring show? Episodes already on the calendar are kept.')) return;
   await dbDel(`content_series?id=eq.${id}`);                            // db call
   toast('Recurring show deleted');
+  loadCalendar();
+}
+
+/* ----- key dates (markers) ----- */
+function calMarkersHtml(){
+  if (!CAL_MARKERS.length) return '<div class="empty">No key dates yet. These show in grey next to the date on the calendar.</div>';
+  const today = calDayKeyET(new Date());
+  return `<div class="table-wrap"><table><thead><tr>
+      <th>Key date</th><th>When</th><th>Notes</th><th></th>
+    </tr></thead><tbody>${CAL_MARKERS.map(mk=>`<tr style="${(mk.ends_on||mk.starts_on) < today ? 'opacity:.55' : ''}">
+      <td><strong>${esc(mk.title)}</strong></td>
+      <td class="ser-when">${fmtDate(mk.starts_on)}${mk.ends_on && mk.ends_on !== mk.starts_on ? ' – '+fmtDate(mk.ends_on) : ''}</td>
+      <td class="ser-when">${esc(mk.notes||'—')}</td>
+      <td class="row-actions">
+        ${ifCan('markers','u',`<button class="btn btn-ghost btn-sm" onclick="markerForm('${mk.id}')">Edit</button>`)}
+        ${ifCan('markers','d',`<button class="btn btn-danger btn-sm" onclick="markerDelete('${mk.id}')">Delete</button>`)}
+      </td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function markerForm(id){
+  if (!can('markers', id ? 'u' : 'c')) return;
+  const mk = id ? CAL_MARKERS.find(x=>x.id===id) : null;
+  modal({
+    title: mk ? 'Edit key date' : 'Add key date',
+    saveLabel: 'Save key date',
+    body: `<div class="form-grid">
+      <div class="field full"><label>Label</label>
+        <input id="mkTitle" value="${mk?esc(mk.title):''}" placeholder="e.g. Week 1 starts"></div>
+      <div class="field"><label>Date</label><input type="date" id="mkStart" value="${mk?mk.starts_on:calDayKeyET(new Date())}"></div>
+      <div class="field"><label>Through (optional)</label><input type="date" id="mkEnd" value="${mk?.ends_on||''}"></div>
+      <div class="field full"><label>Notes</label><textarea id="mkNotes" rows="2">${mk?esc(mk.notes||''):''}</textarea></div>
+    </div>`,
+    onSave: async () => {
+      const payload = { title: calv('mkTitle'), starts_on: calv('mkStart'),
+        ends_on: calv('mkEnd') || null, notes: calv('mkNotes') || null };
+      if (!payload.title) throw new Error('Give it a label');
+      if (!payload.starts_on) throw new Error('Pick a date');
+      if (payload.ends_on && payload.ends_on < payload.starts_on) throw new Error('End date is before the start date');
+      if (id) await dbPatch(`calendar_markers?id=eq.${id}`, payload);
+      else    await dbPost('calendar_markers', payload);
+      toast('Key date saved');
+      loadCalendar();
+    }
+  });
+}
+
+async function markerDelete(id){
+  if (!confirm('Delete this key date?')) return;
+  await dbDel(`calendar_markers?id=eq.${id}`);
+  toast('Key date deleted');
   loadCalendar();
 }
 
