@@ -668,7 +668,7 @@
       <div class="nav-label">Content</div>
       <button data-go="channels">Channels</button>
       <button data-go="shows">Shows</button>
-      <button class="nav-btn" data-nav="calendar" onclick="go('calendar')">Content calendar</button>
+      <button data-go="calendar">Content calendar</button>
       <button data-go="gamepicks">Game Picks</button>
       <button data-go="startsit">Start/Sit Showdown</button>
       <div class="nav-label">Work</div>
@@ -731,8 +731,8 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
-  {label:'Content', keys:['shows','tools','channels','youtube', 'startsit', 'gamepicks']},
-  {label:'Work', keys:['calendar','board']},
+  {label:'Content', keys:['shows','calendar','tools','channels','youtube', 'startsit', 'gamepicks']},
+  {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
 ];
 function resourceGroups(){
@@ -1480,7 +1480,7 @@ function showDelete(id){const s=SHOWS.find(x=>x.id===id);confirmDelete(esc(s.nam
   await dbDel('shows?id=eq.'+id);SHOWS=SHOWS.filter(x=>x.id!==id);renderShows('');toast('Show removed');});}
 
 /* ---------- Content calendar ---------- */
-const CAL_TARGET = '#view';
+const CAL_TARGET = '#content';
 function calMount(html){ document.querySelector(CAL_TARGET).innerHTML = html; }
 
 const EV_SELECT = 'id,title,show_id,channel_id,series_id,format,status,starts_at,duration_minutes,location,video_url,notes,'
@@ -1549,11 +1549,8 @@ function renderCalendar(){
              : CAL_TAB === 'list'   ? calListHtml()
              : CAL_TAB === 'series' ? calSeriesHtml()
              : calGuestsHtml();
-  calMount(`<div class="panel">
-    <div class="panel-head"><h2>Content calendar</h2>${add}</div>
-    <div class="onb-tabs">${tabs.map(([k,l])=>`<button class="${CAL_TAB===k?'on':''}" onclick="calTab('${k}')">${l}</button>`).join('')}</div>
-    ${body}
-  </div>`);
+  topAction(add);
+  calMount(`<div class="onb-tabs">${tabs.map(([k,l])=>`<button class="${CAL_TAB===k?'on':''}" onclick="calTab('${k}')">${l}</button>`).join('')}</div>${body}`);
 }
 
 function calFilterBar(withNav){
@@ -1681,7 +1678,7 @@ function eventForm(id, dayKey){
     </div>`,
     onSave: async () => {
       const date = calv('evDate'), time = calv('evTime');
-      if (!date || !time) return toast('Pick a date and time');
+      if (!date || !time) throw new Error('Pick a date and time');
       const payload = {
         title: calv('evTitle') || null,
         show_id: calv('evShow') || null,
@@ -1709,7 +1706,6 @@ function eventForm(id, dayKey){
         if (rows.length) await dbPost('event_people', rows);
       }
       toast('Episode saved');
-      if (m.close) m.close();
       loadCalendar();
     }
   });
@@ -1851,7 +1847,7 @@ function seriesForm(id){
         is_active: calv('srActive') === 'true',
         notes: calv('srNotes') || null
       };
-      if (!payload.title) return toast('Give the series a title');
+      if (!payload.title) throw new Error('Give the series a title');
       let sid = id;
       if (id){
         await dbPatch(`content_series?id=eq.${id}`, payload);           // db call
@@ -1924,11 +1920,10 @@ function guestForm(id){
     onSave: async () => {
       const payload = { name: calv('gsName'), org: calv('gsOrg')||null, handle: calv('gsHandle')||null,
         email: calv('gsEmail')||null, phone: calv('gsPhone')||null, notes: calv('gsNotes')||null };
-      if (!payload.name) return toast('Name is required');
+      if (!payload.name) throw new Error('Name is required');
       if (id) await dbPatch(`guests?id=eq.${id}`, payload);             // db call
       else    await dbPost('guests', payload);
       toast('Guest saved');
-      if (m.close) m.close();
       loadCalendar();
     }
   });
