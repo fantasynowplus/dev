@@ -469,8 +469,15 @@
   tr.analyst td:first-child{font-weight:800;color:var(--orange)}
 
   /* ---- headshots ---- */
-  img.mini-avatar,img.avatar,img.org-avatar,img.ss-av{
+  img.mini-avatar,img.avatar,img.org-avatar,img.ss-av,img.ll-av{
     object-fit:cover;object-position:top center}
+  .ll-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .ll-row:last-child{border-bottom:none}
+  .ll-av{width:34px;height:34px;border-radius:50%;flex:0 0 34px;display:flex;
+    align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800}
+  .ll-name{font-weight:700}
+  .ll-title{font-size:.82rem;color:var(--muted)}
+  .ll-when{margin-left:auto;font-size:.8rem;color:var(--muted);white-space:nowrap}
   .hs-wrap{display:flex;align-items:center;gap:15px;margin-bottom:16px;
     padding-bottom:16px;border-bottom:1px solid var(--line)}
   .hs-img{width:74px;height:74px;border-radius:50%;flex:0 0 74px;
@@ -785,16 +792,12 @@ function headshotSrc(v){
 }
 function headshotAbs(v){ const s=headshotSrc(v); return s ? new URL(s, location.href).href : ''; }
 
-function avatarHtml(name, url, size){
-  const s = size || 34;
-  const nm = name || '?';
-  const src = url ? headshotSrc(url) : '';
-  const box = 'position:relative;flex:0 0 '+s+'px;height:'+s+'px;border-radius:50%;overflow:hidden;'+
-    'display:flex;align-items:center;justify-content:center;font-weight:700;'+
-    'font-size:'+Math.round(s*0.36)+'px;color:#fff;background:'+accentFor(nm);
-  const img = src ? '<img src="'+esc(src)+'" alt="" onerror="this.remove()" '+
-    'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '';
-  return '<div style="'+box+'">'+esc(initials(nm))+img+'</div>';
+function avatarHtml(p, cls, accent){
+  const nm = (p && p.name) || '';
+  const src = headshotSrc(p && p.headshot);
+  const ini = esc(initials(nm));
+  if(src) return '<img class="'+cls+'" src="'+esc(src)+'" alt="" data-ini="'+ini+'">';
+  return '<span class="'+cls+'" style="background:'+(accent||accentFor(nm))+'">'+ini+'</span>';
 }
 document.addEventListener('error', function(e){
   const img = e.target;
@@ -2451,14 +2454,14 @@ async function lastLoginHtml(){
   if(!rows.length) return '<div class="empty">No logins recorded yet.</div>';
   return rows.map(r => {
     const nm = r.name || r.email || 'Unknown';
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
-      <div style="flex:0 0 34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;background:${accentFor(nm)}">${esc(initials(nm))}</div>
-      <div style="min-width:0;flex:1">
-        <div style="font-weight:700">${esc(nm)}</div>
-        <div style="font-size:.82rem;color:var(--muted)">${esc(r.job_title || '—')}</div>
-      </div>
-      <div style="font-size:.8rem;color:var(--muted);white-space:nowrap">${esc(timeAgo(r.last_seen))}</div>
-    </div>`;
+    return '<div class="ll-row">'+
+      avatarHtml({name:nm, headshot:r.avatar_url}, 'll-av', accentFor(nm))+
+      '<div style="min-width:0">'+
+        '<div class="ll-name">'+esc(nm)+'</div>'+
+        '<div class="ll-title">'+esc(r.job_title || '\u2014')+'</div>'+
+      '</div>'+
+      '<div class="ll-when">'+esc(timeAgo(r.last_seen))+'</div>'+
+    '</div>';
   }).join('');
 }
 
