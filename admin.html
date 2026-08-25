@@ -784,12 +784,11 @@ function headshotSrc(v){
   return v.indexOf('/')>=0 ? v.replace(/^\/+/,'') : HEADSHOT_DIR + v;
 }
 function headshotAbs(v){ const s=headshotSrc(v); return s ? new URL(s, location.href).href : ''; }
-const AVATAR_BASE = 'assets/staff/';
 
 function avatarHtml(name, url, size){
   const s = size || 34;
   const nm = name || '?';
-  const src = !url ? '' : (/^(https?:)?\/\//.test(url) || url.charAt(0) === '/' ? url : AVATAR_BASE + url);
+  const src = url ? headshotSrc(url) : '';
   const box = 'position:relative;flex:0 0 '+s+'px;height:'+s+'px;border-radius:50%;overflow:hidden;'+
     'display:flex;align-items:center;justify-content:center;font-weight:700;'+
     'font-size:'+Math.round(s*0.36)+'px;color:#fff;background:'+accentFor(nm);
