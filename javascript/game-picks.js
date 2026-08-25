@@ -486,9 +486,11 @@
       }
 
       return '<div class="gpx-mlside">'
+        + '<div class="gpx-mlteamline">'
         + '<img class="gpx-mllogo" src="' + logo(team) + '" alt=""'
         + ' onerror="this.style.visibility=\'hidden\'">'
         + '<span class="gpx-mlabbr">' + esc(team) + '</span>'
+        + '</div>'
         + '<div class="gpx-faces">'
         + (shown || '<span class="gpx-nofaces">&mdash;</span>') + '</div>'
         + '</div>';
