@@ -264,11 +264,40 @@ layout: null
 #gpx .gpx-prow {
   align-items: center;
   border-bottom: 1px solid var(--gpx-line-soft);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  gap: 7px;
+  display: grid;
+  font-size: 12px;
+  gap: 8px;
+  grid-template-columns: 24px minmax(0, 1fr) repeat(3, minmax(66px, 1fr));
   padding: 6px 0;
+}
+
+#gpx .gpx-pname {
+  color: var(--gpx-text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#gpx .gpx-cell {
+  align-items: center;
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+#gpx .gpx-phead {
+  border-bottom: 1px solid var(--gpx-line);
+  padding-bottom: 5px;
+}
+
+#gpx .gpx-phead .gpx-cell {
+  color: var(--gpx-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 #gpx .gpx-prow:last-child { border-bottom: 0; }
@@ -289,13 +318,6 @@ layout: null
 }
 
 #gpx .gpx-av img { height: 100%; object-fit: cover; width: 100%; }
-
-#gpx .gpx-pname {
-  color: var(--gpx-text);
-  flex: 1 1 auto;
-  font-weight: 600;
-  min-width: 88px;
-}
 
 #gpx .gpx-tag {
   border-radius: 4px;

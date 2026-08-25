@@ -127,6 +127,12 @@
       .slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
   }
 
+    function headshotSrc(v) {
+    if (!v) return '';
+    if (/^https?:\/\//.test(v) || v.charAt(0) === '/') return v;
+    return 'assets/staff/' + v;
+  }
+
   function started(g) {
     return new Date(g.kickoff) <= new Date();
   }
@@ -401,42 +407,48 @@
   }
 
   function picksBlock(g) {
-    if (!g.revealed) {
-      return '<div class="gpx-picks"><div class="gpx-ptitle">Staff picks</div>'
-        + '<div class="gpx-sealed">Sealed until kickoff.</div></div>';
-    }
-
     var staff = g.staff_picks || [];
     var fan = g.fan_pick || {};
+    var hasFan = !!(fan && (fan.ml || fan.ats || fan.ou));
+
+    if (!staff.length && !hasFan) {
+      return '<div class="gpx-picks"><div class="gpx-ptitle">Picks</div>'
+        + '<div class="gpx-sealed">No picks in yet.</div></div>';
+    }
+
+    function row(name, avatar, p, cls) {
+      return '<div class="gpx-prow' + (cls || '') + '">'
+        + '<span class="gpx-av">' + avatar + '</span>'
+        + '<span class="gpx-pname">' + esc(name) + '</span>'
+        + '<span class="gpx-cell">' + pickText(g, 'ml', p.ml) + resultTag(p.ml_res) + '</span>'
+        + '<span class="gpx-cell">' + pickText(g, 'ats', p.ats) + resultTag(p.ats_res) + '</span>'
+        + '<span class="gpx-cell">' + pickText(g, 'ou', p.ou) + resultTag(p.ou_res) + '</span>'
+        + '</div>';
+    }
+
+    var head = '<div class="gpx-prow gpx-phead">'
+      + '<span class="gpx-av"></span><span class="gpx-pname"></span>'
+      + '<span class="gpx-cell">ML</span>'
+      + '<span class="gpx-cell">Spread</span>'
+      + '<span class="gpx-cell">Total</span></div>';
 
     var rows = staff.map(function (s) {
-      return '<div class="gpx-prow">'
-        + '<span class="gpx-av">'
-        + (s.headshot ? '<img src="' + esc(s.headshot) + '" alt="">' : esc(initials(s.name)))
-        + '</span>'
-        + '<span class="gpx-pname">' + esc(s.name) + '</span>'
-        + '<span>' + pickText(g, 'ml', s.ml) + '</span>' + resultTag(s.ml_res)
-        + '<span>' + pickText(g, 'ats', s.ats) + '</span>' + resultTag(s.ats_res)
-        + '<span>' + pickText(g, 'ou', s.ou) + '</span>' + resultTag(s.ou_res)
-        + '</div>';
+      var ini = esc(initials(s.name));
+      var av = s.headshot
+        ? '<img src="' + esc(headshotSrc(s.headshot)) + '" alt=""'
+          + ' onerror="this.parentNode.textContent=\'' + ini + '\'">'
+        : ini;
+      return row(s.name, av, s, '');
     }).join('');
 
     var fanRow = '';
-    if (fan && (fan.ml || fan.ats || fan.ou)) {
+    if (hasFan) {
       var n = Math.max(fan.ml_n || 0, fan.ats_n || 0, fan.ou_n || 0);
-      fanRow = '<div class="gpx-prow gpx-crowd">'
-        + '<span class="gpx-av">FP</span>'
-        + '<span class="gpx-pname">Fan Picks<span class="gpx-tag n" '
-        + 'style="margin-left:6px">' + n + '</span></span>'
-        + '<span>' + pickText(g, 'ml', fan.ml) + '</span>' + resultTag(fan.ml_res)
-        + '<span>' + pickText(g, 'ats', fan.ats) + '</span>' + resultTag(fan.ats_res)
-        + '<span>' + pickText(g, 'ou', fan.ou) + '</span>' + resultTag(fan.ou_res)
-        + '</div>';
+      fanRow = row('Fan Picks (' + n + ')', 'FP', fan, ' gpx-crowd');
     }
 
     return '<div class="gpx-picks"><div class="gpx-ptitle">Picks</div>'
-      + (rows || '<div class="gpx-sealed">No staff picks logged.</div>')
-      + fanRow + '</div>';
+      + head + rows + fanRow + '</div>';
   }
 
   // ---------------------------------------------------------------- picks
