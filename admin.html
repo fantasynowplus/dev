@@ -60,8 +60,16 @@
     border-right:1px solid var(--navy-2);z-index:20;
   }
   .brand{display:flex;align-items:center;gap:10px;padding:20px 20px 16px}
-  .brand .logo{font-family:'Archivo';font-weight:800;font-size:16px;letter-spacing:.03em;
-    background:var(--orange);color:var(--navy);padding:6px 11px;border-radius:9px}
+  .brand .logo{
+    height:34px;
+    width:auto;
+    display:block;
+    object-fit:contain;
+    background:none;
+    border:none;
+    border-radius:0;
+    padding:0;
+  }
   .brand .sub{font-size:11px;color:#8ea3c9;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
   .nav{flex:1;overflow-y:auto;padding:8px 12px}
   .nav-label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6f86b3;
@@ -661,8 +669,8 @@
 <div id="app">
   <aside class="sidebar">
     <div class="brand">
-      <span class="logo">FN+</span>
-      <div><div style="font-size:14px;font-weight:800;font-family:'Archivo';color:#fff;line-height:1">Admin</div>
+      <img class="logo" src="assets/logos/FantasyNow%2B.png" alt="FantasyNow+">
+      <div><div style="font-size:14px;font-weight:800;font-family:'Archivo';color:#fff;line-height:1">STAFF</div>
       <div class="sub">Portal</div></div>
     </div>
     <nav class="nav" id="nav">
@@ -1077,8 +1085,7 @@ async function loadDashboard(){
     dbGet('tasks?select=id,status')
   ]);
   const activeTasks=(tasks||[]).filter(t=>t.status!=='done').length;
-  const accessRows = await dbGet('profiles?select=name,email,last_seen,role:roles(name,permissions)&role_id=not.is.null&order=name.asc&limit=50')||[];
-  const elevated = accessRows.filter(a=>a.role && (a.role.name||'').toLowerCase()!=='staff' && a.role.permissions && Object.values(a.role.permissions).some(p=>p&&(p.c||p.u||p.d)));
+  const lastLogins = await lastLoginHtml();
   const recentTasks = await dbGet('tasks?select=title,status,updated_at,project:projects(name)&order=updated_at.desc&limit=6')||[];
   let onbCount=null;
   if(can('onboarding','r')){ try{ onbCount=((await rpc('onboarding_list',{p_include_completed:false}))||[]).length; }catch(e){ onbCount=null; } }
@@ -1101,14 +1108,8 @@ async function loadDashboard(){
           '<td class="mono" style="color:var(--muted);text-align:right">'+timeAgo(t.updated_at)+'</td></tr>').join('')+
           '</tbody></table></div>' : '<div class="empty" style="padding:30px"><p>No tasks yet. Head to the Project Board to start one.</p></div>')+
       '</div>'+
-      '<div class="panel"><div class="panel-head"><h3>Elevated access</h3><span class="count-pill" style="margin-left:auto">'+elevated.length+'</span></div>'+
-        '<div class="table-wrap"><table><tbody>'+(elevated.length?elevated.map(a=>{
-          const online=a.last_seen && (Date.now()-new Date(a.last_seen).getTime() < 300000);
-          return '<tr><td><div style="display:flex;align-items:center;gap:9px"><span class="mini-avatar" style="position:relative">'+initials(a.name||a.email)+(online?'<span class="on-dot"></span>':'')+'</span>'+
-          '<div><div>'+esc(a.name||a.email)+'</div><div style="font-size:11px;font-weight:600;color:'+(online?'var(--green)':'var(--muted)')+'">'+(online?'Online now':(a.last_seen?'Seen '+timeAgo(a.last_seen):'Offline'))+'</div></div></div></td>'+
-          '<td style="text-align:right"><span class="chip">'+esc(a.role?a.role.name:'—')+'</span></td></tr>';}).join('')
-          :'<tr><td><div class="empty" style="padding:20px"><p>No one has elevated access yet. Assign a role with create/edit/delete permissions in the Staff area.</p></div></td></tr>')+
-        '</tbody></table></div>'+
+      '<div class="panel"><div class="panel-head"><h3>Last login</h3></div>'+
+        '<div style="padding:0 16px 8px">'+lastLogins+'</div>'+
       '</div>'+
     '</div>';
 }
@@ -2437,6 +2438,23 @@ function ssUpsertPick(matchupId, pickerId, side) {
     body: JSON.stringify({ matchup_id: matchupId, picker_id: pickerId, pick: side,
                            updated_at: new Date().toISOString() })
   });
+}
+
+async function lastLoginHtml(){
+  let rows = [];
+  try { rows = await rpc('recent_logins', { p_limit: 6 }) || []; } catch(e) { rows = []; }
+  if(!rows.length) return '<div class="empty">No logins recorded yet.</div>';
+  return rows.map(r => {
+    const nm = r.name || r.email || 'Unknown';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:0 0 34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;background:${accentFor(nm)}">${esc(initials(nm))}</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-weight:700">${esc(nm)}</div>
+        <div style="font-size:.82rem;color:var(--muted)">${esc(r.job_title || '—')}</div>
+      </div>
+      <div style="font-size:.8rem;color:var(--muted);white-space:nowrap">${esc(timeAgo(r.last_seen))}</div>
+    </div>`;
+  }).join('');
 }
 
 function ssFetchState() {
