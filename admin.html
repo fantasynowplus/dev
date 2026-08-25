@@ -609,7 +609,11 @@
 .cal-add:hover{opacity:1!important}
 .cal-ev{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--ev,var(--navy));background:#f4f6fa;border-radius:5px;padding:4px 6px;font:inherit;font-size:11.5px;line-height:1.3;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cal-ev:hover{background:#eaeef6}
-.cal-ev.pre{background:#f6f7f8;border-left-style:dashed}
+.cal-ev.cal-live{border-left-color:#EA4E3D}
+.cal-ev.cal-record{border-left-color:#FFA515;border-left-style:dashed;background:#fdf5e8}
+.cal-ev.cal-release{border-left-color:#42F4B0;background:#eafaf3}
+.cal-ev.cal-release .cal-t{color:#0b7a58}
+.cal-k{margin-right:3px}
 .cal-ev.canceled{opacity:.5;text-decoration:line-through}
 .cal-ev .cal-t{font-weight:700;color:var(--navy);margin-right:4px}
 .cal-more{border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px;text-align:left}
@@ -625,6 +629,7 @@
 .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:1px}
 .tag-live{background:#fdece9;color:#EA4E3D}
 .tag-pre{background:#e7fbf3;color:#0b7a58}
+.tag-rec{background:#fdf1de;color:#9a6100}
 .tag-status{background:#eef1f6;color:var(--muted)}
 .ppl-pick{max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}
 .ppl-pick label{display:flex;gap:8px;align-items:center;padding:3px 2px;font-size:13.5px;cursor:pointer}
@@ -668,10 +673,10 @@
       <div class="nav-label">Content</div>
       <button data-go="channels">Channels</button>
       <button data-go="shows">Shows</button>
-      <button data-go="calendar">Content calendar</button>
       <button data-go="gamepicks">Game Picks</button>
       <button data-go="startsit">Start/Sit Showdown</button>
       <div class="nav-label">Work</div>
+      <button data-go="calendar">Content calendar</button>
       <button data-go="board">Project Board</button>
       <button data-go="youtube">YouTube Stats</button>
       <button data-go="tools">Tools &amp; links</button>
@@ -731,8 +736,8 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
-  {label:'Content', keys:['shows','calendar','tools','channels','youtube', 'startsit', 'gamepicks']},
-  {label:'Work', keys:['board']},
+  {label:'Content', keys:['shows','tools','channels','youtube', 'startsit', 'gamepicks']},
+  {label:'Work', keys:['calendar','board']},
   {label:'Access', keys:['roles']}
 ];
 function resourceGroups(){
@@ -1483,10 +1488,10 @@ function showDelete(id){const s=SHOWS.find(x=>x.id===id);confirmDelete(esc(s.nam
 const CAL_TARGET = '#content';
 function calMount(html){ document.querySelector(CAL_TARGET).innerHTML = html; }
 
-const EV_SELECT = 'id,title,show_id,channel_id,series_id,format,status,starts_at,duration_minutes,location,video_url,notes,'
+const EV_SELECT = 'id,title,show_id,channel_id,series_id,format,status,starts_at,release_at,duration_minutes,location,video_url,notes,'
   + 'show:shows(id,name,channel_id),channel:channels(id,name),'
   + 'people:event_people(id,role,staff_id,guest_id,staff:staff(id,name),guest:guests(id,name))';
-const SER_SELECT = 'id,title,show_id,format,freq,dow,day_of_month,start_time,duration_minutes,tz,starts_on,ends_on,is_active,notes,show:shows(id,name)';
+const SER_SELECT = 'id,title,show_id,format,freq,dow,day_of_month,start_time,duration_minutes,release_offset_days,release_time,tz,starts_on,ends_on,is_active,notes,show:shows(id,name)';
 
 let CAL_TAB = 'month';
 let CAL_MONTH = (function(){ const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d; })();
@@ -1504,20 +1509,37 @@ function calLongDay(d){ return d.toLocaleDateString('en-US',{weekday:'long',mont
 function calTitle(e){ return e.title || e.show?.name || 'Untitled'; }
 function calHosts(e){ return (e.people||[]).filter(p=>p.role==='host'||p.role==='cohost'); }
 function calGuestsOf(e){ return (e.people||[]).filter(p=>p.role==='guest'); }
+function calOccurrences(){
+  const out = [];
+  calFiltered().forEach(e => {
+    out.push({ e, kind: e.format === 'live' ? 'live' : 'record', at: e.starts_at });
+    if (e.format === 'prerecorded' && e.release_at) out.push({ e, kind:'release', at: e.release_at });
+  });
+  return out;
+}
+function calPairText(e){
+  if (e.format !== 'prerecorded') return calTitle(e) + ' — live ' + fmtDate(e.starts_at);
+  return calTitle(e) + ' — records ' + fmtDate(e.starts_at)
+       + (e.release_at ? ', releases ' + fmtDate(e.release_at) : ', release TBD');
+}
 
 async function loadCalendar(){
   const from = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()-1, 1).toISOString();
   const to   = new Date(CAL_MONTH.getFullYear(), CAL_MONTH.getMonth()+3, 1).toISOString();
   const safe = p => p.catch(()=>[]);
-  const [evs, series, guests, shows, chans, staff] = await Promise.all([
+  const [evs, rels, series, guests, shows, chans, staff] = await Promise.all([
     safe(dbGet(`content_events?select=${EV_SELECT}&starts_at=gte.${from}&starts_at=lt.${to}&order=starts_at.asc`)),
+    safe(dbGet(`content_events?select=${EV_SELECT}&release_at=gte.${from}&release_at=lt.${to}&order=release_at.asc`)),
     safe(dbGet(`content_series?select=${SER_SELECT}&order=title.asc`)),
     safe(dbGet('guests?select=id,name,org,email,handle,notes&order=name.asc')),
     safe(dbGet('shows?select=id,name,channel_id&order=name.asc')),
     safe(dbGet('channels?select=id,name&order=name.asc')),
     safe(dbGet('staff?select=id,name&is_active=eq.true&order=name.asc'))
   ]);
-  CAL_EVENTS = evs; CAL_SERIES = series; CAL_GUESTS = guests;
+  const seen = {};
+  CAL_EVENTS = [];
+  evs.concat(rels).forEach(e => { if (!seen[e.id]) { seen[e.id] = 1; CAL_EVENTS.push(e); } });
+  CAL_SERIES = series; CAL_GUESTS = guests;
   CAL_SHOWS = shows; CAL_CHANNELS = chans; CAL_STAFF = staff;
   renderCalendar();
 }
@@ -1567,7 +1589,7 @@ function calFilterBar(withNav){
       <option value="live" ${CAL_FILTER.format==='live'?'selected':''}>Live only</option>
       <option value="prerecorded" ${CAL_FILTER.format==='prerecorded'?'selected':''}>Pre-recorded only</option>
     </select>
-    <span class="cal-legend"><span><i style="background:#EA4E3D"></i>Live</span><span><i style="background:#42F4B0"></i>Pre-recorded</span></span>
+    <span class="cal-legend"><span><i style="background:#EA4E3D"></i>Live</span><span><i style="background:#FFA515"></i>Record</span><span><i style="background:#42F4B0"></i>Release</span></span>
   </div>`;
 }
 
@@ -1579,7 +1601,7 @@ function calMonthHtml(){
   const start = new Date(y, m, 1 - first.getDay());
   const todayKey = calDayKey(new Date());
   const byDay = {};
-  calFiltered().forEach(e => { const k = calDayKey(new Date(e.starts_at)); (byDay[k] = byDay[k] || []).push(e); });
+  calOccurrences().forEach(o => { const k = calDayKey(new Date(o.at)); (byDay[k] = byDay[k] || []).push(o); });
 
   let cells = '';
   for (let i = 0; i < weeks*7; i++){
@@ -1590,9 +1612,9 @@ function calMonthHtml(){
     cells += `<div class="cal-cell ${d.getMonth()!==m?'out':''} ${key===todayKey?'today':''}">
       <div class="cal-date"><span>${d.getDate()}</span>
         ${ifCan('calendar','c',`<button class="cal-add" title="Add episode" onclick="eventForm(null,'${key}')">+</button>`)}</div>
-      ${show.map(e=>`<button class="cal-ev ${e.format==='live'?'live':'pre'} ${e.status==='canceled'?'canceled':''}"
-          style="--ev:${e.format==='live'?'#EA4E3D':'#42F4B0'}" onclick="eventDetail('${e.id}')">
-          <span class="cal-t">${calTime(e.starts_at)}</span>${esc(calTitle(e))}</button>`).join('')}
+      ${show.map(o=>`<button class="cal-ev cal-${o.kind} ${o.e.status==='canceled'?'canceled':''}"
+          title="${esc(calPairText(o.e))}" onclick="eventDetail('${o.e.id}')">
+          <span class="cal-t">${calTime(o.at)}</span><span class="cal-k">${o.kind==='record'?'●':o.kind==='release'?'▶':''}</span>${esc(calTitle(o.e))}</button>`).join('')}
       ${list.length>3 && !CAL_EXPAND[key] ? `<button class="cal-more" onclick="calExpand('${key}')">+${list.length-3} more</button>` : ''}
     </div>`;
   }
@@ -1604,28 +1626,35 @@ function calExpand(k){ CAL_EXPAND[k] = true; renderCalendar(); }
 
 function calListHtml(){
   const now = Date.now();
-  const list = calFiltered().filter(e => new Date(e.starts_at).getTime() > now - 6*3600e3)
-                            .sort((a,b)=> new Date(a.starts_at) - new Date(b.starts_at));
+  const list = calOccurrences().filter(o => new Date(o.at).getTime() > now - 6*3600e3)
+                               .sort((a,b)=> new Date(a.at) - new Date(b.at));
   if (!list.length) return calFilterBar(false) + '<div class="empty">Nothing scheduled ahead.</div>';
   const byDay = {};
-  list.forEach(e => { const k = calDayKey(new Date(e.starts_at)); (byDay[k] = byDay[k] || []).push(e); });
+  list.forEach(o => { const k = calDayKey(new Date(o.at)); (byDay[k] = byDay[k] || []).push(o); });
   return calFilterBar(false) + Object.keys(byDay).sort().map(k => {
     const d = new Date(k + 'T12:00:00');
     return `<div class="cal-day"><h4>${calLongDay(d)}</h4>${byDay[k].map(calRowHtml).join('')}</div>`;
   }).join('');
 }
 
-function calRowHtml(e){
+function calRowHtml(o){
+  const e = o.e;
   const hosts = calHosts(e).map(p => p.staff?.name || p.guest?.name).filter(Boolean);
   const gs = calGuestsOf(e).map(p => p.guest?.name || p.staff?.name).filter(Boolean);
+  const tag = o.kind === 'live'   ? '<span class="tag tag-live">Live</span>'
+            : o.kind === 'record' ? '<span class="tag tag-rec">Record</span>'
+            :                       '<span class="tag tag-pre">Release</span>';
+  const pair = e.format !== 'prerecorded' ? ''
+    : o.kind === 'record' ? (e.release_at ? 'Releases ' + fmtDate(e.release_at) : 'Release date not set')
+    :                       'Recorded ' + fmtDate(e.starts_at);
   return `<div class="cal-row" onclick="eventDetail('${e.id}')">
-    <div class="cal-when">${calTime(e.starts_at)}</div>
+    <div class="cal-when">${calTime(o.at)}</div>
     <div class="cal-body">
-      <div class="cal-title">${esc(calTitle(e))}
-        <span class="tag ${e.format==='live'?'tag-live':'tag-pre'}">${e.format==='live'?'Live':'Pre-rec'}</span>
+      <div class="cal-title">${esc(calTitle(e))} ${tag}
         ${e.status!=='scheduled'?`<span class="tag tag-status">${esc(e.status)}</span>`:''}</div>
       <div class="cal-meta">
         ${e.show?esc(e.show.name):'No show'}${e.channel?' · '+esc(e.channel.name):''}
+        ${pair?' · '+pair:''}
         ${hosts.length?' · Host: '+esc(hosts.join(', ')):''}
         ${gs.length?' · Guests: '+esc(gs.join(', ')):''}
       </div>
@@ -1639,6 +1668,9 @@ function eventForm(id, dayKey){
   const d = e ? new Date(e.starts_at) : (dayKey ? new Date(dayKey+'T19:00:00') : new Date());
   const dv = calDayKey(d);
   const tv = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const r = e?.release_at ? new Date(e.release_at) : null;
+  const rdv = r ? calDayKey(r) : '';
+  const rtv = r ? String(r.getHours()).padStart(2,'0')+':'+String(r.getMinutes()).padStart(2,'0') : '12:00';
   const hostIds = e ? calHosts(e).map(p=>p.staff_id).filter(Boolean) : [];
   const guestIds = e ? calGuestsOf(e).map(p=>p.guest_id).filter(Boolean) : [];
   const opts = (list, sel) => list.map(x=>`<option value="${x.id}" ${sel===x.id?'selected':''}>${esc(x.name)}</option>`).join('');
@@ -1655,15 +1687,17 @@ function eventForm(id, dayKey){
       <div class="field"><label>Channel</label>
         <select id="evChannel"><option value="">— none —</option>${opts(CAL_CHANNELS, e?.channel_id || e?.show?.channel_id)}</select></div>
       <div class="field"><label>Type</label>
-        <select id="evFormat">
+        <select id="evFormat" onchange="evFormatToggle()">
           <option value="live" ${e?.format!=='prerecorded'?'selected':''}>Live</option>
           <option value="prerecorded" ${e?.format==='prerecorded'?'selected':''}>Pre-recorded</option>
         </select></div>
       <div class="field"><label>Status</label>
         <select id="evStatus">${['scheduled','recorded','published','canceled'].map(s=>
           `<option value="${s}" ${e?.status===s?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}</select></div>
-      <div class="field"><label>Date</label><input type="date" id="evDate" value="${dv}"></div>
-      <div class="field"><label>Start time</label><input type="time" id="evTime" value="${tv}"></div>
+      <div class="field"><label id="evDateLbl">Date</label><input type="date" id="evDate" value="${dv}"></div>
+      <div class="field"><label id="evTimeLbl">Start time</label><input type="time" id="evTime" value="${tv}"></div>
+      <div class="field" id="evRelWrap" style="display:none"><label>Release date</label><input type="date" id="evRelDate" value="${rdv}"></div>
+      <div class="field" id="evRelTimeWrap" style="display:none"><label>Release time</label><input type="time" id="evRelTime" value="${rtv}"></div>
       <div class="field"><label>Length (min)</label><input type="number" id="evLen" min="5" step="5" value="${e?e.duration_minutes:60}"></div>
       <div class="field"><label>Location / studio</label><input id="evLoc" value="${e?esc(e.location||''):''}"></div>
       <div class="field full"><label>Video / stream link</label><input id="evUrl" value="${e?esc(e.video_url||''):''}"></div>
@@ -1686,6 +1720,8 @@ function eventForm(id, dayKey){
         format: calv('evFormat'),
         status: calv('evStatus'),
         starts_at: new Date(`${date}T${time}`).toISOString(),
+        release_at: (calv('evFormat')==='prerecorded' && calv('evRelDate'))
+          ? new Date(`${calv('evRelDate')}T${calv('evRelTime')||'12:00'}`).toISOString() : null,
         duration_minutes: parseInt(calv('evLen')||'60', 10),
         location: calv('evLoc') || null,
         video_url: calv('evUrl') || null,
@@ -1707,8 +1743,21 @@ function eventForm(id, dayKey){
       }
       toast('Episode saved');
       loadCalendar();
-    }
+    },
+    onReady: () => evFormatToggle()
   });
+}
+
+function evFormatToggle(){
+  const pre = calv('evFormat') === 'prerecorded';
+  const dl = document.getElementById('evDateLbl'), tl = document.getElementById('evTimeLbl');
+  if (dl) dl.textContent = pre ? 'Record date' : 'Date';
+  if (tl) tl.textContent = pre ? 'Record time' : 'Start time';
+  ['evRelWrap','evRelTimeWrap'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = pre ? '' : 'none';
+  });
+  const rd = document.getElementById('evRelDate');
+  if (pre && rd && !rd.value) rd.value = calv('evDate');
 }
 
 function evShowPick(showId){
@@ -1749,7 +1798,8 @@ async function eventDetail(id){
     wide: true,
     footer: false,
     body: `<div>
-      <p class="mono">${calLongDay(when)} · ${calTime(e.starts_at)} · ${e.duration_minutes} min</p>
+      <p class="mono">${e.format==='prerecorded'?'Records ':''}${calLongDay(when)} · ${calTime(e.starts_at)} · ${e.duration_minutes} min</p>
+      ${e.format==='prerecorded'?`<p class="mono">Releases ${e.release_at?calLongDay(new Date(e.release_at))+' · '+calTime(e.release_at):'— not set —'}</p>`:''}
       <p><span class="tag ${e.format==='live'?'tag-live':'tag-pre'}">${e.format==='live'?'Live':'Pre-recorded'}</span>
          <span class="tag tag-status">${esc(e.status)}</span>
          ${e.series_id?'<span class="tag tag-status">Recurring</span>':''}</p>
@@ -1813,7 +1863,7 @@ function seriesForm(id){
     body: `<div class="form-grid">
       <div class="field full"><label>Series title</label><input id="srTitle" value="${s?esc(s.title):''}" placeholder="e.g. Monday Night Waivers"></div>
       <div class="field"><label>Show</label><select id="srShow"><option value="">— none —</option>${opts(CAL_SHOWS)}</select></div>
-      <div class="field"><label>Type</label><select id="srFormat">
+      <div class="field"><label>Type</label><select id="srFormat" onchange="srFreqToggle()">
         <option value="live" ${s?.format!=='prerecorded'?'selected':''}>Live</option>
         <option value="prerecorded" ${s?.format==='prerecorded'?'selected':''}>Pre-recorded</option></select></div>
       <div class="field"><label>Repeats</label><select id="srFreq" onchange="srFreqToggle()">
@@ -1824,6 +1874,10 @@ function seriesForm(id){
         <input type="number" id="srDom" min="1" max="31" value="${s?.day_of_month||1}"></div>
       <div class="field"><label>Start time (CT)</label><input type="time" id="srTime" value="${s?s.start_time.slice(0,5):'19:00'}"></div>
       <div class="field"><label>Length (min)</label><input type="number" id="srLen" min="5" step="5" value="${s?s.duration_minutes:60}"></div>
+      <div class="field" id="srRelWrap" style="display:none"><label>Release (days after record)</label>
+        <input type="number" id="srRelOff" min="0" max="60" value="${s?.release_offset_days ?? 0}"></div>
+      <div class="field" id="srRelTimeWrap" style="display:none"><label>Release time (CT)</label>
+        <input type="time" id="srRelTime" value="${s?.release_time ? s.release_time.slice(0,5) : '12:00'}"></div>
       <div class="field"><label>First date</label><input type="date" id="srStart" value="${s?s.starts_on:calDayKey(new Date())}"></div>
       <div class="field"><label>End date (optional)</label><input type="date" id="srEnd" value="${s?.ends_on||''}"></div>
       <div class="field"><label>Active</label><select id="srActive">
@@ -1842,6 +1896,8 @@ function seriesForm(id){
         day_of_month: calv('srFreq')==='monthly' ? parseInt(calv('srDom'),10) : null,
         start_time: calv('srTime'),
         duration_minutes: parseInt(calv('srLen')||'60',10),
+        release_offset_days: calv('srFormat')==='prerecorded' ? parseInt(calv('srRelOff')||'0',10) : 0,
+        release_time: calv('srFormat')==='prerecorded' ? (calv('srRelTime')||null) : null,
         starts_on: calv('srStart'),
         ends_on: calv('srEnd') || null,
         is_active: calv('srActive') === 'true',
@@ -1857,7 +1913,6 @@ function seriesForm(id){
       }
       const reset = !!document.getElementById('srReset')?.checked;
       if (sid) await seriesGenerate(sid, reset, true);
-      if (m.close) m.close();
       loadCalendar();
     },
     onReady: () => srFreqToggle()
@@ -1869,6 +1924,10 @@ function srFreqToggle(){
   const dow = document.getElementById('srDowWrap'), dom = document.getElementById('srDomWrap');
   if (dow) dow.style.display = (f==='weekly'||f==='biweekly') ? '' : 'none';
   if (dom) dom.style.display = (f==='monthly') ? '' : 'none';
+  const pre = calv('srFormat') === 'prerecorded';
+  ['srRelWrap','srRelTimeWrap'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = pre ? '' : 'none';
+  });
 }
 
 async function seriesGenerate(id, reset, quiet){
