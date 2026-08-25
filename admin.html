@@ -784,12 +784,18 @@ function headshotSrc(v){
   return v.indexOf('/')>=0 ? v.replace(/^\/+/,'') : HEADSHOT_DIR + v;
 }
 function headshotAbs(v){ const s=headshotSrc(v); return s ? new URL(s, location.href).href : ''; }
-function avatarHtml(person, cls, bg){
-  const src = headshotSrc(person && person.headshot);
-  const ini = initials(person && (person.name || person.email));
-  return src
-    ? '<img class="'+cls+'" src="'+esc(src)+'" alt="" data-ini="'+esc(ini)+'">'
-    : '<span class="'+cls+'"'+(bg?' style="background:'+bg+'"':'')+'>'+ini+'</span>';
+const AVATAR_BASE = 'assets/staff/';
+
+function avatarHtml(name, url, size){
+  const s = size || 34;
+  const nm = name || '?';
+  const src = !url ? '' : (/^(https?:)?\/\//.test(url) || url.charAt(0) === '/' ? url : AVATAR_BASE + url);
+  const box = 'position:relative;flex:0 0 '+s+'px;height:'+s+'px;border-radius:50%;overflow:hidden;'+
+    'display:flex;align-items:center;justify-content:center;font-weight:700;'+
+    'font-size:'+Math.round(s*0.36)+'px;color:#fff;background:'+accentFor(nm);
+  const img = src ? '<img src="'+esc(src)+'" alt="" onerror="this.remove()" '+
+    'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '';
+  return '<div style="'+box+'">'+esc(initials(nm))+img+'</div>';
 }
 document.addEventListener('error', function(e){
   const img = e.target;
