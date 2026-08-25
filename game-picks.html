@@ -283,41 +283,48 @@ layout: null
 
 #gpx .gpx-mlgrid {
   display: grid;
-  gap: 8px;
   grid-template-columns: 1fr 1fr;
 }
 
 #gpx .gpx-mlside {
-  background: rgba(255, 255, 255, .03);
-  border: 1px solid var(--gpx-line-soft);
-  border-radius: 8px;
-  min-height: 62px;
-  padding: 8px 9px;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-height: 34px;
+  padding: 2px 10px 2px 0;
 }
 
-#gpx .gpx-mlside.on {
-  background: rgba(245, 129, 31, .07);
-  border-color: rgba(245, 129, 31, .28);
+#gpx .gpx-mlside + .gpx-mlside {
+  border-left: 1px solid var(--gpx-line);
+  padding-left: 12px;
+  padding-right: 0;
 }
 
-#gpx .gpx-mlteam {
+#gpx .gpx-mllogo {
+  flex: 0 0 22px;
+  height: 22px;
+  object-fit: contain;
+  width: 22px;
+}
+
+#gpx .gpx-mlabbr {
   color: var(--gpx-text);
-  font-size: 12.5px;
-  font-weight: 700;
-  margin-bottom: 7px;
+  font-family: 'Barlow Condensed', 'Oswald', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: .03em;
 }
 
-#gpx .gpx-mlodds { color: var(--gpx-muted); font-weight: 400; }
-
-#gpx .gpx-faces {
+.gpx-faces {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
+  margin-left: auto;
 }
 
 #gpx .gpx-nofaces { color: var(--gpx-muted); font-size: 12px; }
 
-#gpx .gpx-face {
+.gpx-face {
   align-items: center;
   background: rgba(255, 255, 255, .1);
   border-radius: 50%;
@@ -332,20 +339,26 @@ layout: null
   width: 26px;
 }
 
-#gpx .gpx-face img {
+.gpx-face img {
   height: 100%;
   object-fit: cover;
   object-position: top center;
   width: 100%;
 }
 
-#gpx .gpx-face-fan { background: rgba(53, 196, 196, .22); color: var(--gpx-aqua); }
+.gpx-face-fan { background: rgba(53, 196, 196, .22); color: var(--gpx-aqua); }
 
-#gpx .gpx-face-lg {
-  flex: 0 0 38px;
-  font-size: 12px;
-  height: 38px;
-  width: 38px;
+.gpx-face-more {
+  background: rgba(255, 255, 255, .07);
+  color: #8b97a8;
+  font-size: 10px;
+}
+
+.gpx-face-lg {
+  flex: 0 0 34px;
+  font-size: 11.5px;
+  height: 34px;
+  width: 34px;
 }
 
 #gpx .gpx-sealed {
@@ -355,7 +368,7 @@ layout: null
   padding: 3px 0;
 }
 
-#gpx .gpx-tag {
+.gpx-tag {
   border-radius: 4px;
   font-size: 10.5px;
   font-weight: 700;
@@ -364,9 +377,9 @@ layout: null
   white-space: nowrap;
 }
 
-#gpx .gpx-tag.w { background: rgba(47, 191, 126, .16); color: var(--gpx-win); }
-#gpx .gpx-tag.l { background: rgba(224, 90, 68, .16); color: var(--gpx-loss); }
-#gpx .gpx-tag.n { background: rgba(255, 255, 255, .07); color: var(--gpx-muted); }
+.gpx-tag.w { background: rgba(47, 191, 126, .16); color: var(--gpx-win); }
+.gpx-tag.l { background: rgba(224, 90, 68, .16); color: var(--gpx-loss); }
+.gpx-tag.n { background: rgba(255, 255, 255, .07); color: var(--gpx-muted); }
 
 .gpx-modal {
   align-items: center;

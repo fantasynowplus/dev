@@ -1,3 +1,11 @@
+// javascript/game-picks.js
+// Public picks board for the Sports Betting & DFS section.
+//
+// Anon sees staff picks and the Fan Picks consensus, revealed per game at
+// kickoff. Logged-in users additionally get their own pick controls and a
+// private record tab. Everything is enforced server-side by RLS — this file
+// only decides what to draw.
+
 (function () {
   'use strict';
 
@@ -458,21 +466,31 @@
 
     function sideBlock(which) {
       var team = which === 'home' ? g.home_team : g.away_team;
-      var ml = which === 'home' ? g.ml_home : g.ml_away;
       var backers = staff.filter(function (s) { return s.ml === which; });
-      var faces = backers.map(function (s) {
-        return avatarHtml(s.name, s.headshot);
-      }).join('');
+      var picked = backers.slice();
       if (hasFan && fan.ml === which) {
-        faces += '<span class="gpx-face gpx-face-fan" title="Fan consensus">FP</span>';
+        picked.push({ name: 'Fan consensus', fan: true });
       }
-      var on = backers.length ? ' on' : '';
-      return '<div class="gpx-mlside' + on + '">'
-        + '<div class="gpx-mlteam">' + esc(team)
-        + (ml != null ? ' <span class="gpx-mlodds">' + esc(signed(ml)) + '</span>' : '')
-        + '</div>'
+
+      var shown = picked.slice(0, 4).map(function (s) {
+        return s.fan
+          ? '<span class="gpx-face gpx-face-fan" title="Fan consensus">FP</span>'
+          : avatarHtml(s.name, s.headshot);
+      }).join('');
+
+      var extra = picked.length - 4;
+      if (extra > 0) {
+        shown += '<span class="gpx-face gpx-face-more" title="'
+          + esc(picked.slice(4).map(function (s) { return s.name; }).join(', '))
+          + '">+' + extra + '</span>';
+      }
+
+      return '<div class="gpx-mlside">'
+        + '<img class="gpx-mllogo" src="' + logo(team) + '" alt=""'
+        + ' onerror="this.style.visibility=\'hidden\'">'
+        + '<span class="gpx-mlabbr">' + esc(team) + '</span>'
         + '<div class="gpx-faces">'
-        + (faces || '<span class="gpx-nofaces">&mdash;</span>') + '</div>'
+        + (shown || '<span class="gpx-nofaces">&mdash;</span>') + '</div>'
         + '</div>';
     }
 
