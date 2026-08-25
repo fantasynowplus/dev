@@ -1780,8 +1780,8 @@ function eventForm(id, dayKey){
       }
       if (eid){
         await dbDel(`event_people?event_id=eq.${eid}`);                  // db call
-        const rows = hosts.map(s=>({event_id:eid, role:'host', staff_id:s}))
-          .concat(guests.map(g=>({event_id:eid, role:'guest', guest_id:g})));
+        const rows = hosts.map(s=>({event_id:eid, role:'host', staff_id:s, guest_id:null}))
+          .concat(guests.map(g=>({event_id:eid, role:'guest', staff_id:null, guest_id:g})));
         if (rows.length) await dbPost('event_people', rows);
       }
       toast('Episode saved');
