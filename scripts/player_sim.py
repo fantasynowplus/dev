@@ -55,6 +55,11 @@ _TD_RATIO = 0.68 / (0.68 + 0.28)
 POINTS_PER_TD_EFFECTIVE = 6.94
 
 
+STAT_KEYS = ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
+             "rush_att", "rush_yards", "rush_td", "targets", "receptions",
+             "rec_yards", "rec_td"]
+
+
 @dataclass
 class TeamStyle:
     """Optional per-team overrides. Leave defaults for league-average."""
@@ -239,6 +244,7 @@ def simulate_players_for_game(
     home_style: TeamStyle = None,
     away_style: TeamStyle = None,
     rules: ScoringRules = HALF_PPR,
+    cov_stride: int = 10,
     seed: int = None,
 ) -> dict:
     """Returns {player_name: {stat averages..., fantasy_pts_mean, median,
@@ -250,13 +256,12 @@ def simulate_players_for_game(
     game.variance_alpha = calibrate_variance_alpha(game)
 
     all_players = home_players + away_players
-    stat_keys = ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
-                 "rush_att", "rush_yards", "rush_td", "targets", "receptions",
-                 "rec_yards", "rec_td"]
+    stat_keys = STAT_KEYS
     stat_sums = {p.name: {k: 0.0 for k in stat_keys} for p in all_players}
     fpts = {p.name: [] for p in all_players}
+    samples = {p.name: [] for p in all_players}
 
-    for _ in range(n_sims):
+    for sim_i in range(n_sims):
         hs, as_ = simulate_once(game, game.home_expected, game.away_expected, rng=r)
         for points, players, style in ((hs, home_players, home_style),
                                         (as_, away_players, away_style)):
@@ -266,6 +271,8 @@ def simulate_players_for_game(
                 for k in stat_keys:
                     stat_sums[p.name][k] += line[k]
                 fpts[p.name].append(score_stat_line(line, rules))
+                if sim_i % cov_stride == 0:
+                    samples[p.name].append([line[k] for k in stat_keys])
 
     out = {}
     for p in all_players:
@@ -283,7 +290,8 @@ def simulate_players_for_game(
             "fantasy_pts_stdev": round(statistics.pstdev(pts), 2),
         }
         for k in stat_keys:
-            row[k] = round(stat_sums[p.name][k] / n_sims, 1)
+            row[k] = round(stat_sums[p.name][k] / n_sims, 3)
+        row["_samples"] = samples[p.name]
         out[p.name] = row
     return out
 

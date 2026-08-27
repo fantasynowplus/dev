@@ -1,432 +1,430 @@
+#!/usr/bin/env python3
 """
-Player stat + fantasy point projections, built on top of nfl_simulator.py.
+Slate runner for player_sim.py -- the player-projection equivalent of run_sim.py.
 
-HOW IT WORKS
-------------
-nfl_simulator.py already gives you a full Monte Carlo distribution of each
-TEAM's points per game (not just a mean -- the actual simulated scores from
-every drive-by-drive sim). This module reuses that same team-score sampler,
-and for every simulated game:
+PIPELINE
+--------
+1. Pull this week's Game objects from run_sim.py (same odds feed as the NFL sim).
+2. Build usage shares for every team on the slate via build_players_from_nflverse.
+3. Drop players Sleeper lists as OUT/IR/PUP/SUS and redistribute their share.
+4. Add a synthetic "Other" residual player per team so listed players don't
+   absorb 100% of team volume (see _split_counts in player_sim.py).
+5. Run the Monte Carlo per game under PPR, capturing subsampled stat lines.
+6. Turn those samples into a per-player covariance block + z10/z90 shape
+   offsets, so the BROWSER can rescore for arbitrary league settings:
+       mean = sum(w_k * proj_k)
+       var  = w' C w
+       floor = mean + z10 * sqrt(var)
+7. Attach DraftKings salaries for the main slate.
+8. Write JSON and upsert it into the Supabase player_proj table.
 
-  1. Converts the team's simulated POINTS into approximate team-level
-     volume (pass attempts, completions, rush attempts, pass/rush yards,
-     pass/rush TDs, INTs) using league-average rates -- see TeamStyle.
-  2. Splits that team volume across your roster using each player's USAGE
-     SHARES (target share, rush share, TD share, etc.) that you supply in
-     players.csv.
-  3. Scores each player's simulated stat line with your fantasy rules
-     (half-PPR by default).
-
-Because this runs inside the same per-game simulation loop, a player's
-projection stays correlated with their own team's simulated game script --
-a positive script naturally produces more RB volume/rush TDs, a negative
-script naturally produces more pass volume, etc. You get a full
-distribution per player (mean/median/floor/ceiling), not just one number.
-
-THIS IS A VOLUME/EFFICIENCY MODEL, NOT A PLAY-BY-PLAY SIM. The team-level
-conversion (points -> yards/attempts/TDs) uses fixed league-average
-constants below. They're reasonable NFL averages but tune them for extreme
-pace or run/pass-heavy teams via TeamStyle overrides.
+Run:
+    python run_players.py --season 2026 --weeks 4 --sims 8000 --out player-proj.json
 """
 
-import csv
-import random
-import statistics
-from dataclasses import dataclass
+import argparse
+import json
+import os
+import re
+import sys
+import tempfile
+import urllib.request
+from collections import defaultdict
+from datetime import datetime, timezone
 
-from nfl_simulator import Game, simulate_once, calibrate_variance_alpha
+import numpy as np
 
-# ---------- league-average conversion constants (tune as needed) ----------
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-YARDS_PER_POINT = 15.5      # total offensive yards per point scored, NFL long-run avg
-PASS_YARDS_SHARE = 0.63     # share of total yards that come via the pass
-PASS_TD_SHARE = 0.62        # share of offensive TDs that are passing TDs (vs rushing)
-LEAGUE_YPA = 6.9            # yards per pass attempt
-LEAGUE_YPC = 4.3            # yards per rush attempt
-LEAGUE_COMP_PCT = 0.65      # completion percentage
-LEAGUE_INT_RATE = 0.023     # interceptions per pass attempt
-LEAGUE_YPT = 7.8            # yards per target (receiving)
-
-POSITION_CATCH_RATE = {"RB": 0.76, "WR": 0.64, "TE": 0.70}
-
-# Same TD/FG point-allocation ratio nfl_simulator.py uses internally, so the
-# implied TD count here is consistent with how it generated the score.
-_TD_RATIO = 0.68 / (0.68 + 0.28)
-POINTS_PER_TD_EFFECTIVE = 6.94
+import player_sim
+from player_sim import PPR, PlayerUsage, load_players_csv, simulate_players_for_game
+import build_players_from_nflverse as nflverse
 
 
-STAT_KEYS = ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
-             "rush_att", "rush_yards", "rush_td", "targets", "receptions",
-             "rec_yards", "rec_td"]
+# ---------------------------------------------------------------- team keys
 
+TEAM_ABBR = {
+    "Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens": "BAL",
+    "Buffalo Bills": "BUF", "Carolina Panthers": "CAR", "Chicago Bears": "CHI",
+    "Cincinnati Bengals": "CIN", "Cleveland Browns": "CLE", "Dallas Cowboys": "DAL",
+    "Denver Broncos": "DEN", "Detroit Lions": "DET", "Green Bay Packers": "GB",
+    "Houston Texans": "HOU", "Indianapolis Colts": "IND", "Jacksonville Jaguars": "JAX",
+    "Kansas City Chiefs": "KC", "Las Vegas Raiders": "LV", "Los Angeles Chargers": "LAC",
+    "Los Angeles Rams": "LA", "Miami Dolphins": "MIA", "Minnesota Vikings": "MIN",
+    "New England Patriots": "NE", "New Orleans Saints": "NO", "New York Giants": "NYG",
+    "New York Jets": "NYJ", "Philadelphia Eagles": "PHI", "Pittsburgh Steelers": "PIT",
+    "San Francisco 49ers": "SF", "Seattle Seahawks": "SEA", "Tampa Bay Buccaneers": "TB",
+    "Tennessee Titans": "TEN", "Washington Commanders": "WAS",
+}
 
-@dataclass
-class TeamStyle:
-    """Optional per-team overrides. Leave defaults for league-average."""
-    pass_yards_share: float = PASS_YARDS_SHARE
-    pass_td_share: float = PASS_TD_SHARE
-    ypa: float = LEAGUE_YPA
-    ypc: float = LEAGUE_YPC
-    comp_pct: float = LEAGUE_COMP_PCT
-    int_rate: float = LEAGUE_INT_RATE
-
-
-@dataclass
-class PlayerUsage:
-    name: str
-    team: str
-    position: str  # QB / RB / WR / TE
-
-    # Passing (QB)
-    pass_att_share: float = 0.0   # share of team's pass attempts this player throws
-    comp_pct: float = None        # None -> team/league default
-    int_rate: float = None        # None -> team/league default
-
-    # Rushing (RB / QB scrambles)
-    rush_share: float = 0.0       # share of team's rush attempts
-    ypc_mult: float = 1.0         # multiplier on team/league yards-per-carry
-    rush_td_share: float = None   # None -> defaults to rush_share
-
-    # Receiving (RB / WR / TE)
-    target_share: float = 0.0     # share of team's pass attempts thrown to this player
-    catch_rate: float = None      # None -> position default
-    ypt_mult: float = 1.0         # multiplier on league yards-per-target
-    rec_td_share: float = None    # None -> defaults to target_share
-
-    def resolved_catch_rate(self) -> float:
-        return self.catch_rate if self.catch_rate is not None else POSITION_CATCH_RATE.get(self.position, 0.65)
-
-    def resolved_rush_td_share(self) -> float:
-        return self.rush_share if self.rush_td_share is None else self.rush_td_share
-
-    def resolved_rec_td_share(self) -> float:
-        return self.target_share if self.rec_td_share is None else self.rec_td_share
-
-
-# ---------- fantasy scoring ----------
-
-@dataclass
-class ScoringRules:
-    pass_yd: float = 0.04     # 1 pt / 25 yds
-    pass_td: float = 4.0
-    interception: float = -2.0
-    rush_yd: float = 0.1      # 1 pt / 10 yds
-    rush_td: float = 6.0
-    reception: float = 0.5    # half-PPR
-    rec_yd: float = 0.1       # 1 pt / 10 yds
-    rec_td: float = 6.0
-
-
-HALF_PPR = ScoringRules()
-PPR = ScoringRules(reception=1.0)
-STANDARD = ScoringRules(reception=0.0)
-
-
-def score_stat_line(s: dict, rules: ScoringRules = HALF_PPR) -> float:
-    return (
-        s.get("pass_yards", 0) * rules.pass_yd
-        + s.get("pass_td", 0) * rules.pass_td
-        + s.get("interceptions", 0) * rules.interception
-        + s.get("rush_yards", 0) * rules.rush_yd
-        + s.get("rush_td", 0) * rules.rush_td
-        + s.get("receptions", 0) * rules.reception
-        + s.get("rec_yards", 0) * rules.rec_yd
-        + s.get("rec_td", 0) * rules.rec_td
-    )
-
-
-# ---------- team points -> team volume ----------
-
-def _rand_count(mean: float, r: random.Random) -> int:
-    """Normal-approximation stand-in for a Poisson draw (no numpy dep).
-    Fine for the mean sizes involved here (attempts ~35, TDs ~3, etc.)."""
-    if mean <= 0:
-        return 0
-    return max(round(r.gauss(mean, mean ** 0.5)), 0)
-
-
-def team_game_volume(points: int, style: TeamStyle, r: random.Random) -> dict:
-    total_yards = max(points * YARDS_PER_POINT, 0)
-    pass_yards = total_yards * style.pass_yards_share
-    rush_yards = total_yards - pass_yards
-
-    pass_att = _rand_count(pass_yards / style.ypa, r)
-    completions = min(_rand_count(pass_att * style.comp_pct, r), pass_att)
-    interceptions = min(_rand_count(pass_att * style.int_rate, r), pass_att)
-    rush_att = _rand_count(rush_yards / style.ypc, r)
-
-    total_td = _rand_count(points * _TD_RATIO / POINTS_PER_TD_EFFECTIVE, r)
-    pass_td = sum(1 for _ in range(total_td) if r.random() < style.pass_td_share)
-    rush_td = total_td - pass_td
-
-    return {
-        "pass_att": pass_att, "completions": completions,
-        "pass_yards": pass_yards, "interceptions": interceptions,
-        "rush_att": rush_att, "rush_yards": rush_yards,
-        "pass_td": pass_td, "rush_td": rush_td,
-        "targets": pass_att,
-    }
-
-
-# ---------- allocate one team's volume across its roster for one sim ----------
-
-def _split_counts(count: int, players: list, weight_fn, r: random.Random) -> dict:
-    """Multinomially split `count` discrete events across players by weight.
-    Any share of usage not assigned to a listed player (e.g. backups/
-    committee mates you didn't add) is implicitly absorbed -- add an 'Other'
-    row per team if you want to see it explicitly."""
-    weights = [max(weight_fn(p), 0) for p in players]
-    if count <= 0 or sum(weights) <= 0:
-        return {p.name: 0 for p in players}
-    picks = r.choices(players, weights=weights, k=count)
-    out = {p.name: 0 for p in players}
-    for pick in picks:
-        out[pick.name] += 1
-    return out
-
-
-def _allocate_team(points: int, players: list, style: TeamStyle, r: random.Random) -> dict:
-    """Returns {player_name: stat_line_dict} for one team, one simulated game."""
-    vol = team_game_volume(points, style, r)
-    lines = {p.name: {"pass_att": 0, "completions": 0, "pass_yards": 0, "pass_td": 0,
-                       "interceptions": 0, "rush_att": 0, "rush_yards": 0, "rush_td": 0,
-                       "targets": 0, "receptions": 0, "rec_yards": 0, "rec_td": 0}
-             for p in players}
-
-    qbs = [p for p in players if p.pass_att_share > 0]
-    qb_att = _split_counts(vol["pass_att"], qbs, lambda p: p.pass_att_share, r)
-    for p in qbs:
-        att = qb_att[p.name]
-        if att == 0:
-            continue
-        comp_pct = p.comp_pct if p.comp_pct is not None else style.comp_pct
-        int_rate = p.int_rate if p.int_rate is not None else style.int_rate
-        comps = min(_rand_count(att * comp_pct, r), att)
-        ints = min(_rand_count(att * int_rate, r), att)
-        share = att / vol["pass_att"] if vol["pass_att"] else 0
-        lines[p.name]["pass_att"] = att
-        lines[p.name]["completions"] = comps
-        lines[p.name]["pass_yards"] = round(vol["pass_yards"] * share)
-        lines[p.name]["pass_td"] = round(vol["pass_td"] * share)
-        lines[p.name]["interceptions"] = ints
-
-    rushers = [p for p in players if p.rush_share > 0]
-    rush_att = _split_counts(vol["rush_att"], rushers, lambda p: p.rush_share, r)
-    rush_td_split = _split_counts(vol["rush_td"], rushers, lambda p: p.resolved_rush_td_share(), r)
-    for p in rushers:
-        att = rush_att[p.name]
-        lines[p.name]["rush_att"] = att
-        lines[p.name]["rush_yards"] = round(att * style.ypc * p.ypc_mult)
-        lines[p.name]["rush_td"] = rush_td_split[p.name]
-
-    receivers = [p for p in players if p.target_share > 0]
-    targets = _split_counts(vol["targets"], receivers, lambda p: p.target_share, r)
-    rec_td_split = _split_counts(vol["pass_td"], receivers, lambda p: p.resolved_rec_td_share(), r)
-    for p in receivers:
-        tgt = targets[p.name]
-        catch_rate = p.resolved_catch_rate()
-        recs = min(_rand_count(tgt * catch_rate, r), tgt)
-        lines[p.name]["targets"] = tgt
-        lines[p.name]["receptions"] = recs
-        lines[p.name]["rec_yards"] = round(tgt * LEAGUE_YPT * p.ypt_mult)
-        lines[p.name]["rec_td"] = rec_td_split[p.name]
-
-    return lines
-
-
-# ---------- full simulation across n_sims ----------
-
-def simulate_players_for_game(
-    game: Game,
-    home_players: list,
-    away_players: list,
-    n_sims: int = 20000,
-    home_style: TeamStyle = None,
-    away_style: TeamStyle = None,
-    rules: ScoringRules = HALF_PPR,
-    cov_stride: int = 20,
-    seed: int = None,
-) -> dict:
-    """Returns {player_name: {stat averages..., fantasy_pts_mean, median,
-    floor (10th pct), ceiling (90th pct)}}."""
-    game.prepare()
-    home_style = home_style or TeamStyle()
-    away_style = away_style or TeamStyle()
-    r = random.Random(seed)
-    game.variance_alpha = calibrate_variance_alpha(game)
-
-    all_players = home_players + away_players
-    stat_keys = STAT_KEYS
-    stat_sums = {p.name: {k: 0.0 for k in stat_keys} for p in all_players}
-    fpts = {p.name: [] for p in all_players}
-    samples = {p.name: [] for p in all_players}
-
-    for sim_i in range(n_sims):
-        hs, as_ = simulate_once(game, game.home_expected, game.away_expected, rng=r)
-        for points, players, style in ((hs, home_players, home_style),
-                                        (as_, away_players, away_style)):
-            lines = _allocate_team(points, players, style, r)
-            for p in players:
-                line = lines[p.name]
-                for k in stat_keys:
-                    stat_sums[p.name][k] += line[k]
-                fpts[p.name].append(score_stat_line(line, rules))
-                if sim_i % cov_stride == 0:
-                    samples[p.name].append([line[k] for k in stat_keys])
-
-    out = {}
-    for p in all_players:
-        pts = fpts[p.name]
-        pts_sorted = sorted(pts)
-        n = len(pts_sorted)
-        floor = pts_sorted[int(n * 0.10)]
-        ceiling = pts_sorted[int(n * 0.90)]
-        row = {
-            "player": p.name, "team": p.team, "position": p.position,
-            "fantasy_pts_mean": round(statistics.mean(pts), 2),
-            "fantasy_pts_median": round(statistics.median(pts), 2),
-            "fantasy_pts_floor10": round(floor, 2),
-            "fantasy_pts_ceiling90": round(ceiling, 2),
-            "fantasy_pts_stdev": round(statistics.pstdev(pts), 2),
-        }
-        for k in stat_keys:
-            row[k] = round(stat_sums[p.name][k] / n_sims, 1)
-        row["_samples"] = samples[p.name]
-        out[p.name] = row
-    return out
-
-
-def print_player_report(results: dict):
-    """Position-specific stat columns:
-      QB: att, comp, pass TD, INT, rush att, rush TD  (+ pass yards, kept for
-          scoring context even though not in the original stat list)
-      RB: rush att, rush yds, rush TD, rec, rec yds, rec TD
-      WR: rec, tgt, rec TD, rush att, rush yds, rush TD  (+ rec yards, kept
-          for scoring context)
-      TE: rec, tgt, rec yds, rec TD
-    """
-    order = {"QB": 0, "RB": 1, "WR": 2, "TE": 3}
-    rows = sorted(results.values(), key=lambda x: (order.get(x["position"], 9), -x["fantasy_pts_mean"]))
-
-    print(f"{'PLAYER':<20}{'POS':<5}{'TM':<20}{'FPTS':>6}{'FLR':>6}{'CEIL':>6}   STATS")
-    print("-" * 110)
-    for row in rows:
-        pos = row["position"]
-        if pos == "QB":
-            stat_str = (f"{row['completions']}/{row['pass_att']} att, {row['pass_yards']} pass yd, "
-                        f"{row['pass_td']} pass TD, {row['interceptions']} INT, "
-                        f"{row['rush_att']} rush att, {row['rush_td']} rush TD")
-        elif pos == "RB":
-            stat_str = (f"{row['rush_att']} rush att, {row['rush_yards']} rush yd, {row['rush_td']} rush TD, "
-                        f"{row['receptions']}/{row['targets']} rec, {row['rec_yards']} rec yd, "
-                        f"{row['rec_td']} rec TD")
-        elif pos == "WR":
-            stat_str = (f"{row['receptions']}/{row['targets']} rec, {row['rec_yards']} rec yd, "
-                        f"{row['rec_td']} rec TD, {row['rush_att']} rush att, "
-                        f"{row['rush_yards']} rush yd, {row['rush_td']} rush TD")
-        else:  # TE
-            stat_str = (f"{row['receptions']}/{row['targets']} rec, {row['rec_yards']} rec yd, "
-                        f"{row['rec_td']} rec TD")
-        print(f"{row['player']:<20}{pos:<5}{row['team']:<20}"
-              f"{row['fantasy_pts_mean']:>6}{row['fantasy_pts_floor10']:>6}"
-              f"{row['fantasy_pts_ceiling90']:>6}   {stat_str}")
-
-
-# Position-specific column sets for CSV export, matching the requested stats.
-# pass_yards / rec_yards are appended even where not explicitly requested
-# because half-PPR fantasy_pts is computed from them -- dropping them would
-# make the fantasy point column unverifiable.
-POSITION_COLUMNS = {
-    "QB": ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
-           "rush_att", "rush_td"],
-    "RB": ["rush_att", "rush_yards", "rush_td", "receptions", "targets", "rec_yards", "rec_td"],
-    "WR": ["receptions", "targets", "rec_yards", "rec_td", "rush_att", "rush_yards", "rush_td"],
-    "TE": ["receptions", "targets", "rec_yards", "rec_td"],
+# nflverse is the canonical key; these are the other spellings we may meet.
+ABBR_ALIASES = {
+    "LAR": "LA", "STL": "LA", "SD": "LAC", "OAK": "LV",
+    "JAC": "JAX", "WSH": "WAS", "WFT": "WAS", "ARZ": "ARI",
+    "BLT": "BAL", "CLV": "CLE", "HST": "HOU", "GNB": "GB",
+    "KAN": "KC", "NWE": "NE", "NOR": "NO", "SFO": "SF", "TAM": "TB",
 }
 
 
-def export_player_projections_csv(results: dict, filepath: str):
-    """Writes one row per player. Only the stat columns relevant to that
-    player's position are populated -- the rest are left blank, so a QB row
-    doesn't show a receptions column full of zeroes, etc.
-
-    Every row still gets fantasy_pts_mean/median/floor10/ceiling90 and
-    fantasy_pts_stdev regardless of position, since that's the number you
-    actually draft/start/sit on.
-    """
-    all_stat_cols = ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
-                      "rush_att", "rush_yards", "rush_td", "targets", "receptions",
-                      "rec_yards", "rec_td"]
-    fieldnames = (["player", "team", "position"] + all_stat_cols +
-                  ["fantasy_pts_mean", "fantasy_pts_median", "fantasy_pts_floor10",
-                   "fantasy_pts_ceiling90", "fantasy_pts_stdev"])
-
-    order = {"QB": 0, "RB": 1, "WR": 2, "TE": 3}
-    rows = sorted(results.values(), key=lambda x: (order.get(x["position"], 9), -x["fantasy_pts_mean"]))
-
-    with open(filepath, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            relevant = set(POSITION_COLUMNS.get(row["position"], all_stat_cols))
-            out_row = {"player": row["player"], "team": row["team"], "position": row["position"],
-                       "fantasy_pts_mean": row["fantasy_pts_mean"],
-                       "fantasy_pts_median": row["fantasy_pts_median"],
-                       "fantasy_pts_floor10": row["fantasy_pts_floor10"],
-                       "fantasy_pts_ceiling90": row["fantasy_pts_ceiling90"],
-                       "fantasy_pts_stdev": row["fantasy_pts_stdev"]}
-            for col in all_stat_cols:
-                out_row[col] = row[col] if col in relevant else ""
-            writer.writerow(out_row)
+def norm_abbr(a):
+    a = (a or "").strip().upper()
+    return ABBR_ALIASES.get(a, a)
 
 
-# ---------- CSV loading ----------
-
-def _f(row, key, default=None):
-    v = row.get(key, "")
-    if v is None or str(v).strip() == "":
-        return default
-    return float(v)
-
-
-def load_players_csv(filepath: str) -> dict:
-    """Returns {team_abbr_or_name: [PlayerUsage, ...]}."""
-    by_team: dict = {}
-    with open(filepath, newline="") as f:
-        for row in csv.DictReader(f):
-            if not row.get("player") or not row.get("team"):
-                continue
-            p = PlayerUsage(
-                name=row["player"].strip(),
-                team=row["team"].strip(),
-                position=row["position"].strip().upper(),
-                pass_att_share=_f(row, "pass_att_share", 0.0),
-                comp_pct=_f(row, "comp_pct"),
-                int_rate=_f(row, "int_rate"),
-                rush_share=_f(row, "rush_share", 0.0),
-                ypc_mult=_f(row, "ypc_mult", 1.0),
-                rush_td_share=_f(row, "rush_td_share"),
-                target_share=_f(row, "target_share", 0.0),
-                catch_rate=_f(row, "catch_rate"),
-                ypt_mult=_f(row, "ypt_mult", 1.0),
-                rec_td_share=_f(row, "rec_td_share"),
-            )
-            by_team.setdefault(p.team, []).append(p)
-    return by_team
+def abbr_from_team(name):
+    """Game objects carry full team names; nflverse carries abbreviations."""
+    if not name:
+        return ""
+    n = name.strip()
+    if n in TEAM_ABBR:
+        return TEAM_ABBR[n]
+    if len(n) <= 4:
+        return norm_abbr(n)
+    for full, ab in TEAM_ABBR.items():
+        if full.lower().endswith(n.lower()) or n.lower().endswith(full.split()[-1].lower()):
+            return ab
+    raise SystemExit(f"Unrecognized team name from slate: {name!r} -- add it to TEAM_ABBR.")
 
 
-def validate_players(by_team: dict) -> list:
-    """Sanity check: usage shares within a team shouldn't exceed 100%.
-    Returns a list of warning strings (empty if all good)."""
-    warnings = []
+SUFFIX_RE = re.compile(r"\b(jr|sr|ii|iii|iv|v)\.?$", re.I)
+
+
+def norm_name(n):
+    n = (n or "").lower().replace(".", "").replace("'", "").replace("-", " ")
+    n = SUFFIX_RE.sub("", n)
+    return re.sub(r"\s+", " ", n).strip()
+
+
+# ------------------------------------------------------------------- slate
+
+def load_games(limit=None):
+    """Same source cascade run_sim.py uses in main(): the-odds-api, then
+    ESPN, then scripts/slate.csv. Each fetcher returns [(Game, kickoff, book)]."""
+    try:
+        import run_sim
+    except ImportError:
+        raise SystemExit("run_sim.py must sit next to run_players.py in scripts/")
+
+    for name, fn in (("the-odds-api", run_sim.fetch_odds_api),
+                     ("espn", run_sim.fetch_espn),
+                     ("slate.csv", run_sim.fetch_csv)):
+        try:
+            slate = fn()
+        except Exception as e:
+            print(f"  slate source {name} failed: {e}")
+            continue
+        if slate:
+            print(f"  slate: {len(slate)} games from {name}")
+            return slate[:limit] if limit else slate
+
+    raise SystemExit(
+        "No slate from any source. Set ODDS_API_KEY, or fill scripts/slate.csv "
+        "with home_team,away_team,home_ml,away_ml,home_spread,total_line."
+    )
+
+
+# ---------------------------------------------------------------- injuries
+
+SLEEPER_PLAYERS = "https://api.sleeper.app/v1/players/nfl"
+OUT_STATUSES = {"out", "ir", "pup", "sus", "susp", "dnr", "nfi"}
+OUT_STATUS_TEXT = {"inactive", "injured reserve", "physically unable to perform",
+                   "non football injury", "suspended", "practice squad"}
+
+
+def fetch_sleeper_out_players():
+    """{(norm_name, team_abbr)} for everyone unavailable this week."""
+    try:
+        req = urllib.request.Request(SLEEPER_PLAYERS, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as e:
+        print(f"  WARNING: Sleeper player fetch failed ({e}) -- no injury filtering applied")
+        return set()
+
+    out = set()
+    for p in data.values():
+        inj = (p.get("injury_status") or "").strip().lower()
+        status = (p.get("status") or "").strip().lower()
+        if inj in OUT_STATUSES or status in OUT_STATUS_TEXT:
+            name = p.get("full_name") or f"{p.get('first_name','')} {p.get('last_name','')}"
+            out.add((norm_name(name), norm_abbr(p.get("team"))))
+    print(f"  Sleeper: {len(out)} players flagged unavailable")
+    return out
+
+
+SHARE_FIELDS = ["pass_att_share", "rush_share", "target_share",
+                "rush_td_share", "rec_td_share"]
+
+
+def _pick_starting_qb(keep, team):
+    """Per-game shares leave every QB who started anything looking like a
+    starter. Only one plays: keep the highest-share available QB at 100% of
+    attempts and drop the rest (a backup with real rush volume is kept as a
+    rusher only)."""
+    qbs = [p for p in keep if p.pass_att_share > 0]
+    if not qbs:
+        return keep
+    starter = max(qbs, key=lambda p: p.pass_att_share)
+    starter.pass_att_share = 1.0
+    out = []
+    for p in keep:
+        if p is starter or p.pass_att_share <= 0:
+            out.append(p)
+        elif p.rush_share > 0.05:
+            p.pass_att_share = 0.0
+            out.append(p)
+    if len(out) < len(keep):
+        print(f"  {team}: QB1 = {starter.name}")
+    return out
+
+
+def _normalize(keep, field, cap=1.0):
+    total = sum(getattr(p, field) or 0.0 for p in keep)
+    if total > cap:
+        for p in keep:
+            v = getattr(p, field) or 0.0
+            if v:
+                setattr(p, field, v * cap / total)
+
+
+def apply_injuries_and_residual(by_team, out_players):
+    """Drops unavailable players, redistributes their share within position
+    group, picks a starting QB, rescales shares that sum past 100%, then adds
+    an 'Other' row holding whatever the listed players don't account for.
+    Without that residual row, _split_counts hands 100% of team volume to
+    whoever cleared the volume threshold."""
+    cleaned = {}
     for team, players in by_team.items():
-        pass_share = sum(p.pass_att_share for p in players)
-        rush_share = sum(p.rush_share for p in players)
-        target_share = sum(p.target_share for p in players)
-        if pass_share > 1.01:
-            warnings.append(f"{team}: pass_att_share sums to {pass_share:.2f} (>1.0)")
-        if rush_share > 1.01:
-            warnings.append(f"{team}: rush_share sums to {rush_share:.2f} (>1.0)")
-        if target_share > 1.01:
-            warnings.append(f"{team}: target_share sums to {target_share:.2f} (>1.0)")
-    return warnings
+        keep, dropped = [], []
+        for p in players:
+            if (norm_name(p.name), norm_abbr(p.team)) in out_players:
+                dropped.append(p)
+            else:
+                keep.append(p)
+        if dropped:
+            print(f"  {team}: out -> {', '.join(d.name for d in dropped)}")
+
+        for field in SHARE_FIELDS:
+            lost = sum(getattr(d, field) or 0.0 for d in dropped)
+            if lost <= 0:
+                continue
+            pool = [k for k in keep if (getattr(k, field) or 0.0) > 0]
+            base = sum(getattr(k, field) for k in pool)
+            if base <= 0:
+                continue
+            for k in pool:
+                setattr(k, field, getattr(k, field) + lost * getattr(k, field) / base)
+
+        keep = _pick_starting_qb(keep, team)
+        for field in ("rush_share", "target_share", "rush_td_share", "rec_td_share"):
+            _normalize(keep, field)
+
+        other = PlayerUsage(name=f"Other {team}", team=team, position="OTHER")
+        other.rush_share = max(0.0, 1.0 - sum(p.rush_share for p in keep))
+        other.target_share = max(0.0, 1.0 - sum(p.target_share for p in keep))
+        other.rush_td_share = other.rush_share
+        other.rec_td_share = other.target_share
+        if other.rush_share or other.target_share:
+            keep.append(other)
+        cleaned[team] = keep
+    return cleaned
+
+
+# ------------------------------------------------------------ DraftKings
+
+DK_LOBBY = "https://www.draftkings.com/lobby/getcontests?sport=NFL"
+DK_DRAFTABLES = "https://api.draftkings.com/draftgroups/v1/draftgroups/{}/draftables?format=json"
+
+
+def _get_json(url, timeout=45):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "application/json",
+    })
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode())
+
+
+def fetch_dk_salaries():
+    """{(norm_name, abbr): {salary, dk_pos, dk_game}} for the biggest live
+    NFL Classic draft group (the main slate). Returns {} on any failure --
+    salaries are a nice-to-have, projections still ship without them."""
+    try:
+        lobby = _get_json(DK_LOBBY)
+    except Exception as e:
+        print(f"  WARNING: DK lobby fetch failed ({e}) -- shipping without salaries")
+        return {}
+
+    groups = [g for g in lobby.get("DraftGroups", [])
+              if g.get("GameTypeId") == 1 and (g.get("Sport") or "NFL").upper() == "NFL"]
+    if not groups:
+        print("  WARNING: no NFL Classic draft groups in DK lobby")
+        return {}
+
+    best, best_rows = None, {}
+    for g in sorted(groups, key=lambda g: -(g.get("DraftGroupId") or 0))[:6]:
+        gid = g.get("DraftGroupId")
+        try:
+            payload = _get_json(DK_DRAFTABLES.format(gid))
+        except Exception:
+            continue
+        rows = {}
+        for d in payload.get("draftables", []):
+            key = (norm_name(d.get("displayName")), norm_abbr(d.get("teamAbbreviation")))
+            if key in rows:
+                continue
+            comp = d.get("competition") or {}
+            rows[key] = {
+                "salary": d.get("salary"),
+                "dk_pos": d.get("position"),
+                "dk_game": comp.get("name"),
+            }
+        if len(rows) > len(best_rows):
+            best, best_rows = gid, rows
+
+    if best_rows:
+        print(f"  DK: draft group {best}, {len(best_rows)} salaries")
+    return best_rows
+
+
+# ------------------------------------------------------- covariance blocks
+
+SCORING_KEYS = {
+    "QB": ["pass_att", "completions", "pass_yards", "pass_td", "interceptions",
+           "rush_att", "rush_yards", "rush_td"],
+    "RB": ["rush_att", "rush_yards", "rush_td", "targets", "receptions", "rec_yards", "rec_td"],
+    "WR": ["rush_att", "rush_yards", "rush_td", "targets", "receptions", "rec_yards", "rec_td"],
+    "TE": ["rush_att", "rush_yards", "rush_td", "targets", "receptions", "rec_yards", "rec_td"],
+}
+
+
+def cov_block(samples, position):
+    """Upper-triangle covariance (incl. diagonal) over that position's
+    scoring-relevant stats, in SCORING_KEYS order."""
+    keys = SCORING_KEYS.get(position, SCORING_KEYS["WR"])
+    idx = [player_sim.STAT_KEYS.index(k) for k in keys]
+    m = np.asarray(samples, dtype=float)[:, idx]
+    if m.shape[0] < 3:
+        return keys, [0.0] * (len(keys) * (len(keys) + 1) // 2)
+    c = np.cov(m, rowvar=False)
+    flat = [round(float(c[i][j]), 4)
+            for i in range(len(keys)) for j in range(i, len(keys))]
+    return keys, flat
+
+
+# ------------------------------------------------------------------- main
+
+def build_payload(season, weeks, sims, prior_season, cov_stride, limit=None):
+    slate = load_games(limit)
+    games = [g for (g, _k, _b) in slate]
+    kickoffs = {id(g): k for (g, k, _b) in slate}
+    teams = sorted({abbr_from_team(g.home_team) for g in games} |
+                   {abbr_from_team(g.away_team) for g in games})
+    print(f"  {len(teams)} teams on the slate")
+
+    tmp = os.path.join(tempfile.gettempdir(), "players_usage.csv")
+    nflverse.build(season, weeks, teams, tmp, prior_season)
+    by_team = load_players_csv(tmp)
+
+    missing = [t for t in teams if t not in by_team]
+    if missing:
+        print(f"  WARNING: no usage rows for {', '.join(missing)} -- those games are skipped")
+
+    by_team = apply_injuries_and_residual(by_team, fetch_sleeper_out_players())
+    salaries = fetch_dk_salaries()
+
+    players_out, seen = [], set()
+    for gi, game in enumerate(games, 1):
+        home, away = abbr_from_team(game.home_team), abbr_from_team(game.away_team)
+        if home not in by_team or away not in by_team:
+            continue
+        print(f"  [{gi}/{len(games)}] {away} @ {home} ...")
+        results = simulate_players_for_game(
+            game, by_team[home], by_team[away],
+            n_sims=sims, rules=PPR, cov_stride=cov_stride, seed=1234 + gi,
+        )
+        implied = {home: round(float(game.home_expected), 1),
+                   away: round(float(game.away_expected), 1)}
+
+        for row in results.values():
+            if row["position"] == "OTHER":
+                continue
+            team = norm_abbr(row["team"])
+            key = (norm_name(row["player"]), team)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            keys, cov = cov_block(row.pop("_samples"), row["position"])
+            sd = row["fantasy_pts_stdev"] or 1.0
+            dk = salaries.get(key, {})
+            players_out.append({
+                "name": row["player"],
+                "kickoff": kickoffs.get(id(game), ""),
+                "team": team,
+                "opp": away if team == home else home,
+                "home": team == home,
+                "pos": row["position"],
+                "team_implied": implied[team],
+                "proj": {k: row[k] for k in player_sim.STAT_KEYS},
+                "keys": keys,
+                "cov": cov,
+                "ppr_mean": row["fantasy_pts_mean"],
+                "ppr_sd": row["fantasy_pts_stdev"],
+                "z10": round((row["fantasy_pts_floor10"] - row["fantasy_pts_mean"]) / sd, 3),
+                "z90": round((row["fantasy_pts_ceiling90"] - row["fantasy_pts_mean"]) / sd, 3),
+                "salary": dk.get("salary"),
+                "dk_pos": dk.get("dk_pos"),
+                "dk_game": dk.get("dk_game"),
+            })
+
+    players_out.sort(key=lambda p: -p["ppr_mean"])
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "season": season,
+        "n_sims": sims,
+        "usage_window_weeks": weeks,
+        "scoring_reference": "PPR",
+        "salaries_source": "draftkings" if salaries else None,
+        "players": players_out,
+    }
+
+
+def upsert_supabase(payload):
+    url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key:
+        print("  SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set -- skipping upsert")
+        return
+    body = json.dumps([{"id": 1, "data": payload,
+                        "updated_at": datetime.now(timezone.utc).isoformat()}]).encode()
+    req = urllib.request.Request(
+        f"{url}/rest/v1/player_proj?on_conflict=id", data=body, method="POST",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Content-Type": "application/json",
+                 "Prefer": "resolution=merge-duplicates,return=minimal"})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        print(f"  Supabase upsert -> HTTP {resp.status}")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--season", type=int, default=datetime.now().year)
+    ap.add_argument("--weeks", type=int, default=4)
+    ap.add_argument("--sims", type=int, default=8000)
+    ap.add_argument("--cov-stride", type=int, default=10)
+    ap.add_argument("--prior-season-fallback", type=int, default=None)
+    ap.add_argument("--out", default="player-proj.json")
+    ap.add_argument("--limit-games", type=int, default=None,
+                    help="smoke-test against the first N games only")
+    ap.add_argument("--no-upload", action="store_true")
+    args = ap.parse_args()
+
+    payload = build_payload(args.season, args.weeks, args.sims,
+                            args.prior_season_fallback, args.cov_stride,
+                            args.limit_games)
+    with open(args.out, "w") as fh:
+        json.dump(payload, fh, separators=(",", ":"))
+    print(f"Wrote {args.out}: {len(payload['players'])} players")
+
+    if not args.no_upload:
+        upsert_supabase(payload)
