@@ -1,0 +1,422 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Projections | FantasyNow+</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fnp-orange:#FFA515;
+  --fnp-navy:#002863;
+  --fnp-aqua:#42F4B0;
+  --fnp-red:#EA4E3D;
+  --fnp-gray:#F4F4F4;
+  --fnp-charcoal:#606060;
+}
+.pp-wrap{max-width:1240px;margin:0 auto;padding:28px 18px 70px;font-family:'Inter',system-ui,sans-serif;color:#11151c}
+.pp-head h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:2.7rem;letter-spacing:.01em;margin:0 0 6px;color:var(--fnp-navy);text-transform:uppercase}
+.pp-head p{margin:0;max-width:70ch;color:var(--fnp-charcoal);font-size:.95rem;line-height:1.6}
+.pp-meta{margin-top:10px;font-size:.78rem;color:var(--fnp-charcoal);letter-spacing:.04em;text-transform:uppercase}
+
+.pp-gate{margin-top:26px;border:1px solid #dfe4ec;border-top:4px solid var(--fnp-orange);border-radius:10px;padding:30px;background:#fff;text-align:center}
+.pp-gate h2{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-size:1.5rem;margin:0 0 8px;color:var(--fnp-navy)}
+.pp-gate p{margin:0 auto 16px;max-width:52ch;color:var(--fnp-charcoal);font-size:.92rem;line-height:1.6}
+.pp-gate .pp-note{font-size:.82rem;border-top:1px solid #eef1f5;padding-top:14px;margin-top:18px}
+
+.pp-btn{display:inline-block;background:var(--fnp-orange);color:#111;border:0;border-radius:6px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Inter',sans-serif}
+.pp-btn:hover{background:#ED9405}
+.pp-btn-ghost{background:transparent;border:1px solid #c9d1de;color:var(--fnp-navy)}
+.pp-btn-ghost:hover{background:var(--fnp-gray)}
+
+.pp-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 4px;padding:14px;background:var(--fnp-gray);border-radius:8px}
+.pp-bar label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fnp-charcoal);font-weight:600;display:block;margin-bottom:4px}
+.pp-bar select,.pp-bar input[type=search]{font-family:'Inter',sans-serif;font-size:.88rem;padding:7px 9px;border:1px solid #d3d9e3;border-radius:5px;background:#fff;min-width:130px}
+.pp-count{margin-left:auto;font-size:.8rem;color:var(--fnp-charcoal);font-weight:600}
+
+.pp-scoring{margin-top:12px;border:1px solid #dfe4ec;border-radius:8px;background:#fff;overflow:hidden}
+.pp-scoring summary{cursor:pointer;padding:13px 16px;font-weight:700;font-size:.9rem;color:var(--fnp-navy);list-style:none;display:flex;align-items:center;gap:10px}
+.pp-scoring summary::-webkit-details-marker{display:none}
+.pp-scoring summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--fnp-orange);border-bottom:2px solid var(--fnp-orange);transform:rotate(-45deg);transition:transform .2s}
+.pp-scoring[open] summary::before{transform:rotate(45deg)}
+.pp-tag{margin-left:auto;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;background:var(--fnp-navy);color:#fff;padding:3px 9px;border-radius:20px;font-weight:600}
+.pp-scoring-body{padding:4px 16px 18px;border-top:1px solid #eef1f5}
+.pp-presets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.pp-preset{border:1px solid #c9d1de;background:#fff;border-radius:20px;padding:6px 15px;font-size:.83rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--fnp-navy)}
+.pp-preset:hover{border-color:var(--fnp-orange)}
+.pp-preset[aria-pressed=true]{background:var(--fnp-navy);color:#fff;border-color:var(--fnp-navy)}
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pp-grid label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--fnp-charcoal);font-weight:600;display:block;margin-bottom:3px}
+.pp-grid input{width:100%;font-family:'Inter',sans-serif;font-size:.88rem;padding:7px 8px;border:1px solid #d3d9e3;border-radius:5px}
+.pp-sleeper{margin-top:16px;padding-top:14px;border-top:1px solid #eef1f5;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.pp-sleeper-msg{font-size:.8rem;color:var(--fnp-charcoal);flex-basis:100%}
+
+.pp-scroller{margin-top:16px;overflow-x:auto;border:1px solid #dfe4ec;border-radius:8px;background:#fff}
+table.pp{width:100%;border-collapse:collapse;font-size:.88rem;min-width:900px}
+table.pp thead th{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:11px 10px;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.04em;text-transform:uppercase;color:var(--fnp-navy);cursor:pointer;white-space:nowrap;z-index:2}
+table.pp thead th[data-sort]:hover{color:var(--fnp-orange)}
+table.pp thead th.pp-active::after{content:" ▾";color:var(--fnp-orange)}
+table.pp thead th.pp-active.pp-asc::after{content:" ▴"}
+table.pp tbody td{padding:9px 10px;border-bottom:1px solid #f0f2f6;vertical-align:middle}
+table.pp tbody tr:hover{background:#fbfcfe}
+.pp-name{font-weight:600;color:var(--fnp-navy);white-space:nowrap}
+.pp-sub{display:block;font-size:.72rem;color:var(--fnp-charcoal);font-weight:500;letter-spacing:.03em}
+.pp-pos{display:inline-block;min-width:34px;text-align:center;font-size:.7rem;font-weight:700;padding:3px 6px;border-radius:4px;letter-spacing:.04em}
+.pp-QB{background:#efe3ff;color:#5b21b6}
+.pp-RB{background:#dcfce9;color:#036c45}
+.pp-WR{background:#e0edff;color:#12489c}
+.pp-TE{background:#ffeccc;color:#8a4b00}
+.pp-proj{font-weight:700;font-size:1.02rem;color:var(--fnp-navy);white-space:nowrap}
+.pp-stats{font-size:.78rem;color:var(--fnp-charcoal);white-space:nowrap}
+.pp-val{font-weight:700;white-space:nowrap}
+.pp-val-hot{color:#036c45}
+.pp-sal{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.pp-range{min-width:170px}
+.pp-track{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#e6eaf1 0%,var(--fnp-aqua) 100%);opacity:.55}
+.pp-track i{position:absolute;top:-4px;width:3px;height:16px;background:var(--fnp-orange);border-radius:2px}
+.pp-rangenums{display:flex;justify-content:space-between;font-size:.7rem;color:var(--fnp-charcoal);margin-top:3px;font-variant-numeric:tabular-nums}
+
+.pp-empty{padding:44px 20px;text-align:center;color:var(--fnp-charcoal);font-size:.92rem}
+.pp-disc{margin-top:22px;font-size:.76rem;color:var(--fnp-charcoal);line-height:1.6;border-top:1px solid #e8ecf2;padding-top:14px}
+@media(max-width:640px){
+  .pp-head h1{font-size:2.05rem}
+  .pp-count{margin-left:0;flex-basis:100%}
+}
+</style>
+</head>
+<body>
+{% include header.html %}
+{% include tools-subnav.html %}
+
+<div class="pp-wrap">
+  <div class="pp-head">
+    <h1>Player Projections</h1>
+    <p>Every projection here comes out of the same Monte Carlo engine behind our NFL Simulator. We simulate each game thousands of times, split each team's volume across its depth chart, and score the result with your league's rules. That's why you get a floor and a ceiling, not just one number.</p>
+    <div class="pp-meta" id="ppMeta"></div>
+  </div>
+
+  <div id="ppGate" class="pp-gate" hidden>
+    <h2>Members only</h2>
+    <p>Projections are free with a FantasyNow+ account. Create one in a few seconds and the full board opens up.</p>
+    <button class="pp-btn" id="ppLogin">Log in or sign up</button>
+    <p class="pp-note">Already play in the Super League? You have an account — <a href="forgot-password.html">reset your password</a> to get in.</p>
+  </div>
+
+  <div id="ppApp" hidden>
+    <details class="pp-scoring" id="ppScoring">
+      <summary>Scoring settings <span class="pp-tag" id="ppScoringTag">PPR</span></summary>
+      <div class="pp-scoring-body">
+        <div class="pp-presets">
+          <button class="pp-preset" data-preset="ppr">PPR</button>
+          <button class="pp-preset" data-preset="half">Half PPR</button>
+          <button class="pp-preset" data-preset="standard">Standard</button>
+          <button class="pp-preset" data-preset="superflex">Superflex (6pt pass TD)</button>
+        </div>
+        <div class="pp-grid">
+          <div><label for="s_pass_yards">Pass yards</label><input type="number" step="0.01" id="s_pass_yards"></div>
+          <div><label for="s_pass_td">Pass TD</label><input type="number" step="0.5" id="s_pass_td"></div>
+          <div><label for="s_interceptions">Interception</label><input type="number" step="0.5" id="s_interceptions"></div>
+          <div><label for="s_rush_yards">Rush yards</label><input type="number" step="0.01" id="s_rush_yards"></div>
+          <div><label for="s_rush_td">Rush TD</label><input type="number" step="0.5" id="s_rush_td"></div>
+          <div><label for="s_receptions">Per reception</label><input type="number" step="0.1" id="s_receptions"></div>
+          <div><label for="s_rec_yards">Rec yards</label><input type="number" step="0.01" id="s_rec_yards"></div>
+          <div><label for="s_rec_td">Rec TD</label><input type="number" step="0.5" id="s_rec_td"></div>
+          <div><label for="s_te_prem">TE premium</label><input type="number" step="0.1" id="s_te_prem"></div>
+        </div>
+        <div class="pp-sleeper">
+          <div>
+            <label for="ppLeague">Use my league's scoring</label>
+            <select id="ppLeague"><option value="">Loading your leagues…</option></select>
+          </div>
+          <button class="pp-btn pp-btn-ghost" id="ppImport">Import scoring</button>
+          <div class="pp-sleeper-msg" id="ppSleeperMsg"></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="pp-bar">
+      <div><label for="ppPos">Position</label>
+        <select id="ppPos"><option value="">All</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select></div>
+      <div><label for="ppTeam">Team</label><select id="ppTeam"><option value="">All teams</option></select></div>
+      <div><label for="ppSearch">Search</label><input type="search" id="ppSearch" placeholder="Player name"></div>
+      <div><label for="ppDfs">DFS</label>
+        <select id="ppDfs"><option value="">All players</option><option value="priced">Priced on DraftKings</option></select></div>
+      <div class="pp-count" id="ppCount"></div>
+    </div>
+
+    <div class="pp-scroller">
+      <table class="pp">
+        <thead><tr>
+          <th data-sort="name">Player</th>
+          <th data-sort="pos">Pos</th>
+          <th data-sort="opp">Matchup</th>
+          <th data-sort="pts" class="pp-active">Proj</th>
+          <th>Floor → Ceiling</th>
+          <th data-sort="salary">DK salary</th>
+          <th data-sort="value">Pts / $1K</th>
+          <th>Projected line</th>
+        </tr></thead>
+        <tbody id="ppBody"></tbody>
+      </table>
+      <div class="pp-empty" id="ppEmpty" hidden>No players match those filters.</div>
+    </div>
+
+    <p class="pp-disc">Projections are model output, not advice. Usage shares come from recent games, so a player returning from injury or stepping into a new role may be projected low until the data catches up. Floor and ceiling are the 10th and 90th percentile of simulated outcomes.</p>
+  </div>
+</div>
+
+{% include footer.html %}
+
+<script>
+(function(){
+  var DEFAULTS={pass_yards:0.04,pass_td:4,interceptions:-2,rush_yards:0.1,rush_td:6,receptions:1,rec_yards:0.1,rec_td:6,te_prem:0};
+  var PRESETS={
+    ppr:{},
+    half:{receptions:0.5},
+    standard:{receptions:0},
+    superflex:{pass_td:6}
+  };
+  var FIELDS=['pass_yards','pass_td','interceptions','rush_yards','rush_td','receptions','rec_yards','rec_td','te_prem'];
+  var STORE='fnp-scoring-v1';
+  var ALL=[],PAYLOAD=null,sortKey='pts',sortAsc=false,rules=load();
+
+  function load(){
+    try{var s=JSON.parse(localStorage.getItem(STORE));if(s&&typeof s==='object')return Object.assign({},DEFAULTS,s);}catch(e){}
+    return Object.assign({},DEFAULTS);
+  }
+  function save(){try{localStorage.setItem(STORE,JSON.stringify(rules));}catch(e){}}
+
+  function labelFor(r){
+    for(var k in PRESETS){
+      var t=Object.assign({},DEFAULTS,PRESETS[k]),same=true;
+      for(var i=0;i<FIELDS.length;i++){if(Math.abs((r[FIELDS[i]]||0)-(t[FIELDS[i]]||0))>1e-9){same=false;break;}}
+      if(same)return k==='half'?'Half PPR':k==='ppr'?'PPR':k==='standard'?'Standard':'Superflex';
+    }
+    return 'Custom';
+  }
+
+  function weights(pos){
+    var w={pass_yards:rules.pass_yards,pass_td:rules.pass_td,interceptions:rules.interceptions,
+           rush_yards:rules.rush_yards,rush_td:rules.rush_td,rec_yards:rules.rec_yards,rec_td:rules.rec_td,
+           receptions:rules.receptions+(pos==='TE'?(rules.te_prem||0):0)};
+    return w;
+  }
+
+  function score(p){
+    var w=weights(p.pos),keys=p.keys,cov=p.cov,v=[],i,j,mean=0;
+    for(i=0;i<keys.length;i++){v[i]=w[keys[i]]||0;mean+=v[i]*(p.proj[keys[i]]||0);}
+    var varr=0,idx=0;
+    for(i=0;i<keys.length;i++){
+      for(j=i;j<keys.length;j++){varr+=(i===j?1:2)*v[i]*v[j]*cov[idx];idx++;}
+    }
+    var sd=Math.sqrt(Math.max(varr,0));
+    return {pts:mean,sd:sd,floor:mean+(p.z10||-1.2)*sd,ceil:mean+(p.z90||1.35)*sd};
+  }
+
+  function line(p){
+    var s=p.proj,f=function(n,d){return (n||0).toFixed(d===undefined?0:d);};
+    if(p.pos==='QB')return f(s.completions)+'/'+f(s.pass_att)+', '+f(s.pass_yards)+' yd, '+f(s.pass_td,1)+' TD, '+f(s.rush_yards)+' rush';
+    if(p.pos==='RB')return f(s.rush_att)+' car, '+f(s.rush_yards)+' yd, '+f(s.receptions,1)+' rec, '+f(s.rec_yards)+' yd';
+    return f(s.receptions,1)+'/'+f(s.targets,1)+' tgt, '+f(s.rec_yards)+' yd, '+f(s.rec_td,1)+' TD';
+  }
+
+  function render(){
+    var pos=document.getElementById('ppPos').value,
+        team=document.getElementById('ppTeam').value,
+        q=document.getElementById('ppSearch').value.trim().toLowerCase(),
+        dfs=document.getElementById('ppDfs').value,
+        rows=[];
+
+    ALL.forEach(function(p){
+      if(pos&&p.pos!==pos)return;
+      if(team&&p.team!==team)return;
+      if(q&&p.name.toLowerCase().indexOf(q)<0)return;
+      if(dfs==='priced'&&!p.salary)return;
+      var s=score(p);
+      rows.push({p:p,pts:s.pts,floor:s.floor,ceil:s.ceil,
+                 value:p.salary?s.pts/(p.salary/1000):null});
+    });
+
+    rows.sort(function(a,b){
+      var x,y;
+      if(sortKey==='name'){x=a.p.name;y=b.p.name;}
+      else if(sortKey==='pos'){x=a.p.pos;y=b.p.pos;}
+      else if(sortKey==='opp'){x=a.p.opp;y=b.p.opp;}
+      else if(sortKey==='salary'){x=a.p.salary||0;y=b.p.salary||0;}
+      else if(sortKey==='value'){x=a.value===null?-1:a.value;y=b.value===null?-1:b.value;}
+      else {x=a.pts;y=b.pts;}
+      if(x<y)return sortAsc?-1:1;
+      if(x>y)return sortAsc?1:-1;
+      return 0;
+    });
+
+    var maxCeil=1;rows.forEach(function(r){if(r.ceil>maxCeil)maxCeil=r.ceil;});
+    var html=rows.map(function(r){
+      var p=r.p,pct=Math.max(0,Math.min(100,(r.pts/maxCeil)*100));
+      var val=r.value===null?'<span class="pp-stats">—</span>'
+        :'<span class="pp-val'+(r.value>=2.8?' pp-val-hot':'')+'">'+r.value.toFixed(2)+'</span>';
+      return '<tr>'+
+        '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+esc(p.team)+'</span></td>'+
+        '<td><span class="pp-pos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
+        '<td class="pp-stats">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
+        '<td class="pp-proj">'+r.pts.toFixed(1)+'</td>'+
+        '<td class="pp-range"><div class="pp-track"><i style="left:'+pct.toFixed(1)+'%"></i></div>'+
+          '<div class="pp-rangenums"><span>'+Math.max(0,r.floor).toFixed(1)+'</span><span>'+r.ceil.toFixed(1)+'</span></div></td>'+
+        '<td class="pp-sal">'+(p.salary?'$'+p.salary.toLocaleString():'<span class="pp-stats">—</span>')+'</td>'+
+        '<td>'+val+'</td>'+
+        '<td class="pp-stats">'+esc(line(p))+'</td>'+
+      '</tr>';
+    }).join('');
+
+    document.getElementById('ppBody').innerHTML=html;
+    document.getElementById('ppEmpty').hidden=rows.length>0;
+    document.getElementById('ppCount').textContent='Showing '+rows.length+' of '+ALL.length+' players';
+    document.getElementById('ppScoringTag').textContent=labelFor(rules);
+  }
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  function syncInputs(){
+    FIELDS.forEach(function(f){var el=document.getElementById('s_'+f);if(el)el.value=rules[f];});
+    var lab=labelFor(rules);
+    document.querySelectorAll('.pp-preset').forEach(function(b){
+      var t=b.dataset.preset;
+      var match=(t==='ppr'&&lab==='PPR')||(t==='half'&&lab==='Half PPR')||(t==='standard'&&lab==='Standard')||(t==='superflex'&&lab==='Superflex');
+      b.setAttribute('aria-pressed',match?'true':'false');
+    });
+  }
+
+  function bind(){
+    FIELDS.forEach(function(f){
+      var el=document.getElementById('s_'+f);
+      if(el)el.addEventListener('input',function(){
+        var v=parseFloat(el.value);rules[f]=isNaN(v)?0:v;save();syncInputs();render();
+      });
+    });
+    document.querySelectorAll('.pp-preset').forEach(function(b){
+      b.addEventListener('click',function(){
+        rules=Object.assign({},DEFAULTS,PRESETS[b.dataset.preset]);save();syncInputs();render();
+      });
+    });
+    ['ppPos','ppTeam','ppSearch','ppDfs'].forEach(function(id){
+      var el=document.getElementById(id);
+      el.addEventListener(el.tagName==='SELECT'?'change':'input',render);
+    });
+    document.querySelectorAll('table.pp thead th[data-sort]').forEach(function(th){
+      th.addEventListener('click',function(){
+        var k=th.dataset.sort;
+        if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=(k==='name'||k==='pos'||k==='opp');}
+        document.querySelectorAll('table.pp thead th').forEach(function(o){o.classList.remove('pp-active','pp-asc');});
+        th.classList.add('pp-active');if(sortAsc)th.classList.add('pp-asc');
+        render();
+      });
+    });
+  }
+
+  function token(){return localStorage.getItem('sb-auth-token');}
+  function sbHeaders(){return {apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token()};}
+
+  function loadProjections(){
+    return fetch(SUPABASE_URL+'/rest/v1/player_proj?id=eq.1&select=data',{headers:sbHeaders()})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(j){
+        if(!j.length||!j[0].data)throw new Error('empty');
+        PAYLOAD=j[0].data;ALL=PAYLOAD.players||[];
+        var teams=[];ALL.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
+        teams.sort();
+        var sel=document.getElementById('ppTeam');
+        teams.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+        var when=PAYLOAD.generated_at?new Date(PAYLOAD.generated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+        document.getElementById('ppMeta').textContent=
+          ALL.length+' players · '+(PAYLOAD.n_sims||0).toLocaleString()+' sims per game'+(when?' · updated '+when:'');
+      });
+  }
+
+  function loadLeagues(){
+    var sel=document.getElementById('ppLeague'),msg=document.getElementById('ppSleeperMsg');
+    fetch(SUPABASE_URL+'/rest/v1/sleeper_leagues?select=*',{headers:sbHeaders()})
+      .then(function(r){return r.ok?r.json():[];})
+      .then(function(rows){
+        sel.innerHTML='';
+        if(!rows.length){
+          sel.innerHTML='<option value="">No synced leagues</option>';
+          msg.textContent='Sync your Sleeper account from your profile to pull scoring straight from your league.';
+          return;
+        }
+        var opt=document.createElement('option');opt.value='';opt.textContent='Choose a league…';sel.appendChild(opt);
+        rows.forEach(function(row){
+          var id=row.league_id||row.sleeper_league_id||row.id;
+          var nm=row.name||row.league_name||('League '+id);
+          if(!id)return;
+          var o=document.createElement('option');o.value=id;o.textContent=nm;sel.appendChild(o);
+        });
+      })
+      .catch(function(){sel.innerHTML='<option value="">Could not load leagues</option>';});
+  }
+
+  function importScoring(){
+    var id=document.getElementById('ppLeague').value,msg=document.getElementById('ppSleeperMsg');
+    if(!id){msg.textContent='Pick a league first.';return;}
+    msg.textContent='Reading your league settings…';
+    fetch('https://api.sleeper.app/v1/league/'+id)
+      .then(function(r){if(!r.ok)throw new Error();return r.json();})
+      .then(function(lg){
+        var s=lg.scoring_settings||{};
+        function pick(k,d){return typeof s[k]==='number'?s[k]:d;}
+        rules={
+          pass_yards:pick('pass_yd',DEFAULTS.pass_yards),
+          pass_td:pick('pass_td',DEFAULTS.pass_td),
+          interceptions:pick('pass_int',DEFAULTS.interceptions),
+          rush_yards:pick('rush_yd',DEFAULTS.rush_yards),
+          rush_td:pick('rush_td',DEFAULTS.rush_td),
+          receptions:pick('rec',DEFAULTS.receptions),
+          rec_yards:pick('rec_yd',DEFAULTS.rec_yards),
+          rec_td:pick('rec_td',DEFAULTS.rec_td),
+          te_prem:pick('bonus_rec_te',0)
+        };
+        save();syncInputs();render();
+        msg.textContent='Scoring loaded from '+(lg.name||'your league')+'.';
+      })
+      .catch(function(){msg.textContent='Could not reach Sleeper for that league. Try again in a moment.';});
+  }
+
+  function start(){
+    document.getElementById('ppApp').hidden=false;
+    syncInputs();bind();
+    loadProjections().then(function(){render();loadLeagues();})
+      .catch(function(err){
+        document.getElementById('ppBody').innerHTML='';
+        document.getElementById('ppEmpty').hidden=false;
+        document.getElementById('ppEmpty').textContent =
+          err.message==='empty'
+            ? 'Projections for this week are not published yet. Check back after the daily update.'
+            : 'Could not load projections. Refresh the page to try again.';
+      });
+  }
+
+  function gate(){
+    document.getElementById('ppGate').hidden=false;
+    document.getElementById('ppLogin').addEventListener('click',function(){
+      var m=document.getElementById('loginBackdrop');
+      if(m)m.style.display='flex';else window.location.href='login.html';
+    });
+  }
+
+  function boot(tries){
+    if(typeof auth==='undefined'||typeof SUPABASE_URL==='undefined'){
+      if(tries>60)return gate();
+      return setTimeout(function(){boot((tries||0)+1);},100);
+    }
+    if(auth.isAuthenticated&&auth.isAuthenticated()&&token())start();else gate();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){boot(0);});
+  else boot(0);
+})();
+</script>
+</body>
+</html>
