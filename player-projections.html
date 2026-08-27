@@ -86,10 +86,10 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
 .pp-val-hot{color:var(--fnp-aqua)}
 .pp-sal{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-ink)}
 
-.pp-range{min-width:180px}
-.pp-track{position:relative;height:7px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,.10) 0%,rgba(66,244,176,.55) 100%)}
-.pp-track i{position:absolute;top:-4px;width:3px;height:15px;background:var(--fnp-orange);border-radius:2px;box-shadow:0 0 0 2px rgba(11,18,32,.55)}
-.pp-rangenums{display:flex;justify-content:space-between;font-size:.7rem;color:var(--pp-mute);margin-top:4px;font-variant-numeric:tabular-nums}
+.pp-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute);font-size:.9rem}
+.pp-floor{color:#9fb0c9}
+.pp-ceil{color:#bfe9d6}
+.pp-projchip{display:inline-block;min-width:58px;text-align:center;padding:5px 10px;border-radius:6px;font-weight:700;font-size:1.02rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
 
 .pp-empty{padding:44px 20px;text-align:center;color:var(--pp-mute);font-size:.92rem}
 .pp-disc{margin-top:22px;font-size:.76rem;color:var(--pp-mute);line-height:1.6;border-top:1px solid var(--pp-line);padding-top:14px}
@@ -168,8 +168,9 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
           <th data-sort="name">Player</th>
           <th data-sort="pos">Pos</th>
           <th data-sort="opp">Matchup</th>
+          <th data-sort="floor">Floor</th>
+          <th data-sort="ceil">Ceiling</th>
           <th data-sort="pts" class="pp-active">Proj</th>
-          <th>Floor → Ceiling</th>
           <th data-sort="salary">DK salary</th>
           <th data-sort="value">Pts / $1K</th>
           <th>Projected line</th>
@@ -260,6 +261,8 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       if(sortKey==='name'){x=a.p.name;y=b.p.name;}
       else if(sortKey==='pos'){x=a.p.pos;y=b.p.pos;}
       else if(sortKey==='opp'){x=a.p.opp;y=b.p.opp;}
+      else if(sortKey==='floor'){x=a.floor;y=b.floor;}
+      else if(sortKey==='ceil'){x=a.ceil;y=b.ceil;}
       else if(sortKey==='salary'){x=a.p.salary||0;y=b.p.salary||0;}
       else if(sortKey==='value'){x=a.value===null?-1:a.value;y=b.value===null?-1:b.value;}
       else {x=a.pts;y=b.pts;}
@@ -268,18 +271,29 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       return 0;
     });
 
-    var maxCeil=1;rows.forEach(function(r){if(r.ceil>maxCeil)maxCeil=r.ceil;});
-    var html=rows.map(function(r){
-      var p=r.p,pct=Math.max(0,Math.min(100,(r.pts/maxCeil)*100));
+    var span=rows.map(function(r){
+      var d=r.ceil-r.floor;
+      return d>0?(r.pts-r.floor)/d:0.5;
+    });
+    var ordered=span.slice().sort(function(a,b){return a-b;});
+    function pctile(v){
+      var lo=0,hi=ordered.length;
+      while(lo<hi){var mid=(lo+hi)>>1;if(ordered[mid]<v)lo=mid+1;else hi=mid;}
+      return ordered.length>1?lo/(ordered.length-1):0.5;
+    }
+
+    var html=rows.map(function(r,i){
+      var p=r.p;
+      var c=projColor(rows.length>3?pctile(span[i]):0.5);
       var val=r.value===null?'<span class="pp-stats">—</span>'
         :'<span class="pp-val'+(r.value>=2.8?' pp-val-hot':'')+'">'+r.value.toFixed(2)+'</span>';
       return '<tr>'+
         '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+esc(p.team)+'</span></td>'+
         '<td><span class="pp-pos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
         '<td class="pp-stats">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
-        '<td class="pp-proj">'+r.pts.toFixed(1)+'</td>'+
-        '<td class="pp-range"><div class="pp-track"><i style="left:'+pct.toFixed(1)+'%"></i></div>'+
-          '<div class="pp-rangenums"><span>'+Math.max(0,r.floor).toFixed(1)+'</span><span>'+r.ceil.toFixed(1)+'</span></div></td>'+
+        '<td class="pp-num pp-floor">'+Math.max(0,r.floor).toFixed(1)+'</td>'+
+        '<td class="pp-num pp-ceil">'+r.ceil.toFixed(1)+'</td>'+
+        '<td><span class="pp-projchip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.pts.toFixed(1)+'</span></td>'+
         '<td class="pp-sal">'+(p.salary?'$'+p.salary.toLocaleString():'<span class="pp-stats">—</span>')+'</td>'+
         '<td>'+val+'</td>'+
         '<td class="pp-stats">'+esc(line(p))+'</td>'+
@@ -290,6 +304,16 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
     document.getElementById('ppEmpty').hidden=rows.length>0;
     document.getElementById('ppCount').textContent='Showing '+rows.length+' of '+ALL.length+' players';
     document.getElementById('ppScoringTag').textContent=labelFor(rules);
+  }
+
+  var RAMP=[[234,78,61],[75,143,224],[66,244,176]];
+  function projColor(t){
+    t=Math.max(0,Math.min(1,t));
+    var seg=t<0.5?0:1,f=t<0.5?t/0.5:(t-0.5)/0.5,a=RAMP[seg],b=RAMP[seg+1],rgb=[];
+    for(var i=0;i<3;i++)rgb[i]=Math.round(a[i]+(b[i]-a[i])*f);
+    return {fg:'rgb('+rgb.join(',')+')',
+            bg:'rgba('+rgb.join(',')+',.11)',
+            br:'rgba('+rgb.join(',')+',.34)'};
   }
 
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
