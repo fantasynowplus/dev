@@ -131,25 +131,43 @@ OUT_STATUS_TEXT = {"inactive", "injured reserve", "physically unable to perform"
                    "non football injury", "suspended", "practice squad"}
 
 
-def fetch_sleeper_out_players():
-    """{(norm_name, team_abbr)} for everyone unavailable this week."""
+def fetch_sleeper_index():
+    """Current team, depth-chart slot and availability for every NFL player.
+
+    The usage CSV describes LAST season. Sleeper describes today. Without
+    this the model happily starts a quarterback who left in March."""
     try:
         req = urllib.request.Request(SLEEPER_PLAYERS, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=90) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode())
     except Exception as e:
-        print(f"  WARNING: Sleeper player fetch failed ({e}) -- no injury filtering applied")
-        return set()
+        print(f"  WARNING: Sleeper fetch failed ({e}) -- rosters NOT refreshed, "
+              f"projections will reflect last season's teams")
+        return {}
 
-    out = set()
-    for p in data.values():
-        inj = (p.get("injury_status") or "").strip().lower()
-        status = (p.get("status") or "").strip().lower()
-        if inj in OUT_STATUSES or status in OUT_STATUS_TEXT:
-            name = p.get("full_name") or f"{p.get('first_name','')} {p.get('last_name','')}"
-            out.add((norm_name(name), norm_abbr(p.get("team"))))
-    print(f"  Sleeper: {len(out)} players flagged unavailable")
-    return out
+    idx = {}
+    for pl in data.values():
+        name = pl.get("full_name") or f"{pl.get('first_name','')} {pl.get('last_name','')}"
+        key = norm_name(name)
+        if not key:
+            continue
+        inj = (pl.get("injury_status") or "").strip().lower()
+        status = (pl.get("status") or "").strip().lower()
+        depth = pl.get("depth_chart_order")
+        rec = {
+            "team": norm_abbr(pl.get("team")),
+            "pos": (pl.get("position") or "").upper(),
+            "out": inj in OUT_STATUSES or status in OUT_STATUS_TEXT,
+            "depth": int(depth) if isinstance(depth, (int, float)) else None,
+        }
+        idx[(key, rec["pos"])] = rec
+        idx.setdefault(key, rec)
+    print(f"  Sleeper: {len(data)} players indexed")
+    return idx
+
+
+def _lookup(index, player):
+    return index.get((norm_name(player.name), player.position)) or index.get(norm_name(player.name))
 
 
 SHARE_FIELDS = ["pass_att_share", "rush_share", "target_share",
@@ -157,14 +175,20 @@ SHARE_FIELDS = ["pass_att_share", "rush_share", "target_share",
 
 
 def _pick_starting_qb(keep, team):
-    """Per-game shares leave every QB who started anything looking like a
-    starter. Only one plays: keep the highest-share available QB at 100% of
-    attempts and drop the rest (a backup with real rush volume is kept as a
-    rusher only)."""
+    """Sleeper's depth chart decides QB1; last season's attempt total is only
+    the tiebreak when the depth chart is silent. The starter gets 100% of
+    attempts and the other passers are dropped unless they run enough to
+    matter on their own."""
     qbs = [p for p in keep if p.pass_att_share > 0]
     if not qbs:
         return keep
-    starter = max(qbs, key=lambda p: p.pass_att_share)
+
+    ranked = [p for p in qbs if getattr(p, "_depth", None)]
+    if ranked:
+        starter = min(ranked, key=lambda p: p._depth)
+    else:
+        starter = max(qbs, key=lambda p: p.pass_att_share)
+
     starter.pass_att_share = 1.0
     out = []
     for p in keep:
@@ -173,8 +197,7 @@ def _pick_starting_qb(keep, team):
         elif p.rush_share > 0.05:
             p.pass_att_share = 0.0
             out.append(p)
-    if len(out) < len(keep):
-        print(f"  {team}: QB1 = {starter.name}")
+    print(f"  {team}: QB1 = {starter.name}")
     return out
 
 
@@ -187,35 +210,47 @@ def _normalize(keep, field, cap=1.0):
                 setattr(p, field, v * cap / total)
 
 
-def apply_injuries_and_residual(by_team, out_players):
-    """Drops unavailable players, redistributes their share within position
-    group, picks a starting QB, rescales shares that sum past 100%, then adds
-    an 'Other' row holding whatever the listed players don't account for.
-    Without that residual row, _split_counts hands 100% of team volume to
-    whoever cleared the volume threshold."""
+def apply_sleeper_rosters(by_team, index, slate_teams):
+    """Reconciles last season's usage against this season's rosters: drops
+    anyone unavailable, moves offseason signings to their current team, picks
+    a starting QB off the depth chart, rescales shares past 100%, and adds an
+    'Other' row so listed players don't absorb all of a team's volume."""
+    if not index:
+        moved_by_team = by_team
+    else:
+        moved_by_team, moved, dropped_out, dropped_gone = {}, [], [], []
+        for team, players in by_team.items():
+            for p in players:
+                rec = _lookup(index, p)
+                if rec is None:
+                    moved_by_team.setdefault(team, []).append(p)
+                    continue
+                if rec["out"]:
+                    dropped_out.append(p.name)
+                    continue
+                now = rec["team"]
+                if not now or now not in slate_teams:
+                    dropped_gone.append(f"{p.name} ({team})")
+                    continue
+                if now != team:
+                    moved.append(f"{p.name} {team}->{now}")
+                    p.team = now
+                p._depth = rec["depth"]
+                moved_by_team.setdefault(now, []).append(p)
+
+        if dropped_out:
+            print(f"  unavailable ({len(dropped_out)}): {', '.join(dropped_out[:8])}"
+                  + (" ..." if len(dropped_out) > 8 else ""))
+        if moved:
+            print(f"  changed teams ({len(moved)}): {', '.join(moved[:8])}"
+                  + (" ..." if len(moved) > 8 else ""))
+        if dropped_gone:
+            print(f"  not on a slate roster ({len(dropped_gone)}): {', '.join(dropped_gone[:6])}"
+                  + (" ..." if len(dropped_gone) > 6 else ""))
+
     cleaned = {}
-    for team, players in by_team.items():
-        keep, dropped = [], []
-        for p in players:
-            if (norm_name(p.name), norm_abbr(p.team)) in out_players:
-                dropped.append(p)
-            else:
-                keep.append(p)
-        if dropped:
-            print(f"  {team}: out -> {', '.join(d.name for d in dropped)}")
-
-        for field in SHARE_FIELDS:
-            lost = sum(getattr(d, field) or 0.0 for d in dropped)
-            if lost <= 0:
-                continue
-            pool = [k for k in keep if (getattr(k, field) or 0.0) > 0]
-            base = sum(getattr(k, field) for k in pool)
-            if base <= 0:
-                continue
-            for k in pool:
-                setattr(k, field, getattr(k, field) + lost * getattr(k, field) / base)
-
-        keep = _pick_starting_qb(keep, team)
+    for team, keep in moved_by_team.items():
+        keep = _pick_starting_qb(list(keep), team)
         for field in ("rush_share", "target_share", "rush_td_share", "rec_td_share"):
             _normalize(keep, field)
 
@@ -330,7 +365,7 @@ def build_payload(season, weeks, sims, prior_season, cov_stride, limit=None):
     if missing:
         print(f"  WARNING: no usage rows for {', '.join(missing)} -- those games are skipped")
 
-    by_team = apply_injuries_and_residual(by_team, fetch_sleeper_out_players())
+    by_team = apply_sleeper_rosters(by_team, fetch_sleeper_index(), set(teams))
     salaries = fetch_dk_salaries()
 
     players_out, seen = [], set()
