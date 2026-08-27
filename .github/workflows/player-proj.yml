@@ -1,0 +1,34 @@
+name: Player Projections
+
+on:
+  schedule:
+    - cron: "15 13 * * *"
+  workflow_dispatch:
+
+jobs:
+  project:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install numpy
+
+      - name: Run player projections
+        working-directory: scripts
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python run_players.py \
+            --season 2026 \
+            --weeks 4 \
+            --sims 8000 \
+            --prior-season-fallback 2025 \
+            --out "${RUNNER_TEMP}/player-proj.json"
