@@ -65,7 +65,7 @@ layout: null
 .pp-sleeper-msg.pp-bad{color:var(--fnp-red)}
 
 .pp-scroller{margin-top:16px;overflow-x:auto;border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
-table.pp{width:100%;border-collapse:collapse;font-size:.88rem;min-width:940px}
+table.pp{width:100%;border-collapse:collapse;font-size:.88rem;min-width:780px}
 table.pp thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:12px 10px;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
 table.pp thead th[data-sort]:hover{color:var(--fnp-orange)}
 table.pp thead th.pp-active{color:var(--fnp-orange)}
@@ -82,9 +82,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
 .pp-TE{background:rgba(255,165,21,.16);color:var(--fnp-orange)}
 .pp-proj{font-weight:700;font-size:1.05rem;color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums}
 .pp-stats{font-size:.78rem;color:var(--pp-mute);white-space:nowrap}
-.pp-val{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--pp-ink)}
-.pp-val-hot{color:var(--fnp-aqua)}
-.pp-sal{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-ink)}
 
 .pp-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute);font-size:.9rem}
 .pp-floor{color:#9fb0c9}
@@ -157,8 +154,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
         <select id="ppPos"><option value="">All</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select></div>
       <div><label for="ppTeam">Team</label><select id="ppTeam"><option value="">All teams</option></select></div>
       <div><label for="ppSearch">Search</label><input type="search" id="ppSearch" placeholder="Player name"></div>
-      <div><label for="ppDfs">DFS</label>
-        <select id="ppDfs"><option value="">All players</option><option value="priced">Priced on DraftKings</option></select></div>
       <div class="pp-count" id="ppCount"></div>
     </div>
 
@@ -171,8 +166,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
           <th data-sort="floor">Floor</th>
           <th data-sort="ceil">Ceiling</th>
           <th data-sort="pts" class="pp-active">Proj</th>
-          <th data-sort="salary">DK salary</th>
-          <th data-sort="value">Pts / $1K</th>
           <th>Projected line</th>
         </tr></thead>
         <tbody id="ppBody"></tbody>
@@ -243,17 +236,14 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
     var pos=document.getElementById('ppPos').value,
         team=document.getElementById('ppTeam').value,
         q=document.getElementById('ppSearch').value.trim().toLowerCase(),
-        dfs=document.getElementById('ppDfs').value,
         rows=[];
 
     ALL.forEach(function(p){
       if(pos&&p.pos!==pos)return;
       if(team&&p.team!==team)return;
       if(q&&p.name.toLowerCase().indexOf(q)<0)return;
-      if(dfs==='priced'&&!p.salary)return;
       var s=score(p);
-      rows.push({p:p,pts:s.pts,floor:s.floor,ceil:s.ceil,
-                 value:p.salary?s.pts/(p.salary/1000):null});
+      rows.push({p:p,pts:s.pts,floor:s.floor,ceil:s.ceil});
     });
 
     rows.sort(function(a,b){
@@ -263,8 +253,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       else if(sortKey==='opp'){x=a.p.opp;y=b.p.opp;}
       else if(sortKey==='floor'){x=a.floor;y=b.floor;}
       else if(sortKey==='ceil'){x=a.ceil;y=b.ceil;}
-      else if(sortKey==='salary'){x=a.p.salary||0;y=b.p.salary||0;}
-      else if(sortKey==='value'){x=a.value===null?-1:a.value;y=b.value===null?-1:b.value;}
       else {x=a.pts;y=b.pts;}
       if(x<y)return sortAsc?-1:1;
       if(x>y)return sortAsc?1:-1;
@@ -285,8 +273,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
     var html=rows.map(function(r,i){
       var p=r.p;
       var c=projColor(rows.length>3?pctile(span[i]):0.5);
-      var val=r.value===null?'<span class="pp-stats">—</span>'
-        :'<span class="pp-val'+(r.value>=2.8?' pp-val-hot':'')+'">'+r.value.toFixed(2)+'</span>';
       return '<tr>'+
         '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+esc(p.team)+'</span></td>'+
         '<td><span class="pp-pos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
@@ -294,8 +280,6 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
         '<td class="pp-num pp-floor">'+Math.max(0,r.floor).toFixed(1)+'</td>'+
         '<td class="pp-num pp-ceil">'+r.ceil.toFixed(1)+'</td>'+
         '<td><span class="pp-projchip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.pts.toFixed(1)+'</span></td>'+
-        '<td class="pp-sal">'+(p.salary?'$'+p.salary.toLocaleString():'<span class="pp-stats">—</span>')+'</td>'+
-        '<td>'+val+'</td>'+
         '<td class="pp-stats">'+esc(line(p))+'</td>'+
       '</tr>';
     }).join('');
@@ -340,7 +324,7 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
         rules=Object.assign({},DEFAULTS,PRESETS[b.dataset.preset]);save();syncInputs();render();
       });
     });
-    ['ppPos','ppTeam','ppSearch','ppDfs'].forEach(function(id){
+    ['ppPos','ppTeam','ppSearch'].forEach(function(id){
       var el=document.getElementById(id);
       el.addEventListener(el.tagName==='SELECT'?'change':'input',render);
     });

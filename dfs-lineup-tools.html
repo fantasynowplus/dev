@@ -1,0 +1,539 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFS Lineup Tools | FantasyNow+</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fnp-orange:#FFA515;
+  --fnp-aqua:#42F4B0;
+  --fnp-red:#EA4E3D;
+  --pp-ink:#E9EFF9;
+  --pp-mute:#93A3BD;
+  --pp-panel:rgba(255,255,255,.045);
+  --pp-line:rgba(255,255,255,.11);
+  --pp-raise:rgba(255,255,255,.07);
+}
+.dfs-wrap{max-width:1240px;margin:0 auto;padding:28px 18px 70px;font-family:'Inter',system-ui,sans-serif;color:var(--pp-ink)}
+.dfs-head h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:2.7rem;letter-spacing:.01em;margin:0 0 6px;color:#fff;text-transform:uppercase}
+.dfs-head h1 span{color:var(--fnp-orange)}
+.dfs-head p{margin:0;max-width:72ch;color:var(--pp-mute);font-size:.95rem;line-height:1.6}
+.dfs-meta{margin-top:10px;font-size:.78rem;color:var(--pp-mute);letter-spacing:.05em;text-transform:uppercase}
+
+.dfs-gate{margin-top:26px;border:1px solid var(--pp-line);border-top:3px solid var(--fnp-orange);border-radius:10px;padding:30px;background:var(--pp-panel);text-align:center}
+.dfs-gate h2{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-size:1.5rem;margin:0 0 8px;color:#fff}
+.dfs-gate p{margin:0 auto 16px;max-width:52ch;color:var(--pp-mute);font-size:.92rem;line-height:1.6}
+.dfs-gate a{color:var(--fnp-orange)}
+.dfs-gate .dfs-note{font-size:.82rem;border-top:1px solid var(--pp-line);padding-top:14px;margin-top:18px}
+
+.dfs-btn{display:inline-block;background:var(--fnp-orange);color:#0b1220;border:0;border-radius:6px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Inter',sans-serif}
+.dfs-btn:hover{background:#FF8C00}
+.dfs-btn:disabled{opacity:.45;cursor:default}
+.dfs-btn-ghost{background:transparent;border:1px solid var(--pp-line);color:var(--pp-ink)}
+.dfs-btn-ghost:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
+
+.dfs-cols{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;align-items:start;margin-top:20px}
+@media(max-width:1040px){.dfs-cols{grid-template-columns:minmax(0,1fr)}}
+
+.dfs-card{border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
+.dfs-card h2{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-size:1.15rem;margin:0;padding:14px 16px;color:#fff;border-bottom:1px solid var(--pp-line)}
+.dfs-card-body{padding:16px}
+
+.dfs-modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.dfs-mode{flex:1;min-width:96px;border:1px solid var(--pp-line);background:transparent;border-radius:6px;padding:10px 8px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--pp-ink);text-align:center}
+.dfs-mode b{display:block;font-size:.86rem;font-weight:700}
+.dfs-mode small{display:block;font-size:.68rem;color:var(--pp-mute);margin-top:3px;letter-spacing:.03em}
+.dfs-mode:hover{border-color:var(--fnp-orange)}
+.dfs-mode[aria-pressed=true]{border-color:var(--fnp-orange);background:rgba(255,165,21,.12)}
+.dfs-mode[aria-pressed=true] small{color:var(--fnp-orange)}
+
+.dfs-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--pp-line);font-size:.85rem}
+.dfs-opt label{color:var(--pp-ink)}
+.dfs-opt small{display:block;color:var(--pp-mute);font-size:.73rem;margin-top:2px;line-height:1.4}
+.dfs-opt input[type=number]{width:96px;font-family:'Inter',sans-serif;font-size:.86rem;padding:7px 8px;border:1px solid var(--pp-line);border-radius:5px;background:var(--pp-raise);color:var(--pp-ink)}
+.dfs-opt input[type=checkbox]{width:17px;height:17px;accent-color:var(--fnp-orange)}
+.dfs-build{margin-top:16px;width:100%}
+
+.dfs-lineup{width:100%;border-collapse:collapse;font-size:.86rem}
+.dfs-lineup td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.06)}
+.dfs-slot{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:.07em;color:var(--fnp-orange);text-transform:uppercase;width:52px}
+.dfs-who{color:#fff;font-weight:600}
+.dfs-who small{display:block;color:var(--pp-mute);font-weight:500;font-size:.72rem;letter-spacing:.03em}
+.dfs-sal,.dfs-pts{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dfs-pts{color:var(--fnp-aqua);font-weight:700}
+.dfs-open{color:var(--pp-mute);font-style:italic;font-weight:500}
+.dfs-tot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--pp-line);font-size:.8rem;color:var(--pp-mute)}
+.dfs-tot b{display:block;color:#fff;font-size:1.12rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.dfs-warn{margin-top:12px;font-size:.78rem;line-height:1.5;color:var(--fnp-orange)}
+
+.dfs-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:14px;border-bottom:1px solid var(--pp-line)}
+.dfs-bar label{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--pp-mute);font-weight:600;display:block;margin-bottom:5px}
+.dfs-bar select,.dfs-bar input[type=search]{font-family:'Inter',sans-serif;font-size:.88rem;padding:8px 9px;border:1px solid var(--pp-line);border-radius:5px;background:var(--pp-raise);color:var(--pp-ink);min-width:126px}
+.dfs-bar input[type=search]::placeholder{color:var(--pp-mute)}
+.dfs-count{margin-left:auto;font-size:.8rem;color:var(--pp-mute);font-weight:600}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--fnp-orange);outline-offset:1px}
+
+.dfs-scroller{overflow-x:auto}
+table.dfs{width:100%;border-collapse:collapse;font-size:.87rem;min-width:820px}
+table.dfs thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:11px 9px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
+table.dfs thead th:hover{color:var(--fnp-orange)}
+table.dfs thead th.dfs-active{color:var(--fnp-orange)}
+table.dfs thead th.dfs-active::after{content:" ▾"}
+table.dfs thead th.dfs-active.dfs-asc::after{content:" ▴"}
+table.dfs tbody td{padding:9px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+table.dfs tbody tr:hover{background:rgba(255,255,255,.04)}
+tr.dfs-locked{background:rgba(66,244,176,.07)}
+tr.dfs-banned{opacity:.4}
+.dfs-name{font-weight:600;color:#fff;white-space:nowrap}
+.dfs-name small{display:block;font-size:.72rem;color:var(--pp-mute);font-weight:500;letter-spacing:.04em}
+.dfs-pos{display:inline-block;min-width:34px;text-align:center;font-size:.7rem;font-weight:700;padding:4px 7px;border-radius:4px;letter-spacing:.05em}
+.dfs-QB{background:rgba(167,139,250,.18);color:#c4b5fd}
+.dfs-RB{background:rgba(66,244,176,.14);color:var(--fnp-aqua)}
+.dfs-WR{background:rgba(96,165,250,.18);color:#93c5fd}
+.dfs-TE{background:rgba(255,165,21,.16);color:var(--fnp-orange)}
+.dfs-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute)}
+.dfs-chip{display:inline-block;min-width:56px;text-align:center;padding:5px 9px;border-radius:6px;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
+.dfs-acts{white-space:nowrap;text-align:right}
+.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;padding:4px 9px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:5px;letter-spacing:.04em}
+.dfs-act:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
+.dfs-act[aria-pressed=true]{background:var(--fnp-aqua);border-color:var(--fnp-aqua);color:#07211a}
+.dfs-act.dfs-ban[aria-pressed=true]{background:var(--fnp-red);border-color:var(--fnp-red);color:#fff}
+
+.dfs-empty{padding:44px 20px;text-align:center;color:var(--pp-mute);font-size:.92rem}
+.dfs-disc{margin-top:22px;font-size:.76rem;color:var(--pp-mute);line-height:1.6;border-top:1px solid var(--pp-line);padding-top:14px}
+@media(max-width:640px){.dfs-head h1{font-size:2.05rem}.dfs-count{margin-left:0;flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+{% include header.html %}
+
+<div class="dfs-wrap">
+  <div class="dfs-head">
+    <h1>DFS <span>Lineup Tools</span></h1>
+    <p>The same simulations behind our player projections, scored with DraftKings rules and priced against this week's salaries. Build for a safe floor in cash games or a wide ceiling in tournaments, then lock in the players you already believe in.</p>
+    <div class="dfs-meta" id="dfsMeta"></div>
+  </div>
+
+  <div id="dfsGate" class="dfs-gate" hidden>
+    <h2>Members only</h2>
+    <p>DFS tools are free with a FantasyNow+ account. Create one in a few seconds and the full board opens up.</p>
+    <button class="dfs-btn" id="dfsLogin">Log in or sign up</button>
+    <p class="dfs-note">Already play in the Super League? You have an account — <a href="forgot-password.html">reset your password</a> to get in.</p>
+  </div>
+
+  <div id="dfsApp" hidden>
+    <div class="dfs-cols">
+      <div class="dfs-card">
+        <div class="dfs-bar">
+          <div><label for="dfsPos">Position</label>
+            <select id="dfsPos"><option value="">All</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select></div>
+          <div><label for="dfsTeam">Team</label><select id="dfsTeam"><option value="">All teams</option></select></div>
+          <div><label for="dfsSearch">Search</label><input type="search" id="dfsSearch" placeholder="Player name"></div>
+          <div><label for="dfsMax">Max salary</label>
+            <select id="dfsMax">
+              <option value="">Any</option><option value="9000">Under $9,000</option>
+              <option value="7000">Under $7,000</option><option value="5000">Under $5,000</option>
+              <option value="4000">Under $4,000</option>
+            </select></div>
+          <div class="dfs-count" id="dfsCount"></div>
+        </div>
+        <div class="dfs-scroller">
+          <table class="dfs">
+            <thead><tr>
+              <th data-sort="name">Player</th>
+              <th data-sort="pos">Pos</th>
+              <th data-sort="opp">Matchup</th>
+              <th data-sort="salary">Salary</th>
+              <th data-sort="floor">Floor</th>
+              <th data-sort="ceil">Ceiling</th>
+              <th data-sort="pts">Proj</th>
+              <th data-sort="value" class="dfs-active">Value</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="dfsBody"></tbody>
+          </table>
+          <div class="dfs-empty" id="dfsEmpty" hidden>No players match those filters.</div>
+        </div>
+      </div>
+
+      <div class="dfs-card">
+        <h2>Lineup builder</h2>
+        <div class="dfs-card-body">
+          <div class="dfs-modes">
+            <button class="dfs-mode" data-mode="cash"><b>Cash</b><small>Highest floor</small></button>
+            <button class="dfs-mode" data-mode="balanced" aria-pressed="true"><b>Balanced</b><small>Highest median</small></button>
+            <button class="dfs-mode" data-mode="gpp"><b>Tournament</b><small>Highest ceiling</small></button>
+          </div>
+
+          <div class="dfs-opt">
+            <label for="dfsDst">Reserve for DST<small>Your data has no defenses, so the builder leaves this much room for one.</small></label>
+            <input type="number" id="dfsDst" value="3000" step="100" min="0" max="12000">
+          </div>
+          <div class="dfs-opt">
+            <label for="dfsStack">Stack the quarterback<small>Force at least one pass catcher from the QB's team.</small></label>
+            <input type="checkbox" id="dfsStack" checked>
+          </div>
+          <div class="dfs-opt">
+            <label for="dfsNoOpp">Avoid the QB's opponent<small>Skip running backs facing your quarterback.</small></label>
+            <input type="checkbox" id="dfsNoOpp" checked>
+          </div>
+
+          <button class="dfs-btn dfs-build" id="dfsBuild">Build lineup</button>
+
+          <table class="dfs-lineup" id="dfsLineup"></table>
+          <div class="dfs-tot" id="dfsTotals"></div>
+          <div class="dfs-warn" id="dfsWarn"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="dfs-disc">Scored with DraftKings Classic rules. Yardage bonuses aren't included, so a player who regularly clears 100 yards will score slightly higher than shown. Salaries come from the largest live Classic draft group and may not match a showdown or single-game slate. Projections are model output, not advice — DFS involves financial risk, and you should only ever play with money you can afford to lose.</p>
+  </div>
+</div>
+
+{% include footer.html %}
+
+<script>
+(function(){
+  var DK={pass_yards:0.04,pass_td:4,interceptions:-1,rush_yards:0.1,rush_td:6,
+          receptions:1,rec_yards:0.1,rec_td:6};
+  var CAP=50000,SLOTS=['QB','RB','RB','WR','WR','WR','TE','FLEX'],FLEX={RB:1,WR:1,TE:1};
+  var ALL=[],PAYLOAD=null,sortKey='value',sortAsc=false,mode='balanced',locks={},bans={};
+
+  function score(p){
+    var keys=p.keys,cov=p.cov,w=[],i,j,mean=0;
+    for(i=0;i<keys.length;i++){w[i]=DK[keys[i]]||0;mean+=w[i]*(p.proj[keys[i]]||0);}
+    var varr=0,idx=0;
+    for(i=0;i<keys.length;i++)for(j=i;j<keys.length;j++){varr+=(i===j?1:2)*w[i]*w[j]*cov[idx];idx++;}
+    var sd=Math.sqrt(Math.max(varr,0));
+    return {pts:mean,floor:Math.max(0,mean+(p.z10||-1.2)*sd),ceil:mean+(p.z90||1.35)*sd};
+  }
+
+  function objective(r){return mode==='cash'?r.floor:mode==='gpp'?r.ceil:r.pts;}
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  var RAMP=[[75,143,224],[255,165,21],[66,244,176]];
+  function chipColor(t){
+    t=Math.max(0,Math.min(1,t));
+    var seg=t<0.5?0:1,f=t<0.5?t/0.5:(t-0.5)/0.5,a=RAMP[seg],b=RAMP[seg+1],rgb=[];
+    for(var i=0;i<3;i++)rgb[i]=Math.round(a[i]+(b[i]-a[i])*f);
+    return {fg:'rgb('+rgb.join(',')+')',bg:'rgba('+rgb.join(',')+',.11)',br:'rgba('+rgb.join(',')+',.34)'};
+  }
+
+  function pool(){
+    return ALL.filter(function(p){return p.salary&&!bans[p.id];}).map(function(p){
+      var s=score(p);
+      return {p:p,pts:s.pts,floor:s.floor,ceil:s.ceil,value:s.pts/(p.salary/1000)};
+    });
+  }
+
+  function eligible(rows,slot){
+    return rows.filter(function(r){
+      return slot==='FLEX'?FLEX[r.p.pos]:r.p.pos===slot;
+    });
+  }
+
+  function build(){
+    var rows=pool(),reserve=Math.max(0,parseInt(document.getElementById('dfsDst').value,10)||0),
+        cap=CAP-reserve,stack=document.getElementById('dfsStack').checked,
+        avoid=document.getElementById('dfsNoOpp').checked,
+        locked=rows.filter(function(r){return locks[r.p.id];});
+
+    if(locked.length>8)return fail('You have more than eight players locked. Unlock a few and build again.');
+
+    var best=null;
+    for(var attempt=0;attempt<420;attempt++){
+      var lineup=seed(rows,locked,cap,stack,avoid,attempt);
+      if(!lineup)continue;
+      lineup=improve(lineup,rows,cap,stack,avoid);
+      var tot=lineup.reduce(function(a,r){return a+objective(r);},0);
+      if(!best||tot>best.total)best={picks:lineup,total:tot};
+    }
+    if(!best)return fail('No valid lineup fits under the cap with those settings. Try lowering the DST reserve or unlocking a player.');
+    show(best.picks,reserve);
+  }
+
+  function seed(rows,locked,cap,stack,avoid,attempt){
+    var used={},picks=[],spent=0,i;
+    locked.forEach(function(r){used[r.p.id]=1;spent+=r.p.salary;});
+    if(spent>cap)return null;
+
+    var order=SLOTS.slice(),lockedBySlot=assign(locked);
+    if(!lockedBySlot)return null;
+
+    var qb=lockedBySlot.QB?lockedBySlot.QB[0]:null;
+    if(!qb){
+      var qbs=eligible(rows,'QB').filter(function(r){return !used[r.p.id]&&spent+r.p.salary<=cap;});
+      qbs.sort(function(a,b){return objective(b)-objective(a);});
+      if(!qbs.length)return null;
+      qb=qbs[Math.min(qbs.length-1,Math.floor(Math.random()*Math.min(qbs.length,8*(1+attempt%3))))];
+      used[qb.p.id]=1;spent+=qb.p.salary;
+    }
+    picks.push({slot:'QB',r:qb});
+
+    var remaining=order.slice(1),needStack=stack;
+    for(i=0;i<remaining.length;i++){
+      var slot=remaining[i],pre=lockedBySlot[slot]&&lockedBySlot[slot].length?lockedBySlot[slot].shift():null;
+      if(pre){picks.push({slot:slot,r:pre});if(sameTeam(pre,qb))needStack=false;continue;}
+      var left=remaining.length-i,
+          cands=eligible(rows,slot).filter(function(r){
+            if(used[r.p.id])return false;
+            if(spent+r.p.salary+(left-1)*2800>cap)return false;
+            if(avoid&&r.p.pos==='RB'&&r.p.team===qb.p.opp)return false;
+            return true;
+          });
+      if(needStack&&i===remaining.length-1){
+        var st=cands.filter(function(r){return sameTeam(r,qb);});
+        if(st.length)cands=st;
+      }
+      if(!cands.length)return null;
+      cands.sort(function(a,b){return objective(b)/b.p.salary-objective(a)/a.p.salary;});
+      var span=Math.max(1,Math.min(cands.length,6+attempt%7)),
+          pick=cands[Math.floor(Math.random()*span)];
+      used[pick.p.id]=1;spent+=pick.p.salary;
+      if(sameTeam(pick,qb))needStack=false;
+      picks.push({slot:slot,r:pick});
+    }
+    if(needStack)return null;
+    return picks;
+  }
+
+  function assign(locked){
+    var by={},i,r;
+    for(i=0;i<locked.length;i++){
+      r=locked[i];
+      var slot=r.p.pos;
+      by[slot]=by[slot]||[];by[slot].push(r);
+    }
+    var counts={QB:1,RB:2,WR:3,TE:1},flex=0;
+    for(var k in by){
+      var over=by[k].length-(counts[k]||0);
+      if(over>0){
+        if(!FLEX[k])return null;
+        flex+=over;
+      }
+    }
+    if(flex>1)return null;
+    return by;
+  }
+
+  function sameTeam(a,b){return a.p.team===b.p.team&&a.p.id!==b.p.id;}
+
+  function improve(picks,rows,cap,stack,avoid){
+    var used={},spent=0;
+    picks.forEach(function(x){used[x.r.p.id]=1;spent+=x.r.p.salary;});
+    var qb=picks[0].r,improved=true,guard=0;
+
+    while(improved&&guard++<40){
+      improved=false;
+      for(var i=0;i<picks.length;i++){
+        var cur=picks[i];
+        if(locks[cur.r.p.id])continue;
+        var room=cap-spent+cur.r.p.salary;
+        var cands=eligible(rows,cur.slot).filter(function(r){
+          if(used[r.p.id]||r.p.salary>room)return false;
+          if(avoid&&r.p.pos==='RB'&&r.p.team===qb.p.opp)return false;
+          return objective(r)>objective(cur.r);
+        });
+        if(!cands.length)continue;
+        cands.sort(function(a,b){return objective(b)-objective(a);});
+        var next=cands[0];
+        if(stack&&i>0&&sameTeam(cur.r,qb)){
+          var still=picks.some(function(x,j){return j!==i&&j>0&&sameTeam(x.r,qb);});
+          if(!still&&!sameTeam(next,qb))continue;
+        }
+        delete used[cur.r.p.id];used[next.p.id]=1;
+        spent+=next.p.salary-cur.r.p.salary;
+        picks[i]={slot:cur.slot,r:next};
+        improved=true;
+      }
+    }
+    return picks;
+  }
+
+  function fail(msg){
+    document.getElementById('dfsLineup').innerHTML='';
+    document.getElementById('dfsTotals').innerHTML='';
+    document.getElementById('dfsWarn').textContent=msg;
+  }
+
+  function show(picks,reserve){
+    var sal=0,pts=0,floor=0,ceil=0;
+    var html=picks.map(function(x){
+      sal+=x.r.p.salary;pts+=x.r.pts;floor+=x.r.floor;ceil+=x.r.ceil;
+      return '<tr><td class="dfs-slot">'+x.slot+'</td>'+
+        '<td class="dfs-who">'+esc(x.r.p.name)+'<small>'+esc(x.r.p.team)+' '+(x.r.p.home?'vs ':'@ ')+esc(x.r.p.opp)+'</small></td>'+
+        '<td class="dfs-sal">$'+x.r.p.salary.toLocaleString()+'</td>'+
+        '<td class="dfs-pts">'+x.r.pts.toFixed(1)+'</td></tr>';
+    }).join('');
+    html+='<tr><td class="dfs-slot">DST</td><td class="dfs-who dfs-open">Pick your own</td>'+
+          '<td class="dfs-sal">$'+reserve.toLocaleString()+'</td><td class="dfs-pts">—</td></tr>';
+    document.getElementById('dfsLineup').innerHTML=html;
+
+    var left=CAP-sal-reserve;
+    document.getElementById('dfsTotals').innerHTML=
+      '<div>Salary used<b>$'+(sal+reserve).toLocaleString()+'</b></div>'+
+      '<div>Left over<b>$'+left.toLocaleString()+'</b></div>'+
+      '<div>Projected<b>'+pts.toFixed(1)+'</b></div>'+
+      '<div>Floor → ceiling<b>'+floor.toFixed(0)+' → '+ceil.toFixed(0)+'</b></div>';
+    document.getElementById('dfsWarn').textContent=
+      left>2500?'Over $2,500 unspent on the skill positions — a pricier DST or a bigger reserve may use the cap better.':'';
+  }
+
+  function render(){
+    var pos=document.getElementById('dfsPos').value,
+        team=document.getElementById('dfsTeam').value,
+        q=document.getElementById('dfsSearch').value.trim().toLowerCase(),
+        maxSal=parseInt(document.getElementById('dfsMax').value,10)||0,
+        rows=[];
+
+    ALL.forEach(function(p){
+      if(!p.salary)return;
+      if(pos&&p.pos!==pos)return;
+      if(team&&p.team!==team)return;
+      if(q&&p.name.toLowerCase().indexOf(q)<0)return;
+      if(maxSal&&p.salary>=maxSal)return;
+      var s=score(p);
+      rows.push({p:p,pts:s.pts,floor:s.floor,ceil:s.ceil,value:s.pts/(p.salary/1000)});
+    });
+
+    rows.sort(function(a,b){
+      var x,y;
+      if(sortKey==='name'){x=a.p.name;y=b.p.name;}
+      else if(sortKey==='pos'){x=a.p.pos;y=b.p.pos;}
+      else if(sortKey==='opp'){x=a.p.opp;y=b.p.opp;}
+      else if(sortKey==='salary'){x=a.p.salary;y=b.p.salary;}
+      else if(sortKey==='floor'){x=a.floor;y=b.floor;}
+      else if(sortKey==='ceil'){x=a.ceil;y=b.ceil;}
+      else if(sortKey==='pts'){x=a.pts;y=b.pts;}
+      else {x=a.value;y=b.value;}
+      if(x<y)return sortAsc?-1:1;
+      if(x>y)return sortAsc?1:-1;
+      return 0;
+    });
+
+    var vals=rows.map(function(r){return r.value;}).sort(function(a,b){return a-b;});
+    function pct(v){
+      var lo=0,hi=vals.length;
+      while(lo<hi){var m=(lo+hi)>>1;if(vals[m]<v)lo=m+1;else hi=m;}
+      return vals.length>1?lo/(vals.length-1):0.5;
+    }
+
+    document.getElementById('dfsBody').innerHTML=rows.map(function(r){
+      var p=r.p,c=chipColor(rows.length>3?pct(r.value):0.5);
+      return '<tr class="'+(locks[p.id]?'dfs-locked':bans[p.id]?'dfs-banned':'')+'">'+
+        '<td><span class="dfs-name">'+esc(p.name)+'<small>'+esc(p.team)+'</small></span></td>'+
+        '<td><span class="dfs-pos dfs-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
+        '<td class="dfs-num">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
+        '<td class="dfs-num">$'+p.salary.toLocaleString()+'</td>'+
+        '<td class="dfs-num">'+r.floor.toFixed(1)+'</td>'+
+        '<td class="dfs-num">'+r.ceil.toFixed(1)+'</td>'+
+        '<td class="dfs-num">'+r.pts.toFixed(1)+'</td>'+
+        '<td><span class="dfs-chip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.value.toFixed(2)+'</span></td>'+
+        '<td class="dfs-acts">'+
+          '<button class="dfs-act" data-lock="'+esc(p.id)+'" aria-pressed="'+(locks[p.id]?'true':'false')+'">Lock</button>'+
+          '<button class="dfs-act dfs-ban" data-ban="'+esc(p.id)+'" aria-pressed="'+(bans[p.id]?'true':'false')+'">Fade</button>'+
+        '</td></tr>';
+    }).join('');
+
+    document.getElementById('dfsEmpty').hidden=rows.length>0;
+    document.getElementById('dfsCount').textContent='Showing '+rows.length+' priced players';
+  }
+
+  function bind(){
+    ['dfsPos','dfsTeam','dfsSearch','dfsMax'].forEach(function(id){
+      var el=document.getElementById(id);
+      el.addEventListener(el.tagName==='SELECT'?'change':'input',render);
+    });
+    document.querySelectorAll('table.dfs thead th[data-sort]').forEach(function(th){
+      th.addEventListener('click',function(){
+        var k=th.dataset.sort;
+        if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=(k==='name'||k==='pos'||k==='opp');}
+        document.querySelectorAll('table.dfs thead th').forEach(function(o){o.classList.remove('dfs-active','dfs-asc');});
+        th.classList.add('dfs-active');if(sortAsc)th.classList.add('dfs-asc');
+        render();
+      });
+    });
+    document.getElementById('dfsBody').addEventListener('click',function(e){
+      var lk=e.target.closest('[data-lock]'),bn=e.target.closest('[data-ban]');
+      if(lk){var id=lk.dataset.lock;if(locks[id])delete locks[id];else{locks[id]=1;delete bans[id];}render();}
+      else if(bn){var b=bn.dataset.ban;if(bans[b])delete bans[b];else{bans[b]=1;delete locks[b];}render();}
+    });
+    document.querySelectorAll('.dfs-mode').forEach(function(b){
+      b.addEventListener('click',function(){
+        mode=b.dataset.mode;
+        document.querySelectorAll('.dfs-mode').forEach(function(o){o.setAttribute('aria-pressed',o===b?'true':'false');});
+        render();
+      });
+    });
+    document.getElementById('dfsBuild').addEventListener('click',build);
+  }
+
+  function token(){return localStorage.getItem('sb-auth-token');}
+
+  function start(){
+    document.getElementById('dfsApp').hidden=false;
+    bind();
+    fetch(SUPABASE_URL+'/rest/v1/player_proj?id=eq.1&select=data',
+          {headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token()}})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(j){
+        if(!j.length||!j[0].data)throw new Error('empty');
+        PAYLOAD=j[0].data;
+        ALL=(PAYLOAD.players||[]).map(function(p,i){p.id=p.name+'|'+p.team+'|'+i;return p;});
+        var priced=ALL.filter(function(p){return p.salary;});
+        var teams=[];priced.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
+        teams.sort();
+        var sel=document.getElementById('dfsTeam');
+        teams.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+        var when=PAYLOAD.generated_at?new Date(PAYLOAD.generated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+        document.getElementById('dfsMeta').textContent=
+          priced.length+' priced players · DraftKings Classic'+(when?' · updated '+when:'');
+        if(!priced.length){
+          document.getElementById('dfsEmpty').hidden=false;
+          document.getElementById('dfsEmpty').textContent='No DraftKings salaries in this week\\u2019s data yet.';
+          document.getElementById('dfsBuild').disabled=true;
+          return;
+        }
+        render();
+      })
+      .catch(function(err){
+        document.getElementById('dfsEmpty').hidden=false;
+        document.getElementById('dfsEmpty').textContent=
+          err.message==='empty'
+            ? 'Projections for this week are not published yet. Check back after the daily update.'
+            : 'Could not load projections. Refresh the page to try again.';
+        document.getElementById('dfsBuild').disabled=true;
+      });
+  }
+
+  function gate(){
+    document.getElementById('dfsGate').hidden=false;
+    document.getElementById('dfsLogin').addEventListener('click',function(){
+      var m=document.getElementById('loginBackdrop');
+      if(m)m.style.display='flex';else window.location.href='login.html';
+    });
+  }
+
+  function boot(tries){
+    if(typeof auth==='undefined'||typeof SUPABASE_URL==='undefined'){
+      if(tries>60)return gate();
+      return setTimeout(function(){boot((tries||0)+1);},100);
+    }
+    if(auth.isAuthenticated&&auth.isAuthenticated()&&token())start();else gate();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){boot(0);});
+  else boot(0);
+})();
+</script>
+</body>
+</html>
