@@ -102,18 +102,18 @@ tr.dfs-banned{opacity:.4}
 .dfs-TE{background:rgba(255,165,21,.16);color:var(--fnp-orange)}
 .dfs-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute)}
 .dfs-chip{display:inline-block;min-width:0;width:100%;box-sizing:border-box;text-align:center;padding:5px 9px;border-radius:6px;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
-table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:25%}
+table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:23%}
 table.dfs th:nth-child(2),table.dfs td:nth-child(2){width:7%}
-table.dfs th:nth-child(3),table.dfs td:nth-child(3){width:11%}
-table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:11%}
-table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:14%}
+table.dfs th:nth-child(3),table.dfs td:nth-child(3){width:10%}
+table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:10%}
+table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:13%}
 table.dfs th:nth-child(6),table.dfs td:nth-child(6){width:8%}
 table.dfs th:nth-child(7),table.dfs td:nth-child(7){width:12%}
-table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:12%}
+table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:17%}
 .dfs-name{overflow:hidden;text-overflow:ellipsis}
 .dfs-range em{font-style:normal;color:rgba(255,255,255,.28);padding:0 4px}
 .dfs-acts{white-space:nowrap;text-align:right;padding-right:6px!important}
-.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;width:25px;height:25px;padding:0;font-size:.71rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:3px;letter-spacing:.04em;box-sizing:border-box;flex:none}
+.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;padding:5px 9px;font-size:.71rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:4px;letter-spacing:.04em;box-sizing:border-box}
 .dfs-act:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
 .dfs-act[aria-pressed=true]{background:var(--fnp-aqua);border-color:var(--fnp-aqua);color:#07211a}
 .dfs-act.dfs-ban[aria-pressed=true]{background:var(--fnp-red);border-color:var(--fnp-red);color:#fff}
@@ -136,11 +136,13 @@ table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:12%}
   table.dfs{font-size:.8rem}
   table.dfs th:nth-child(3),table.dfs td:nth-child(3),
   table.dfs th:nth-child(6),table.dfs td:nth-child(6){display:none}
-  table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:34%}
-  table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:16%}
-  table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:20%}
-  table.dfs th:nth-child(7),table.dfs td:nth-child(7){width:15%}
-  table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:15%}
+  table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:27%}
+  table.dfs th:nth-child(2),table.dfs td:nth-child(2){width:8%}
+  table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:14%}
+  table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:19%}
+  table.dfs th:nth-child(7),table.dfs td:nth-child(7){width:13%}
+  table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:19%}
+  .dfs-act{padding:5px 7px;margin-left:3px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -472,8 +474,8 @@ table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:12%}
         '<td class="dfs-num">'+r.pts.toFixed(1)+'</td>'+
         '<td><span class="dfs-chip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.value.toFixed(2)+'</span></td>'+
         '<td class="dfs-acts">'+
-          '<button class="dfs-act" data-lock="'+esc(p.id)+'" title="Lock into lineup" aria-label="Lock '+esc(p.name)+' into lineup" aria-pressed="'+(locks[p.id]?'true':'false')+'">L</button>'+
-          '<button class="dfs-act dfs-ban" data-ban="'+esc(p.id)+'" title="Fade this player" aria-label="Fade '+esc(p.name)+'" aria-pressed="'+(bans[p.id]?'true':'false')+'">F</button>'+
+          '<button class="dfs-act" data-lock="'+esc(p.id)+'" title="Lock into lineup" aria-label="Lock '+esc(p.name)+' into lineup" aria-pressed="'+(locks[p.id]?'true':'false')+'">Lock</button>'+
+          '<button class="dfs-act dfs-ban" data-ban="'+esc(p.id)+'" title="Fade this player" aria-label="Fade '+esc(p.name)+'" aria-pressed="'+(bans[p.id]?'true':'false')+'">Fade</button>'+
         '</td></tr>';
     }).join('');
 
