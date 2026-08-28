@@ -38,7 +38,11 @@ layout: null
 .dfs-btn-ghost:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
 
 .dfs-cols{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;align-items:start;margin-top:20px}
-@media(max-width:1040px){.dfs-cols{grid-template-columns:minmax(0,1fr)}}
+.dfs-builder{position:sticky;top:16px}
+@media(max-width:1040px){
+  .dfs-cols{display:flex;flex-direction:column}
+  .dfs-builder{position:static;order:-1}
+}
 
 .dfs-card{border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
 .dfs-card h2{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-size:1.15rem;margin:0;padding:14px 16px;color:#fff;border-bottom:1px solid var(--pp-line)}
@@ -78,8 +82,8 @@ layout: null
 .dfs-count{margin-left:auto;font-size:.8rem;color:var(--pp-mute);font-weight:600}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--fnp-orange);outline-offset:1px}
 
-.dfs-scroller{overflow-x:auto}
-table.dfs{width:100%;border-collapse:collapse;font-size:.87rem;min-width:820px}
+.dfs-scroller{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.dfs{width:100%;border-collapse:collapse;font-size:.87rem;min-width:900px}
 table.dfs thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:11px 9px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
 table.dfs thead th:hover{color:var(--fnp-orange)}
 table.dfs thead th.dfs-active{color:var(--fnp-orange)}
@@ -98,15 +102,28 @@ tr.dfs-banned{opacity:.4}
 .dfs-TE{background:rgba(255,165,21,.16);color:var(--fnp-orange)}
 .dfs-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute)}
 .dfs-chip{display:inline-block;min-width:56px;text-align:center;padding:5px 9px;border-radius:6px;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
-.dfs-acts{white-space:nowrap;text-align:right}
-.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;padding:4px 9px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:5px;letter-spacing:.04em}
+.dfs-acts{white-space:nowrap;text-align:right;padding-right:16px!important;width:1%}
+.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;padding:5px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:6px;letter-spacing:.04em}
 .dfs-act:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
 .dfs-act[aria-pressed=true]{background:var(--fnp-aqua);border-color:var(--fnp-aqua);color:#07211a}
 .dfs-act.dfs-ban[aria-pressed=true]{background:var(--fnp-red);border-color:var(--fnp-red);color:#fff}
 
 .dfs-empty{padding:44px 20px;text-align:center;color:var(--pp-mute);font-size:.92rem}
 .dfs-disc{margin-top:22px;font-size:.76rem;color:var(--pp-mute);line-height:1.6;border-top:1px solid var(--pp-line);padding-top:14px}
-@media(max-width:640px){.dfs-head h1{font-size:2.05rem}.dfs-count{margin-left:0;flex-basis:100%}}
+@media(max-width:640px){
+  .dfs-head h1{font-size:2.05rem}
+  .dfs-count{margin-left:0;flex-basis:100%}
+  .dfs-bar{gap:10px}
+  .dfs-bar>div{flex:1 1 130px}
+  .dfs-bar select,.dfs-bar input[type=search]{min-width:0;width:100%}
+  .dfs-modes{gap:6px}
+  .dfs-mode{min-width:0;padding:9px 4px}
+  .dfs-mode b{font-size:.8rem}
+  .dfs-mode small{font-size:.63rem}
+  .dfs-card-body{padding:14px}
+  .dfs-lineup{font-size:.82rem}
+  .dfs-scroller::after{content:"Swipe the table sideways for salary, floor and ceiling";display:block;padding:9px 12px;font-size:.72rem;color:var(--pp-mute)}
+}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -129,7 +146,7 @@ tr.dfs-banned{opacity:.4}
 
   <div id="dfsApp" hidden>
     <div class="dfs-cols">
-      <div class="dfs-card">
+      <div class="dfs-card dfs-board">
         <div class="dfs-bar">
           <div><label for="dfsPos">Position</label>
             <select id="dfsPos"><option value="">All</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select></div>
@@ -162,7 +179,7 @@ tr.dfs-banned{opacity:.4}
         </div>
       </div>
 
-      <div class="dfs-card">
+      <div class="dfs-card dfs-builder">
         <h2>Lineup builder</h2>
         <div class="dfs-card-body">
           <div class="dfs-modes">
