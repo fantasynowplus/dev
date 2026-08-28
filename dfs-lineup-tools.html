@@ -82,18 +82,18 @@ layout: null
 .dfs-count{margin-left:auto;font-size:.8rem;color:var(--pp-mute);font-weight:600}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--fnp-orange);outline-offset:1px}
 
-.dfs-scroller{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table.dfs{width:100%;border-collapse:collapse;font-size:.87rem;min-width:900px}
-table.dfs thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:11px 9px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
+.dfs-scroller{overflow:auto;max-height:min(72vh,760px);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+table.dfs{width:100%;border-collapse:collapse;font-size:.85rem;table-layout:fixed}
+table.dfs thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:11px 7px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
 table.dfs thead th:hover{color:var(--fnp-orange)}
 table.dfs thead th.dfs-active{color:var(--fnp-orange)}
 table.dfs thead th.dfs-active::after{content:" ▾"}
 table.dfs thead th.dfs-active.dfs-asc::after{content:" ▴"}
-table.dfs tbody td{padding:9px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+table.dfs tbody td{padding:9px 7px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
 table.dfs tbody tr:hover{background:rgba(255,255,255,.04)}
 tr.dfs-locked{background:rgba(66,244,176,.07)}
 tr.dfs-banned{opacity:.4}
-.dfs-name{font-weight:600;color:#fff;white-space:nowrap}
+.dfs-name{font-weight:600;color:#fff;white-space:nowrap;display:block}
 .dfs-name small{display:block;font-size:.72rem;color:var(--pp-mute);font-weight:500;letter-spacing:.04em}
 .dfs-pos{display:inline-block;min-width:34px;text-align:center;font-size:.7rem;font-weight:700;padding:4px 7px;border-radius:4px;letter-spacing:.05em}
 .dfs-QB{background:rgba(167,139,250,.18);color:#c4b5fd}
@@ -101,9 +101,19 @@ tr.dfs-banned{opacity:.4}
 .dfs-WR{background:rgba(96,165,250,.18);color:#93c5fd}
 .dfs-TE{background:rgba(255,165,21,.16);color:var(--fnp-orange)}
 .dfs-num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--pp-mute)}
-.dfs-chip{display:inline-block;min-width:56px;text-align:center;padding:5px 9px;border-radius:6px;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
-.dfs-acts{white-space:nowrap;text-align:right;padding-right:16px!important;width:1%}
-.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;padding:5px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:6px;letter-spacing:.04em}
+.dfs-chip{display:inline-block;min-width:0;width:100%;box-sizing:border-box;text-align:center;padding:5px 9px;border-radius:6px;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;border:1px solid transparent}
+table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:26%}
+table.dfs th:nth-child(2),table.dfs td:nth-child(2){width:8%}
+table.dfs th:nth-child(3),table.dfs td:nth-child(3){width:12%}
+table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:12%}
+table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:15%}
+table.dfs th:nth-child(6),table.dfs td:nth-child(6){width:9%}
+table.dfs th:nth-child(7),table.dfs td:nth-child(7){width:11%}
+table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:7%}
+.dfs-name{overflow:hidden;text-overflow:ellipsis}
+.dfs-range em{font-style:normal;color:rgba(255,255,255,.28);padding:0 4px}
+.dfs-acts{white-space:nowrap;text-align:right;padding-right:10px!important}
+.dfs-act{border:1px solid var(--pp-line);background:transparent;color:var(--pp-mute);border-radius:5px;width:26px;height:26px;padding:0;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-left:4px;letter-spacing:.04em}
 .dfs-act:hover{border-color:var(--fnp-orange);color:var(--fnp-orange)}
 .dfs-act[aria-pressed=true]{background:var(--fnp-aqua);border-color:var(--fnp-aqua);color:#07211a}
 .dfs-act.dfs-ban[aria-pressed=true]{background:var(--fnp-red);border-color:var(--fnp-red);color:#fff}
@@ -122,7 +132,15 @@ tr.dfs-banned{opacity:.4}
   .dfs-mode small{font-size:.63rem}
   .dfs-card-body{padding:14px}
   .dfs-lineup{font-size:.82rem}
-  .dfs-scroller::after{content:"Swipe the table sideways for salary, floor and ceiling";display:block;padding:9px 12px;font-size:.72rem;color:var(--pp-mute)}
+  .dfs-scroller{max-height:none}
+  table.dfs{font-size:.8rem}
+  table.dfs th:nth-child(3),table.dfs td:nth-child(3),
+  table.dfs th:nth-child(6),table.dfs td:nth-child(6){display:none}
+  table.dfs th:nth-child(1),table.dfs td:nth-child(1){width:34%}
+  table.dfs th:nth-child(4),table.dfs td:nth-child(4){width:16%}
+  table.dfs th:nth-child(5),table.dfs td:nth-child(5){width:20%}
+  table.dfs th:nth-child(7),table.dfs td:nth-child(7){width:16%}
+  table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:14%}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -167,8 +185,7 @@ tr.dfs-banned{opacity:.4}
               <th data-sort="pos">Pos</th>
               <th data-sort="opp">Matchup</th>
               <th data-sort="salary">Salary</th>
-              <th data-sort="floor">Floor</th>
-              <th data-sort="ceil">Ceiling</th>
+              <th data-sort="floor">Floor → Ceil</th>
               <th data-sort="pts">Proj</th>
               <th data-sort="value" class="dfs-active">Value</th>
               <th></th>
@@ -451,13 +468,12 @@ tr.dfs-banned{opacity:.4}
         '<td><span class="dfs-pos dfs-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
         '<td class="dfs-num">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
         '<td class="dfs-num">$'+p.salary.toLocaleString()+'</td>'+
-        '<td class="dfs-num">'+r.floor.toFixed(1)+'</td>'+
-        '<td class="dfs-num">'+r.ceil.toFixed(1)+'</td>'+
+        '<td class="dfs-num dfs-range">'+r.floor.toFixed(1)+'<em>→</em>'+r.ceil.toFixed(1)+'</td>'+
         '<td class="dfs-num">'+r.pts.toFixed(1)+'</td>'+
         '<td><span class="dfs-chip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.value.toFixed(2)+'</span></td>'+
         '<td class="dfs-acts">'+
-          '<button class="dfs-act" data-lock="'+esc(p.id)+'" aria-pressed="'+(locks[p.id]?'true':'false')+'">Lock</button>'+
-          '<button class="dfs-act dfs-ban" data-ban="'+esc(p.id)+'" aria-pressed="'+(bans[p.id]?'true':'false')+'">Fade</button>'+
+          '<button class="dfs-act" data-lock="'+esc(p.id)+'" title="Lock into lineup" aria-label="Lock '+esc(p.name)+' into lineup" aria-pressed="'+(locks[p.id]?'true':'false')+'">L</button>'+
+          '<button class="dfs-act dfs-ban" data-ban="'+esc(p.id)+'" title="Fade this player" aria-label="Fade '+esc(p.name)+'" aria-pressed="'+(bans[p.id]?'true':'false')+'">F</button>'+
         '</td></tr>';
     }).join('');
 
