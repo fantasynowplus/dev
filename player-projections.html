@@ -64,14 +64,23 @@ layout: null
 .pp-sleeper-msg.pp-ok{color:var(--fnp-aqua)}
 .pp-sleeper-msg.pp-bad{color:var(--fnp-red)}
 
-.pp-scroller{margin-top:16px;overflow-x:auto;border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
-table.pp{width:100%;border-collapse:collapse;font-size:.88rem;min-width:780px}
+.pp-scroller{margin-top:16px;overflow-y:auto;overflow-x:hidden;max-height:min(74vh,820px);scrollbar-gutter:stable;border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
+table.pp{width:100%;border-collapse:collapse;font-size:.88rem;table-layout:fixed}
+table.pp th:nth-child(1),table.pp td:nth-child(1){width:22%}
+table.pp th:nth-child(2),table.pp td:nth-child(2){width:7%}
+table.pp th:nth-child(3),table.pp td:nth-child(3){width:11%}
+table.pp th:nth-child(4),table.pp td:nth-child(4){width:9%}
+table.pp th:nth-child(5),table.pp td:nth-child(5){width:9%}
+table.pp th:nth-child(6),table.pp td:nth-child(6){width:11%}
+table.pp th:nth-child(7),table.pp td:nth-child(7){width:31%}
+.pp-mpos,.pp-mmatch{display:none}
+.pp-lrow{display:none}
 table.pp thead th{position:sticky;top:0;background:#0d1b31;border-bottom:2px solid var(--fnp-orange);text-align:left;padding:12px 10px;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;cursor:pointer;white-space:nowrap;z-index:2}
 table.pp thead th[data-sort]:hover{color:var(--fnp-orange)}
 table.pp thead th.pp-active{color:var(--fnp-orange)}
 table.pp thead th.pp-active::after{content:" ▾"}
 table.pp thead th.pp-active.pp-asc::after{content:" ▴"}
-table.pp tbody td{padding:10px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+table.pp tbody td{padding:10px 7px;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
 table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
 .pp-name{font-weight:600;color:#fff;white-space:nowrap}
 .pp-sub{display:block;font-size:.72rem;color:var(--pp-mute);font-weight:500;letter-spacing:.05em}
@@ -93,7 +102,27 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
 @media(max-width:640px){
   .pp-head h1{font-size:2.05rem}
   .pp-count{margin-left:0;flex-basis:100%}
+  .pp-bar>div{flex:1 1 140px}
+  .pp-bar select,.pp-bar input[type=search]{min-width:0;width:100%}
   .pp-sleeper select{min-width:100%}
+  .pp-scroller{max-height:none}
+  table.pp{font-size:.84rem}
+  table.pp th:nth-child(2),table.pp td:nth-child(2),
+  table.pp th:nth-child(3),table.pp td:nth-child(3),
+  table.pp th:nth-child(7),table.pp td:nth-child(7){display:none}
+  table.pp th:nth-child(1),table.pp td:nth-child(1){width:42%}
+  table.pp th:nth-child(4),table.pp td:nth-child(4){width:15%}
+  table.pp th:nth-child(5),table.pp td:nth-child(5){width:15%}
+  table.pp th:nth-child(6),table.pp td:nth-child(6){width:28%}
+  table.pp tbody td{padding:11px 5px}
+  .pp-name{white-space:normal;line-height:1.25}
+  .pp-sub{margin-top:4px;display:flex;align-items:center;gap:6px}
+  .pp-mpos{display:inline-block;min-width:28px;text-align:center;font-size:.63rem;font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.04em}
+  .pp-mmatch{display:inline}
+  .pp-projchip{min-width:0;width:100%;box-sizing:border-box;padding:5px 4px}
+  table.pp tbody tr:not(.pp-lrow) td{border-bottom:0}
+  .pp-lrow{display:table-row}
+  .pp-lrow td{padding:0 5px 11px!important;font-size:.76rem;color:var(--pp-mute);letter-spacing:.01em}
 }
 @media(prefers-reduced-motion:reduce){
   .pp-scoring summary::before{transition:none}
@@ -274,14 +303,17 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       var p=r.p;
       var c=projColor(rows.length>3?pctile(span[i]):0.5);
       return '<tr>'+
-        '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+esc(p.team)+'</span></td>'+
+        '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+
+          '<span class="pp-mpos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span>'+
+          esc(p.team)+'<span class="pp-mmatch"> '+(p.home?'vs ':'@ ')+esc(p.opp)+'</span></span></td>'+
         '<td><span class="pp-pos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
         '<td class="pp-stats">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
         '<td class="pp-num pp-floor">'+Math.max(0,r.floor).toFixed(1)+'</td>'+
         '<td class="pp-num pp-ceil">'+r.ceil.toFixed(1)+'</td>'+
         '<td><span class="pp-projchip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.pts.toFixed(1)+'</span></td>'+
         '<td class="pp-stats">'+esc(line(p))+'</td>'+
-      '</tr>';
+      '</tr>'+
+      '<tr class="pp-lrow"><td colspan="7">'+esc(line(p))+'</td></tr>';
     }).join('');
 
     document.getElementById('ppBody').innerHTML=html;
