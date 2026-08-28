@@ -129,6 +129,9 @@ SLEEPER_PLAYERS = "https://api.sleeper.app/v1/players/nfl"
 OUT_STATUSES = {"out", "ir", "pup", "sus", "susp", "dnr", "nfi"}
 OUT_STATUS_TEXT = {"inactive", "injured reserve", "physically unable to perform",
                    "non football injury", "suspended", "practice squad"}
+LONGTERM_STATUSES = {"ir", "pup", "nfi", "sus", "susp", "dnr"}
+LONGTERM_TEXT = {"injured reserve", "physically unable to perform",
+                 "non football injury", "suspended"}
 
 
 def fetch_sleeper_index():
@@ -154,10 +157,12 @@ def fetch_sleeper_index():
         inj = (pl.get("injury_status") or "").strip().lower()
         status = (pl.get("status") or "").strip().lower()
         depth = pl.get("depth_chart_order")
+        longterm = inj in LONGTERM_STATUSES or status in LONGTERM_TEXT
         rec = {
             "team": norm_abbr(pl.get("team")),
             "pos": (pl.get("position") or "").upper(),
             "out": inj in OUT_STATUSES or status in OUT_STATUS_TEXT,
+            "longterm": longterm,
             "depth": int(depth) if isinstance(depth, (int, float)) else None,
         }
         idx[(key, rec["pos"])] = rec
@@ -177,8 +182,9 @@ SHARE_FIELDS = ["pass_att_share", "rush_share", "target_share",
 def _pick_starting_qb(keep, team):
     """Sleeper's depth chart decides QB1; last season's attempt total is only
     the tiebreak when the depth chart is silent. The starter gets 100% of
-    attempts and the other passers are dropped unless they run enough to
-    matter on their own."""
+    attempts and every other passer is dropped -- a backup's only carries are
+    kneel-downs and scrambles, which show up as negative rushing yards and put
+    nonsense on the board."""
     qbs = [p for p in keep if p.pass_att_share > 0]
     if not qbs:
         return keep
@@ -194,9 +200,6 @@ def _pick_starting_qb(keep, team):
     for p in keep:
         if p is starter or p.pass_att_share <= 0:
             out.append(p)
-        elif p.rush_share > 0.05:
-            p.pass_att_share = 0.0
-            out.append(p)
     print(f"  {team}: QB1 = {starter.name}")
     return out
 
@@ -210,7 +213,8 @@ def _normalize(keep, field, cap=1.0):
                 setattr(p, field, v * cap / total)
 
 
-def apply_sleeper_rosters(by_team, index, slate_teams, drop_injured=True):
+def apply_sleeper_rosters(by_team, index, slate_teams, drop_injured=True,
+                          drop_longterm=False):
     """Reconciles last season's usage against this season's rosters: drops
     anyone unavailable, moves offseason signings to their current team, picks
     a starting QB off the depth chart, rescales shares past 100%, and adds an
@@ -225,7 +229,7 @@ def apply_sleeper_rosters(by_team, index, slate_teams, drop_injured=True):
                 if rec is None:
                     moved_by_team.setdefault(team, []).append(p)
                     continue
-                if rec["out"] and drop_injured:
+                if (rec["out"] and drop_injured) or (rec.get("longterm") and drop_longterm):
                     dropped_out.append(p.name)
                     continue
                 now = rec["team"]

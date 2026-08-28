@@ -305,20 +305,20 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       return 0;
     });
 
-    var span=rows.map(function(r){
-      var d=r.ceil-r.floor;
-      return d>0?(r.pts-r.floor)/d:0.5;
-    });
-    var ordered=span.slice().sort(function(a,b){return a-b;});
-    function pctile(v){
-      var lo=0,hi=ordered.length;
-      while(lo<hi){var mid=(lo+hi)>>1;if(ordered[mid]<v)lo=mid+1;else hi=mid;}
-      return ordered.length>1?lo/(ordered.length-1):0.5;
+    var byPos={};
+    rows.forEach(function(r){(byPos[r.p.pos]=byPos[r.p.pos]||[]).push(r.pts);});
+    for(var k in byPos)byPos[k].sort(function(a,b){return a-b;});
+    function posRank(pos,v){
+      var arr=byPos[pos];
+      if(!arr||arr.length<4)return 0.5;
+      var lo=0,hi=arr.length;
+      while(lo<hi){var m=(lo+hi)>>1;if(arr[m]<v)lo=m+1;else hi=m;}
+      return lo/(arr.length-1);
     }
 
-    var html=rows.map(function(r,i){
+    var html=rows.map(function(r){
       var p=r.p;
-      var c=projColor(rows.length>3?pctile(span[i]):0.5);
+      var c=projColor(posRank(p.pos,r.pts));
       return '<tr>'+
         '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+
           '<span class="pp-mpos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span>'+
