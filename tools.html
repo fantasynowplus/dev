@@ -19,14 +19,37 @@ layout: null
         letter-spacing: .03em; font-size: 1.7rem; color: #eef2fb; margin: 0;
     }
     .tools-section-head p { color: #94a1bd; margin: 6px 0 0; line-height: 1.5; font-size: .95rem; }
-    .tool-lock {
-        display: inline-flex; align-items: center; gap: 6px; font-family: "Barlow Condensed", sans-serif;
-        font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .72rem;
-        color: #f0b429; background: rgba(240,180,41,.12); border: 1px solid rgba(240,180,41,.3);
-        padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
-    }
-    .tool-card-nolock h3 { margin-top: 34px; }
     .tool-card-link.disabled { background: #2a3450; color: #8a97b3; cursor: default; pointer-events: none; }
+
+    .tool-card { display: flex; flex-direction: column; align-items: center; }
+    .tool-card p { flex: 1 0 auto; }
+    .tool-card .tool-card-link { margin-top: auto; }
+    .tool-card-nolock h3 { margin-top: 0; }
+
+    .tool-lock, .tool-open {
+        display: inline-flex; align-items: center; gap: 5px; align-self: center; width: auto;
+        font-family: "Barlow Condensed", sans-serif; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .05em; font-size: .64rem; padding: 2px 9px; border-radius: 999px;
+        margin-bottom: 10px; white-space: nowrap;
+    }
+    .tool-lock { color: #f0b429; background: rgba(240,180,41,.12); border: 1px solid rgba(240,180,41,.3); }
+    .tool-open { color: #42F4B0; background: rgba(66,244,176,.10); border: 1px solid rgba(66,244,176,.28); }
+
+    .tools-cta {
+        margin: 22px 0 8px; padding: 16px 22px; border-radius: 12px;
+        border: 1px solid rgba(255,165,21,.32); border-left: 3px solid #FFA515;
+        background: rgba(255,165,21,.07); display: flex; flex-wrap: wrap;
+        align-items: center; gap: 14px; justify-content: center; text-align: center;
+    }
+    .tools-cta[hidden] { display: none; }
+    .tools-cta p { margin: 0; color: #dfe6f5; font-size: .95rem; line-height: 1.5; }
+    .tools-cta b { color: #FFA515; }
+    .tools-cta button {
+        background: #FFA515; color: #0b1220; border: 0; border-radius: 6px;
+        padding: 10px 22px; font-weight: 700; font-size: .9rem; cursor: pointer;
+        font-family: 'Inter', sans-serif;
+    }
+    .tools-cta button:hover { background: #FF8C00; }
 
     .dgf-feature{
         margin-top:0;
@@ -79,33 +102,6 @@ layout: null
         text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;
         color:#002863;background:#FFA515;padding:2px 9px;border-radius:999px;margin-bottom:10px;
     }
-
-        .tools-cta{
-        margin: 22px 0 8px; padding: 16px 22px; border-radius: 12px;
-        border: 1px solid rgba(255,165,21,.32); border-left: 3px solid #FFA515;
-        background: rgba(255,165,21,.07); display: flex; flex-wrap: wrap;
-        align-items: center; gap: 14px; justify-content: center; text-align: center;
-    }
-    .tools-cta p { margin: 0; color: #dfe6f5; font-size: .95rem; line-height: 1.5; }
-    .tools-cta b { color: #FFA515; }
-    .tools-cta button{
-        background: #FFA515; color: #0b1220; border: 0; border-radius: 6px;
-        padding: 10px 22px; font-weight: 700; font-size: .9rem; cursor: pointer;
-        font-family: 'Inter', sans-serif;
-    }
-    .tools-cta button:hover { background: #FF8C00; }
-
-    .tool-card { display: flex; flex-direction: column; }
-    .tool-card p { flex: 1 0 auto; }
-    .tool-card .tool-card-link { margin-top: auto; align-self: center; }
-    .tool-card-nolock h3 { margin-top: 0; }
-    .tool-open {
-        display: inline-flex; align-items: center; gap: 6px; font-family: "Barlow Condensed", sans-serif;
-        font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .72rem;
-        color: #42F4B0; background: rgba(66,244,176,.12); border: 1px solid rgba(66,244,176,.32);
-        padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
-    }
-
     </style>
     <section id="draft" class="tools-section">
         <div class="dgf-feature">
@@ -149,7 +145,7 @@ layout: null
                 <a href="my-leagues" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
                 <h3>Trade Calculator</h3>
                 <p>Evaluate any trade against our analyst rankings, built for dynasty and redraft, with instant value on both sides of the deal.</p>
                 <a href="trade-calculator" class="tool-card-link">Open Tool</a>
@@ -161,19 +157,19 @@ layout: null
         <div class="tools-section-head"><h2>Graphics</h2></div>
         <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
             <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
                 <h3>SFB Draft Graphic</h3>
                 <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
                 <a href="sfb-roster" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>             
                 <h3>League Flex Graphic</h3>
                 <p>Transform your draft results into a single roster view for quick trash-talk.</p>
                 <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>            
                 <h3>Dynasty Rookie Recap</h3>
                 <p>High-impact graphic highlighting your rookie haul and pick value.</p>
                 <a href="rookie-recap" class="tool-card-link">Open Tool</a>
@@ -194,7 +190,7 @@ layout: null
                 <a href="nfl-simulator" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>            
                 <h3>Staff Game Picks</h3>
                 <p>Every analyst picks the moneyline, spread and total on all 16 games. Log in to play along and the crowd rides as one line in the standings.</p>
                 <a href="game-picks" class="tool-card-link">Open Tool</a>
