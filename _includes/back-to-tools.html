@@ -1,0 +1,37 @@
+<a href="{{ '/tools' | relative_url }}" class="back-to-tools">
+  <span aria-hidden="true">&larr;</span> Back to All Tools
+</a>
+
+<style>
+.back-to-tools{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:18px 0 0 18px;
+  padding:8px 15px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:20px;
+  background:rgba(255,255,255,.04);
+  color:#93A3BD;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:.82rem;
+  font-weight:600;
+  letter-spacing:.02em;
+  text-decoration:none;
+  transition:color .15s,border-color .15s;
+}
+.back-to-tools:hover{
+  color:#FFA515;
+  border-color:#FFA515;
+}
+.back-to-tools span{
+  font-size:1rem;
+  line-height:1;
+}
+@media(max-width:640px){
+  .back-to-tools{margin-left:14px;font-size:.78rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .back-to-tools{transition:none}
+}
+</style>

@@ -6,7 +6,10 @@ layout: null
 <main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
     <h1 style="text-align: center;">Tools & Graphics</h1>
     <p style="text-align: center; color: #ffffff; margin-bottom: 24px;">Level up your teams with these free tools from FantasyNow+</p>
-
+    <div class="tools-cta">
+        <p><b>Accounts are free.</b> Sign up in a few seconds to unlock projections, the NFL Simulator and DFS lineup tools. Super League players already have one.</p>
+        <button onclick="var m=document.getElementById('loginBackdrop'); if(m){m.style.display='flex';}else{window.location.href='login';}">Create free account</button>
+    </div>
     <style>
     .tools-section { margin-top: 44px; scroll-margin-top: 90px; }
     .tools-section:first-of-type { margin-top: 8px; }
@@ -76,6 +79,22 @@ layout: null
         text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;
         color:#002863;background:#FFA515;padding:2px 9px;border-radius:999px;margin-bottom:10px;
     }
+
+        .tools-cta{
+        margin: 22px 0 8px; padding: 16px 22px; border-radius: 12px;
+        border: 1px solid rgba(255,165,21,.32); border-left: 3px solid #FFA515;
+        background: rgba(255,165,21,.07); display: flex; flex-wrap: wrap;
+        align-items: center; gap: 14px; justify-content: center; text-align: center;
+    }
+    .tools-cta p { margin: 0; color: #dfe6f5; font-size: .95rem; line-height: 1.5; }
+    .tools-cta b { color: #FFA515; }
+    .tools-cta button{
+        background: #FFA515; color: #0b1220; border: 0; border-radius: 6px;
+        padding: 10px 22px; font-weight: 700; font-size: .9rem; cursor: pointer;
+        font-family: 'Inter', sans-serif;
+    }
+    .tools-cta button:hover { background: #FF8C00; }
+
     </style>
     <section id="draft" class="tools-section">
         <div class="dgf-feature">
@@ -104,14 +123,21 @@ layout: null
         </div>
     </section>
     <section id="leagues" class="tools-section">
-        <div class="tools-section-head"><h2>Leagues &amp; Trades</h2></div>
+        <div class="tools-section-head"><h2>Leagues &amp; Players</h2></div>
         <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
             <div class="tool-card">
+                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
+                <h3>Player Projections</h3>
+                <p>Thousands of simulations per game give every player a floor, a median and a ceiling. Score them with your own league settings, or pull the scoring straight from your Sleeper league.</p>
+                <a href="player-projections" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>My Leagues</h3>
                 <p>Link your Sleeper account to view all your leagues in one hub, complete with format, scoring, and contender insights.</p>
                 <a href="my-leagues" class="tool-card-link">Open Tool</a>
             </div>
-            <div class="tool-card">
+            <div class="tool-card tool-card-nolock">
                 <h3>Trade Calculator</h3>
                 <p>Evaluate any trade using our rankings, built for both dynasty and redraft formats.</p>
                 <a href="trade-calculator" class="tool-card-link">Open Tool</a>
@@ -160,7 +186,7 @@ layout: null
             <div class="tool-card">
                 <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>DFS Lineup Tools</h3>
-                <p>Access projections and a lineup optimizer built for daily fantasy slates. We are putting the finishing touches on this tool, so check back soon.</p>
+                <p>DK salaries priced against our simulations, with a lineup optimizer to builds for a safe floor in cash games or a wide ceiling in tourneys.</p>
                 <a href="dfs-lineup-tools" class="tool-card-link">Open Tool</a>
             </div>
         </div>
