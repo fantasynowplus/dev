@@ -210,7 +210,7 @@ def _normalize(keep, field, cap=1.0):
                 setattr(p, field, v * cap / total)
 
 
-def apply_sleeper_rosters(by_team, index, slate_teams):
+def apply_sleeper_rosters(by_team, index, slate_teams, drop_injured=True):
     """Reconciles last season's usage against this season's rosters: drops
     anyone unavailable, moves offseason signings to their current team, picks
     a starting QB off the depth chart, rescales shares past 100%, and adds an
@@ -225,7 +225,7 @@ def apply_sleeper_rosters(by_team, index, slate_teams):
                 if rec is None:
                     moved_by_team.setdefault(team, []).append(p)
                     continue
-                if rec["out"]:
+                if rec["out"] and drop_injured:
                     dropped_out.append(p.name)
                     continue
                 now = rec["team"]
