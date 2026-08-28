@@ -685,6 +685,7 @@
       <button data-go="dashboard" class="active">Dashboard</button>
       <div class="nav-label">People</div>
       <button data-go="subscribers">Subscribers</button>
+      <button data-go="logins">Last login</button>
       <button class="nav-link" data-go="recruitment" onclick="go('recruitment')">Recruitment</button>
       <button data-go="onboarding">Onboarding</button>
       <button data-go="staff">Staff</button>
@@ -731,7 +732,7 @@ const GATE_LEVEL = 7;
 
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
-  onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart',
+  onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart', logins:'Last login',
   shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', markers: 'Calendar key dates'
 };
 const STATUS = {
@@ -755,7 +756,7 @@ let MY_STAFF_ID = null;
 let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
-  {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers']},
+  {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers','logins']},
   {label:'Content', keys:['shows','calendar','markers','tools','channels','youtube', 'startsit', 'gamepicks']},
   {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
@@ -772,7 +773,7 @@ function resourceGroups(){
 }
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment', 
-  onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart',
+  onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart', logins:'Last login',
   channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar'
 };
 function can(resource, action){
@@ -983,7 +984,7 @@ function go(name){
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
     shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles, calendar:loadCalendar,
-    startsit:loadStartsit, gamepicks:loadGamePicks}[name];
+    startsit:loadStartsit, gamepicks:loadGamePicks, logins:loadLogins}[name];
     
   fn().catch(err=>{
     document.getElementById('content').innerHTML =
@@ -2446,6 +2447,47 @@ function ssUpsertPick(matchupId, pickerId, side) {
     body: JSON.stringify({ matchup_id: matchupId, picker_id: pickerId, pick: side,
                            updated_at: new Date().toISOString() })
   });
+}
+
+let LOGINS = [];
+async function loadLogins(){
+  LOGINS = await rpc('login_activity') || [];
+  renderLogins('');
+}
+function loginBucket(d){
+  if(!d) return 'never';
+  const days = (Date.now() - new Date(d)) / 86400000;
+  if(days <= 7) return 'week';
+  if(days <= 30) return 'month';
+  return 'old';
+}
+function renderLogins(q){
+  const rows = LOGINS.filter(u=>!q||[u.name,u.email,u.job_title].some(v=>(v||'').toLowerCase().includes(q)));
+  const n = b => LOGINS.filter(u=>loginBucket(u.last_seen)===b).length;
+  const stat=(k,v,color)=>'<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="bar" style="background:'+color+'"></div></div>';
+  document.getElementById('content').innerHTML =
+    '<div class="cards">'+
+      stat('Total users',LOGINS.length,'var(--orange)')+
+      stat('Last 7 days',n('week'),'var(--green)')+
+      stat('Last 30 days',n('week')+n('month'),'var(--aqua)')+
+      stat('Never logged in',n('never'),'var(--muted)')+
+    '</div>'+
+    toolbar('Search users\u2026','<span class="count-pill" style="margin-left:auto">'+rows.length+' of '+LOGINS.length+'</span>')+
+    '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Last login</th></tr></thead><tbody>'+
+    (rows.length ? rows.map(u=>
+      '<tr><td><div style="display:flex;align-items:center;gap:9px">'+
+        avatarHtml({name:u.name, headshot:u.avatar_url},'mini-avatar',accentFor(u.name||u.email||'?'))+
+        '<strong>'+esc(u.name||'\u2014')+'</strong></div>'+
+        (u.job_title?'<div style="font-size:12px;color:var(--muted);padding-left:29px">'+esc(u.job_title)+'</div>':'')+
+      '</td>'+
+      '<td>'+esc(u.email||'\u2014')+'</td>'+
+      '<td>'+(u.is_staff?badge('Staff','var(--orange)'):badge('Member','var(--sky)'))+'</td>'+
+      '<td>'+(u.last_seen
+        ? '<strong>'+esc(timeAgo(u.last_seen))+'</strong><div style="font-size:12px;color:var(--muted)">'+fmtDate(u.last_seen)+'</div>'
+        : badge('Never','var(--muted)'))+'</td></tr>').join('')
+      : '<tr><td colspan="4"><div class="empty"><h4>No users match</h4></div></td></tr>')+
+    '</tbody></table></div></div>';
+  bindSearch(renderLogins);
 }
 
 async function lastLoginHtml(){
