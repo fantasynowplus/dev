@@ -43,6 +43,11 @@ layout: null
 .pp-bar select:focus-visible,.pp-bar input:focus-visible,.pp-grid input:focus-visible{outline:2px solid var(--fnp-orange);outline-offset:1px}
 .pp-count{margin-left:auto;font-size:.8rem;color:var(--pp-mute);font-weight:600}
 
+.pp-modes{display:flex;gap:8px;margin-top:20px}
+.pp-mode{border:1px solid var(--pp-line);background:transparent;border-radius:6px;padding:10px 20px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;color:var(--pp-ink)}
+.pp-mode:hover{border-color:var(--fnp-orange)}
+.pp-mode[aria-pressed=true]{background:var(--fnp-orange);color:#0b1220;border-color:var(--fnp-orange)}
+.pp-ppg{display:block;font-size:.7rem;color:var(--pp-mute);font-weight:500;margin-top:3px;letter-spacing:.03em}
 .pp-scoring{margin-top:16px;border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
 .pp-scoring summary{cursor:pointer;padding:14px 16px;font-weight:700;font-size:.92rem;color:#fff;list-style:none;display:flex;align-items:center;gap:10px}
 .pp-scoring summary::-webkit-details-marker{display:none}
@@ -147,6 +152,11 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
   </div>
 
   <div id="ppApp" hidden>
+    <div class="pp-modes" role="group" aria-label="Projection range">
+      <button class="pp-mode" data-mode="week" aria-pressed="true">This week</button>
+      <button class="pp-mode" data-mode="season">Full season</button>
+    </div>
+
     <details class="pp-scoring" id="ppScoring">
       <summary>Scoring settings <span class="pp-tag" id="ppScoringTag">PPR</span></summary>
       <div class="pp-scoring-body">
@@ -191,7 +201,7 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
         <thead><tr>
           <th data-sort="name">Player</th>
           <th data-sort="pos">Pos</th>
-          <th data-sort="opp">Matchup</th>
+          <th data-sort="opp" id="ppCol3">Matchup</th>
           <th data-sort="floor">Floor</th>
           <th data-sort="ceil">Ceiling</th>
           <th data-sort="pts" class="pp-active">Proj</th>
@@ -219,7 +229,7 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
   };
   var FIELDS=['pass_yards','pass_td','interceptions','rush_yards','rush_td','receptions','rec_yards','rec_td','te_prem'];
   var STORE='fnp-scoring-v1';
-  var ALL=[],PAYLOAD=null,sortKey='pts',sortAsc=false,rules=load();
+  var ALL=[],PAYLOAD=null,sortKey='pts',sortAsc=false,rules=load(),MODE='week',CACHE={};
 
   function load(){
     try{var s=JSON.parse(localStorage.getItem(STORE));if(s&&typeof s==='object')return Object.assign({},DEFAULTS,s);}catch(e){}
@@ -279,7 +289,10 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       var x,y;
       if(sortKey==='name'){x=a.p.name;y=b.p.name;}
       else if(sortKey==='pos'){x=a.p.pos;y=b.p.pos;}
-      else if(sortKey==='opp'){x=a.p.opp;y=b.p.opp;}
+      else if(sortKey==='opp'){
+        if(MODE==='season'){x=a.p.games||0;y=b.p.games||0;}
+        else {x=a.p.opp;y=b.p.opp;}
+      }
       else if(sortKey==='floor'){x=a.floor;y=b.floor;}
       else if(sortKey==='ceil'){x=a.ceil;y=b.ceil;}
       else {x=a.pts;y=b.pts;}
@@ -305,12 +318,13 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       return '<tr>'+
         '<td><span class="pp-name">'+esc(p.name)+'</span><span class="pp-sub">'+
           '<span class="pp-mpos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span>'+
-          esc(p.team)+'<span class="pp-mmatch"> '+(p.home?'vs ':'@ ')+esc(p.opp)+'</span></span></td>'+
+          esc(p.team)+'<span class="pp-mmatch"> '+(MODE==='season'?(p.games||17)+' games':(p.home?'vs ':'@ ')+esc(p.opp))+'</span></span></td>'+
         '<td><span class="pp-pos pp-'+esc(p.pos)+'">'+esc(p.pos)+'</span></td>'+
-        '<td class="pp-stats">'+(p.home?'vs ':'@ ')+esc(p.opp)+'</td>'+
+        '<td class="pp-stats">'+(MODE==='season'?(p.games||17)+' games':(p.home?'vs ':'@ ')+esc(p.opp))+'</td>'+
         '<td class="pp-num pp-floor">'+Math.max(0,r.floor).toFixed(1)+'</td>'+
         '<td class="pp-num pp-ceil">'+r.ceil.toFixed(1)+'</td>'+
-        '<td><span class="pp-projchip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.pts.toFixed(1)+'</span></td>'+
+        '<td><span class="pp-projchip" style="color:'+c.fg+';background:'+c.bg+';border-color:'+c.br+'">'+r.pts.toFixed(1)+'</span>'+
+          (MODE==='season'&&p.games?'<span class="pp-ppg">'+(r.pts/p.games).toFixed(1)+' per game</span>':'')+'</td>'+
         '<td class="pp-stats">'+esc(line(p))+'</td>'+
       '</tr>'+
       '<tr class="pp-lrow"><td colspan="7">'+esc(line(p))+'</td></tr>';
@@ -360,6 +374,9 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       var el=document.getElementById(id);
       el.addEventListener(el.tagName==='SELECT'?'change':'input',render);
     });
+    document.querySelectorAll('.pp-mode').forEach(function(b){
+      b.addEventListener('click',function(){switchMode(b.dataset.mode);});
+    });
     document.getElementById('ppImport').addEventListener('click',importScoring);
     document.getElementById('ppLeague').addEventListener('change',function(){
       setMsg('','');
@@ -384,20 +401,53 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
   function token(){return localStorage.getItem('sb-auth-token');}
   function sbHeaders(){return {apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token()};}
 
+  function applyPayload(data){
+    PAYLOAD=data;ALL=data.players||[];
+    var teams=[];ALL.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
+    teams.sort();
+    var sel=document.getElementById('ppTeam'),keep=sel.value;
+    sel.innerHTML='<option value="">All teams</option>';
+    teams.forEach(function(t){
+      var o=document.createElement('option');o.value=t;o.textContent=t;
+      if(t===keep)o.selected=true;
+      sel.appendChild(o);
+    });
+    document.getElementById('ppCol3').textContent=MODE==='season'?'Games':'Matchup';
+    var when=data.generated_at?new Date(data.generated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    document.getElementById('ppMeta').textContent=
+      ALL.length+' players · '+(MODE==='season'?'full season · ':'this week · ')+
+      (data.n_sims||0).toLocaleString()+' sims per game'+(when?' · updated '+when:'');
+  }
+
   function loadProjections(){
-    return fetch(SUPABASE_URL+'/rest/v1/player_proj?id=eq.1&select=data',{headers:sbHeaders()})
+    if(CACHE[MODE]){applyPayload(CACHE[MODE]);return Promise.resolve();}
+    var id=MODE==='season'?2:1;
+    return fetch(SUPABASE_URL+'/rest/v1/player_proj?id=eq.'+id+'&select=data',{headers:sbHeaders()})
       .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
       .then(function(j){
         if(!j.length||!j[0].data)throw new Error('empty');
-        PAYLOAD=j[0].data;ALL=PAYLOAD.players||[];
-        var teams=[];ALL.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
-        teams.sort();
-        var sel=document.getElementById('ppTeam');
-        teams.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
-        var when=PAYLOAD.generated_at?new Date(PAYLOAD.generated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
-        document.getElementById('ppMeta').textContent=
-          ALL.length+' players · '+(PAYLOAD.n_sims||0).toLocaleString()+' sims per game'+(when?' · updated '+when:'');
+        CACHE[MODE]=j[0].data;
+        applyPayload(j[0].data);
       });
+  }
+
+  function switchMode(next){
+    if(next===MODE)return;
+    MODE=next;
+    document.querySelectorAll('.pp-mode').forEach(function(b){
+      b.setAttribute('aria-pressed',b.dataset.mode===MODE?'true':'false');
+    });
+    document.getElementById('ppBody').innerHTML='';
+    document.getElementById('ppEmpty').hidden=true;
+    loadProjections().then(render).catch(function(err){
+      document.getElementById('ppEmpty').hidden=false;
+      document.getElementById('ppEmpty').textContent=
+        err.message==='empty'
+          ? (MODE==='season'
+              ? 'Season projections have not been published yet. They rebuild every Tuesday.'
+              : 'Projections for this week are not published yet. Check back after the daily update.')
+          : 'Could not load projections. Refresh the page to try again.';
+    });
   }
 
   function loadLeagues(){
