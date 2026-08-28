@@ -6,7 +6,7 @@ layout: null
 <main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
     <h1 style="text-align: center;">Tools & Graphics</h1>
     <p style="text-align: center; color: #ffffff; margin-bottom: 24px;">Level up your teams with these free tools from FantasyNow+</p>
-    <div class="tools-cta">
+    <div class="tools-cta" id="toolsCta" hidden>
         <p><b>Accounts are free.</b> Sign up in a few seconds to unlock projections, the NFL Simulator and DFS lineup tools. Super League players already have one.</p>
         <button onclick="var m=document.getElementById('loginBackdrop'); if(m){m.style.display='flex';}else{window.location.href='login';}">Create free account</button>
     </div>
@@ -95,6 +95,17 @@ layout: null
     }
     .tools-cta button:hover { background: #FF8C00; }
 
+    .tool-card { display: flex; flex-direction: column; }
+    .tool-card p { flex: 1 0 auto; }
+    .tool-card .tool-card-link { margin-top: auto; align-self: center; }
+    .tool-card-nolock h3 { margin-top: 0; }
+    .tool-open {
+        display: inline-flex; align-items: center; gap: 6px; font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .72rem;
+        color: #42F4B0; background: rgba(66,244,176,.12); border: 1px solid rgba(66,244,176,.32);
+        padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
+    }
+
     </style>
     <section id="draft" class="tools-section">
         <div class="dgf-feature">
@@ -128,18 +139,19 @@ layout: null
             <div class="tool-card">
                 <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>Player Projections</h3>
-                <p>Thousands of simulations per game give every player a floor, a median and a ceiling. Score them with your own league settings, or pull the scoring straight from your Sleeper league.</p>
+                <p>Thousands of simulations give every player a floor, a median and a ceiling, scored with your league's exact settings or imported from Sleeper.</p>
                 <a href="player-projections" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card">
                 <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>My Leagues</h3>
-                <p>Link your Sleeper account to view all your leagues in one hub, complete with format, scoring, and contender insights.</p>
+                <p>Link your Sleeper account to see every league in one hub, with format, scoring, rosters and contender insights at a glance.</p>
                 <a href="my-leagues" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card tool-card-nolock">
+                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
                 <h3>Trade Calculator</h3>
-                <p>Evaluate any trade using our rankings, built for both dynasty and redraft formats.</p>
+                <p>Evaluate any trade against our analyst rankings, built for dynasty and redraft, with instant value on both sides of the deal.</p>
                 <a href="trade-calculator" class="tool-card-link">Open Tool</a>
             </div>
         </div>
@@ -149,16 +161,19 @@ layout: null
         <div class="tools-section-head"><h2>Graphics</h2></div>
         <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
             <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
                 <h3>SFB Draft Graphic</h3>
                 <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
                 <a href="sfb-roster" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
                 <h3>League Flex Graphic</h3>
                 <p>Transform your draft results into a single roster view for quick trash-talk.</p>
                 <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
                 <h3>Dynasty Rookie Recap</h3>
                 <p>High-impact graphic highlighting your rookie haul and pick value.</p>
                 <a href="rookie-recap" class="tool-card-link">Open Tool</a>
@@ -179,6 +194,7 @@ layout: null
                 <a href="nfl-simulator" class="tool-card-link">Open Tool</a>
             </div>
             <div class="tool-card tool-card-nolock">
+                <span class="tool-open"><i class="fa-solid fa-unlock"></i> No account required</span>                
                 <h3>Staff Game Picks</h3>
                 <p>Every analyst picks the moneyline, spread and total on all 16 games. Log in to play along and the crowd rides as one line in the standings.</p>
                 <a href="game-picks" class="tool-card-link">Open Tool</a>
@@ -192,5 +208,18 @@ layout: null
         </div>
     </section>
 </main>
-
+<script>
+(function(){
+  function show(){document.getElementById('toolsCta').hidden=false;}
+  function check(tries){
+    if(typeof auth==='undefined'){
+      if(tries>60)return show();
+      return setTimeout(function(){check((tries||0)+1);},100);
+    }
+    if(!(auth.isAuthenticated&&auth.isAuthenticated()&&localStorage.getItem('sb-auth-token')))show();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){check(0);});
+  else check(0);
+})();
+</script>
 {% include footer.html %}
