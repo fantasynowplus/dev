@@ -1,88 +1,303 @@
-/* Global Font Control */
-#fp-widget, #fp-widget table {
+#fp-widget {
+    background-color: var(--bg-card);
+    background-image:
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
+    background-repeat: no-repeat;
+    background-size: 18px 2px, 2px 18px, 18px 2px, 2px 18px;
+    background-position: bottom left, bottom left, bottom right, bottom right;
+    border: 1px solid var(--border-dark);
+    border-top: 3px solid var(--bright-orange);
+    border-radius: 0;
+    overflow: hidden;
+    color: var(--text-light);
+}
+
+#fp-widget,
+#fp-widget table {
     font-family: 'Inter', sans-serif !important;
     font-size: 14px !important;
 }
 
-/* Header Customization (The white headers) */
-#fp-widget table thead tr th {
-    background-color: #002863 !important;
-    color: #ffffff !important;
-    text-transform: uppercase;
+#fp-widget-header {
+    display: none !important;
 }
 
-/* Row and Cell Backgrounds */
-#fp-widget table.table-striped tbody tr,
-#fp-widget table.table-striped tbody tr td {
-    background-color: #071a3d !important;
-    color: #ffffff !important;
-}
-
-/* Alternating Row Colors */
-#fp-widget table.table-striped tbody tr:nth-child(even),
-#fp-widget table.table-striped tbody tr:nth-child(even) td {
-    background-color: #0a2654 !important;
-}
-
-/* Link Color (The player names) */
-#fp-widget a {
-    color: #ffa515 !important;
-    text-decoration: none;
-}
-
-/* Clean Borders */
-#fp-widget table td, 
-#fp-widget table th {
-    border-color: #14294d !important;
-}
-
-/* Darken the background container for the navigation */
 #fp-widget .pills-wrap.feature-bg {
-    background-color: #0a0f1a !important;
-    border-top: 1px solid #14294d !important; 
-    border-bottom: 1px solid #14294d !important;
-}
-
-/* Target the active pill to ensure it has a rounded pill shape */
-#fp-widget ul.pills li.active {
-    background-color: #ffa515 !important;
-    color: #000000 !important;
+    background-color: var(--bg-panel) !important;
     border: none !important;
-    background-image: none !important;
+    border-bottom: 1px solid var(--border-dark) !important;
+    padding: 14px 16px !important;
 }
 
-/* Ensure inactive pills also follow the rounded theme */
+#fp-widget ul.pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
 #fp-widget ul.pills li {
-    border-radius: 50px !important;
-    background-color: #071a3d !important;
-    color: #ffffff !important;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--border-dark) !important;
+    border-radius: 0 !important;
+    background: var(--bg-card) !important;
+    background-image: none !important;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+#fp-widget ul.pills li a {
+    display: block !important;
+    padding: 8px 18px !important;
+    color: var(--text-light) !important;
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    background: transparent !important;
     border: none !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+}
+
+#fp-widget ul.pills li:hover {
+    border-color: var(--bright-orange) !important;
+}
+
+#fp-widget ul.pills li.active {
+    background: var(--bright-orange) !important;
+    background-image: none !important;
+    border-color: var(--bright-orange) !important;
 }
 
 #fp-widget ul.pills li.active a {
-    background-color: #ffa515 !important; 
-    color: #071a3d !important;         
-    border-radius: 50px !important;    
-    padding: 5px 15px !important;
-    display: inline-block !important;
-    border: 1px solid #ffa515 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
 }
 
-/* Ensure the text inside the pills is readable */
-#fp-widget ul.pills li a {
-    color: #ffffff !important;
-}
-
-/* Darken the Scoring and Download bar */
 #fp-widget #fp-widget-subDiv {
-    background-color: #0a0f1a !important; 
-    color: #ffffff !important;
+    background-color: var(--bg-panel) !important;
+    color: var(--text-light) !important;
     border: none !important;
+    border-bottom: 1px solid var(--border-dark) !important;
+    padding: 10px 16px !important;
+    overflow: hidden;
 }
 
-/* Ensure the text inside that bar is readable */
-#fp-widget #fp-widget-subDiv, 
-#fp-widget #fp-widget-subDiv label, 
-#fp-widget #fp-widget-subDiv a {
-    color: #ffffff !important;
+#fp-widget #fp-widget-subDiv label {
+    color: var(--charcoal) !important;
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    line-height: 34px !important;
+    margin: 0 8px 0 0 !important;
+}
+
+#fp-widget #fp-widget-pos-select {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 34px;
+    padding: 0 32px 0 12px !important;
+    border: 1px solid var(--border-dark) !important;
+    border-radius: 0 !important;
+    background-color: var(--bg-card) !important;
+    background-image: linear-gradient(45deg, transparent 50%, var(--bright-orange) 50%), linear-gradient(135deg, var(--bright-orange) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 15px, calc(100% - 11px) 15px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    color: var(--text-light) !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+#fp-widget #fp-widget-pos-select:focus {
+    outline: none;
+    border-color: var(--bright-orange) !important;
+}
+
+#fp-widget #fp-widget-pubDate a {
+    display: inline-block;
+    padding: 8px 18px;
+    background: var(--deep-blue) !important;
+    border: 1px solid var(--bright-orange);
+    color: var(--bright-orange) !important;
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+#fp-widget #fp-widget-pubDate a:hover {
+    background: var(--bright-orange) !important;
+    color: #000000 !important;
+}
+
+#fp-widget #fp-widget-table {
+    overflow-x: auto;
+    background: var(--bg-card);
+}
+
+#fp-widget table.player-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    background: var(--bg-card) !important;
+    font-variant-numeric: tabular-nums;
+}
+
+#fp-widget table thead tr th {
+    background-color: var(--deep-blue) !important;
+    color: var(--text-light) !important;
+    border: none !important;
+    border-bottom: 2px solid var(--bright-orange) !important;
+    padding: 12px 10px !important;
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+    vertical-align: top !important;
+    white-space: nowrap;
+}
+
+#fp-widget table thead th.name-col {
+    text-align: left !important;
+    padding-left: 16px !important;
+}
+
+#fp-widget table thead th a.expert-name {
+    display: block;
+    color: var(--text-light) !important;
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em;
+    text-decoration: none !important;
+}
+
+#fp-widget table thead th a.expert-name:hover {
+    color: var(--bright-orange) !important;
+}
+
+#fp-widget table thead th span {
+    display: block;
+    margin-top: 3px;
+    color: var(--charcoal) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 400;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+#fp-widget table.table-striped tbody tr,
+#fp-widget table.table-striped tbody tr td {
+    background-color: var(--bg-card) !important;
+    color: var(--text-light) !important;
+}
+
+#fp-widget table.table-striped tbody tr:nth-child(even),
+#fp-widget table.table-striped tbody tr:nth-child(even) td {
+    background-color: #0a2148 !important;
+}
+
+#fp-widget table.table-hover tbody tr:hover td {
+    background-color: #10305f !important;
+}
+
+#fp-widget table tbody td {
+    border: none !important;
+    border-bottom: 1px solid var(--border-dark) !important;
+    padding: 11px 10px !important;
+    text-align: center;
+    vertical-align: middle !important;
+}
+
+#fp-widget table tbody td.center-cell:empty::after {
+    content: "\2013";
+    color: #2f4a78;
+}
+
+#fp-widget table tbody tr td:first-child {
+    width: 46px;
+    color: var(--bright-orange) !important;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+#fp-widget table td.fp-player-name-cell {
+    text-align: left !important;
+    padding-left: 16px !important;
+    white-space: nowrap;
+}
+
+#fp-widget table td.fp-player-name-cell a {
+    color: var(--text-light) !important;
+    font-weight: 600;
+    text-decoration: none !important;
+}
+
+#fp-widget table td.fp-player-name-cell a:hover {
+    color: var(--bright-orange) !important;
+}
+
+#fp-widget span.player-team {
+    color: var(--charcoal) !important;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+
+#fp-widget table thead th.small-col,
+#fp-widget table thead th.name-col,
+#fp-widget table tbody tr td:first-child,
+#fp-widget table td.fp-player-name-cell {
+    position: sticky;
+    z-index: 2;
+}
+
+#fp-widget table thead th.small-col,
+#fp-widget table tbody tr td:first-child {
+    left: 0;
+}
+
+#fp-widget table thead th.name-col,
+#fp-widget table td.fp-player-name-cell {
+    left: 46px;
+    box-shadow: 1px 0 0 var(--border-dark);
+}
+
+@media (max-width: 600px) {
+    #fp-widget ul.pills li a {
+        padding: 7px 13px !important;
+        font-size: 0.85rem !important;
+    }
+
+    #fp-widget table thead tr th {
+        font-size: 0.82rem !important;
+        padding: 10px 8px !important;
+    }
+
+    #fp-widget table tbody td {
+        padding: 9px 8px !important;
+    }
+
+    #fp-widget table td.fp-player-name-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
