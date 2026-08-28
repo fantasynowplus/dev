@@ -6,6 +6,11 @@ Runs the same Monte Carlo engine as run_players.py, but across all 17 games
 on a team's schedule instead of one week, and writes the result to the
 player_proj table as id=2.
 
+THIS IS A PRESEASON BENCHMARK. It rebuilds freely until the first kickoff of
+week 1, then locks permanently -- it is the published preseason view of the
+season, not a rest-of-season forecast, so it must not move once games start.
+Re-running after kickoff exits without touching the stored payload.
+
 WHY THE MATH IS EASY
 --------------------
 Games are independent, so a player's season line is just the sum of their
@@ -54,6 +59,7 @@ SCHEDULE_CSV = ("https://github.com/nflverse/nflverse-data/releases/download/"
                 "schedules/games.csv")
 
 LEAGUE_TOTAL = 44.5
+ET_OFFSET_HOURS = 4
 HOME_EDGE = 1.2
 SEASON_Z10 = -1.2816
 SEASON_Z90 = 1.2816
@@ -70,6 +76,40 @@ def download_schedule(season):
     lined = sum(1 for g in games if g.get("total_line"))
     print(f"  schedule: {len(games)} games, {lined} with posted lines")
     return games
+
+
+def kickoff_of_week_one(games):
+    """When the benchmark locks: the first kickoff of week 1, in UTC.
+    nflverse gameday/gametime are Eastern."""
+    from datetime import timedelta
+    stamps = []
+    for g in games:
+        if g.get("week") != "1" or not g.get("gameday"):
+            continue
+        t = (g.get("gametime") or "13:00")[:5]
+        try:
+            et = datetime.strptime(f"{g['gameday']} {t}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            continue
+        stamps.append(et + timedelta(hours=ET_OFFSET_HOURS))
+    if not stamps:
+        return None
+    return min(stamps).replace(tzinfo=timezone.utc)
+
+
+def benchmark_exists():
+    """True if a season benchmark has already been published."""
+    url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key:
+        return False
+    req = urllib.request.Request(
+        f"{url}/rest/v1/player_proj?id=eq.2&select=id",
+        headers={"apikey": key, "Authorization": f"Bearer {key}"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return bool(json.loads(resp.read().decode()))
+    except Exception:
+        return False
 
 
 def _f(v, default=None):
@@ -120,8 +160,24 @@ def game_from_schedule(row, levels):
                 home_spread=-spread, total_line=total), home, away
 
 
-def build(season, weeks_window, sims, prior_season, cov_stride, limit_weeks):
+def current_week(schedule):
+    """First scheduled week that hasn't finished yet."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    upcoming = [int(g["week"]) for g in schedule if (g.get("gameday") or "") >= today]
+    return min(upcoming) if upcoming else 18
+
+
+def build(season, weeks_window, sims, prior_season, cov_stride, limit_weeks,
+          ros=False, from_week=None):
     schedule = download_schedule(season)
+
+    if ros:
+        start = from_week or current_week(schedule)
+        schedule = [g for g in schedule if int(g["week"]) >= start]
+        print(f"  rest of season: weeks {start}-18, {len(schedule)} games remaining")
+        if not schedule:
+            raise SystemExit("No games left in the season.")
+
     if limit_weeks:
         schedule = [g for g in schedule if int(g["week"]) <= limit_weeks]
         print(f"  limited to weeks 1-{limit_weeks}: {len(schedule)} games")
@@ -134,10 +190,12 @@ def build(season, weeks_window, sims, prior_season, cov_stride, limit_weeks):
     nflverse.build(season, weeks_window, teams, tmp, prior_season)
     by_team = load_players_csv(tmp)
 
-    # A player who is out this week still plays most of a season, so injury
-    # status is deliberately ignored here -- only roster moves are applied.
+    # Week-to-week injury tags never apply to a multi-game projection. Season
+    # ending ones do, so rest-of-season drops anyone on IR/PUP/NFI/suspension
+    # while the preseason benchmark keeps everybody.
     by_team = rp.apply_sleeper_rosters(by_team, rp.fetch_sleeper_index(),
-                                       set(teams), drop_injured=False)
+                                       set(teams), drop_injured=False,
+                                       drop_longterm=ros)
 
     acc, meta = {}, {}
     for i, row in enumerate(schedule, 1):
@@ -187,9 +245,12 @@ def build(season, weeks_window, sims, prior_season, cov_stride, limit_weeks):
         })
 
     players.sort(key=lambda p: -p["ppr_mean"])
+    weeks = sorted({int(g["week"]) for g in schedule})
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "season": season, "mode": "season", "n_sims": sims,
+        "season": season, "mode": "ros" if ros else "season", "n_sims": sims,
+        "from_week": weeks[0] if weeks else None,
+        "to_week": weeks[-1] if weeks else None,
         "games_in_schedule": len(schedule),
         "scoring_reference": "PPR",
         "players": players,
@@ -213,12 +274,12 @@ def _ppr_var(a):
     return total
 
 
-def upsert(payload):
+def upsert(payload, row_id):
     url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
         print("  SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set -- skipping upsert")
         return
-    body = json.dumps([{"id": 2, "data": payload,
+    body = json.dumps([{"id": row_id, "data": payload,
                         "updated_at": datetime.now(timezone.utc).isoformat()}]).encode()
     req = urllib.request.Request(
         f"{url}/rest/v1/player_proj?on_conflict=id", data=body, method="POST",
@@ -226,7 +287,7 @@ def upsert(payload):
                  "Content-Type": "application/json",
                  "Prefer": "resolution=merge-duplicates,return=minimal"})
     with urllib.request.urlopen(req, timeout=60) as resp:
-        print(f"  Supabase upsert (id=2) -> HTTP {resp.status}")
+        print(f"  Supabase upsert (id={row_id}) -> HTTP {resp.status}")
 
 
 if __name__ == "__main__":
@@ -237,15 +298,22 @@ if __name__ == "__main__":
     ap.add_argument("--cov-stride", type=int, default=5)
     ap.add_argument("--prior-season-fallback", type=int, default=None)
     ap.add_argument("--limit-weeks", type=int, default=None, help="smoke test on weeks 1-N")
+    ap.add_argument("--ros", action="store_true",
+                    help="rest of season: remaining weeks only, drops season-ending injuries")
+    ap.add_argument("--from-week", type=int, default=None,
+                    help="override the detected current week")
     ap.add_argument("--out", default="player-proj-season.json")
     ap.add_argument("--no-upload", action="store_true")
+    ap.add_argument("--force", action="store_true",
+                    help="rebuild the benchmark even after week 1 has started")
     args = ap.parse_args()
 
     payload = build(args.season, args.weeks, args.sims,
-                    args.prior_season_fallback, args.cov_stride, args.limit_weeks)
+                    args.prior_season_fallback, args.cov_stride, args.limit_weeks,
+                    ros=args.ros, from_week=args.from_week)
     with open(args.out, "w") as fh:
         json.dump(payload, fh, separators=(",", ":"))
     print(f"Wrote {args.out}: {len(payload['players'])} players")
 
     if not args.no_upload:
-        upsert(payload)
+        upsert(payload, 3 if args.ros else 2)

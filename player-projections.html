@@ -47,6 +47,8 @@ layout: null
 .pp-mode{border:1px solid var(--pp-line);background:transparent;border-radius:6px;padding:10px 20px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;color:var(--pp-ink)}
 .pp-mode:hover{border-color:var(--fnp-orange)}
 .pp-mode[aria-pressed=true]{background:var(--fnp-orange);color:#0b1220;border-color:var(--fnp-orange)}
+.pp-lock{margin-top:16px;padding:13px 16px;border:1px solid rgba(255,165,21,.35);border-left:3px solid var(--fnp-orange);border-radius:8px;background:rgba(255,165,21,.07);font-size:.85rem;line-height:1.55;color:var(--pp-ink)}
+.pp-lock b{color:var(--fnp-orange)}
 .pp-ppg{display:block;font-size:.7rem;color:var(--pp-mute);font-weight:500;margin-top:3px;letter-spacing:.03em}
 .pp-scoring{margin-top:16px;border:1px solid var(--pp-line);border-radius:8px;background:var(--pp-panel)}
 .pp-scoring summary{cursor:pointer;padding:14px 16px;font-weight:700;font-size:.92rem;color:#fff;list-style:none;display:flex;align-items:center;gap:10px}
@@ -156,6 +158,8 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       <button class="pp-mode" data-mode="week" aria-pressed="true">This week</button>
       <button class="pp-mode" data-mode="season">Full season</button>
     </div>
+
+    <div class="pp-lock" id="ppLock" hidden></div>
 
     <details class="pp-scoring" id="ppScoring">
       <summary>Scoring settings <span class="pp-tag" id="ppScoringTag">PPR</span></summary>
@@ -413,6 +417,19 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
       sel.appendChild(o);
     });
     document.getElementById('ppCol3').textContent=MODE==='season'?'Games':'Matchup';
+
+    var lock=document.getElementById('ppLock');
+    if(MODE==='season'&&data.locks_at){
+      var when=new Date(data.locks_at),locked=Date.now()>=when.getTime(),
+          d=when.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+      lock.hidden=false;
+      lock.innerHTML=locked
+        ? '<b>Locked preseason benchmark.</b> These are the season projections we published before kickoff on '+d+
+          '. They do not update for injuries, trades or usage changes — the point is to have a fixed line to measure the season against. For current numbers, switch to This week.'
+        : '<b>Preseason benchmark.</b> Still updating daily as rosters and lines firm up. It locks for good at kickoff on '+d+'.';
+    } else {
+      lock.hidden=true;
+    }
     var when=data.generated_at?new Date(data.generated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
     document.getElementById('ppMeta').textContent=
       ALL.length+' players · '+(MODE==='season'?'full season · ':'this week · ')+
