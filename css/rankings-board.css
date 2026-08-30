@@ -1,0 +1,415 @@
+.rb {
+    background-color: var(--bg-card);
+    background-image:
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
+        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
+    background-repeat: no-repeat;
+    background-size: 18px 2px, 2px 18px, 18px 2px, 2px 18px;
+    background-position: bottom left, bottom left, bottom right, bottom right;
+    border: 1px solid var(--border-dark);
+    border-top: 3px solid var(--bright-orange);
+    color: var(--text-light);
+}
+
+.rb-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 18px;
+    padding: 18px 20px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.rb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rb-field-search {
+    flex: 1;
+    min-width: 200px;
+}
+
+.rb-field label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bright-orange);
+}
+
+.rb-select,
+.rb-search {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border-dark);
+    border-radius: 0;
+    background: var(--bg-card);
+    color: var(--text-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+}
+
+.rb-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 38px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--bright-orange) 50%), linear-gradient(135deg, var(--bright-orange) 50%, transparent 50%);
+    background-position: calc(100% - 20px) 20px, calc(100% - 15px) 20px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.rb-select-lg {
+    min-width: 230px;
+    height: 48px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background-color: var(--deep-blue);
+    border-color: var(--bright-orange);
+    background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px;
+}
+
+.rb-select:focus,
+.rb-search:focus {
+    outline: none;
+    border-color: var(--bright-orange);
+}
+
+.rb-search {
+    width: 100%;
+}
+
+.rb-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 20px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.rb-pill {
+    padding: 9px 20px;
+    border: 1px solid var(--border-dark);
+    border-radius: 0;
+    background: var(--bg-card);
+    color: var(--text-light);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.rb-pill:hover {
+    border-color: var(--bright-orange);
+}
+
+.rb-pill.on {
+    background: var(--bright-orange);
+    border-color: var(--bright-orange);
+    color: #000000;
+    font-weight: 700;
+}
+
+.rb-scroll {
+    overflow-x: auto;
+    background: var(--bg-card);
+}
+
+.rb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.rb-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--deep-blue);
+    border-bottom: 2px solid var(--bright-orange);
+    padding: 10px 12px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.rb-table thead th.sorted {
+    color: var(--bright-orange);
+}
+
+.rb-c-exp {
+    min-width: 96px;
+}
+
+.rb-table thead th.rb-c-exp {
+    padding: 8px 12px;
+}
+
+.rb-av {
+    display: block;
+    width: 34px;
+    height: 34px;
+    margin: 0 auto 5px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    border: 1px solid var(--bright-orange);
+    background: var(--bg-panel);
+}
+
+.rb-av-i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--bright-orange);
+}
+
+.rb-exp-name {
+    display: block;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+}
+
+.rb-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border-dark);
+    text-align: center;
+    vertical-align: middle;
+    background: var(--bg-card);
+}
+
+.rb-table tbody tr:nth-child(even) td {
+    background: #0a2148;
+}
+
+.rb-table tbody tr:hover td {
+    background: #10305f;
+}
+
+.rb-c-rank {
+    width: 52px;
+    color: var(--bright-orange);
+    font-weight: 800;
+}
+
+.rb-c-bye {
+    width: 56px;
+    color: var(--charcoal);
+    font-size: 0.85rem;
+}
+
+.rb-c-player {
+    text-align: left;
+    min-width: 210px;
+}
+
+.rb-who {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.rb-photo {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dark);
+}
+
+.rb-photo-fb {
+    object-fit: contain;
+    padding: 6px;
+}
+
+.rb-photo-x {
+    display: block;
+    background: var(--bg-panel);
+}
+
+.rb-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+    white-space: nowrap;
+}
+
+.rb-name a {
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.rb-name a:hover {
+    color: var(--bright-orange);
+}
+
+.rb-rookie {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 5px;
+    background: var(--aqua);
+    color: #00110a;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.rb-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+}
+
+.rb-logo {
+    width: 17px;
+    height: 17px;
+    object-fit: contain;
+}
+
+.rb-pos {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--bright-orange);
+}
+
+.rb-team {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--charcoal);
+}
+
+.rb-none {
+    color: #2f4a78;
+}
+
+.rb-table tbody tr.rb-tier td {
+    background: var(--bg-panel);
+    padding: 7px 16px;
+    text-align: left;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--bright-orange);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.rb-table thead th.rb-c-rank,
+.rb-table thead th.rb-c-player,
+.rb-table tbody td.rb-c-rank,
+.rb-table tbody td.rb-c-player {
+    position: sticky;
+    z-index: 2;
+}
+
+.rb-table thead th.rb-c-rank,
+.rb-table tbody td.rb-c-rank {
+    left: 0;
+}
+
+.rb-table thead th.rb-c-player,
+.rb-table tbody td.rb-c-player {
+    left: 52px;
+    box-shadow: 1px 0 0 var(--border-dark);
+}
+
+.rb-table thead th.rb-c-rank,
+.rb-table thead th.rb-c-player {
+    z-index: 4;
+}
+
+.rb-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--charcoal);
+    font-size: 0.95rem;
+}
+
+.rb-error {
+    color: var(--red-orange);
+}
+
+.rb-error span {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--charcoal);
+}
+
+@media (max-width: 600px) {
+    .rb-bar {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .rb-select-lg {
+        min-width: 0;
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .rb-field-set {
+        flex: 1 1 100%;
+    }
+
+    .rb-pills {
+        padding: 12px 14px;
+    }
+
+    .rb-pill {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .rb-c-player {
+        min-width: 168px;
+    }
+
+    .rb-photo {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+    }
+
+    .rb-name {
+        font-size: 0.9rem;
+    }
+
+    .rb-table thead th.rb-c-player,
+    .rb-table tbody td.rb-c-player {
+        left: 46px;
+    }
+
+    .rb-c-rank {
+        width: 46px;
+    }
+}
