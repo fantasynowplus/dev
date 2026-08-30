@@ -2534,6 +2534,7 @@ function rankAnalystForm(id){
     body:'<div class="form-grid">'+
       '<div class="field"><label>Name</label><input name="name" value="'+esc(a.name||'')+'"></div>'+
       '<div class="field"><label>FantasyPros ID</label><input name="fp_id" placeholder="7357" value="'+esc(a.fp_id||'')+'"></div>'+
+      '<div class="field full"><label>Name as FantasyPros spells it</label><input name="fp_name" placeholder="Leave blank to use the name above" value="'+esc(a.fp_name||'')+'"></div>'+
       '<div class="field full"><label>Staff record</label><select name="staff_id"><option value="">Not linked</option>'+
         RANK_STAFF.map(s=>'<option value="'+s.id+'"'+(a.staff_id===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+
       '</select></div>'+
@@ -2542,6 +2543,7 @@ function rankAnalystForm(id){
     '</div>',
     onSave:async(bg)=>{
       const body={name:val(bg,'name'),fp_id:val(bg,'fp_id'),
+        fp_name:val(bg,'fp_name')||null,
         staff_id:bg.querySelector('[name="staff_id"]').value||null,
         sort_order:parseInt(val(bg,'sort_order')||'0',10),
         is_active:bg.querySelector('[name="is_active"]').checked};
