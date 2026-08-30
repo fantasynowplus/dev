@@ -28,6 +28,14 @@
     return String(s == null ? '' : s).toLowerCase().replace(/[^a-z]/g, '');
   }
 
+    var HEADSHOT_DIR = 'assets/staff/';
+
+  function headshotSrc(v) {
+    if (!v) return '';
+    if (/^https?:\/\//i.test(v)) return v;
+    return v.indexOf('/') >= 0 ? v.replace(/^\/+/, '') : HEADSHOT_DIR + v;
+  }
+
   function initials(name) {
     return String(name || '?').trim().split(/\s+/).slice(0, 2).map(function (w) {
       return w.charAt(0).toUpperCase();
@@ -190,23 +198,17 @@
       keep.map(function (c) {
         var a = analystFor(experts[c]);
         var label = a ? a.name : experts[c];
-        var avatar = a && a.headshot
-          ? '<img class="rb-av" src="' + esc(a.headshot) + '" alt="">'
+        var hs = a ? headshotSrc(a.headshot) : '';
+        var avatar = hs
+          ? '<img class="rb-av" src="' + esc(hs) + '" alt="" data-ini="' + esc(initials(label)) + '">'
           : '<span class="rb-av rb-av-i">' + esc(initials(label)) + '</span>';
         return '<th class="rb-c-exp' + (sortCol === c ? ' sorted' : '') + '" data-sort="' + c + '">' +
           avatar + '<span class="rb-exp-name">' + esc(label) + '</span></th>';
       }).join('') +
     '</tr>';
 
-    var lastTier = null;
-    var showTiers = !term && sortCol < 0;
     var body = rows.map(function (p) {
       var out = '';
-      if (showTiers && p.tier != null && p.tier !== lastTier) {
-        lastTier = p.tier;
-        out += '<tr class="rb-tier"><td colspan="' + (3 + keep.length) + '">Tier ' + esc(p.tier) + '</td></tr>';
-      }
-
       var photo = p.photoUrl
         ? '<img class="rb-photo" src="' + esc(p.photoUrl) + '" alt="" loading="lazy" data-fb="' + esc(p.teamLogoUrl || '') + '">'
         : '<span class="rb-photo rb-photo-x"></span>';
@@ -261,6 +263,15 @@
         img.removeAttribute('data-fb');
         if (fb) { img.src = fb; img.classList.add('rb-photo-fb'); }
         else { img.classList.add('rb-photo-x'); }
+      });
+    });
+
+    el.querySelectorAll('.rb-av[data-ini]').forEach(function (img) {
+      img.addEventListener('error', function () {
+        var sp = document.createElement('span');
+        sp.className = 'rb-av rb-av-i';
+        sp.textContent = img.getAttribute('data-ini');
+        if (img.parentNode) img.parentNode.replaceChild(sp, img);
       });
     });
 
