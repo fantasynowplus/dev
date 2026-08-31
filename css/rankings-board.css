@@ -15,8 +15,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 18px;
-    padding: 18px 20px;
+    gap: 16px;
+    padding: 16px 18px;
     background: var(--bg-panel);
     border-bottom: 1px solid var(--border-dark);
 }
@@ -24,18 +24,18 @@
 .rb-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .rb-field-search {
     flex: 1;
-    min-width: 200px;
+    min-width: 190px;
 }
 
 .rb-field label {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--bright-orange);
@@ -43,38 +43,36 @@
 
 .rb-select,
 .rb-search {
-    height: 44px;
-    padding: 0 14px;
+    height: 42px;
+    padding: 0 13px;
     border: 1px solid var(--border-dark);
     border-radius: 0;
     background: var(--bg-card);
     color: var(--text-light);
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
+    font-size: 14.5px;
 }
 
 .rb-select {
     appearance: none;
     -webkit-appearance: none;
-    padding-right: 38px;
+    padding-right: 36px;
     background-image: linear-gradient(45deg, transparent 50%, var(--bright-orange) 50%), linear-gradient(135deg, var(--bright-orange) 50%, transparent 50%);
-    background-position: calc(100% - 20px) 20px, calc(100% - 15px) 20px;
+    background-position: calc(100% - 19px) 19px, calc(100% - 14px) 19px;
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
     cursor: pointer;
 }
 
 .rb-select-lg {
-    min-width: 230px;
-    height: 48px;
+    min-width: 215px;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     background-color: var(--deep-blue);
     border-color: var(--bright-orange);
-    background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px;
 }
 
 .rb-select:focus,
@@ -90,26 +88,26 @@
 .rb-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 14px 20px;
+    gap: 7px;
+    padding: 12px 18px;
     background: var(--bg-panel);
     border-bottom: 1px solid var(--border-dark);
 }
 
 .rb-pill {
-    padding: 9px 20px;
+    padding: 8px 18px;
     border: 1px solid var(--border-dark);
     border-radius: 0;
     background: var(--bg-card);
     color: var(--text-light);
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     cursor: pointer;
     clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .rb-pill:hover {
@@ -140,17 +138,23 @@
     z-index: 3;
     background: var(--deep-blue);
     border-bottom: 2px solid var(--bright-orange);
-    padding: 10px 12px;
+    padding: 8px 8px 9px;
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.9rem;
-    letter-spacing: 0.06em;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-light);
+    color: var(--charcoal);
     text-align: center;
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
+    vertical-align: bottom;
+}
+
+.rb-table thead th.rb-c-player {
+    text-align: left;
+    padding-left: 14px;
 }
 
 .rb-table thead th.sorted {
@@ -158,18 +162,18 @@
 }
 
 .rb-c-exp {
-    min-width: 96px;
+    width: 86px;
 }
 
 .rb-table thead th.rb-c-exp {
-    padding: 8px 12px;
+    padding: 9px 6px 8px;
 }
 
 .rb-av {
     display: block;
-    width: 34px;
-    height: 34px;
-    margin: 0 auto 5px;
+    width: 30px;
+    height: 30px;
+    margin: 0 auto 4px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
@@ -182,23 +186,41 @@
     align-items: center;
     justify-content: center;
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--bright-orange);
 }
 
 .rb-exp-name {
     display: block;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
+    font-size: 0.76rem;
+    line-height: 1.15;
+    letter-spacing: 0.03em;
+    color: var(--text-light);
+    white-space: normal;
+    max-width: 78px;
+    margin: 0 auto;
+}
+
+.rb-exp-date {
+    display: block;
+    margin-top: 2px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 0.65rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--charcoal);
 }
 
 .rb-table tbody td {
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--border-dark);
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     text-align: center;
     vertical-align: middle;
     background: var(--bg-card);
+    font-size: 0.94rem;
+    color: #d8e3f7;
 }
 
 .rb-table tbody tr:nth-child(even) td {
@@ -210,32 +232,33 @@
 }
 
 .rb-c-rank {
-    width: 52px;
+    width: 48px;
     color: var(--bright-orange);
     font-weight: 800;
+    font-size: 0.95rem;
 }
 
 .rb-c-bye {
-    width: 56px;
+    width: 52px;
     color: var(--charcoal);
     font-size: 0.85rem;
 }
 
 .rb-c-player {
     text-align: left;
-    min-width: 210px;
+    min-width: 196px;
 }
 
 .rb-who {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 10px;
 }
 
 .rb-photo {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
@@ -245,7 +268,7 @@
 
 .rb-photo-fb {
     object-fit: contain;
-    padding: 6px;
+    padding: 5px;
 }
 
 .rb-photo-x {
@@ -255,8 +278,10 @@
 
 .rb-name {
     font-weight: 600;
-    font-size: 0.98rem;
+    font-size: 0.95rem;
+    line-height: 1.2;
     white-space: nowrap;
+    color: var(--text-light);
 }
 
 .rb-name a {
@@ -270,11 +295,11 @@
 
 .rb-rookie {
     display: inline-block;
-    margin-left: 7px;
+    margin-left: 6px;
     padding: 1px 5px;
     background: var(--aqua);
     color: #00110a;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.06em;
 }
@@ -282,45 +307,34 @@
 .rb-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 3px;
+    gap: 5px;
+    margin-top: 2px;
 }
 
 .rb-logo {
-    width: 17px;
-    height: 17px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
 }
 
 .rb-pos {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.08em;
-    color: var(--bright-orange);
+    padding: 1px 5px;
+    color: #000000;
+    background: var(--bright-orange);
 }
 
 .rb-team {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.06em;
     color: var(--charcoal);
 }
 
 .rb-none {
     color: #2f4a78;
-}
-
-.rb-table tbody tr.rb-tier td {
-    background: var(--bg-panel);
-    padding: 7px 16px;
-    text-align: left;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.8rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--bright-orange);
-    border-bottom: 1px solid var(--border-dark);
 }
 
 .rb-table thead th.rb-c-rank,
@@ -338,7 +352,7 @@
 
 .rb-table thead th.rb-c-player,
 .rb-table tbody td.rb-c-player {
-    left: 52px;
+    left: 48px;
     box-shadow: 1px 0 0 var(--border-dark);
 }
 
@@ -348,7 +362,7 @@
 }
 
 .rb-state {
-    padding: 60px 20px;
+    padding: 56px 20px;
     text-align: center;
     color: var(--charcoal);
     font-size: 0.95rem;
@@ -367,14 +381,14 @@
 
 @media (max-width: 600px) {
     .rb-bar {
-        gap: 12px;
-        padding: 14px;
+        gap: 11px;
+        padding: 13px;
     }
 
     .rb-select-lg {
         min-width: 0;
         width: 100%;
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .rb-field-set {
@@ -382,45 +396,48 @@
     }
 
     .rb-pills {
-        padding: 12px 14px;
+        padding: 11px 13px;
     }
 
     .rb-pill {
-        padding: 8px 14px;
-        font-size: 0.85rem;
+        padding: 7px 13px;
+        font-size: 0.82rem;
     }
 
     .rb-c-player {
-        min-width: 168px;
+        min-width: 162px;
     }
 
     .rb-photo {
-        width: 34px;
-        height: 34px;
-        flex: 0 0 34px;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
     }
 
     .rb-name {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
+    }
+
+    .rb-c-exp {
+        width: 66px;
+    }
+
+    .rb-av {
+        width: 26px;
+        height: 26px;
+    }
+
+    .rb-exp-name {
+        font-size: 0.68rem;
+        max-width: 60px;
     }
 
     .rb-table thead th.rb-c-player,
     .rb-table tbody td.rb-c-player {
-        left: 46px;
+        left: 44px;
     }
 
     .rb-c-rank {
-        width: 46px;
+        width: 44px;
     }
-}
-
-.rb-exp-date {
-    display: block;
-    margin-top: 2px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    font-size: 0.68rem;
-    letter-spacing: 0.02em;
-    text-transform: none;
-    color: var(--charcoal);
 }
