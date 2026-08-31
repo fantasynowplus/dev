@@ -89,3 +89,45 @@
 }
 
 .nav-btn:hover { opacity: 0.9; }
+
+.feed-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    border: 1px dashed rgba(255, 165, 21, 0.35);
+    border-radius: 10px;
+    background: rgba(0, 40, 99, 0.04);
+    min-height: 220px;
+}
+
+.feed-empty-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    background: #FFA515;
+    color: #000000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.feed-empty-title {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.feed-empty-text {
+    margin: 0;
+    max-width: 420px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.7);
+}

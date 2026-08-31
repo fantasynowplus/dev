@@ -38,8 +38,9 @@ async function fetchFeedItems(sourceId) {
                 vid: vid
             };
         });
-        if (!items.length) throw new Error('Feed returned no items');
-        try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch (e) {}
+        if (items.length) {
+            try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch (e) {}
+        }
         return items;
     } catch (err) {
         const cached = localStorage.getItem(cacheKey);
@@ -64,6 +65,16 @@ function renderVideos(videos) {
         `).join('');
 }
 
+function renderEmptyState(container, buttonElement) {
+    const label = buttonElement?.textContent?.trim().toLowerCase() || 'this';
+    container.innerHTML = `
+        <div class="feed-empty">
+            <span class="feed-empty-badge">Coming Soon</span>
+            <h3 class="feed-empty-title">${label === 'this' ? 'New videos' : label.charAt(0).toUpperCase() + label.slice(1)} content is on the way</h3>
+            <p class="feed-empty-text">We drop new videos throughout the week as the news breaks. Check back later — or hit the ALL tab for the latest from every channel.</p>
+        </div>`;
+}
+
 async function loadFeed(playlistId, buttonElement) {
     setActiveButton(buttonElement);
 
@@ -72,7 +83,10 @@ async function loadFeed(playlistId, buttonElement) {
 
     try {
         const items = await fetchFeedItems(playlistId);
-        if (items.length === 0) throw new Error('Feed returned no items');
+        if (items.length === 0) {
+            renderEmptyState(container, buttonElement);
+            return;
+        }
         renderVideos(items.slice(0, 8));
     } catch (err) {
         console.error('Feed load failed:', err);
@@ -88,11 +102,16 @@ async function loadMergedFeed(sourceIds, buttonElement) {
 
     try {
         const results = await Promise.allSettled(sourceIds.map(fetchFeedItems));
-        const items = results
-            .filter(r => r.status === 'fulfilled')
-            .flatMap(r => r.value);
+        const fulfilled = results.filter(r => r.status === 'fulfilled');
 
-        if (items.length === 0) throw new Error('No items from any source');
+        if (fulfilled.length === 0) throw new Error('No sources responded');
+
+        const items = fulfilled.flatMap(r => r.value);
+
+        if (items.length === 0) {
+            renderEmptyState(container, buttonElement);
+            return;
+        }
 
         items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
         renderVideos(items.slice(0, 8));

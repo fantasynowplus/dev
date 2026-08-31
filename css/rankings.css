@@ -46,6 +46,6 @@
 .photo-box { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; margin-right: 12px; }
 .player-photo { width: 100%; height: 100%; object-fit: cover; }
 .fnp-name { font-weight: 600; font-size: 0.85rem; display: block; }
-.fnp-meta { font-size: 0.7rem; color: var(--charcoal); }
+.fnp-meta { font-size: 0.7rem; color: #ffffffdc; }
 
 .footer-link { display: block; padding: 10px; text-align: center; color: var(--bright-orange); font-weight: 600; font-size: 0.8rem; text-decoration: none; border-top: 1px solid var(--border-dark); }

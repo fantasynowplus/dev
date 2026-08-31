@@ -34,6 +34,6 @@
 .player-img { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; background: #333; }
 .player-info { flex-grow: 1; }
 .player-name { font-size: 0.9rem; font-weight: 600; }
-.player-pos { font-size: 0.75rem; color: var(--charcoal); }
+.player-pos { font-size: 0.75rem; color: #ffffffdc; }
 .player-count { font-weight: bold; color: var(--aqua); }
 #drops-list .player-count { color: var(--red-orange); }
