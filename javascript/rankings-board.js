@@ -50,7 +50,64 @@
     return parseInt(p[1], 10) + '/' + parseInt(p[2], 10);
   }
 
+  var ALL_ANALYSTS = [];
   function mount() { return document.getElementById(MOUNT_ID); }
+  function directory() { return document.getElementById('rankings-staff'); }
+
+  function buildAllAnalysts() {
+    var seen = {};
+    ALL_ANALYSTS = [];
+    PAGES.forEach(function (p) {
+      (p.analysts || []).forEach(function (a) {
+        var k = String(a.fp_id);
+        if (!seen[k]) {
+          seen[k] = { fp_id: a.fp_id, name: a.name, headshot: a.headshot, slugs: [] };
+          ALL_ANALYSTS.push(seen[k]);
+        }
+        if (seen[k].slugs.indexOf(p.slug) === -1) seen[k].slugs.push(p.slug);
+      });
+    });
+    ALL_ANALYSTS.sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); });
+  }
+
+  function paintDirectory() {
+    var el = directory();
+    if (!el) return;
+    el.innerHTML = '<div class="rb"><div class="rb-tiles">' + ALL_ANALYSTS.map(function (a) {
+      var hs = headshotSrc(a.headshot);
+      var av = hs
+        ? '<img class="rb-tile-av" src="' + esc(hs) + '" alt="" data-ini="' + esc(initials(a.name)) + '">'
+        : '<span class="rb-tile-av rb-av-i">' + esc(initials(a.name)) + '</span>';
+      var sets = a.slugs.map(function (s) {
+        var p = PAGES.filter(function (x) { return x.slug === s; })[0];
+        return '<span class="rb-tile-set">' + esc((p && p.name) || s) + '</span>';
+      }).join('');
+      return '<button type="button" class="rb-tile" data-expert="' + esc(a.fp_id) +
+        '" data-slug="' + esc(a.slugs[0] || '') + '">' + av +
+        '<span class="rb-tile-name">' + esc(a.name) + '</span>' +
+        '<span class="rb-tile-sets">' + sets + '</span></button>';
+    }).join('') + '</div></div>' +
+    '<div class="rb-ov" id="rbOv" hidden><div class="rb-ov-box" id="rbOvBox"></div></div>';
+
+    el.querySelectorAll('.rb-tile-av[data-ini]').forEach(function (img) {
+      img.addEventListener('error', function () {
+        var sp = document.createElement('span');
+        sp.className = 'rb-tile-av rb-av-i';
+        sp.textContent = img.getAttribute('data-ini');
+        if (img.parentNode) img.parentNode.replaceChild(sp, img);
+      });
+    });
+
+    el.querySelectorAll('.rb-tile').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openOverlay(btn.getAttribute('data-expert'), btn.getAttribute('data-slug'));
+      });
+    });
+
+    el.querySelector('#rbOv').addEventListener('click', function (e) {
+      if (e.target.id === 'rbOv') closeOverlay();
+    });
+  }
 
   function waitForSupabase(cb) {
     var tries = 0;
@@ -90,7 +147,7 @@
   }
 
   function analystById(id) {
-    var people = (page && page.analysts) || [];
+    var people = ((page && page.analysts) || []).concat(ALL_ANALYSTS);
     for (var i = 0; i < people.length; i++) {
       if (String(people[i].fp_id) === String(id)) return people[i];
     }
@@ -328,13 +385,18 @@
     '</tr>';
   }
 
-  function openOverlay(expertId) {
+  function openOverlay(expertId, startSlug) {
     var e = null;
-    (data.experts || []).forEach(function (x) { if (String(x.id) === String(expertId)) e = x; });
-    if (!e) return;
+    ((data && data.experts) || []).forEach(function (x) { if (String(x.id) === String(expertId)) e = x; });
+    if (!e) {
+      var a = analystById(expertId);
+      if (!a) return;
+      e = { id: expertId, name: a.name, updated: null };
+    }
     ovExpert = e;
-    ovSlug = page.slug;
-    ovPosition = position;
+    ovSlug = startSlug || (page && page.slug) || PAGES[0].slug;
+    var op = PAGES.filter(function (x) { return x.slug === ovSlug; })[0] || PAGES[0];
+    ovPosition = defaultPosition(op);
     ovData = null;
     ovOpen = true;
     document.getElementById('rbOv').hidden = false;
@@ -545,9 +607,9 @@
   });
 
   function start() {
-    var el = mount();
+    var el = mount() || directory();
     if (!el) return;
-    el.innerHTML = '<div class="rb-state">Loading rankings…</div>';
+    el.innerHTML = '<div class="rb-state">Loading…</div>';
 
     loadConfig(function (pages) {
       if (!pages || !pages.length) {
@@ -555,6 +617,8 @@
         return;
       }
       PAGES = pages;
+      buildAllAnalysts();
+      if (!mount()) { paintDirectory(); return; }
       page = pages.filter(function (p) { return p.slug === SLUG; })[0] || pages[0];
       position = defaultPosition(page);
       scoring = page.scoring || 'PPR';
