@@ -4,6 +4,7 @@
     border-radius: 14px;
     overflow: hidden;
     color: #e6edf7;
+    color-scheme: dark;
 }
 
 .rb-bar {
@@ -691,4 +692,14 @@ button.rb-exp-name:hover {
     font-weight: 600;
     letter-spacing: 0.04em;
     color: #5f77a0;
+}
+
+.rb-select option {
+    background: #101a2b;
+    color: #e6edf7;
+}
+
+.rb-select optgroup {
+    background: #101a2b;
+    color: #8fa4c6;
 }
