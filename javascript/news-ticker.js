@@ -2,6 +2,7 @@ const NEWS_URL = "https://fantasynowplus-rankings-proxy.fantasynowplus.workers.d
 const NEWS_CACHE_KEY = "fnp_news_ticker";
 const TICKER_STATE_KEY = "fnp_ticker_state";
 const NEWS_TTL = 5 * 60 * 1000;
+const TICKER_SPEED = 60;
 
 function escHTML(s) {
     return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -34,6 +35,8 @@ function syncTickerPosition(container, signature) {
 
 function paint(container, items) {
     renderTicker(container, items);
+    const width = container.scrollWidth || container.offsetWidth;
+    if (width) container.style.animationDuration = `${(width / TICKER_SPEED).toFixed(1)}s`;
     syncTickerPosition(container, sigOf(items));
 }
 
