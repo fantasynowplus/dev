@@ -134,7 +134,24 @@
     return keep;
   }
 
+  function isLoggedIn() {
+    try {
+      if (typeof auth !== 'undefined' && auth && auth.user) return true;
+      var t = localStorage.getItem('sb-auth-token');
+      if (!t) return false;
+      var d = JSON.parse(atob(t.split('.')[1]));
+      return !!d.exp && d.exp * 1000 > Date.now();
+    } catch (e) { return false; }
+  }
+
+  function promptLogin() {
+    var link = document.querySelector('.btn-login');
+    if (link) { link.click(); return; }
+    window.location.href = 'login.html';
+  }
+
   function downloadCsv() {
+    if (!isLoggedIn()) { promptLogin(); return; }
     if (!data || !data.players || !data.players.length) return;
     var keep = keptColumns(data);
     var head = ['Rank', 'Player', 'Team', 'Position', 'Bye'].concat(keep.map(function (c) {
@@ -198,7 +215,8 @@
           '</div>' +
           '<div class="rb-field">' +
             '<label>&nbsp;</label>' +
-            '<button type="button" id="rbCsv" class="rb-csv">Download CSV</button>' +
+            '<button type="button" id="rbCsv" class="rb-csv' + (isLoggedIn() ? '' : ' rb-csv-lock') + '">' +
+              (isLoggedIn() ? 'Download CSV' : 'Log in to download') + '</button>' +
           '</div>' +
         '</div>' +
         '<div class="rb-pills" id="rbPills">' + pills + '</div>' +
@@ -340,6 +358,18 @@
     });
   }
 
+  function ovUpdatedLabel() {
+    var p = PAGES.filter(function (x) { return x.slug === ovSlug; })[0];
+    var setName = (p && p.name) || '';
+    if (!ovData || ovData.error) return setName;
+    var e = null;
+    (ovData.experts || []).forEach(function (x) {
+      if (String(x.id) === String(ovExpert.id)) e = x;
+    });
+    var when = e && e.updated ? shortDate(e.updated) : '';
+    return when ? setName + ' · updated ' + when : setName + ' · not published';
+  }
+
   function paintOverlay() {
     var box = document.getElementById('rbOvBox');
     if (!box) return;
@@ -380,7 +410,7 @@
     box.innerHTML =
       '<div class="rb-ov-head">' + avatar +
         '<div class="rb-ov-t"><h3>' + esc(label) + '</h3>' +
-          (ovExpert.updated ? '<span>Updated ' + esc(shortDate(ovExpert.updated)) + '</span>' : '') +
+          '<span>' + esc(ovUpdatedLabel()) + '</span>' +
         '</div>' +
         '<button type="button" class="rb-ov-x" id="rbOvClose" aria-label="Close">&times;</button>' +
       '</div>' +

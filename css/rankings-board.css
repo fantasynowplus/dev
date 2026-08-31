@@ -598,4 +598,14 @@ button.rb-exp-name:hover {
     }
 }
 
+.rb-csv-lock {
+    color: #8fa4c6;
+}
+
+.rb-csv-lock::before {
+    content: "\1F512";
+    margin-right: 7px;
+    font-size: 12px;
+}
+
 
