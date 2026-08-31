@@ -5,7 +5,8 @@
     'https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev';
 
   var MOUNT_ID = 'rankings-board';
-  var POSITION_LABELS = { OP: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex' };
+  var HEADSHOT_DIR = 'assets/staff/';
+  var POSITION_LABELS = { OP: 'Overall', ALL: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex' };
   var SCORING_OPTIONS = [['PPR', 'PPR'], ['HALF', 'Half PPR'], ['STD', 'Standard']];
 
   var PAGES = [];
@@ -24,12 +25,6 @@
     });
   }
 
-  function norm(s) {
-    return String(s == null ? '' : s).toLowerCase().replace(/[^a-z]/g, '');
-  }
-
-    var HEADSHOT_DIR = 'assets/staff/';
-
   function headshotSrc(v) {
     if (!v) return '';
     if (/^https?:\/\//i.test(v)) return v;
@@ -40,6 +35,13 @@
     return String(name || '?').trim().split(/\s+/).slice(0, 2).map(function (w) {
       return w.charAt(0).toUpperCase();
     }).join('');
+  }
+
+  function shortDate(iso) {
+    if (!iso) return '';
+    var p = String(iso).split('-');
+    if (p.length < 3) return '';
+    return parseInt(p[1], 10) + '/' + parseInt(p[2], 10);
   }
 
   function mount() {
@@ -78,18 +80,15 @@
   function defaultPosition(p) {
     var list = positionsFor(p);
     if (list.indexOf('OP') !== -1) return 'OP';
+    if (list.indexOf('ALL') !== -1) return 'ALL';
     if (list.indexOf('IDP') !== -1) return 'IDP';
     return list[0];
   }
 
-  function analystFor(fpName) {
-    var target = norm(fpName);
+  function analystById(id) {
     var people = (page && page.analysts) || [];
     for (var i = 0; i < people.length; i++) {
-      if (norm(people[i].fp_name) === target) return people[i];
-    }
-    for (var j = 0; j < people.length; j++) {
-      if (norm(people[j].name) === target) return people[j];
+      if (String(people[i].fp_id) === String(id)) return people[i];
     }
     return null;
   }
@@ -196,22 +195,27 @@
       '<th class="rb-c-player">Player</th>' +
       '<th class="rb-c-bye">Bye</th>' +
       keep.map(function (c) {
-        var a = analystFor(experts[c]);
-        var label = a ? a.name : experts[c];
+        var e = experts[c] || {};
+        var a = analystById(e.id);
+        var label = (a && a.name) || e.name || '';
         var hs = a ? headshotSrc(a.headshot) : '';
         var avatar = hs
           ? '<img class="rb-av" src="' + esc(hs) + '" alt="" data-ini="' + esc(initials(label)) + '">'
           : '<span class="rb-av rb-av-i">' + esc(initials(label)) + '</span>';
+        var when = shortDate(e.updated);
         return '<th class="rb-c-exp' + (sortCol === c ? ' sorted' : '') + '" data-sort="' + c + '">' +
-          avatar + '<span class="rb-exp-name">' + esc(label) + '</span></th>';
+          avatar + '<span class="rb-exp-name">' + esc(label) + '</span>' +
+          (when ? '<span class="rb-exp-date">' + esc(when) + '</span>' : '') +
+        '</th>';
       }).join('') +
     '</tr>';
 
     var body = rows.map(function (p) {
-      var out = '';
       var photo = p.photoUrl
         ? '<img class="rb-photo" src="' + esc(p.photoUrl) + '" alt="" loading="lazy" data-fb="' + esc(p.teamLogoUrl || '') + '">'
-        : '<span class="rb-photo rb-photo-x"></span>';
+        : (p.teamLogoUrl
+            ? '<img class="rb-photo rb-photo-fb" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
+            : '<span class="rb-photo rb-photo-x"></span>');
 
       var logo = p.teamLogoUrl
         ? '<img class="rb-logo" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
@@ -221,7 +225,7 @@
         ? '<a href="' + esc(p.pageUrl) + '" target="_blank" rel="noopener">' + esc(p.name) + '</a>'
         : esc(p.name);
 
-      return out + '<tr>' +
+      return '<tr>' +
         '<td class="rb-c-rank">' + esc(p.rank == null ? '' : p.rank) + '</td>' +
         '<td class="rb-c-player">' +
           '<div class="rb-who">' + photo +
@@ -319,8 +323,7 @@
       load();
     });
 
-    var searchBox = document.getElementById('rbSearch');
-    searchBox.addEventListener('input', function (e) {
+    document.getElementById('rbSearch').addEventListener('input', function (e) {
       search = e.target.value;
       paintBody();
     });

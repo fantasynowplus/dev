@@ -413,3 +413,14 @@
         width: 46px;
     }
 }
+
+.rb-exp-date {
+    display: block;
+    margin-top: 2px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--charcoal);
+}
