@@ -609,53 +609,53 @@ button.rb-exp-name:hover {
 }
 
 .rb-tiles {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 14px;
-    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
 }
 
 .rb-tile {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 9px;
-    padding: 20px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.02);
+    gap: 14px;
+    width: 100%;
+    padding: 13px 18px;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: none;
+    text-align: left;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .rb-tile:hover {
-    border-color: var(--bright-orange);
-    background: rgba(255, 255, 255, 0.04);
+    background: #121c2e;
 }
 
 .rb-tile-av {
-    width: 72px;
-    height: 72px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.06);
-    font-size: 22px;
+    font-size: 15px;
 }
 
 .rb-tile-name {
-    font-size: 0.98rem;
+    flex: 0 0 auto;
+    min-width: 180px;
+    font-size: 1rem;
     font-weight: 600;
     color: #ffffff;
-    text-align: center;
 }
 
 .rb-tile-sets {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
+    gap: 5px;
 }
 
 .rb-tile-set {

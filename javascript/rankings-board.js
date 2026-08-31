@@ -54,9 +54,27 @@
   function mount() { return document.getElementById(MOUNT_ID); }
   function directory() { return document.getElementById('rankings-staff'); }
 
-  function buildAllAnalysts() {
+  function loadAllAnalysts(cb) {
+    waitForSupabase(function (url, key) {
+      if (!url || !key) return cb([]);
+      fetch(url + '/rest/v1/rpc/rankings_public_analysts', {
+        method: 'POST',
+        headers: { 'apikey': key, 'Content-Type': 'application/json' },
+        body: '{}'
+      })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (d) { cb(d || []); })
+        .catch(function () { cb([]); });
+    });
+  }
+
+  function buildAllAnalysts(everyone) {
     var seen = {};
     ALL_ANALYSTS = [];
+    (everyone || []).forEach(function (a) {
+      seen[String(a.fp_id)] = { fp_id: a.fp_id, name: a.name, headshot: a.headshot, slugs: [] };
+      ALL_ANALYSTS.push(seen[String(a.fp_id)]);
+    });
     PAGES.forEach(function (p) {
       (p.analysts || []).forEach(function (a) {
         var k = String(a.fp_id);
@@ -78,12 +96,13 @@
       var av = hs
         ? '<img class="rb-tile-av" src="' + esc(hs) + '" alt="" data-ini="' + esc(initials(a.name)) + '">'
         : '<span class="rb-tile-av rb-av-i">' + esc(initials(a.name)) + '</span>';
-      var sets = a.slugs.map(function (s) {
+      var slugs = a.slugs.length ? a.slugs : PAGES.map(function (p) { return p.slug; });
+      var sets = slugs.map(function (s) {
         var p = PAGES.filter(function (x) { return x.slug === s; })[0];
-        return '<span class="rb-tile-set">' + esc((p && p.name) || s) + '</span>';
+        return '<span class="rb-tile-set">' + esc(((p && p.name) || s).replace(/ Rankings$/, '')) + '</span>';
       }).join('');
       return '<button type="button" class="rb-tile" data-expert="' + esc(a.fp_id) +
-        '" data-slug="' + esc(a.slugs[0] || '') + '">' + av +
+        '" data-slug="' + esc(slugs[0]) + '">' + av +
         '<span class="rb-tile-name">' + esc(a.name) + '</span>' +
         '<span class="rb-tile-sets">' + sets + '</span></button>';
     }).join('') + '</div></div>' +
@@ -444,7 +463,9 @@
       : '<span class="rb-ov-av rb-av-i">' + esc(initials(label)) + '</span>';
 
     var p = PAGES.filter(function (x) { return x.slug === ovSlug; })[0] || page;
-    var setOptions = PAGES.map(function (x) {
+    var mine = analystById(ovExpert.id);
+    var allowed = (mine && mine.slugs && mine.slugs.length) ? mine.slugs : PAGES.map(function (x) { return x.slug; });
+    var setOptions = PAGES.filter(function (x) { return allowed.indexOf(x.slug) !== -1; }).map(function (x) {
       return '<option value="' + esc(x.slug) + '"' + (x.slug === ovSlug ? ' selected' : '') + '>' + esc(x.name) + '</option>';
     }).join('');
     var pills = positionsFor(p).map(function (x) {
@@ -617,8 +638,14 @@
         return;
       }
       PAGES = pages;
-      buildAllAnalysts();
-      if (!mount()) { paintDirectory(); return; }
+      if (!mount()) {
+        loadAllAnalysts(function (everyone) {
+          buildAllAnalysts(everyone);
+          paintDirectory();
+        });
+        return;
+      }
+      buildAllAnalysts([]);
       page = pages.filter(function (p) { return p.slug === SLUG; })[0] || pages[0];
       position = defaultPosition(page);
       scoring = page.scoring || 'PPR';
