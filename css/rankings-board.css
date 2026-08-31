@@ -160,6 +160,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    justify-content: center;
 }
 
 .rb-av {
@@ -220,8 +221,7 @@
 }
 
 .rb-table tbody td.rb-c-exp {
-    text-align: left;
-    padding-left: 14px;
+    text-align: center;
 }
 
 .rb-c-rank {
