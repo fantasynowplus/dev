@@ -204,8 +204,12 @@
           : '<span class="rb-av rb-av-i">' + esc(initials(label)) + '</span>';
         var when = shortDate(e.updated);
         return '<th class="rb-c-exp' + (sortCol === c ? ' sorted' : '') + '" data-sort="' + c + '">' +
-          avatar + '<span class="rb-exp-name">' + esc(label) + '</span>' +
-          (when ? '<span class="rb-exp-date">' + esc(when) + '</span>' : '') +
+          '<div class="rb-exp-h">' + avatar +
+            '<div class="rb-exp-t">' +
+              '<span class="rb-exp-name">' + esc(label) + '</span>' +
+              (when ? '<span class="rb-exp-date">' + esc(when) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
         '</th>';
       }).join('') +
     '</tr>';
@@ -233,7 +237,7 @@
               '<div class="rb-name">' + nameCell +
                 (p.isRookie ? '<span class="rb-rookie">R</span>' : '') + '</div>' +
               '<div class="rb-meta">' + logo +
-                '<span class="rb-pos">' + esc(p.position || '') + '</span>' +
+                '<span class="rb-pos rb-pos-' + esc(p.position || '') + '">' + esc(p.position || '') + '</span>' +
                 '<span class="rb-team">' + esc(p.team || '') + '</span>' +
               '</div>' +
             '</div>' +

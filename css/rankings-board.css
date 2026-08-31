@@ -1,30 +1,24 @@
 .rb {
-    background-color: var(--bg-card);
-    background-image:
-        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
-        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
-    background-repeat: no-repeat;
-    background-size: 18px 2px, 2px 18px, 18px 2px, 2px 18px;
-    background-position: bottom left, bottom left, bottom right, bottom right;
-    border: 1px solid var(--border-dark);
-    border-top: 3px solid var(--bright-orange);
-    color: var(--text-light);
+    background: #0b1220;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    color: #e6edf7;
 }
 
 .rb-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 16px;
+    gap: 14px;
     padding: 16px 18px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border-dark);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .rb-field {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
 }
 
 .rb-field-search {
@@ -35,44 +29,40 @@
 .rb-field label {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--bright-orange);
+    color: #8fa4c6;
 }
 
 .rb-select,
 .rb-search {
     height: 42px;
-    padding: 0 13px;
-    border: 1px solid var(--border-dark);
-    border-radius: 0;
-    background: var(--bg-card);
-    color: var(--text-light);
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e6edf7;
     font-family: 'Inter', sans-serif;
-    font-size: 14.5px;
+    font-size: 15px;
 }
 
 .rb-select {
     appearance: none;
     -webkit-appearance: none;
-    padding-right: 36px;
-    background-image: linear-gradient(45deg, transparent 50%, var(--bright-orange) 50%), linear-gradient(135deg, var(--bright-orange) 50%, transparent 50%);
-    background-position: calc(100% - 19px) 19px, calc(100% - 14px) 19px;
+    padding-right: 38px;
+    background-image: linear-gradient(45deg, transparent 50%, #8fa4c6 50%), linear-gradient(135deg, #8fa4c6 50%, transparent 50%);
+    background-position: calc(100% - 20px) 19px, calc(100% - 15px) 19px;
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
     cursor: pointer;
 }
 
 .rb-select-lg {
-    min-width: 215px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.05rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background-color: var(--deep-blue);
-    border-color: var(--bright-orange);
+    min-width: 210px;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: #ffffff;
 }
 
 .rb-select:focus,
@@ -85,45 +75,46 @@
     width: 100%;
 }
 
+.rb-search::placeholder {
+    color: #5f77a0;
+}
+
 .rb-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    padding: 12px 18px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border-dark);
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .rb-pill {
     padding: 8px 18px;
-    border: 1px solid var(--border-dark);
-    border-radius: 0;
-    background: var(--bg-card);
-    color: var(--text-light);
-    font-family: var(--font-display);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: transparent;
+    color: #8fa4c6;
+    font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 0.92rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 0.88rem;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .rb-pill:hover {
-    border-color: var(--bright-orange);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.24);
 }
 
 .rb-pill.on {
     background: var(--bright-orange);
     border-color: var(--bright-orange);
-    color: #000000;
+    color: #14100a;
     font-weight: 700;
 }
 
 .rb-scroll {
     overflow-x: auto;
-    background: var(--bg-card);
 }
 
 .rb-table {
@@ -136,25 +127,24 @@
     position: sticky;
     top: 0;
     z-index: 3;
-    background: var(--deep-blue);
-    border-bottom: 2px solid var(--bright-orange);
-    padding: 8px 8px 9px;
-    font-family: var(--font-display);
+    background: #101a2b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    padding: 10px 10px;
+    font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 0.8rem;
-    letter-spacing: 0.08em;
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--charcoal);
-    text-align: center;
+    color: #8fa4c6;
+    text-align: left;
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
-    vertical-align: bottom;
 }
 
-.rb-table thead th.rb-c-player {
-    text-align: left;
-    padding-left: 14px;
+.rb-table thead th.rb-c-rank,
+.rb-table thead th.rb-c-bye {
+    text-align: center;
 }
 
 .rb-table thead th.sorted {
@@ -162,130 +152,130 @@
 }
 
 .rb-c-exp {
-    width: 86px;
+    min-width: 132px;
 }
 
-.rb-table thead th.rb-c-exp {
-    padding: 9px 6px 8px;
+.rb-exp-h {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .rb-av {
-    display: block;
-    width: 30px;
-    height: 30px;
-    margin: 0 auto 4px;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
-    border: 1px solid var(--bright-orange);
-    background: var(--bg-panel);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .rb-av-i {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    color: var(--bright-orange);
+    color: #8fa4c6;
+}
+
+.rb-exp-t {
+    min-width: 0;
 }
 
 .rb-exp-name {
     display: block;
-    font-size: 0.76rem;
-    line-height: 1.15;
-    letter-spacing: 0.03em;
-    color: var(--text-light);
-    white-space: normal;
-    max-width: 78px;
-    margin: 0 auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #e6edf7;
+    white-space: nowrap;
 }
 
 .rb-exp-date {
     display: block;
-    margin-top: 2px;
-    font-family: 'Inter', sans-serif;
+    margin-top: 1px;
+    font-size: 0.68rem;
     font-weight: 400;
-    font-size: 0.65rem;
     letter-spacing: 0.02em;
     text-transform: none;
-    color: var(--charcoal);
+    color: #5f77a0;
 }
 
 .rb-table tbody td {
-    padding: 7px 8px;
+    padding: 9px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     text-align: center;
     vertical-align: middle;
-    background: var(--bg-card);
-    font-size: 0.94rem;
+    background: #0b1220;
+    font-size: 1rem;
     color: #d8e3f7;
 }
 
-.rb-table tbody tr:nth-child(even) td {
-    background: #0a2148;
+.rb-table tbody tr:hover td {
+    background: #121c2e;
 }
 
-.rb-table tbody tr:hover td {
-    background: #10305f;
+.rb-table tbody td.rb-c-exp {
+    text-align: left;
+    padding-left: 14px;
 }
 
 .rb-c-rank {
-    width: 48px;
-    color: var(--bright-orange);
-    font-weight: 800;
-    font-size: 0.95rem;
+    width: 52px;
+    color: #8fa4c6;
+    font-weight: 700;
 }
 
 .rb-c-bye {
-    width: 52px;
-    color: var(--charcoal);
-    font-size: 0.85rem;
+    width: 56px;
+    color: #5f77a0;
+    font-size: 0.9rem;
 }
 
 .rb-c-player {
     text-align: left;
-    min-width: 196px;
+    min-width: 210px;
 }
 
 .rb-who {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
 }
 
 .rb-photo {
-    width: 36px;
-    height: 36px;
-    flex: 0 0 36px;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-dark);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .rb-photo-fb {
     object-fit: contain;
-    padding: 5px;
+    padding: 6px;
 }
 
 .rb-photo-x {
     display: block;
-    background: var(--bg-panel);
 }
 
 .rb-name {
     font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.2;
+    font-size: 1rem;
+    line-height: 1.25;
     white-space: nowrap;
-    color: var(--text-light);
+    color: #ffffff;
 }
 
 .rb-name a {
-    color: var(--text-light);
+    color: #ffffff;
     text-decoration: none;
 }
 
@@ -295,46 +285,55 @@
 
 .rb-rookie {
     display: inline-block;
-    margin-left: 6px;
-    padding: 1px 5px;
-    background: var(--aqua);
-    color: #00110a;
-    font-size: 0.62rem;
-    font-weight: 800;
+    margin-left: 7px;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(66, 244, 176, 0.16);
+    color: var(--aqua);
+    font-size: 0.64rem;
+    font-weight: 700;
     letter-spacing: 0.06em;
 }
 
 .rb-meta {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-top: 2px;
+    gap: 7px;
+    margin-top: 3px;
 }
 
 .rb-logo {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
     object-fit: contain;
 }
 
 .rb-pos {
-    font-family: var(--font-display);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.68rem;
     font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    padding: 1px 5px;
-    color: #000000;
-    background: var(--bright-orange);
+    letter-spacing: 0.06em;
+    background: rgba(255, 255, 255, 0.08);
+    color: #8fa4c6;
 }
 
+.rb-pos-QB { background: rgba(234, 78, 61, 0.18); color: #ff8b7d; }
+.rb-pos-RB { background: rgba(66, 244, 176, 0.16); color: var(--aqua); }
+.rb-pos-WR { background: rgba(61, 165, 234, 0.18); color: #6fc2ff; }
+.rb-pos-TE { background: rgba(255, 165, 21, 0.18); color: var(--bright-orange); }
+.rb-pos-K  { background: rgba(139, 61, 255, 0.2); color: #b98cff; }
+.rb-pos-DST { background: rgba(143, 164, 198, 0.18); color: #b6c6e0; }
+
 .rb-team {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 500;
     letter-spacing: 0.06em;
-    color: var(--charcoal);
+    color: #5f77a0;
 }
 
 .rb-none {
-    color: #2f4a78;
+    color: #3c527a;
 }
 
 .rb-table thead th.rb-c-rank,
@@ -352,8 +351,8 @@
 
 .rb-table thead th.rb-c-player,
 .rb-table tbody td.rb-c-player {
-    left: 48px;
-    box-shadow: 1px 0 0 var(--border-dark);
+    left: 52px;
+    box-shadow: 1px 0 0 rgba(255, 255, 255, 0.07);
 }
 
 .rb-table thead th.rb-c-rank,
@@ -364,8 +363,8 @@
 .rb-state {
     padding: 56px 20px;
     text-align: center;
-    color: var(--charcoal);
-    font-size: 0.95rem;
+    color: #5f77a0;
+    font-size: 0.98rem;
 }
 
 .rb-error {
@@ -375,8 +374,8 @@
 .rb-error span {
     display: block;
     margin-top: 8px;
-    font-size: 0.8rem;
-    color: var(--charcoal);
+    font-size: 0.82rem;
+    color: #5f77a0;
 }
 
 @media (max-width: 600px) {
@@ -388,7 +387,6 @@
     .rb-select-lg {
         min-width: 0;
         width: 100%;
-        font-size: 0.95rem;
     }
 
     .rb-field-set {
@@ -396,48 +394,34 @@
     }
 
     .rb-pills {
-        padding: 11px 13px;
+        padding: 12px 13px;
     }
 
     .rb-pill {
-        padding: 7px 13px;
+        padding: 7px 14px;
         font-size: 0.82rem;
     }
 
     .rb-c-player {
-        min-width: 162px;
+        min-width: 172px;
     }
 
     .rb-photo {
-        width: 32px;
-        height: 32px;
-        flex: 0 0 32px;
-    }
-
-    .rb-name {
-        font-size: 0.88rem;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
     }
 
     .rb-c-exp {
-        width: 66px;
-    }
-
-    .rb-av {
-        width: 26px;
-        height: 26px;
-    }
-
-    .rb-exp-name {
-        font-size: 0.68rem;
-        max-width: 60px;
+        min-width: 112px;
     }
 
     .rb-table thead th.rb-c-player,
     .rb-table tbody td.rb-c-player {
-        left: 44px;
+        left: 46px;
     }
 
     .rb-c-rank {
-        width: 44px;
+        width: 46px;
     }
 }
