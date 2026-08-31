@@ -49,13 +49,28 @@ async function fetchFeedItems(sourceId) {
     }
 }
 
+const LIVE_TITLE_PATTERN = /\b(live|livestream|premiere|watch ?along)\b/i;
+
+function getLiveState(v) {
+    if (v.liveState) return v.liveState;
+    return LIVE_TITLE_PATTERN.test(v.title) ? 'was-live' : '';
+}
+
+function liveBadge(state) {
+    if (state === 'live') return '<span class="live-badge is-live"><span class="live-dot"></span>LIVE</span>';
+    if (state === 'upcoming') return '<span class="live-badge is-upcoming">UPCOMING</span>';
+    if (state === 'was-live') return '<span class="live-badge was-live">WAS LIVE</span>';
+    return '';
+}
+
 function renderVideos(videos) {
     const container = document.getElementById('youtube-feed');
     container.innerHTML = videos.map(v => `
             <div class="video-card">
-                <a href="${v.link}" target="_blank" rel="noopener">
-                                        <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}"
+                <a href="${v.link}" class="thumb-link" target="_blank" rel="noopener">
+                    <img src="${v.thumbnail}" class="thumbnail" alt="${v.title}"
                          onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${v.vid}/oardefault.jpg';">
+                    ${liveBadge(getLiveState(v))}
                 </a>
                 <div class="video-info">
                     <h3 class="video-title">${v.title}</h3>
