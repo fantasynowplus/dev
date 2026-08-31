@@ -608,62 +608,87 @@ button.rb-exp-name:hover {
     font-size: 12px;
 }
 
-.rb-tiles {
-    display: flex;
-    flex-direction: column;
-    padding: 6px 0;
+.rb-group {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.rb-tile {
+.rb-group:last-child {
+    border-bottom: 0;
+}
+
+.rb-group-h {
     display: flex;
     align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 13px 18px;
-    border: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 9px;
+    margin: 0;
+    padding: 14px 18px;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bright-orange);
+}
+
+.rb-group-h span {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: #8fa4c6;
+}
+
+.rb-staff {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 6px;
+    padding: 0 12px 16px;
+}
+
+.rb-staff-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
     background: none;
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.rb-tile:hover {
+.rb-staff-row:hover {
     background: #121c2e;
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
-.rb-tile-av {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
+.rb-staff-av {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.06);
-    font-size: 15px;
+    font-size: 13px;
 }
 
-.rb-tile-name {
-    flex: 0 0 auto;
-    min-width: 180px;
-    font-size: 1rem;
+.rb-staff-name {
+    font-size: 0.95rem;
     font-weight: 600;
-    color: #ffffff;
+    color: #e6edf7;
 }
 
-.rb-tile-sets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.rb-tile-set {
-    padding: 2px 7px;
+.rb-bye {
+    padding: 1px 6px;
     border-radius: 5px;
-    background: rgba(255, 255, 255, 0.06);
-    font-size: 0.64rem;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.04em;
-    color: #8fa4c6;
+    color: #5f77a0;
 }
