@@ -427,5 +427,175 @@
     }
 }
 
+.rb-csv {
+    height: 42px;
+    padding: 0 18px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e6edf7;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.rb-csv:hover {
+    border-color: var(--bright-orange);
+    color: var(--bright-orange);
+}
+
+button.rb-exp-name {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: 'Inter', sans-serif;
+    text-align: left;
+    cursor: pointer;
+}
+
+button.rb-exp-name:hover {
+    color: var(--bright-orange);
+    text-decoration: underline;
+}
+
+.rb-ov {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(4, 8, 16, 0.78);
+    backdrop-filter: blur(3px);
+}
+
+.rb-ov[hidden] {
+    display: none;
+}
+
+.rb-ov-box {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 620px;
+    max-height: 86vh;
+    background: #0b1220;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.rb-ov-head {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.rb-ov-av {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.rb-ov-t h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+.rb-ov-t span {
+    font-size: 0.78rem;
+    color: #5f77a0;
+}
+
+.rb-ov-x {
+    margin-left: auto;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9px;
+    background: none;
+    color: #8fa4c6;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.rb-ov-x:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.rb-ov-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.rb-ov-controls .rb-select {
+    min-width: 180px;
+}
+
+.rb-ov-pills {
+    padding: 0;
+    border: 0;
+    gap: 6px;
+}
+
+.rb-ov-pills .rb-pill {
+    padding: 6px 13px;
+    font-size: 0.8rem;
+}
+
+.rb-ov-list {
+    overflow-y: auto;
+}
+
+.rb-ov-table tbody td {
+    background: transparent;
+}
+
+.rb-ov-table tbody tr:hover td {
+    background: #121c2e;
+}
+
+.rb-ov-table .rb-c-player,
+.rb-ov-table .rb-c-rank,
+.rb-ov-table .rb-c-bye {
+    position: static;
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    .rb-ov {
+        padding: 0;
+    }
+
+    .rb-ov-box {
+        max-width: none;
+        max-height: 100vh;
+        height: 100vh;
+        border-radius: 0;
+        border: 0;
+    }
+
+    .rb-ov-controls .rb-select {
+        width: 100%;
+    }
+}
 
 

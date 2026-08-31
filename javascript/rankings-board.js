@@ -6,7 +6,7 @@
 
   var MOUNT_ID = 'rankings-board';
   var HEADSHOT_DIR = 'assets/staff/';
-  var POSITION_LABELS = { OP: 'Overall', ALL: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex' };
+  var POSITION_LABELS = { OP: 'Superflex', ALL: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex' };
   var SCORING_OPTIONS = [['PPR', 'PPR'], ['HALF', 'Half PPR'], ['STD', 'Standard']];
 
   var PAGES = [];
@@ -18,6 +18,12 @@
   var sortDir = 1;
   var data = null;
   var cache = {};
+
+  var ovOpen = false;
+  var ovExpert = null;
+  var ovSlug = null;
+  var ovPosition = null;
+  var ovData = null;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -44,9 +50,7 @@
     return parseInt(p[1], 10) + '/' + parseInt(p[2], 10);
   }
 
-  function mount() {
-    return document.getElementById(MOUNT_ID);
-  }
+  function mount() { return document.getElementById(MOUNT_ID); }
 
   function waitForSupabase(cb) {
     var tries = 0;
@@ -79,8 +83,8 @@
 
   function defaultPosition(p) {
     var list = positionsFor(p);
-    if (list.indexOf('OP') !== -1) return 'OP';
     if (list.indexOf('ALL') !== -1) return 'ALL';
+    if (list.indexOf('OP') !== -1) return 'OP';
     if (list.indexOf('IDP') !== -1) return 'IDP';
     return list[0];
   }
@@ -93,20 +97,22 @@
     return null;
   }
 
-  function fetchRankings(cb) {
+  function requestFor(p, pos, sc, filterIds) {
     var qs = new URLSearchParams({
-      type: page.wtype || 'ST',
-      position: position,
-      scoring: scoring,
-      year: String(page.year || 2026),
-      week: String(page.week || 0)
+      type: p.wtype || 'ST',
+      position: pos,
+      scoring: sc,
+      year: String(p.year || 2026),
+      week: String(p.week || 0)
     });
-    if (page.expert) qs.set('expert', page.expert);
-    if (page.filters) qs.set('filters', page.filters);
+    if (p.expert) qs.set('expert', p.expert);
+    if (filterIds) qs.set('filters', filterIds);
+    else if (p.filters) qs.set('filters', p.filters);
+    return qs.toString();
+  }
 
-    var key = qs.toString();
+  function fetchRankings(key, cb) {
     if (cache[key]) return cb(cache[key]);
-
     fetch(WORKER + '/expert-rankings?' + key)
       .then(function (r) {
         if (!r.ok) throw new Error('Rankings service returned ' + r.status);
@@ -114,6 +120,49 @@
       })
       .then(function (d) { cache[key] = d; cb(d); })
       .catch(function (e) { cb({ error: e.message }); });
+  }
+
+  function keptColumns(d) {
+    var keep = [];
+    var experts = (d && d.experts) || [];
+    var players = (d && d.players) || [];
+    for (var c = 0; c < experts.length; c++) {
+      for (var r = 0; r < players.length; r++) {
+        if (players[r].ranks && players[r].ranks[c] != null) { keep.push(c); break; }
+      }
+    }
+    return keep;
+  }
+
+  function downloadCsv() {
+    if (!data || !data.players || !data.players.length) return;
+    var keep = keptColumns(data);
+    var head = ['Rank', 'Player', 'Team', 'Position', 'Bye'].concat(keep.map(function (c) {
+      var e = data.experts[c] || {};
+      var a = analystById(e.id);
+      return (a && a.name) || e.name || '';
+    }));
+
+    function cell(v) {
+      var s = String(v == null ? '' : v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    var lines = [head.map(cell).join(',')];
+    data.players.forEach(function (p) {
+      var row = [p.rank, p.name, p.team, p.position, p.byeWeek]
+        .concat(keep.map(function (c) { return p.ranks ? p.ranks[c] : ''; }));
+      lines.push(row.map(cell).join(','));
+    });
+
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fantasynowplus-' + page.slug + '-' + position.toLowerCase() + '-' + scoring.toLowerCase() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
   }
 
   function shellHtml() {
@@ -147,10 +196,15 @@
             '<label for="rbSearch">Search</label>' +
             '<input id="rbSearch" class="rb-search" type="search" placeholder="Filter players" value="' + esc(search) + '">' +
           '</div>' +
+          '<div class="rb-field">' +
+            '<label>&nbsp;</label>' +
+            '<button type="button" id="rbCsv" class="rb-csv">Download CSV</button>' +
+          '</div>' +
         '</div>' +
         '<div class="rb-pills" id="rbPills">' + pills + '</div>' +
         '<div class="rb-body" id="rbBody"></div>' +
-      '</div>';
+      '</div>' +
+      '<div class="rb-ov" id="rbOv" hidden><div class="rb-ov-box" id="rbOvBox"></div></div>';
   }
 
   function tableHtml() {
@@ -160,17 +214,10 @@
     }
 
     var players = data.players || [];
-    if (!players.length) {
-      return '<div class="rb-state">No rankings published for this view yet.</div>';
-    }
+    if (!players.length) return '<div class="rb-state">No rankings published for this view yet.</div>';
 
     var experts = data.experts || [];
-    var keep = [];
-    for (var c = 0; c < experts.length; c++) {
-      for (var r = 0; r < players.length; r++) {
-        if (players[r].ranks && players[r].ranks[c] != null) { keep.push(c); break; }
-      }
-    }
+    var keep = keptColumns(data);
 
     var term = search.trim().toLowerCase();
     var rows = players.filter(function (p) {
@@ -206,7 +253,7 @@
         return '<th class="rb-c-exp' + (sortCol === c ? ' sorted' : '') + '" data-sort="' + c + '">' +
           '<div class="rb-exp-h">' + avatar +
             '<div class="rb-exp-t">' +
-              '<span class="rb-exp-name">' + esc(label) + '</span>' +
+              '<button type="button" class="rb-exp-name" data-expert="' + esc(e.id) + '">' + esc(label) + '</button>' +
               (when ? '<span class="rb-exp-date">' + esc(when) + '</span>' : '') +
             '</div>' +
           '</div>' +
@@ -214,43 +261,7 @@
       }).join('') +
     '</tr>';
 
-    var body = rows.map(function (p) {
-      var photo = p.photoUrl
-        ? '<img class="rb-photo" src="' + esc(p.photoUrl) + '" alt="" loading="lazy" data-fb="' + esc(p.teamLogoUrl || '') + '">'
-        : (p.teamLogoUrl
-            ? '<img class="rb-photo rb-photo-fb" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
-            : '<span class="rb-photo rb-photo-x"></span>');
-
-      var logo = p.teamLogoUrl
-        ? '<img class="rb-logo" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
-        : '';
-
-      var nameCell = p.pageUrl
-        ? '<a href="' + esc(p.pageUrl) + '" target="_blank" rel="noopener">' + esc(p.name) + '</a>'
-        : esc(p.name);
-
-      return '<tr>' +
-        '<td class="rb-c-rank">' + esc(p.rank == null ? '' : p.rank) + '</td>' +
-        '<td class="rb-c-player">' +
-          '<div class="rb-who">' + photo +
-            '<div class="rb-who-t">' +
-              '<div class="rb-name">' + nameCell +
-                (p.isRookie ? '<span class="rb-rookie">R</span>' : '') + '</div>' +
-              '<div class="rb-meta">' + logo +
-                '<span class="rb-pos rb-pos-' + esc(p.position || '') + '">' + esc(p.position || '') + '</span>' +
-                '<span class="rb-team">' + esc(p.team || '') + '</span>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</td>' +
-        '<td class="rb-c-bye">' + esc(p.byeWeek || '—') + '</td>' +
-        keep.map(function (c) {
-          var v = p.ranks ? p.ranks[c] : null;
-          return '<td class="rb-c-exp' + (v == null ? ' rb-none' : '') + '">' +
-            (v == null ? '&ndash;' : esc(v)) + '</td>';
-        }).join('') +
-      '</tr>';
-    }).join('');
+    var body = rows.map(function (p) { return rowHtml(p, keep); }).join('');
 
     if (!rows.length) {
       body = '<tr><td class="rb-state" colspan="' + (3 + keep.length) + '">No players match “' + esc(search) + '”.</td></tr>';
@@ -260,19 +271,158 @@
       '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
   }
 
+  function playerCellHtml(p) {
+    var photo = p.photoUrl
+      ? '<img class="rb-photo" src="' + esc(p.photoUrl) + '" alt="" loading="lazy" data-fb="' + esc(p.teamLogoUrl || '') + '">'
+      : (p.teamLogoUrl
+          ? '<img class="rb-photo rb-photo-fb" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
+          : '<span class="rb-photo rb-photo-x"></span>');
+
+    var logo = p.teamLogoUrl
+      ? '<img class="rb-logo" src="' + esc(p.teamLogoUrl) + '" alt="" loading="lazy">'
+      : '';
+
+    var nameCell = p.pageUrl
+      ? '<a href="' + esc(p.pageUrl) + '" target="_blank" rel="noopener">' + esc(p.name) + '</a>'
+      : esc(p.name);
+
+    return '<div class="rb-who">' + photo +
+        '<div class="rb-who-t">' +
+          '<div class="rb-name">' + nameCell + (p.isRookie ? '<span class="rb-rookie">R</span>' : '') + '</div>' +
+          '<div class="rb-meta">' + logo +
+            '<span class="rb-pos rb-pos-' + esc(p.position || '') + '">' + esc(p.position || '') + '</span>' +
+            '<span class="rb-team">' + esc(p.team || '') + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function rowHtml(p, keep) {
+    return '<tr>' +
+      '<td class="rb-c-rank">' + esc(p.rank == null ? '' : p.rank) + '</td>' +
+      '<td class="rb-c-player">' + playerCellHtml(p) + '</td>' +
+      '<td class="rb-c-bye">' + esc(p.byeWeek || '—') + '</td>' +
+      keep.map(function (c) {
+        var v = p.ranks ? p.ranks[c] : null;
+        return '<td class="rb-c-exp' + (v == null ? ' rb-none' : '') + '">' +
+          (v == null ? '&ndash;' : esc(v)) + '</td>';
+      }).join('') +
+    '</tr>';
+  }
+
+  function openOverlay(expertId) {
+    var e = null;
+    (data.experts || []).forEach(function (x) { if (String(x.id) === String(expertId)) e = x; });
+    if (!e) return;
+    ovExpert = e;
+    ovSlug = page.slug;
+    ovPosition = position;
+    ovData = null;
+    ovOpen = true;
+    document.getElementById('rbOv').hidden = false;
+    document.body.style.overflow = 'hidden';
+    paintOverlay();
+    loadOverlay();
+  }
+
+  function closeOverlay() {
+    ovOpen = false;
+    document.getElementById('rbOv').hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  function loadOverlay() {
+    var p = PAGES.filter(function (x) { return x.slug === ovSlug; })[0] || page;
+    if (positionsFor(p).indexOf(ovPosition) === -1) ovPosition = defaultPosition(p);
+    fetchRankings(requestFor(p, ovPosition, scoring, ovExpert.id), function (d) {
+      ovData = d;
+      paintOverlay();
+    });
+  }
+
+  function paintOverlay() {
+    var box = document.getElementById('rbOvBox');
+    if (!box) return;
+
+    var a = analystById(ovExpert.id);
+    var label = (a && a.name) || ovExpert.name || '';
+    var hs = a ? headshotSrc(a.headshot) : '';
+    var avatar = hs
+      ? '<img class="rb-ov-av" src="' + esc(hs) + '" alt="">'
+      : '<span class="rb-ov-av rb-av-i">' + esc(initials(label)) + '</span>';
+
+    var p = PAGES.filter(function (x) { return x.slug === ovSlug; })[0] || page;
+    var setOptions = PAGES.map(function (x) {
+      return '<option value="' + esc(x.slug) + '"' + (x.slug === ovSlug ? ' selected' : '') + '>' + esc(x.name) + '</option>';
+    }).join('');
+    var pills = positionsFor(p).map(function (x) {
+      return '<button type="button" class="rb-pill' + (x === ovPosition ? ' on' : '') +
+        '" data-ovpos="' + esc(x) + '">' + esc(POSITION_LABELS[x] || x) + '</button>';
+    }).join('');
+
+    var listHtml;
+    if (!ovData) listHtml = '<div class="rb-state">Loading…</div>';
+    else if (ovData.error) listHtml = '<div class="rb-state rb-error">Could not load rankings.</div>';
+    else {
+      var rows = (ovData.players || []).filter(function (pl) {
+        return pl.ranks && pl.ranks[0] != null;
+      }).sort(function (x, y) { return x.ranks[0] - y.ranks[0]; });
+
+      listHtml = rows.length
+        ? '<table class="rb-table rb-ov-table"><tbody>' + rows.map(function (pl) {
+            return '<tr><td class="rb-c-rank">' + esc(pl.ranks[0]) + '</td>' +
+              '<td class="rb-c-player">' + playerCellHtml(pl) + '</td>' +
+              '<td class="rb-c-bye">' + esc(pl.byeWeek || '—') + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<div class="rb-state">' + esc(label) + ' hasn’t published rankings for this view.</div>';
+    }
+
+    box.innerHTML =
+      '<div class="rb-ov-head">' + avatar +
+        '<div class="rb-ov-t"><h3>' + esc(label) + '</h3>' +
+          (ovExpert.updated ? '<span>Updated ' + esc(shortDate(ovExpert.updated)) + '</span>' : '') +
+        '</div>' +
+        '<button type="button" class="rb-ov-x" id="rbOvClose" aria-label="Close">&times;</button>' +
+      '</div>' +
+      '<div class="rb-ov-controls">' +
+        '<select class="rb-select" id="rbOvSet">' + setOptions + '</select>' +
+        '<div class="rb-pills rb-ov-pills" id="rbOvPills">' + pills + '</div>' +
+      '</div>' +
+      '<div class="rb-ov-list">' + listHtml + '</div>';
+
+    document.getElementById('rbOvClose').addEventListener('click', closeOverlay);
+    document.getElementById('rbOvSet').addEventListener('change', function (ev) {
+      ovSlug = ev.target.value;
+      ovData = null;
+      paintOverlay();
+      loadOverlay();
+    });
+    document.getElementById('rbOvPills').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('[data-ovpos]');
+      if (!btn) return;
+      ovPosition = btn.getAttribute('data-ovpos');
+      ovData = null;
+      paintOverlay();
+      loadOverlay();
+    });
+    box.querySelectorAll('.rb-photo[data-fb]').forEach(bindPhotoFallback);
+  }
+
+  function bindPhotoFallback(img) {
+    img.addEventListener('error', function () {
+      var fb = img.getAttribute('data-fb');
+      img.removeAttribute('data-fb');
+      if (fb) { img.src = fb; img.classList.add('rb-photo-fb'); }
+      else { img.classList.add('rb-photo-x'); }
+    });
+  }
+
   function paintBody() {
     var el = document.getElementById('rbBody');
     if (!el) return;
     el.innerHTML = tableHtml();
 
-    el.querySelectorAll('.rb-photo[data-fb]').forEach(function (img) {
-      img.addEventListener('error', function () {
-        var fb = img.getAttribute('data-fb');
-        img.removeAttribute('data-fb');
-        if (fb) { img.src = fb; img.classList.add('rb-photo-fb'); }
-        else { img.classList.add('rb-photo-x'); }
-      });
-    });
+    el.querySelectorAll('.rb-photo[data-fb]').forEach(bindPhotoFallback);
 
     el.querySelectorAll('.rb-av[data-ini]').forEach(function (img) {
       img.addEventListener('error', function () {
@@ -280,6 +430,13 @@
         sp.className = 'rb-av rb-av-i';
         sp.textContent = img.getAttribute('data-ini');
         if (img.parentNode) img.parentNode.replaceChild(sp, img);
+      });
+    });
+
+    el.querySelectorAll('.rb-exp-name[data-expert]').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        openOverlay(btn.getAttribute('data-expert'));
       });
     });
 
@@ -297,7 +454,10 @@
   function load() {
     data = null;
     paintBody();
-    fetchRankings(function (d) { data = d; paintBody(); });
+    fetchRankings(requestFor(page, position, scoring), function (d) {
+      data = d;
+      paintBody();
+    });
   }
 
   function paintAll() {
@@ -332,6 +492,8 @@
       paintBody();
     });
 
+    document.getElementById('rbCsv').addEventListener('click', downloadCsv);
+
     document.getElementById('rbPills').addEventListener('click', function (e) {
       var btn = e.target.closest('.rb-pill');
       if (!btn) return;
@@ -341,8 +503,16 @@
       load();
     });
 
+    document.getElementById('rbOv').addEventListener('click', function (e) {
+      if (e.target.id === 'rbOv') closeOverlay();
+    });
+
     paintBody();
   }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && ovOpen) closeOverlay();
+  });
 
   function start() {
     var el = mount();
