@@ -529,8 +529,12 @@
     PAGES.forEach(function (p) {
       fetchRankings(requestFor(p, defaultPosition(p), p.scoring || 'PPR', allIds), function (d) {
         var ids = [];
+        var hidden = (p.hidden || []).map(String);
         if (d && !d.error) {
-          keptColumns(d).forEach(function (c) { ids.push(String(d.experts[c].id)); });
+          keptColumns(d).forEach(function (c) {
+            var id = String(d.experts[c].id);
+            if (hidden.indexOf(id) === -1) ids.push(id);
+          });
         }
         PUBLISHED[p.slug] = ids;
         if (--pending === 0) paintDirectory();
