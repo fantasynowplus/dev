@@ -2296,7 +2296,7 @@ function toolDelete(id){
 }
 /* ---------------- RANKINGS DISPLAY ---------------- */
 let RANK_TAB='grid';
-let RANK_PAGES=[], RANK_ANALYSTS=[], RANK_LINKS=[], RANK_STAFF=[];
+let RANK_PAGES=[], RANK_ANALYSTS=[], RANK_LINKS=[], RANK_STAFF=[], RANK_HIDDEN={};
 
 const ROSTER_ATTRS={filters:'data-filters (standard)', expert:'data-expert (IDP-style)'};
 
@@ -2308,6 +2308,12 @@ async function loadRankings(){
   ]);
   RANK_PAGES=pages||[]; RANK_ANALYSTS=analysts||[]; RANK_LINKS=links||[];
   try{ RANK_STAFF=await dbGet('staff?select=id,name&order=name.asc')||[]; }catch(e){ RANK_STAFF=[]; }
+  RANK_HIDDEN={};
+  try{
+    (await dbGet('ranking_directory_hidden?select=*')||[]).forEach(h=>{
+      (RANK_HIDDEN[h.page_id]=RANK_HIDDEN[h.page_id]||[]).push(h.analyst_id);
+    });
+  }catch(e){}
   renderRankings();
 }
 
@@ -2420,6 +2426,15 @@ function rankPageForm(id){
   const p=id?RANK_PAGES.find(x=>x.id===id):{};
   const isNew=!id;
   const roster=id?rankRosterLinks(id):[];
+  const hiddenHtml=!id?'' :
+    '<div class="field full"><label>Hide from the staff page</label><div id="rdhList">'+
+    RANK_ANALYSTS.map(a=>{
+      const on=(RANK_HIDDEN[id]||[]).indexOf(a.id)!==-1;
+      return '<label class="rr-row" style="cursor:pointer">'+
+        '<input type="checkbox" class="rdh-c" data-analyst="'+a.id+'"'+(on?' checked':'')+'>'+
+        '<span class="rr-n">'+esc(a.name)+'</span>'+
+        '<span class="rank-mono">'+esc(a.fp_id)+'</span></label>';
+    }).join('')+'</div></div>';
   const rosterHtml=!id?'' :
     '<div class="field full"><label>Roster order &amp; ID overrides</label>'+
     (roster.length?'<div id="rrList">'+roster.map(l=>{
@@ -2456,7 +2471,7 @@ function rankPageForm(id){
       '<div class="field"><label>Primary expert</label><input name="primary_expert" placeholder="7357" value="'+esc(p.primary_expert||'')+'"></div>'+
       '<div class="field"><label>Extra filters</label><input name="extra_filters" placeholder="7625" value="'+esc(p.extra_filters||'')+'"></div>'+
       '<div class="field full"><label><input type="checkbox" name="is_active" '+(p.is_active===false?'':'checked')+'> Live on the site</label></div>'+
-      rosterHtml+
+      rosterHtml+hiddenHtml+
     '</div>',
     onSave:async(bg)=>{
       const body={
@@ -2487,6 +2502,9 @@ function rankPageForm(id){
           const ov=rows[i].querySelector('.rr-i').value.trim();
           await dbPatch('ranking_page_analysts?page_id=eq.'+id+'&analyst_id=eq.'+aid,{sort_order:(i+1)*10,fp_id_override:ov||null});
         }
+        await dbDel('ranking_directory_hidden?page_id=eq.'+id);
+        const hide=[].slice.call(bg.querySelectorAll('.rdh-c:checked')).map(c=>({page_id:id,analyst_id:c.dataset.analyst}));
+        if(hide.length) await dbPost('ranking_directory_hidden',hide);
       } else {
         await dbPost('ranking_pages',body);
       }
