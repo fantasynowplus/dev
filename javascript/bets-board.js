@@ -58,6 +58,14 @@
     var pl = { 19: 'Wild Card', 20: 'Divisional', 21: 'Conference', 22: 'Super Bowl' };
     return pl[w] || ('Week ' + w);
   }
+  function weekOpts(sel) {
+    var h = '';
+    for (var w = 1; w <= 22; w++) {
+      h += '<option value="' + w + '"' + (Number(sel) === w ? ' selected' : '') + '>' +
+           weekLabel(w) + '</option>';
+    }
+    return h;
+  }  
   function dayTxt(d) {
     if (!d) return '';
     var p = String(d).split('-');
@@ -67,6 +75,14 @@
   /* ---------- render ---------- */
 
   function render() {
+    var wkSel = document.getElementById('weekSel');
+    if (wkSel) {
+      wkSel.disabled = (STATE.tab !== 'card');
+      wkSel.value = STATE.week;
+    }
+
+    var stage = document.getElementById('stage');
+    var sub = document.getElementById('subtitle');
     var stage = document.getElementById('stage');
     var sub = document.getElementById('subtitle');
 
@@ -250,7 +266,15 @@
       var map = { '1': 'card', '2': 'season', '3': 'board' };
       if (map[e.key]) document.querySelector('[data-tab="' + map[e.key] + '"]').click();
     });
-
+    var wk = document.getElementById('weekSel');
+    wk.innerHTML = weekOpts(STATE.week);
+    wk.onchange = function () {
+      STATE.week = Number(this.value);
+      var u = new URL(location.href);
+      u.searchParams.set('week', STATE.week);
+      history.replaceState(null, '', u);   // survives a refresh mid-show
+      load();
+    };
     await load();
     poll();
   }

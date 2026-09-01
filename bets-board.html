@@ -33,6 +33,10 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 .meta{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--muted)}
 .meta button{border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
 .meta button:hover{border-color:var(--orange);color:var(--orange)}
+.wkpick{display:flex;align-items:center;gap:7px}
+.wkpick select{background:var(--panel);border:1px solid var(--line);color:#fff;font:inherit;font-size:13px;padding:7px 10px;border-radius:8px;cursor:pointer}
+.wkpick select:hover{border-color:var(--orange)}
+.wkpick select:disabled{opacity:.35;cursor:default}
 .title{font-family:Oswald,sans-serif;font-size:19px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:20px 0 14px}
 
 /* ---- summary strip ---- */
@@ -103,7 +107,10 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
       <button data-tab="season">Season</button>
       <button data-tab="board">Leaderboard</button>
     </div>
-    <div class="meta"><span id="updated">—</span><button id="refresh">Refresh</button></div>
+      <div class="meta">
+        <label class="wkpick">Week <select id="weekSel"></select></label>
+        <span id="updated">—</span><button id="refresh">Refresh</button>
+    </div>
   </div>
   <div class="title" id="subtitle">Loading…</div>
   <div id="stage"><div class="state">Loading the card…</div></div>
