@@ -59,7 +59,7 @@
     var v = Number(n) || 0;
     return (v > 0 ? '+' : '') + v.toFixed(dp === undefined ? 2 : dp);
   }
-  function cls(n) { return Number(n) > 0 ? 'up' : Number(n) < 0 ? 'down' : ''; }
+  function cls(n) { return Number(n) > 0 ? 'btx-up' : Number(n) < 0 ? 'btx-down' : ''; }
   function oddsTxt(n) { return n > 0 ? '+' + n : String(n); }
   function dayTxt(d) {
     if (!d) return '';
@@ -127,22 +127,22 @@
     var on = S.sel === o.id;
     var dim = !on && S.sel !== null;
     var av = o.group
-      ? '<div class="an-av">' + esc(o.abbr) + '</div>'
+      ? '<div class="btx-anav">' + esc(o.abbr) + '</div>'
       : (headshot(o.headshot)
-          ? '<img class="an-av" src="' + esc(headshot(o.headshot)) + '" alt="" ' +
+          ? '<img class="btx-anav" src="' + esc(headshot(o.headshot)) + '" alt="" ' +
             'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
-            '{className:\'an-av\',textContent:\'' + esc(initials(o.name)) + '\'}))">'
-          : '<div class="an-av">' + esc(initials(o.name)) + '</div>');
+            '{className:\'btx-anav\',textContent:\'' + esc(initials(o.name)) + '\'}))">'
+          : '<div class="btx-anav">' + esc(initials(o.name)) + '</div>');
 
-    return '<button class="an' + (o.group ? ' grp' : '') + (on ? ' on' : dim ? ' dim' : '') +
+    return '<button class="btx-an' + (o.group ? ' grp' : '') + (on ? ' on' : dim ? ' dim' : '') +
              '" data-sel="' + esc(o.id) + '">' +
       av +
-      '<span class="an-b">' +
-        '<span class="an-n">' + esc(o.name) + '</span>' +
-        '<span class="an-s">' + recordTxt(o.t) +
+      '<span class="btx-anb">' +
+        '<span class="btx-ann">' + esc(o.name) + '</span>' +
+        '<span class="btx-ans">' + recordTxt(o.t) +
           (o.t.roi == null ? '' : ' · ' + signed(o.t.roi, 1) + '%') + '</span>' +
       '</span>' +
-      '<span class="an-u ' + cls(o.t.net) + '">' + signed(o.t.net) + '</span>' +
+      '<span class="btx-anu ' + cls(o.t.net) + '">' + signed(o.t.net) + '</span>' +
     '</button>';
   }
 
@@ -158,7 +158,7 @@
 
     document.getElementById('btxMainPeople').innerHTML =
       main.map(function (p) { return analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t }); }).join('') ||
-      '<p class="muted" style="font-size:13px">No bets logged yet.</p>';
+      '<p class="btx-state" style="padding:14px 0">No bets logged yet.</p>';
 
     document.getElementById('btxOtherLabel').hidden = !rest.length;
     document.getElementById('btxOtherPeople').innerHTML =
@@ -221,10 +221,10 @@
       rows.map(function (r) {
         var w = Math.abs(r.net) / peak * 100;
         return '<tr>' +
-          '<td><div class="type">' + esc(r.label) + '</div>' +
-            '<div class="bar"><i style="width:' + w.toFixed(0) + '%;background:' +
-            (r.net >= 0 ? '#42F4B0' : '#EA4E3D') + '"></i></div></td>' +
-          '<td class="r">' + recordTxt(r) + (r.pending ? ' <span class="muted">(' + r.pending + ')</span>' : '') + '</td>' +
+          '<td><div class="btx-type">' + esc(r.label) + '</div>' +
+            '<div class="btx-bar"><i style="width:' + w.toFixed(0) + '%;background:' +
+            (r.net >= 0 ? '#56d364' : '#ff7b72') + '"></i></div></td>' +
+          '<td class="r">' + recordTxt(r) + (r.pending ? ' <span class="btx-dim">(' + r.pending + ')</span>' : '') + '</td>' +
           '<td class="r">' + (r.win_pct == null ? '—' : r.win_pct.toFixed(0) + '%') + '</td>' +
           '<td class="r">' + units(r.risked) + 'u</td>' +
           '<td class="r ' + cls(r.net) + '"><b>' + signed(r.net) + '</b></td>' +
@@ -247,11 +247,11 @@
       '</tr></thead><tbody>' +
       list.map(function (b) {
         return '<tr>' +
-          '<td><div class="bd">' + esc(b.description) + '</div>' +
-            '<div class="bs">' + dayTxt(b.placed_on) + ' · ' + esc(b.bettor_name) +
+          '<td><div class="btx-bd">' + esc(b.description) + '</div>' +
+            '<div class="btx-bs">' + dayTxt(b.placed_on) + ' · ' + esc(b.bettor_name) +
             ' · ' + units(b.units) + 'u' + (b.sportsbook ? ' · ' + esc(b.sportsbook) : '') + '</div></td>' +
           '<td class="r">' + oddsTxt(b.odds) + '</td>' +
-          '<td class="r"><span class="pill p-' + b.result + '">' + b.result + '</span></td>' +
+          '<td class="r"><span class="btx-pill btx-p-' + b.result + '">' + b.result + '</span></td>' +
           '<td class="r ' + cls(b.net) + '">' + (b.result === 'pending' ? '—' : signed(b.net)) + '</td>' +
         '</tr>';
       }).join('') + '</tbody></table></div>';
@@ -296,7 +296,7 @@
     buildPeople();
     render();
 
-    document.getElementById('btx').addEventListener('click', function (e) {
+    document.querySelector('.btx-wrap').addEventListener('click', function (e) {
       var b = e.target.closest('[data-sel]');
       if (!b) return;
       S.sel = b.dataset.sel;

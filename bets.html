@@ -1,19 +1,84 @@
 ---
 layout: null
 ---
-
 {% include header.html %}
+{% include back-to-tools.html %}
+<style>
+  .btx-wrap { max-width: 1180px; margin: 30px auto 60px; padding: 0 20px; }
+  .btx-head h1 { color: #eef2fb; margin: 0 0 4px; }
+  .btx-sub { color: #94a1bd; margin: 0 0 22px; font-size: 15px; max-width: 620px; }
 
-<div id="btx">
+  .btx-grid { display: grid; grid-template-columns: 1fr 310px; gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .btx-grid { grid-template-columns: 1fr; } }
 
-<div id="btx">
+  /* left — the numbers */
+  .btx-who { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .btx-whoav { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; flex: none; background: #232e49; color: #eef2fb; display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 19px; }
+  .btx-whon { color: #eef2fb; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 30px; line-height: 1.15; letter-spacing: .01em; }
+  .btx-whos { color: #8a97b3; font-size: 13px; margin-top: 1px; }
+
+  .btx-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .btx-strip { grid-template-columns: repeat(2, 1fr); } }
+  .btx-card { background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; padding: 14px 16px; }
+  .btx-card .l { color: #8a97b3; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+  .btx-card .v { color: #eef2fb; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 30px; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .btx-card .s { color: #7d8aa5; font-size: 12px; margin-top: 2px; }
+  .btx-up { color: #56d364; }
+  .btx-down { color: #ff7b72; }
+
+  .btx-sec { color: #eef2fb; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 11px; }
+  .btx-panel { background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; overflow: hidden; }
+  .btx-panel table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .btx-panel th { text-align: left; background: #131a29; color: #8a97b3; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 10px 14px; border-bottom: 1px solid #2a3450; }
+  .btx-panel td { padding: 12px 14px; border-top: 1px solid #232c42; color: #c9d2e6; font-size: 14px; }
+  .btx-panel tbody tr:first-child td { border-top: none; }
+  .btx-panel .r { text-align: right; }
+  .btx-type { color: #eef2fb; font-weight: 700; }
+  .btx-bar { height: 5px; border-radius: 3px; background: #0f1523; margin-top: 6px; max-width: 150px; overflow: hidden; }
+  .btx-bar i { display: block; height: 100%; border-radius: 3px; }
+  .btx-dim { color: #6b7890; }
+  .btx-bd { color: #eef2fb; font-weight: 600; }
+  .btx-bs { color: #7d8aa5; font-size: 12px; margin-top: 2px; }
+
+  .btx-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .btx-p-win { background: rgba(86,211,100,.16); color: #56d364; }
+  .btx-p-loss { background: rgba(255,123,114,.15); color: #ff7b72; }
+  .btx-p-push { background: rgba(75,143,224,.15); color: #4b8fe0; }
+  .btx-p-pending { background: rgba(255,165,21,.16); color: #FFA515; }
+  .btx-p-void { background: #1e2740; color: #7d8aa5; }
+
+  /* right — the analysts */
+  .btx-rail { position: sticky; top: 20px; }
+  @media (max-width: 900px) { .btx-rail { position: static; order: -1; margin-bottom: 8px; } }
+  .btx-raillabel { color: #6b7890; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 18px 0 9px; }
+  .btx-railgroup, .btx-people { display: grid; gap: 8px; }
+  @media (max-width: 900px) {
+    .btx-railgroup, .btx-people { grid-auto-flow: column; grid-auto-columns: minmax(185px, 1fr); overflow-x: auto; padding-bottom: 6px; }
+  }
+
+  .btx-an { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; background: #161d2e; border: 1px solid #2a3450; border-radius: 12px; padding: 10px 12px; cursor: pointer; font-family: inherit; transition: opacity .18s, border-color .18s, box-shadow .18s, filter .18s; }
+  .btx-an:hover { border-color: #3c4a6e; }
+  .btx-an.dim { opacity: .38; filter: grayscale(.65); }
+  .btx-an.on { border-color: #FFA515; box-shadow: 0 0 0 2px rgba(255,165,21,.18); opacity: 1; filter: none; }
+  .btx-anav { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; background: #232e49; color: #c3cee0; display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 14px; }
+  .btx-anb { flex: 1; min-width: 0; }
+  .btx-ann { color: #eef2fb; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btx-ans { color: #8a97b3; font-size: 12px; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .btx-anu { flex: none; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .btx-an.grp .btx-anav { background: #FFA515; color: #1a1204; font-size: 12px; }
+
+  .btx-state { color: #7d8aa5; font-size: 14px; padding: 40px 0; text-align: center; }
+  .btx-disc { margin-top: 30px; padding-top: 16px; border-top: 1px solid #232c42; color: #6b7890; font-size: 12px; line-height: 1.7; }
+</style>
+
+<main class="btx-wrap">
   <div class="btx-head">
     <h1>Bet Tracker</h1>
-    <p class="btx-lede">Every NFL bet our analysts put on the board, tracked in units all season. Nothing hidden, nothing deleted.</p>
+    <p class="btx-sub">Every NFL bet our analysts put on the board, tracked in units all season. Nothing hidden, nothing deleted.</p>
   </div>
 
   <div class="btx-grid">
-    <div class="btx-main" id="btxMain">
+    <div id="btxMain">
       <p class="btx-state">Loading…</p>
     </div>
 
@@ -32,76 +97,8 @@ layout: null
     was placed and may differ from the current line. Must be 21+ and in a state where sports wagering
     is legal. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
   </p>
-</div>
+</main>
 
-<style>
-#btx{max-width:1180px;margin:0 auto;padding:36px 20px 60px}
-#btx .btx-head h1{font-family:Oswald,sans-serif;font-size:40px;margin:0 0 8px;color:#002863;letter-spacing:.01em}
-#btx .btx-lede{color:#606060;font-size:16px;max-width:620px;margin:0 0 28px;line-height:1.6}
+<script src="javascript/bets.js"></script>
 
-#btx .btx-grid{display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start}
-
-#btx .btx-who{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-#btx .btx-whoav{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#002863;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:20px;flex:none}
-#btx .btx-whon{font-family:Oswald,sans-serif;font-size:30px;color:#002863;line-height:1.15}
-#btx .btx-whos{font-size:13px;color:#606060;margin-top:1px}
-
-#btx .btx-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
-#btx .btx-card{border:1px solid #e8e8e8;border-radius:12px;padding:15px 17px;background:#fff}
-#btx .btx-card .l{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#606060;font-weight:700}
-#btx .btx-card .v{font-family:Oswald,sans-serif;font-size:32px;line-height:1.1;margin-top:3px;font-variant-numeric:tabular-nums}
-#btx .btx-card .s{font-size:12px;color:#606060;margin-top:2px}
-#btx .up{color:#12a06a}
-#btx .down{color:#d2382a}
-
-#btx .btx-sec{font-family:Oswald,sans-serif;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#002863;margin:26px 0 12px}
-#btx .btx-panel{border:1px solid #e8e8e8;border-radius:12px;background:#fff;overflow:hidden}
-#btx table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-#btx th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#606060;font-weight:700;padding:11px 14px;border-bottom:1px solid #eee;background:#fafafa}
-#btx td{padding:12px 14px;border-bottom:1px solid #f2f2f2;font-size:14px}
-#btx tr:last-child td{border-bottom:0}
-#btx .r{text-align:right}
-#btx .type{font-weight:600;color:#111}
-#btx .bar{height:5px;border-radius:3px;background:#eee;margin-top:5px;overflow:hidden;max-width:150px}
-#btx .bar i{display:block;height:100%;border-radius:3px}
-#btx .muted{color:#909090}
-
-#btx .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase}
-#btx .p-win{background:rgba(66,244,176,.22);color:#0d7a52}
-#btx .p-loss{background:rgba(234,78,61,.15);color:#b5301f}
-#btx .p-push{background:#eef1f6;color:#002863}
-#btx .p-pending{background:rgba(255,165,21,.2);color:#8a5900}
-#btx .p-void{background:#f4f4f4;color:#909090}
-#btx .bd{font-weight:500;color:#111}
-#btx .bs{font-size:12px;color:#909090;margin-top:2px}
-
-#btx .btx-rail{position:sticky;top:20px}
-#btx .btx-raillabel{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#909090;font-weight:700;margin:20px 0 9px}
-#btx .btx-railgroup{display:grid;gap:8px}
-#btx .btx-people{display:grid;gap:8px}
-
-#btx .an{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #e8e8e8;background:#fff;border-radius:12px;padding:10px 13px;cursor:pointer;font:inherit;transition:opacity .18s,border-color .18s,box-shadow .18s,filter .18s}
-#btx .an:hover{border-color:#002863}
-#btx .an.dim{opacity:.42;filter:grayscale(.7)}
-#btx .an.on{border-color:#002863;box-shadow:0 0 0 2px rgba(0,40,99,.14);opacity:1;filter:none}
-#btx .an-av{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:none;background:#002863;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:15px}
-#btx .an-b{min-width:0;flex:1}
-#btx .an-n{font-weight:600;font-size:14px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#btx .an-s{font-size:12px;color:#606060;font-variant-numeric:tabular-nums;margin-top:1px}
-#btx .an-u{font-family:Oswald,sans-serif;font-size:17px;font-variant-numeric:tabular-nums;flex:none}
-#btx .an.grp .an-av{background:#FFA515;color:#002863;font-size:13px;letter-spacing:.02em}
-#btx .an.grp.on{border-color:#FFA515;box-shadow:0 0 0 2px rgba(255,165,21,.24)}
-
-#btx .btx-state{padding:50px;text-align:center;color:#606060}
-#btx .btx-disc{margin-top:34px;font-size:12px;line-height:1.7;color:#909090;border-top:1px solid #eee;padding-top:16px}
-
-@media (max-width:900px){
-  #btx .btx-grid{grid-template-columns:1fr}
-  #btx .btx-rail{position:static;order:-1}
-  #btx .btx-people,#btx .btx-railgroup{grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);overflow-x:auto;padding-bottom:6px}
-  #btx .btx-strip{grid-template-columns:repeat(2,1fr)}
-}
-</style>
-
-<script src="{{ '/javascript/bets.js' | relative_url }}"></script>
 {% include footer.html %}

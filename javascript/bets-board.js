@@ -6,7 +6,7 @@
 
   var CFG = null;
   var STATE = { season: null, week: null, tab: 'card', bets: [], board: [], house: null };
-  var BOARD_BETTORS = ['jozef hooson', 'paul redman', 'john byrne', 'justin bauerle'];
+  var BOARD_BETTORS = ['jozef hooson', 'paul redman', 'john byrne'];
   var REVEALED = {};   // bet id -> true, survives the 20s poll
 
   function onBoard(name) {
