@@ -167,12 +167,16 @@
     var rest = S.people.filter(function (p) { return !p.btb; });
 
     document.getElementById('btxMainPeople').innerHTML =
-      analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb }); }).join('') ||
+      main.map(function (p) {
+        return analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb });
+      }).join('') ||
       '<p class="btx-state" style="padding:14px 0">No bets logged yet.</p>';
 
     document.getElementById('btxOtherLabel').hidden = !rest.length;
     document.getElementById('btxOtherPeople').innerHTML =
-      analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb }); }).join('');
+      rest.map(function (p) {
+        return analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb });
+      }).join('');
   }
 
   /* ---------- left panel ---------- */
