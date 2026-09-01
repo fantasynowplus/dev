@@ -180,20 +180,24 @@
   }
 
   /* ---------- left panel ---------- */
-
+  function groupAvatar(src, fallback) {
+    return '<img class="btx-whoav" src="' + esc(src) + '" alt="" ' +
+      'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
+      '{className:\'btx-whoav\',textContent:\'' + fallback + '\'}))">';
+  }
   function headerHtml() {
     var t = totalFor(S.sel);
     var name, sub, avatar;
 
     if (S.sel === 'all') {
       name = 'All Picks';
-      sub = S.people.length + ' analysts · every logged bet';
-      avatar = '<div class="btx-whoav">ALL</div>';
+      sub = S.people.length + ' analyst' + (S.people.length === 1 ? '' : 's') + ' · every logged bet';
+      avatar = groupAvatar('assets/images/social-logo.png', 'ALL');
     } else if (S.sel === 'btb') {
       var n = S.people.filter(function (p) { return p.btb; }).length;
       name = 'Beat the Bookie';
-      sub = n + ' analysts on the show board';
-      avatar = '<div class="btx-whoav">BTB</div>';
+      sub = n + ' analyst' + (n === 1 ? '' : 's') + ' on the show board';
+      avatar = groupAvatar('assets/images/Beat-the-Bookie.png', 'BTB');
     } else {
       var p = S.people.filter(function (x) { return x.id === S.sel; })[0] || { name: '—' };
       name = p.name;
