@@ -468,22 +468,3 @@ if __name__ == "__main__":
     if not args.no_upload:
         upsert_supabase(payload)
 
-import gspread
-
-# 1. Authenticate locally
-gc = gspread.service_account(filename="credentials.json")
-
-# 2. Target the spreadsheet and worksheet
-sh = gc.open("NFL_Fantasy_Rankings_Engine")
-worksheet = sh.worksheet("My_Projections")
-
-# 3. Format DataFrame into a list of lists for gspread
-header = [["Player", "Position", "Team", "PPR_Points"]]
-rows = df_projections[['player_name', 'position', 'team', 'ppr_points']].values.tolist()
-data_to_upload = header + rows
-
-# 4. Overwrite tab contents
-worksheet.clear()
-worksheet.update('A1', data_to_upload)
-
-print("Projections pushed successfully to Google Sheets!")
