@@ -2764,9 +2764,10 @@ async function btLoadTab(){
 /* ---------- render ---------- */
 
 function btRender(){
-  topAction(ifCan('bets','c','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>') ||
-            ifCan('bets','u','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>'));
-
+  topAction(
+    ifCan('bets','c','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>') +
+    ifCan('bets','c','<button class="btn btn-ghost" onclick="btGraphic()">Make graphic</button>')
+  );
   var tabs = [['mine','My bets'],['grade','Grade']];
   if(can('bets','r')) tabs.push(['all','All bets'],['board','Leaderboard']);
   if(can('bets','u')) tabs.push(['books','Sportsbooks']);
