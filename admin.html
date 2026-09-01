@@ -675,75 +675,105 @@
   .rdh-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--line)}
   .rdh-row .rr-n{flex:1;font-size:13.5px;font-weight:600}
 
-  .bt-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(0,40,99,.03);flex-wrap:wrap}
+.bt-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(0,40,99,.03);flex-wrap:wrap}
 .bt-tabs{display:flex;gap:6px}
-.bt-tab{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+.bt-tab{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .bt-tab:hover{border-color:var(--navy);color:var(--navy)}
 .bt-tab.on{background:var(--navy);border-color:var(--navy);color:#fff}
-.bt-filters{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted)}
+.bt-badge{background:var(--orange);color:#002863;border-radius:999px;font-size:11px;font-weight:700;padding:1px 7px;line-height:1.5}
+.bt-filters{display:flex;gap:12px;align-items:center;font-size:13px;color:var(--muted)}
 .bt-filters label{display:flex;gap:6px;align-items:center}
 .bt-filters select,.bt-season{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:13px}
 .bt-season{width:74px}
+.bt-add{margin-left:4px}
 .bt-body{padding:0}
 .bt-pad{padding:14px 16px}
+
 .bt-table{width:100%;border-collapse:collapse;font-size:13px}
 .bt-table th{text-align:left;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
 .bt-table td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
 .bt-table .num{text-align:right}
 .bt-table .nowrap{white-space:nowrap}
-.bt-desc{max-width:320px}
+.bt-desc{max-width:340px}
+.bt-d{font-weight:500;color:#111}
+.bt-sub{font-size:11px;color:var(--muted);margin-top:2px}
 .bt-row:hover{background:rgba(0,40,99,.03)}
 .bt-r-pending{background:rgba(255,165,21,.06)}
-.bt-r-win td:first-child{box-shadow:inset 3px 0 0 var(--green,#42F4B0)}
-.bt-r-loss td:first-child{box-shadow:inset 3px 0 0 var(--red,#EA4E3D)}
 .bt-table tfoot td{padding:11px 12px;font-weight:600;border-top:2px solid var(--line);border-bottom:0}
 .bt-tot{text-align:right;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.06em}
 .bt-net{font-variant-numeric:tabular-nums;font-weight:600}
 .bt-net.up{color:#12a06a}
 .bt-net.down{color:#d2382a}
+
 .bt-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#F4F4F4;color:var(--muted)}
 .bt-win{background:rgba(66,244,176,.18);color:#0d7a52}
 .bt-loss{background:rgba(234,78,61,.15);color:#b5301f}
 .bt-push{background:rgba(0,40,99,.09);color:var(--navy)}
 .bt-pending{background:rgba(255,165,21,.18);color:#8a5900}
 .bt-void{background:#F4F4F4;color:var(--muted);text-decoration:line-through}
+
 .bt-grade{display:inline-flex;gap:4px}
 .bt-g{width:26px;height:26px;border-radius:6px;border:1px solid var(--line);background:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted)}
-.bt-g:hover{transform:translateY(-1px)}
 .bt-g-win:hover{background:rgba(66,244,176,.2);border-color:#42F4B0;color:#0d7a52}
 .bt-g-loss:hover{background:rgba(234,78,61,.15);border-color:#EA4E3D;color:#b5301f}
 .bt-g-push:hover{background:rgba(0,40,99,.08);border-color:var(--navy);color:var(--navy)}
+
+/* ---- grade tab ---- */
+.bt-gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:16px}
+.bt-gcard{border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:12px;padding:14px 16px;background:#fff;transition:opacity .18s,transform .18s}
+.bt-gcard.going{opacity:.35;transform:scale(.98)}
+.bt-gtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.bt-gwho{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--navy)}
+.bt-gwk{color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none}
+.bt-godds{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.bt-gdesc{font-size:16px;font-weight:600;line-height:1.35;margin:8px 0 4px;color:#111}
+.bt-gmeta{font-size:12px;color:var(--muted)}
+.bt-gbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.bt-gb{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 0;font:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+.bt-gb.win:hover{background:#42F4B0;border-color:#42F4B0;color:#00311f}
+.bt-gb.loss:hover{background:#EA4E3D;border-color:#EA4E3D;color:#fff}
+.bt-gb.push:hover{background:var(--navy);border-color:var(--navy);color:#fff}
+.bt-gb.void:hover{background:#F4F4F4;color:var(--muted)}
+
 .bt-rank{font-weight:700;color:var(--muted);width:34px}
 .bt-house{padding:16px;gap:12px}
 .bt-stat{padding:14px 16px}
 .bt-stat-l{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .bt-stat-v{font-size:26px;font-weight:700;line-height:1.2;margin-top:2px;font-variant-numeric:tabular-nums}
 .bt-stat-s{font-size:12px;color:var(--muted);margin-top:2px}
-@media (max-width:820px){.bt-bar{flex-direction:column;align-items:stretch}.bt-desc{max-width:none}}
-/* append to admin-bets.css */
 
-.bq{padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(255,165,21,.05)}
-.bq-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.bq-f{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:inherit;font-size:13px;background:#fff}
-.bq-who{width:150px}
-.bq-date{width:140px}
-.bq-week{width:120px}
-.bq-text{flex:1;min-width:280px;font-size:14px}
-.bq-text:focus{outline:0;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,165,21,.16)}
-.bq-text:disabled{opacity:.5}
-.bq-read{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0}
-.bq-read:empty{display:none}
-.bq-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--navy)}
-.bq-chip.type{background:rgba(0,40,99,.06);color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.06em;font-weight:700;padding:4px 9px}
-.bq-chip.miss{border-color:var(--red,#EA4E3D);color:#b5301f;background:rgba(234,78,61,.07)}
+/* ---- the add/edit overlay ---- */
+.btf-kinds{display:flex;gap:6px;margin:16px 0 14px;flex-wrap:wrap}
+.btf-kind{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:8px 14px;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.btf-kind:hover{border-color:var(--navy);color:var(--navy)}
+.btf-kind.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
 
-.bp-ta{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.7;resize:vertical}
-.bp-prev{margin-top:14px;max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px}
-.bp-prev:empty{display:none}
-.bp-prev table{margin:0}
-.bp-bad{background:rgba(234,78,61,.07)}
-.bp-x{color:#b5301f;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
-.bp-note{padding:8px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.btf-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.btf-seg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:9px 20px;cursor:pointer}
+.btf-seg button+button{border-left:1px solid var(--line)}
+.btf-seg button.on{background:var(--orange);color:#002863}
+
+.btf-psearch{position:relative}
+.btf-plist{display:none;position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(0,20,50,.14);overflow:hidden;max-height:280px;overflow-y:auto}
+.btf-plist.on{display:block}
+.btf-pi{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;padding:10px 14px;font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.btf-pi+.btf-pi{border-top:1px solid #f2f2f2}
+.btf-pi:hover{background:rgba(255,165,21,.10)}
+.btf-pn{font-weight:600;color:#111}
+.btf-pm{font-size:12px;color:var(--muted);white-space:nowrap}
+.btf-hint{font-size:12px;color:var(--muted);margin:6px 0}
+
+.btf-price{border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.btf-prev{margin-top:16px;padding:14px 16px;background:rgba(0,40,99,.04);border-radius:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:52px}
+.btf-wait{color:var(--muted);font-size:13px}
+.btf-pl{font-size:16px;font-weight:600;color:#111}
+.btf-po,.btf-pu,.btf-pb{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+
+@media (max-width:820px){
+  .bt-bar{flex-direction:column;align-items:stretch}
+  .bt-desc{max-width:none}
+  .bt-gbtns{grid-template-columns:repeat(2,1fr)}
+}
 
 </style>
 </head>
@@ -826,7 +856,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart', logins:'Last login',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates', bets: 'Bets'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -2813,230 +2843,7 @@ function btBookForm(id) {
   });
 }
 
-/* last-used values persist across adds so a run of bets is 2 fields each */
-var BT_LAST = { week: null, book: '', units: 1, bettor: null, date: null };
 
-/* ---------------------------------------------------------------------
-   1. PARSER — turns "Kyler Murray u18.5 Completions -110 DK 1u" into fields
-   Returns {description, odds, units, sportsbook_id, matchup, bet_type}
-   Anything it can't read comes back null and the field is left blank.
-   ------------------------------------------------------------------- */
-function btParse(text) {
-  var t = ' ' + String(text || '').trim() + ' ';
-  var out = { description: '', odds: null, units: null, sportsbook_id: null, matchup: null, bet_type: 'prop' };
-  if (!t.trim()) return out;
-
-  // matchup: NYJ@ARI or NYJ @ ARI
-  var mm = t.match(/\b([A-Z]{2,3})\s*@\s*([A-Z]{2,3})\b/);
-  if (mm) { out.matchup = mm[1] + '@' + mm[2]; t = t.replace(mm[0], ' '); }
-
-  // units: "1u", "0.5u", "2 units"
-  var um = t.match(/\b(\d+(?:\.\d+)?)\s*(?:u|units?)\b/i);
-  if (um) { out.units = Number(um[1]); t = t.replace(um[0], ' '); }
-
-  // odds: American only — 3+ digits, no decimal, so -3.5 spreads survive
-  var om = t.match(/(?:^|\s)([+-]\d{3,4})(?=\s|$)/);
-  if (om) { out.odds = parseInt(om[1], 10); t = t.replace(om[0], ' '); }
-
-  // sportsbook: match name or short name, longest first
-  var books = (BT.books || []).slice().sort(function (a, b) {
-    return (b.name || '').length - (a.name || '').length;
-  });
-  for (var i = 0; i < books.length; i++) {
-    var b = books[i];
-    var names = [b.name, b.short_name].filter(Boolean);
-    for (var j = 0; j < names.length; j++) {
-      var re = new RegExp('(?:^|\\s)' + names[j].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=\\s|$)', 'i');
-      if (re.test(t)) { out.sportsbook_id = b.id; t = t.replace(re, ' '); i = books.length; break; }
-    }
-  }
-
-  out.description = t.replace(/\s{2,}/g, ' ').trim();
-
-  // type inference off what's left
-  var d = out.description.toLowerCase();
-  if (/\bml\b|moneyline|money line/.test(d)) out.bet_type = 'moneyline';
-  else if (/\b(o|u|over|under)\s?\d+(\.\d)?\b/.test(d) && /\btotal|team total\b/.test(d)) out.bet_type = 'total';
-  else if (/[+-]\d+(\.\d)?\b/.test(d) && !/\b(o|u|over|under)\d/.test(d)) out.bet_type = 'spread';
-
-  return out;
-}
-
-/* ---------------------------------------------------------------------
-   2. QUICK BAR — always-visible row above the table. Type, hit Enter,
-   focus jumps back to the bet field with book/units/week held over.
-   ------------------------------------------------------------------- */
-function btQuickHtml() {
-  if (!can('bets', 'c') && !can('bets', 'u')) return '';
-
-  var wk = BT_LAST.week || BT.week || 1;
-  var date = BT_LAST.date || new Date().toISOString().slice(0, 10);
-  var bettorSel = can('bets', 'u')
-    ? '<select id="bq-bettor" class="bq-f bq-who">' +
-        (BT.staff || []).map(function (s) {
-          var sel = (BT_LAST.bettor || MY_STAFF_ID) === s.id;
-          return '<option value="' + s.id + '"' + (sel ? ' selected' : '') + '>' + esc(s.name) + '</option>';
-        }).join('') + '</select>'
-    : '<input type="hidden" id="bq-bettor" value="' + (MY_STAFF_ID || '') + '">';
-
-  return '<div class="bq">' +
-    '<div class="bq-row">' +
-      bettorSel +
-      '<input type="date" id="bq-date" class="bq-f bq-date" value="' + esc(date) + '">' +
-      '<select id="bq-week" class="bq-f bq-week">' +
-        btWeekOpts(wk).replace('<option value="">All weeks</option>', '') + '</select>' +
-      '<input id="bq-text" class="bq-f bq-text" autocomplete="off" ' +
-        'placeholder="Kyler Murray u18.5 Completions -110 DK 1u   —  paste it however you say it, then Enter">' +
-      '<button class="btn btn-primary btn-sm" onclick="btQuickAdd()">Add</button>' +
-      '<button class="btn btn-ghost btn-sm" onclick="btPasteForm()">Paste list</button>' +
-    '</div>' +
-    '<div class="bq-read" id="bq-read"></div>' +
-  '</div>';
-}
-
-function btQuickWire() {
-  var t = document.querySelector('#bq-text');
-  if (!t) return;
-  t.oninput = function () {
-    var p = btParse(this.value);
-    var r = document.querySelector('#bq-read');
-    if (!this.value.trim()) { r.innerHTML = ''; return; }
-    var book = (BT.books || []).filter(function (b) { return b.id === p.sportsbook_id; })[0];
-    r.innerHTML =
-      '<span class="bq-chip' + (p.description ? '' : ' miss') + '">' + esc(p.description || 'bet?') + '</span>' +
-      '<span class="bq-chip' + (p.odds == null ? ' miss' : '') + '">' + (p.odds == null ? 'odds?' : btOddsTxt(p.odds)) + '</span>' +
-      '<span class="bq-chip">' + btUnits(p.units == null ? BT_LAST.units : p.units) + 'u</span>' +
-      (book ? '<span class="bq-chip">' + esc(book.short_name || book.name) + '</span>' : '') +
-      (p.matchup ? '<span class="bq-chip">' + esc(p.matchup) + '</span>' : '') +
-      '<span class="bq-chip type">' + p.bet_type + '</span>';
-  };
-  t.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); btQuickAdd(); } };
-  t.focus();
-}
-
-async function btQuickAdd() {
-  var box = document.querySelector('#bq-text');
-  var raw = box.value.trim();
-  if (!raw) return;
-
-  var p = btParse(raw);
-  if (!p.description) return toast('Couldn\'t read a bet out of that.', 'err');
-  if (p.odds == null) { box.focus(); return toast('No odds found — add -110 or +175 to the line.', 'err'); }
-
-  var bettor = val('#bq-bettor');
-  if (!bettor) return toast('No staff record linked to your login.', 'err');
-
-  var payload = {
-    season: Number(BT.season),
-    week: Number(val('#bq-week')),
-    placed_on: val('#bq-date'),
-    matchup: p.matchup,
-    description: p.description,
-    bet_type: p.bet_type,
-    odds: p.odds,
-    sportsbook_id: p.sportsbook_id || BT_LAST.book || null,
-    units: p.units == null ? BT_LAST.units : p.units,
-    result: 'pending',
-    bettor_id: bettor
-  };
-
-  box.disabled = true;
-  try {
-    await dbPost('bt_bets', payload);
-    BT_LAST = {
-      week: payload.week, book: payload.sportsbook_id, units: payload.units,
-      bettor: bettor, date: payload.placed_on
-    };
-    box.value = '';
-    document.querySelector('#bq-read').innerHTML = '';
-    toast('Added');
-    await btLoadTab();
-  } catch (e) {
-    toast('Could not add: ' + (e.message || e), 'err');
-  }
-  box.disabled = false;
-  var again = document.querySelector('#bq-text');
-  if (again) again.focus();
-}
-
-/* ---------------------------------------------------------------------
-   3. BULK PASTE — one bet per line, preview before committing
-   ------------------------------------------------------------------- */
-function btPasteForm() {
-  var bettorSel = can('bets', 'u')
-    ? '<div class="field"><label>Bettor</label><select id="bp-bettor">' +
-        (BT.staff || []).map(function (s) {
-          var sel = (BT_LAST.bettor || MY_STAFF_ID) === s.id;
-          return '<option value="' + s.id + '"' + (sel ? ' selected' : '') + '>' + esc(s.name) + '</option>';
-        }).join('') + '</select></div>'
-    : '<input type="hidden" id="bp-bettor" value="' + (MY_STAFF_ID || '') + '">';
-
-  modal({
-    title: 'Paste bets',
-    wide: true,
-    saveLabel: 'Add all',
-    body:
-      '<div class="form-grid">' +
-        bettorSel +
-        '<div class="field"><label>Date</label><input type="date" id="bp-date" value="' +
-          (BT_LAST.date || new Date().toISOString().slice(0, 10)) + '"></div>' +
-        '<div class="field"><label>Week</label><select id="bp-week">' +
-          btWeekOpts(BT_LAST.week || BT.week || 1).replace('<option value="">All weeks</option>', '') +
-        '</select></div>' +
-        '<div class="field full"><label>One bet per line</label>' +
-          '<textarea id="bp-text" rows="9" class="bp-ta" placeholder="Kyler Murray u18.5 Completions -110 DK 1u&#10;Tyrone Tracy o73.5 Rush Yds -110 Bet365 1u&#10;NYG@CAR Deebo o55.5 Rec Yds -113 FD 0.5u"></textarea></div>' +
-      '</div>' +
-      '<div class="bp-prev" id="bp-prev"></div>',
-    onReady: function () {
-      var ta = document.querySelector('#bp-text');
-      ta.oninput = function () {
-        var lines = this.value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-        if (!lines.length) { document.querySelector('#bp-prev').innerHTML = ''; return; }
-        var h = '<table class="bt-table"><thead><tr><th>Bet</th><th>Odds</th>' +
-                '<th class="num">Units</th><th>Book</th><th>Game</th></tr></thead><tbody>';
-        lines.forEach(function (l) {
-          var p = btParse(l);
-          var bk = (BT.books || []).filter(function (b) { return b.id === p.sportsbook_id; })[0];
-          var bad = !p.description || p.odds == null;
-          h += '<tr class="' + (bad ? 'bp-bad' : '') + '">' +
-            '<td>' + esc(p.description || '—') + '</td>' +
-            '<td class="mono">' + (p.odds == null ? '<span class="bp-x">missing</span>' : btOddsTxt(p.odds)) + '</td>' +
-            '<td class="num">' + btUnits(p.units == null ? BT_LAST.units : p.units) + '</td>' +
-            '<td>' + esc(bk ? (bk.short_name || bk.name) : '—') + '</td>' +
-            '<td class="mono">' + esc(p.matchup || '—') + '</td></tr>';
-        });
-        document.querySelector('#bp-prev').innerHTML = h + '</tbody></table>' +
-          '<div class="bp-note">Rows in red are missing odds and will be skipped.</div>';
-      };
-    },
-    onSave: async function () {
-      var bettor = val('#bp-bettor');
-      if (!bettor) throw new Error('No bettor selected.');
-      var week = Number(val('#bp-week'));
-      var date = val('#bp-date');
-      var lines = val('#bp-text').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-
-      var rows = lines.map(btParse).filter(function (p) { return p.description && p.odds != null; })
-        .map(function (p) {
-          return {
-            season: Number(BT.season), week: week, placed_on: date,
-            matchup: p.matchup, description: p.description, bet_type: p.bet_type,
-            odds: p.odds, sportsbook_id: p.sportsbook_id || null,
-            units: p.units == null ? 1 : p.units,
-            result: 'pending', bettor_id: bettor
-          };
-        });
-
-      if (!rows.length) throw new Error('Nothing usable to add — every line needs odds.');
-
-      await dbPost('bt_bets', rows);
-      BT_LAST.week = week; BT_LAST.date = date; BT_LAST.bettor = bettor;
-      toast('Added ' + rows.length + ' bet' + (rows.length === 1 ? '' : 's') +
-            (rows.length < lines.length ? ' (' + (lines.length - rows.length) + ' skipped)' : ''));
-      btLoadTab();
-    }
-  });
-}
 
 /* ---------------- RANKINGS DISPLAY ---------------- */
 let RANK_TAB='grid';
