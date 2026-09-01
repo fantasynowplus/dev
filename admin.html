@@ -6,6 +6,8 @@
 <title>Admin Portal — FantasyNow+</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -778,7 +780,96 @@
   .bt-desc{max-width:none}
   .bt-gbtns{grid-template-columns:repeat(2,1fr)}
 }
+/* admin-bets-graphic.css — append to admin.html's <style> block */
 
+/* ---- overlay chrome ---- */
+.bg-overlay{position:fixed;inset:0;z-index:900;background:rgba(6,14,30,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+.bg-shell{background:#fff;border-radius:16px;width:100%;max-width:1400px;height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,10,40,.4)}
+.bg-top{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+.bg-top h3{margin:0;font-size:17px;color:var(--navy)}
+.bg-topright{display:flex;gap:8px}
+.bg-body{flex:1;display:grid;grid-template-columns:320px 1fr;min-height:0}
+.bg-side{border-right:1px solid var(--line);padding:16px;overflow-y:auto;background:#fbfcfe}
+.bg-f{display:block;margin-bottom:12px}
+.bg-f span{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.bg-f input,.bg-f select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+.bg-lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;display:flex;justify-content:space-between;align-items:center}
+.bg-count{font-weight:600;letter-spacing:0;text-transform:none;color:var(--orange)}
+.bg-tpls{display:grid;gap:6px}
+.bg-tpl{text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 11px;cursor:pointer;font:inherit}
+.bg-tpl b{display:block;font-size:13px;color:#111}
+.bg-tpl i{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:1px}
+.bg-tpl.on{border-color:var(--orange);background:rgba(255,165,21,.07)}
+.bg-picks{display:grid;gap:6px}
+.bg-pick{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;cursor:pointer;font:inherit}
+.bg-pick:hover{border-color:var(--navy)}
+.bg-pdot{width:15px;height:15px;border-radius:5px;border:2px solid var(--line);flex:none}
+.bg-pick.on{border-color:var(--orange);background:rgba(255,165,21,.07)}
+.bg-pick.on .bg-pdot{background:var(--orange);border-color:var(--orange)}
+.bg-pb{flex:1;min-width:0}
+.bg-pd{display:block;font-size:13px;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bg-pm{display:block;font-size:11px;color:var(--muted)}
+.bg-po{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--navy)}
+.bg-none{font-size:13px;color:var(--muted);padding:10px 0}
+.bg-preview{position:relative;overflow:auto;background:#e9edf4;display:flex;align-items:center;justify-content:center;padding:20px}
+.bg-scaler{transform-origin:top left;flex:none}
+
+/* ---- the stage itself ---- */
+.bg-stage{position:relative;overflow:hidden;background:linear-gradient(160deg,#00306f 0%,#001c45 55%,#001231 100%);color:#fff;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column}
+.bgs-empty{margin:auto;color:rgba(255,255,255,.45);font-size:30px}
+
+.bgs-head{padding:34px 44px 22px;text-align:center}
+.bgs-title{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:72px;line-height:1;letter-spacing:.01em;text-transform:uppercase;color:#fff;text-shadow:0 4px 22px rgba(0,0,0,.35)}
+
+.bgs-foot{margin-top:auto;background:rgba(0,0,0,.34);padding:20px;text-align:center}
+.bgs-brand{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:34px;letter-spacing:.03em;color:#fff}
+.bgs-brand i{font-style:normal;color:#FFA515}
+
+.bgs-face{width:54px;height:54px;border-radius:50%;object-fit:cover;flex:none;border:3px solid #FFA515;background:#0d2b5c;display:inline-flex;align-items:center;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px}
+.bgs-face.lg{width:96px;height:96px;font-size:32px;border-width:4px}
+.bgs-face.xl{width:140px;height:140px;font-size:48px;border-width:5px}
+
+.bgs-game{display:flex;align-items:center;justify-content:center;gap:22px;background:#FFA515;padding:14px}
+.bgs-game img{height:76px;width:auto;object-fit:contain}
+.bgs-at{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:36px;color:#001c45}
+.bgs-gtxt{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:36px;color:#001c45}
+
+/* slate */
+.bgs-slate{display:grid;gap:22px;padding:0 40px 24px;flex:1;align-content:start}
+.bgs-panel{border:3px solid #FFA515;border-radius:14px;overflow:hidden;background:rgba(0,20,55,.55)}
+.bgs-rows{display:flex;flex-direction:column}
+.bgs-row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:2px solid rgba(255,165,21,.5)}
+.bgs-row:first-child{border-top:0}
+.bgs-rd{flex:1;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:33px;line-height:1.12}
+.bgs-ro{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:31px;color:#4ade80;font-variant-numeric:tabular-nums}
+
+/* analyst grid */
+.bgs-grid{display:grid;gap:16px;padding:0 40px 24px;flex:1;align-content:start}
+.bgs-col{display:flex;flex-direction:column;gap:14px}
+.bgs-colhead{display:flex;flex-direction:column;align-items:center;gap:8px}
+.bgs-colname{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.03em}
+.bgs-cell{background:rgba(0,20,55,.6);border:3px solid #FFA515;border-radius:12px;padding:16px 14px;text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.bgs-cell-empty{border-style:dashed;border-color:rgba(255,165,21,.25);background:transparent}
+.bgs-cellgame{font-size:17px;color:rgba(255,255,255,.6);letter-spacing:.05em}
+.bgs-celltxt{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:34px;line-height:1.1}
+.bgs-cellodds{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;color:#4ade80}
+
+/* solo */
+.bgs-solo{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:60px 60px 40px;text-align:center}
+.bgs-ghost{position:absolute;right:-90px;bottom:-60px;width:520px;opacity:.09;pointer-events:none}
+.bgs-solotop{display:flex;align-items:center;gap:20px}
+.bgs-soloname{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:46px;text-transform:uppercase;letter-spacing:.02em;text-align:left}
+.bgs-solowk{font-size:20px;color:#FFA515;letter-spacing:.1em;text-transform:uppercase;text-align:left}
+.bgs-solo .bgs-game{border-radius:12px;padding:12px 26px}
+.bgs-solobet{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:82px;line-height:1.06;max-width:900px}
+.bgs-solometa{display:flex;align-items:center;gap:16px}
+.bgs-soloodds{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:58px;color:#4ade80}
+.bgs-solounits,.bgs-solobook{border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 20px;font-size:24px;font-weight:600}
+
+@media (max-width:1000px){
+  .bg-body{grid-template-columns:1fr}
+  .bg-side{border-right:0;border-bottom:1px solid var(--line);max-height:44vh}
+}
 </style>
 </head>
 <body>
@@ -2639,9 +2730,10 @@ async function btLoadTab(){
 /* ---------- render ---------- */
 
 function btRender(){
-  topAction(ifCan('bets','c','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>') ||
-            ifCan('bets','u','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>'));
-
+  topAction(
+    ifCan('bets','c','<button class="btn btn-primary" onclick="btForm()">+ Add bet</button>') +
+    ifCan('bets','c','<button class="btn btn-ghost" onclick="btGraphic()">Make graphic</button>')
+  );
   var tabs = [['mine','My bets'],['grade','Grade']];
   if(can('bets','r')) tabs.push(['all','All bets'],['board','Leaderboard']);
   if(can('bets','u')) tabs.push(['books','Sportsbooks']);
@@ -3216,6 +3308,340 @@ function btBookForm(id){
       loadBets();
     }
   });
+}
+
+var BG = { bets: [], sel: {}, tpl: 'slate', size: 'square', title: '', week: null, busy: false };
+ 
+var BG_TEMPLATES = [
+  ['slate',  'Matchup Slate', 'Grouped by game, logos up top'],
+  ['grid',   'Analyst Grid',  'One column per analyst'],
+  ['solo',   'Solo Bet',      'One bet, full bleed']
+];
+ 
+var BG_SIZES = {
+  square:   { w: 1080, h: 1080, label: 'Square 1:1' },
+  portrait: { w: 1080, h: 1350, label: 'Portrait 4:5' },
+  wide:     { w: 1920, h: 1080, label: 'Wide 16:9' }
+};
+ 
+/* team logos — same Sleeper CDN the roster generator already uses */
+var BG_LOGO = 'https://sleepercdn.com/images/team_logos/nfl/';
+function bgLogo(abbr) {
+  if (!abbr) return '';
+  return BG_LOGO + String(abbr).trim().toLowerCase() + '.png';
+}
+function bgTeams(matchup) {
+  var m = String(matchup || '').split('@');
+  return m.length === 2 ? { away: m[0].trim(), home: m[1].trim() } : null;
+}
+function bgHead(v) {
+  if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return v;
+  return v.indexOf('/') >= 0 ? v.replace(/^\/+/, '') : 'assets/staff/' + v;
+}
+function bgInitials(n) {
+  return String(n || '?').trim().split(/\s+/).slice(0, 2)
+    .map(function (w) { return w[0]; }).join('').toUpperCase();
+}
+ 
+/* ---------------------------------------------------------------------
+   Overlay
+   ------------------------------------------------------------------- */
+ 
+async function btGraphic() {
+  if (typeof html2canvas === 'undefined') {
+    return toast('html2canvas isn\'t loaded — add the script tag to <head>.', true);
+  }
+ 
+  BG.week = BT.week || BT_LAST.week || 1;
+  BG.title = 'Week ' + BG.week + ' Betting Card';
+  BG.sel = {};
+ 
+  var args = { p_season: Number(BT.season), p_week: BG.week };
+  try {
+    BG.bets = (can('bets','u') ? await rpc('bt_board', args) : await rpc('bt_my_bets', args)) || [];
+  } catch (e) {
+    return toast('Could not load bets: ' + (e.message || e), true);
+  }
+ 
+  var host = document.createElement('div');
+  host.className = 'bg-overlay';
+  host.id = 'bgOverlay';
+  host.innerHTML =
+    '<div class="bg-shell">' +
+      '<div class="bg-top">' +
+        '<h3>Bet graphic</h3>' +
+        '<div class="bg-topright">' +
+          '<button class="btn btn-primary" onclick="bgDownload()">Download PNG</button>' +
+          '<button class="btn btn-ghost" onclick="bgClose()">Close</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bg-body">' +
+        '<div class="bg-side">' +
+          '<label class="bg-f"><span>Week</span><select id="bgWeek">' +
+            btWeekOpts(BG.week, false) + '</select></label>' +
+          '<label class="bg-f"><span>Headline</span><input id="bgTitle" value="' + esc(BG.title) + '"></label>' +
+          '<label class="bg-f"><span>Size</span><select id="bgSize">' +
+            Object.keys(BG_SIZES).map(function (k) {
+              return '<option value="' + k + '"' + (BG.size === k ? ' selected' : '') + '>' +
+                     BG_SIZES[k].label + '</option>';
+            }).join('') + '</select></label>' +
+          '<div class="bg-lab">Template</div>' +
+          '<div class="bg-tpls">' + BG_TEMPLATES.map(function (t) {
+            return '<button class="bg-tpl' + (BG.tpl === t[0] ? ' on' : '') + '" data-tpl="' + t[0] + '">' +
+                   '<b>' + t[1] + '</b><i>' + t[2] + '</i></button>';
+          }).join('') + '</div>' +
+          '<div class="bg-lab">Bets <span class="bg-count" id="bgCount">0 picked</span></div>' +
+          '<div class="bg-picks" id="bgPicks"></div>' +
+        '</div>' +
+        '<div class="bg-preview"><div class="bg-scaler" id="bgScaler">' +
+          '<div id="bgStage" class="bg-stage"></div>' +
+        '</div></div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(host);
+  document.body.style.overflow = 'hidden';
+ 
+  host.querySelector('#bgWeek').onchange = async function () {
+    BG.week = Number(this.value);
+    BG.sel = {};
+    try {
+      var a = { p_season: Number(BT.season), p_week: BG.week };
+      BG.bets = (can('bets','u') ? await rpc('bt_board', a) : await rpc('bt_my_bets', a)) || [];
+    } catch (e) { BG.bets = []; }
+    var t = document.getElementById('bgTitle');
+    t.value = 'Week ' + BG.week + ' Betting Card';
+    BG.title = t.value;
+    bgPicks(); bgRender();
+  };
+  host.querySelector('#bgTitle').oninput = function () { BG.title = this.value; bgRender(); };
+  host.querySelector('#bgSize').onchange = function () { BG.size = this.value; bgRender(); };
+  host.querySelector('.bg-tpls').onclick = function (e) {
+    var b = e.target.closest('[data-tpl]');
+    if (!b) return;
+    BG.tpl = b.dataset.tpl;
+    Array.prototype.forEach.call(this.querySelectorAll('.bg-tpl'), function (x) {
+      x.classList.toggle('on', x === b);
+    });
+    bgRender();
+  };
+  host.querySelector('#bgPicks').onclick = function (e) {
+    var row = e.target.closest('[data-bet]');
+    if (!row) return;
+    var id = row.dataset.bet;
+    if (BG.sel[id]) delete BG.sel[id]; else BG.sel[id] = true;
+    row.classList.toggle('on', !!BG.sel[id]);
+    bgCount(); bgRender();
+  };
+ 
+  bgPicks();
+  bgRender();
+}
+ 
+function bgClose() {
+  var o = document.getElementById('bgOverlay');
+  if (o) o.remove();
+  document.body.style.overflow = '';
+}
+ 
+function bgCount() {
+  var n = Object.keys(BG.sel).length;
+  var el = document.getElementById('bgCount');
+  if (el) el.textContent = n + ' picked';
+}
+ 
+function bgPicks() {
+  var host = document.getElementById('bgPicks');
+  if (!host) return;
+  if (!BG.bets.length) {
+    host.innerHTML = '<div class="bg-none">No bets logged for ' + btWeekLabel(BG.week) + '.</div>';
+    return bgCount();
+  }
+  host.innerHTML = BG.bets.map(function (b) {
+    return '<button class="bg-pick" data-bet="' + b.id + '">' +
+      '<span class="bg-pdot"></span>' +
+      '<span class="bg-pb">' +
+        '<span class="bg-pd">' + esc(b.description) + '</span>' +
+        '<span class="bg-pm">' + esc(b.bettor_name || 'You') +
+          (b.matchup ? ' · ' + esc(b.matchup) : '') + '</span>' +
+      '</span>' +
+      '<span class="bg-po">' + btOddsTxt(b.odds) + '</span>' +
+    '</button>';
+  }).join('');
+  bgCount();
+}
+ 
+/* ---------------------------------------------------------------------
+   Stage
+   ------------------------------------------------------------------- */
+ 
+function bgChosen() {
+  return BG.bets.filter(function (b) { return BG.sel[b.id]; });
+}
+ 
+function bgRender() {
+  var stage = document.getElementById('bgStage');
+  if (!stage) return;
+  var sz = BG_SIZES[BG.size];
+  stage.style.width = sz.w + 'px';
+  stage.style.height = sz.h + 'px';
+ 
+  var picks = bgChosen();
+  stage.innerHTML = picks.length
+    ? (BG.tpl === 'grid' ? bgTplGrid(picks, sz)
+      : BG.tpl === 'solo' ? bgTplSolo(picks, sz)
+      : bgTplSlate(picks, sz))
+    : '<div class="bgs-empty">Pick some bets on the left</div>';
+ 
+  // fit the 1080px stage into the preview column
+  var wrap = document.querySelector('.bg-preview');
+  var scaler = document.getElementById('bgScaler');
+  if (wrap && scaler) {
+    var pad = 40;
+    var s = Math.min((wrap.clientWidth - pad) / sz.w, (wrap.clientHeight - pad) / sz.h, 1);
+    scaler.style.transform = 'scale(' + s + ')';
+    scaler.style.width = sz.w + 'px';
+    scaler.style.height = sz.h + 'px';
+    scaler.style.marginLeft = ((wrap.clientWidth - sz.w * s) / 2 - 0) + 'px';
+  }
+}
+ 
+function bgHeadHtml(title) {
+  return '<div class="bgs-head"><div class="bgs-title">' + esc(title || '') + '</div></div>';
+}
+function bgFootHtml() {
+  return '<div class="bgs-foot"><span class="bgs-brand">FantasyNow<i>+</i></span></div>';
+}
+function bgFace(b, size) {
+  var src = bgHead(b.bettor_headshot);
+  var cl = 'bgs-face' + (size ? ' ' + size : '');
+  return src
+    ? '<img class="' + cl + '" src="' + esc(src) + '" alt="">'
+    : '<span class="' + cl + '">' + esc(bgInitials(b.bettor_name)) + '</span>';
+}
+function bgTeamRow(matchup) {
+  var t = bgTeams(matchup);
+  if (!t) return '<div class="bgs-game"><span class="bgs-gtxt">' + esc(matchup || '') + '</span></div>';
+  return '<div class="bgs-game">' +
+    '<img src="' + bgLogo(t.away) + '" alt="">' +
+    '<span class="bgs-at">@</span>' +
+    '<img src="' + bgLogo(t.home) + '" alt="">' +
+  '</div>';
+}
+ 
+/* --- template: matchup slate --- */
+function bgTplSlate(picks) {
+  var groups = {}, order = [];
+  picks.forEach(function (b) {
+    var k = b.matchup || 'Other';
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(b);
+  });
+ 
+  var cols = order.length <= 1 ? 1 : 2;
+  return bgHeadHtml(BG.title) +
+    '<div class="bgs-slate" style="grid-template-columns:repeat(' + cols + ',1fr)">' +
+      order.slice(0, 4).map(function (k) {
+        return '<div class="bgs-panel">' +
+          bgTeamRow(k) +
+          '<div class="bgs-rows">' + groups[k].map(function (b) {
+            return '<div class="bgs-row">' +
+              bgFace(b) +
+              '<span class="bgs-rd">' + esc(b.description) + '</span>' +
+              '<span class="bgs-ro">' + btOddsTxt(b.odds) + '</span>' +
+            '</div>';
+          }).join('') + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>' + bgFootHtml();
+}
+ 
+/* --- template: analyst grid --- */
+function bgTplGrid(picks) {
+  var people = [], byPerson = {};
+  picks.forEach(function (b) {
+    var k = b.bettor_id || b.bettor_name;
+    if (!byPerson[k]) { byPerson[k] = []; people.push({ k: k, b: b }); }
+    byPerson[k].push(b);
+  });
+  people = people.slice(0, 4);
+  var deep = Math.max.apply(null, people.map(function (p) { return byPerson[p.k].length; }).concat([1]));
+ 
+  return bgHeadHtml(BG.title) +
+    '<div class="bgs-grid" style="grid-template-columns:repeat(' + people.length + ',1fr)">' +
+      people.map(function (p) {
+        var list = byPerson[p.k];
+        return '<div class="bgs-col">' +
+          '<div class="bgs-colhead">' + bgFace(p.b, 'lg') +
+            '<span class="bgs-colname">' + esc(p.b.bettor_name || '') + '</span></div>' +
+          Array.apply(null, { length: deep }).map(function (_, i) {
+            var b = list[i];
+            if (!b) return '<div class="bgs-cell bgs-cell-empty"></div>';
+            return '<div class="bgs-cell">' +
+              (b.matchup ? '<div class="bgs-cellgame">' + esc(b.matchup) + '</div>' : '') +
+              '<div class="bgs-celltxt">' + esc(b.description) + '</div>' +
+              '<div class="bgs-cellodds">' + btOddsTxt(b.odds) + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }).join('') +
+    '</div>' + bgFootHtml();
+}
+ 
+/* --- template: solo --- */
+function bgTplSolo(picks) {
+  var b = picks[0];
+  var t = bgTeams(b.matchup);
+  return '<div class="bgs-solo">' +
+    (t ? '<img class="bgs-ghost" src="' + bgLogo(t.home) + '" alt="">' : '') +
+    '<div class="bgs-solotop">' + bgFace(b, 'xl') +
+      '<div><div class="bgs-soloname">' + esc(b.bettor_name || '') + '</div>' +
+      '<div class="bgs-solowk">' + btWeekLabel(b.week) + '</div></div>' +
+    '</div>' +
+    (b.matchup ? bgTeamRow(b.matchup) : '') +
+    '<div class="bgs-solobet">' + esc(b.description) + '</div>' +
+    '<div class="bgs-solometa">' +
+      '<span class="bgs-soloodds">' + btOddsTxt(b.odds) + '</span>' +
+      '<span class="bgs-solounits">' + btUnits(b.units) + 'u</span>' +
+      (b.sportsbook ? '<span class="bgs-solobook">' + esc(b.sportsbook) + '</span>' : '') +
+    '</div>' +
+  '</div>' + bgFootHtml();
+}
+ 
+/* ---------------------------------------------------------------------
+   Export
+   ------------------------------------------------------------------- */
+ 
+async function bgDownload() {
+  if (BG.busy) return;
+  var stage = document.getElementById('bgStage');
+  var scaler = document.getElementById('bgScaler');
+  if (!stage || !bgChosen().length) return toast('Pick at least one bet first.', true);
+ 
+  BG.busy = true;
+  var prev = scaler.style.transform;
+  scaler.style.transform = 'scale(1)';   // rasterize unscaled, then restore
+ 
+  try {
+    var canvas = await html2canvas(stage, {
+      backgroundColor: null,
+      scale: 1,
+      useCORS: true,
+      logging: false,
+      width: BG_SIZES[BG.size].w,
+      height: BG_SIZES[BG.size].h
+    });
+    var a = document.createElement('a');
+    a.download = 'fnp-bets-w' + BG.week + '-' + BG.tpl + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    toast('Graphic downloaded');
+  } catch (e) {
+    toast('Could not render: ' + (e.message || e), true);
+  }
+ 
+  scaler.style.transform = prev;
+  BG.busy = false;
 }
 
 /* ---------------- RANKINGS DISPLAY ---------------- */
