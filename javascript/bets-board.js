@@ -6,6 +6,12 @@
 
   var CFG = null;
   var STATE = { season: null, week: null, tab: 'card', bets: [], board: [], house: null };
+  var BOARD_BETTORS = ['jozef hooson', 'paul redman', 'john byrne'];
+  var REVEALED = {};   // bet id -> true, survives the 20s poll
+
+  function onBoard(name) {
+    return BOARD_BETTORS.indexOf(String(name || '').trim().toLowerCase()) > -1;
+  }
   var POLL_MS = 20000;
   var timer = null;
 
@@ -75,18 +81,50 @@
       : weekLabel(STATE.week) + ' \u2022 ' + STATE.season;
     sub.textContent = scope + ' bet card';
     stage.innerHTML = stripHtml() + betsHtml();
+
+    var st = document.getElementById('stage');
+    st.onclick = function (e) {
+      if (e.target.closest('#revealAll')) {
+        var all = STATE.bets.every(function (b) { return REVEALED[b.id]; });
+        STATE.bets.forEach(function (b) { if (all) delete REVEALED[b.id]; else REVEALED[b.id] = true; });
+        return render();
+      }
+      var card = e.target.closest('.bet');
+      if (!card) return;
+      var id = card.dataset.id;
+      if (REVEALED[id]) delete REVEALED[id]; else REVEALED[id] = true;
+      render();
+    };    
+  }
+
+    function summarize(bets) {
+    var s = { wins:0, losses:0, pushes:0, pending:0, risked:0, net:0, bettors:{} };
+    bets.forEach(function (b) {
+      s.bettors[b.bettor_id] = 1;
+      if (b.result === 'pending') { s.pending++; return; }
+      if (b.result === 'void') return;
+      if (b.result === 'win') s.wins++;
+      if (b.result === 'loss') s.losses++;
+      if (b.result === 'push') s.pushes++;
+      s.risked += Number(b.units || 0);
+      s.net += Number(b.net || 0);
+    });
+    s.roi = s.risked ? s.net / s.risked * 100 : null;
+    s.win_pct = (s.wins + s.losses) ? s.wins / (s.wins + s.losses) * 100 : null;
+    s.people = Object.keys(s.bettors).length;
+    return s;
   }
 
   function stripHtml() {
-    var h = STATE.house || {};
-    var rec = (h.wins || 0) + '-' + (h.losses || 0) + (h.pushes ? '-' + h.pushes : '');
+    var h = summarize(STATE.bets);
     return '<div class="strip">' +
-      card('Units', '<span class="' + cls(h.units_net) + '">' + signed(h.units_net) + '</span>',
-           units(h.units_risked) + 'u risked') +
+      card('Units', '<span class="' + cls(h.net) + '">' + signed(h.net) + '</span>',
+           units(h.risked) + 'u risked') +
       card('ROI', '<span class="' + cls(h.roi) + '">' + (h.roi == null ? '—' : signed(h.roi, 1) + '%') + '</span>',
            'return on risk') +
-      card('Record', rec, (h.win_pct == null ? '—' : h.win_pct + '%') + ' win rate') +
-      card('Open', String(h.pending || 0), (h.bettors || 0) + ' analysts') +
+      card('Record', h.wins + '-' + h.losses + (h.pushes ? '-' + h.pushes : ''),
+           (h.win_pct == null ? '—' : h.win_pct.toFixed(0) + '%') + ' win rate') +
+      card('Open', String(h.pending), h.people + ' analysts') +
       '</div>';
   }
 
@@ -95,33 +133,42 @@
            '</div><div class="s">' + esc(s) + '</div></div>';
   }
 
-  function betsHtml() {
+    function betsHtml() {
     if (!STATE.bets.length) return '<div class="state">No bets on the card yet.</div>';
 
-    // open bets first, then most recent
     var rows = STATE.bets.slice().sort(function (a, b) {
       if ((a.result === 'pending') !== (b.result === 'pending')) return a.result === 'pending' ? -1 : 1;
       return String(b.placed_on).localeCompare(String(a.placed_on));
     });
 
-    return '<div class="bets">' + rows.map(function (b) {
+    var allShown = rows.every(function (b) { return REVEALED[b.id]; });
+
+    return '<div class="revealbar"><button class="revealbtn" id="revealAll">' +
+             (allShown ? 'Hide all' : 'Reveal all') + '</button></div>' +
+           '<div class="bets">' + rows.map(function (b) {
+      var shown = !!REVEALED[b.id];
       var net = b.result === 'pending' ? '' :
         '<div class="net ' + cls(b.net) + '">' + signed(b.net) + 'u</div>';
-      return '<div class="bet ' + b.result + '">' +
-        '<div>' +
-          '<div class="who">' + esc(b.bettor_name) + '</div>' +
-          '<div class="desc">' + esc(b.description) + '</div>' +
-          '<div class="sub">' +
-            (b.matchup ? '<span>' + esc(b.matchup) + '</span><span class="dot"></span>' : '') +
-            '<span><b>' + units(b.units) + 'u</b></span>' +
-            (b.sportsbook ? '<span class="dot"></span><span>' + esc(b.sportsbook) + '</span>' : '') +
-            '<span class="dot"></span><span>' + dayTxt(b.placed_on) + '</span>' +
+      return '<div class="bet ' + b.result + (shown ? ' shown' : '') + '" data-id="' + b.id + '">' +
+        '<div class="bet-inner">' +
+          '<div>' +
+            '<div class="who">' + esc(b.bettor_name) + '</div>' +
+            '<div class="desc">' + esc(b.description) + '</div>' +
+            '<div class="sub">' +
+              (b.matchup ? '<span>' + esc(b.matchup) + '</span><span class="dot"></span>' : '') +
+              '<span><b>' + units(b.units) + 'u</b></span>' +
+              (b.sportsbook ? '<span class="dot"></span><span>' + esc(b.sportsbook) + '</span>' : '') +
+              '<span class="dot"></span><span>' + dayTxt(b.placed_on) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="right">' +
+            '<div class="odds">' + oddsTxt(b.odds) + '</div>' + net +
+            '<div class="tag ' + b.result + '">' + b.result + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="right">' +
-          '<div class="odds">' + oddsTxt(b.odds) + '</div>' + net +
-          '<div class="tag ' + b.result + '">' + b.result + '</div>' +
-        '</div>' +
+        (shown ? '' :
+          '<div class="veil"><div class="veil-who">' + esc(b.bettor_name) + '</div>' +
+          '<div class="veil-hint">Tap to reveal</div></div>') +
       '</div>';
     }).join('') + '</div>';
   }
@@ -152,12 +199,10 @@
     try {
       var res = await Promise.all([
         rpc('bt_board', { p_season: STATE.season, p_week: wk }),
-        rpc('bt_house', { p_season: STATE.season, p_week: wk }),
         rpc('bt_leaderboard', { p_season: STATE.season, p_week: null })
       ]);
-      STATE.bets = res[0] || [];
-      STATE.house = (res[1] || [])[0] || {};
-      STATE.board = res[2] || [];
+      STATE.bets = (res[0] || []).filter(function (b) { return onBoard(b.bettor_name); });
+      STATE.board = (res[2] || []).filter(function (r) { return onBoard(r.name); });
       document.getElementById('updated').textContent =
         'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       render();

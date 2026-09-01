@@ -45,11 +45,12 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 
 /* ---- bet rows ---- */
 .bets{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
-.bet{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;padding:15px 18px;display:grid;grid-template-columns:1fr auto;gap:10px 18px;align-items:center}
-.bet.win{border-left-color:var(--aqua);background:linear-gradient(90deg,rgba(66,244,176,.10),transparent 55%),var(--panel)}
-.bet.loss{border-left-color:var(--red);opacity:.62}
-.bet.push{border-left-color:var(--muted)}
-.bet.pending{border-left-color:var(--orange)}
+.bet{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;cursor:pointer}
+.bet-inner{padding:15px 18px;display:grid;grid-template-columns:1fr auto;gap:10px 18px;align-items:center;transition:filter .25s,opacity .25s}
+.bet.shown.win{border-left-color:var(--aqua);background:linear-gradient(90deg,rgba(66,244,176,.10),transparent 55%),var(--panel)}
+.bet.shown.loss{border-left-color:var(--red);opacity:.62}
+.bet.shown.push{border-left-color:var(--muted)}
+.bet.shown.pending{border-left-color:var(--orange)}
 .bet .who{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange)}
 .bet .desc{font-family:Oswald,sans-serif;font-size:25px;font-weight:500;line-height:1.24;margin-top:3px}
 .bet .sub{font-size:13px;color:var(--muted);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -64,6 +65,16 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 .tag.loss{background:rgba(234,78,61,.18);color:var(--red)}
 .tag.push{background:rgba(143,168,204,.16);color:var(--muted)}
 .tag.void{background:rgba(143,168,204,.12);color:var(--muted)}
+.bet:not(.shown) .bet-inner{filter:blur(11px) saturate(.6);opacity:.5;pointer-events:none;user-select:none}
+.bet:not(.shown):hover .bet-inner{filter:blur(8px) saturate(.7);opacity:.62}
+.veil{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(0,10,30,.80);transition:background .25s}
+.bet:not(.shown):hover .veil{background:rgba(0,10,30,.62)}
+.bet.shown .veil{display:none}
+.veil-who{font-family:Oswald,sans-serif;font-size:27px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.55)}
+.veil-hint{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bet:not(.shown):hover .veil-hint{color:var(--orange)}
+.revealbtn{border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
+.revealbtn:hover{border-color:var(--orange);color:var(--orange)}
 
 /* ---- leaderboard ---- */
 .lb{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -77,6 +88,7 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 
 .state{padding:60px 20px;text-align:center;color:var(--muted);font-size:17px}
 @media (max-width:1100px){.strip{grid-template-columns:repeat(2,1fr)}.bets{grid-template-columns:1fr}}
+.revealbar{display:flex;justify-content:flex-end;margin-bottom:12px}
 </style>
 </head>
 <body>
