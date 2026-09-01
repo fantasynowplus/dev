@@ -102,6 +102,15 @@ layout: null
         text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;
         color:#002863;background:#FFA515;padding:2px 9px;border-radius:999px;margin-bottom:10px;
     }
+
+    .tools-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    }
+    @media (max-width: 760px) {
+    .tools-grid-2 { grid-template-columns: 1fr; }
+    }    
     </style>
     <section id="draft" class="tools-section">
         <div class="dgf-feature">
@@ -178,23 +187,25 @@ layout: null
     </section>
 
     <section id="betting" class="tools-section">
-        <div class="tools-section-head">
-            <h2>Sports Betting &amp; DFS</h2>
-            <p>Model-driven betting and DFS tools. Completely free with any FantasyNow+ account, just log in to see the numbers.</p>
-        </div>
-        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                <div class="tools-grid tools-grid-2">
+            <div class="tool-card tool-card-nolock">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>
+                <h3>Bet Tracker</h3>
+                <p>Every NFL bet our analysts put on the board, graded and tracked in units all season. Filter by analyst or see how the Beat the Bookie crew is running.</p>
+                <a href="bets" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card tool-card-nolock">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>
+                <h3>Staff Game Picks</h3>
+                <p>Every analyst picks the moneyline, spread and total on all 16 games. Log in to play along and the crowd rides as one line in the standings.</p>
+                <a href="game-picks" class="tool-card-link">Open Tool</a>
+            </div>
             <div class="tool-card">
                 <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>NFL Simulator</h3>
                 <p>We run 20,000 simulations per game to compare against sportsbooks. Spot where our model beats the market, updated fresh every single morning.</p>
                 <a href="nfl-simulator" class="tool-card-link">Open Tool</a>
             </div>
-            <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>            
-                <h3>Staff Game Picks</h3>
-                <p>Every analyst picks the moneyline, spread and total on all 16 games. Log in to play along and the crowd rides as one line in the standings.</p>
-                <a href="game-picks" class="tool-card-link">Open Tool</a>
-            </div>            
             <div class="tool-card">
                 <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
                 <h3>DFS Lineup Tools</h3>
