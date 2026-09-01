@@ -123,20 +123,28 @@
 
   /* ---------- rail ---------- */
 
-  function analystHtml(o) {
-    var on = S.sel === o.id;
-    var dim = !on && S.sel !== null;
-    var av = o.group
-      ? '<div class="btx-anav">' + esc(o.abbr) + '</div>'
-      : (headshot(o.headshot)
-          ? '<img class="btx-anav" src="' + esc(headshot(o.headshot)) + '" alt="" ' +
-            'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
-            '{className:\'btx-anav\',textContent:\'' + esc(initials(o.name)) + '\'}))">'
-          : '<div class="btx-anav">' + esc(initials(o.name)) + '</div>');
+  function isOn(o) {
+    if (S.sel === o.id) return true;
+    if (o.group) return false;          // group cards only light up when picked directly
+    if (S.sel === 'all') return true;   // All Picks lights everyone
+    if (S.sel === 'btb') return !!o.btb;
+    return false;
+  }
 
-    return '<button class="btx-an' + (o.group ? ' grp' : '') + (on ? ' on' : dim ? ' dim' : '') +
+  function avatarHtml(o) {
+    var src = o.group ? o.logo : headshot(o.headshot);
+    var fallback = o.group ? o.abbr : initials(o.name);
+    if (!src) return '<div class="btx-anav">' + esc(fallback) + '</div>';
+    return '<img class="btx-anav" src="' + esc(src) + '" alt="" ' +
+      'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
+      '{className:\'btx-anav\',textContent:\'' + esc(fallback) + '\'}))">';
+  }
+
+  function analystHtml(o) {
+    var on = isOn(o);
+    return '<button class="btx-an' + (o.group ? ' grp' : '') + (on ? ' on' : ' dim') +
              '" data-sel="' + esc(o.id) + '">' +
-      av +
+      avatarHtml(o) +
       '<span class="btx-anb">' +
         '<span class="btx-ann">' + esc(o.name) + '</span>' +
         '<span class="btx-ans">' + recordTxt(o.t) +
@@ -148,8 +156,10 @@
 
   function renderRail() {
     var groups = [
-      { id: 'btb', name: 'Beat the Bookie', abbr: 'BTB', group: true, t: totalFor('btb') },
-      { id: 'all', name: 'All Picks',       abbr: 'ALL', group: true, t: totalFor('all') }
+      { id: 'btb', name: 'Beat the Bookie', abbr: 'BTB', group: true,
+        logo: 'assets/images/Beat-the-Bookie.png', t: totalFor('btb') },
+      { id: 'all', name: 'All Picks', abbr: 'ALL', group: true,
+        logo: 'assets/images/social-logo.png', t: totalFor('all') }
     ];
     document.getElementById('btxGroups').innerHTML = groups.map(analystHtml).join('');
 
@@ -157,12 +167,12 @@
     var rest = S.people.filter(function (p) { return !p.btb; });
 
     document.getElementById('btxMainPeople').innerHTML =
-      main.map(function (p) { return analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t }); }).join('') ||
+      analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb }); }).join('') ||
       '<p class="btx-state" style="padding:14px 0">No bets logged yet.</p>';
 
     document.getElementById('btxOtherLabel').hidden = !rest.length;
     document.getElementById('btxOtherPeople').innerHTML =
-      rest.map(function (p) { return analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t }); }).join('');
+      analystHtml({ id:p.id, name:p.name, headshot:p.headshot, t:p.t, btb:p.btb }); }).join('');
   }
 
   /* ---------- left panel ---------- */
