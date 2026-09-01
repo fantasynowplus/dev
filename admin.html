@@ -675,6 +675,10 @@
   .rdh-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--line)}
   .rdh-row .rr-n{flex:1;font-size:13.5px;font-weight:600}
 
+.pp-boxes{display:flex;gap:18px;flex-wrap:wrap;padding-top:6px}
+.pp-box{display:inline-flex;align-items:center;gap:7px;font-size:14px;cursor:pointer}
+.pp-hint{margin:14px 0 0;font-size:12.5px;color:var(--muted);line-height:1.6}
+
 .bt-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(0,40,99,.03);flex-wrap:wrap}
 .bt-tabs{display:flex;gap:6px}
 .bt-tab{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -856,7 +860,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart', logins:'Last login',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates', bets: 'Sports Betting'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates', bets: 'Bets'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -1052,6 +1056,7 @@ async function boot(){
   const lvl = ME && ME.admin_level ? ME.admin_level : 0;
   if(!ME){ gateMsg('Admin access required','Found a session but no matching profile row. Log out and back in on the site.'); return; }
   try{ if(ME.role_id){ const r = await dbGet('roles?select=permissions&id=eq.'+ME.role_id); if(r&&r[0]) PERMS = r[0].permissions||{}; } }catch(e){ PERMS = {}; }
+  try{ const merged = await rpc('my_perms'); if(merged && typeof merged==='object') PERMS = merged; }catch(e){}
   try{ MY_STAFF_ID = await rpc('my_staff_id'); }catch(e){ MY_STAFF_ID = null; }
   if(!(lvl>=9 || MY_STAFF_ID || Object.keys(RESOURCES).some(k=>can(k,'r')))){
     gateMsg('No access yet','Your account isn\'t linked to a staff record and has no dashboard permissions. Ask an owner to set you up.');
@@ -1269,7 +1274,86 @@ async function loadRoles(){
     '</tr>').join('')
   ).join('');
   document.getElementById('content').innerHTML =
-    '<div class="panel"><div class="table-wrap"><table class="role-matrix"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>';
+    '<div class="panel"><div class="table-wrap"><table class="role-matrix"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>'+
+    '<div id="ppPanel"><div class="empty">Loading individual access…</div></div>';
+  loadPersonPerms();
+}
+
+/* ---------------- individual access (grants on top of a role) ---------------- */
+let PPERMS=[], PPROFILES=[];
+async function loadPersonPerms(){
+  const host=document.getElementById('ppPanel');
+  if(!host) return;
+  try{
+    PPERMS = await dbGet('profile_perms?select=*,profile:profiles(id,name,email)&order=resource.asc')||[];
+  }catch(e){
+    host.innerHTML='<div class="panel"><div class="empty"><h4>Individual access unavailable</h4><p>'+esc(e.message)+'</p></div></div>';
+    return;
+  }
+  const rows = PPERMS.map(p=>{
+    const nm = (p.profile&&(p.profile.name||p.profile.email))||'Unknown';
+    const acts=['c','r','u','d'].map(a=>p[a]?'<span class="pm-on">'+a.toUpperCase()+'</span>':'<span class="pm-off">'+a.toUpperCase()+'</span>').join('');
+    return '<tr><td><strong>'+esc(nm)+'</strong>'+(p.note?'<div class="role-desc">'+esc(p.note)+'</div>':'')+'</td>'+
+      '<td>'+esc(RESOURCES[p.resource]||p.resource)+'</td>'+
+      '<td>'+acts+'</td>'+
+      '<td class="row-actions">'+
+        ifCan('roles','u','<button class="btn btn-ghost btn-sm" onclick=\'ppForm("'+p.profile_id+'","'+p.resource+'")\'>Edit</button>')+
+        ifCan('roles','u','<button class="btn btn-danger btn-sm" onclick=\'ppDelete("'+p.profile_id+'","'+p.resource+'")\'>Remove</button>')+
+      '</td></tr>';
+  }).join('');
+
+  host.innerHTML =
+    '<div class="panel" style="margin-top:18px">'+
+      '<div class="panel-head"><h3>Individual access</h3>'+
+        ifCan('roles','u','<button class="btn btn-primary btn-sm" onclick="ppForm()">+ Grant access</button>')+
+      '</div>'+
+      (PPERMS.length
+        ? '<div class="table-wrap"><table><thead><tr><th>Person</th><th>Section</th><th>Access</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+        : '<div class="empty"><p>Nobody has extra access yet. Use this to give one person a section their role doesn\'t include — it only ever adds access, never removes it.</p></div>')+
+    '</div>';
+}
+
+async function ppForm(profileId, resource){
+  const existing = (profileId&&resource) ? PPERMS.find(p=>p.profile_id===profileId&&p.resource===resource) : null;
+  if(!PPROFILES.length){
+    try{ PPROFILES = await dbGet('profiles?select=id,name,email&order=name.asc')||[]; }catch(e){ PPROFILES=[]; }
+  }
+  const people = PPROFILES.map(p=>'<option value="'+p.id+'"'+(existing&&existing.profile_id===p.id?' selected':'')+'>'+esc(p.name||p.email||p.id)+'</option>').join('');
+  const sections = Object.keys(RESOURCES).map(k=>'<option value="'+k+'"'+(existing&&existing.resource===k?' selected':'')+'>'+esc(RESOURCES[k])+'</option>').join('');
+  const box=(a,label)=>'<label class="pp-box"><input type="checkbox" data-act="'+a+'"'+(existing&&existing[a]?' checked':'')+'> '+label+'</label>';
+
+  modal({title: existing?'Edit access':'Grant access', wide:true, saveLabel:'Save access',
+    body:'<div class="form-grid">'+
+      '<div class="field"><label>Person</label><select id="pp-person"'+(existing?' disabled':'')+'>'+people+'</select></div>'+
+      '<div class="field"><label>Section</label><select id="pp-res"'+(existing?' disabled':'')+'>'+sections+'</select></div>'+
+      '<div class="field full"><label>What they can do</label><div class="pp-boxes">'+
+        box('r','Read')+box('c','Create')+box('u','Update')+box('d','Delete')+'</div></div>'+
+      '<div class="field full"><label>Note (optional)</label><input id="pp-note" placeholder="Why this person has it" value="'+esc((existing&&existing.note)||'')+'"></div>'+
+      '</div>'+
+      '<p class="pp-hint">This is added on top of their role. Their role\'s own permissions stay exactly as they are.</p>',
+    onSave: async (bg)=>{
+      const pid = existing ? existing.profile_id : bg.querySelector('#pp-person').value;
+      const res = existing ? existing.resource   : bg.querySelector('#pp-res').value;
+      if(!pid||!res) throw new Error('Pick a person and a section.');
+      const payload={profile_id:pid, resource:res, c:false, r:false, u:false, d:false,
+                     note: bg.querySelector('#pp-note').value.trim()||null};
+      bg.querySelectorAll('input[data-act]').forEach(cb=>{ payload[cb.dataset.act]=cb.checked; });
+      if(!(payload.c||payload.r||payload.u||payload.d)) throw new Error('Tick at least one thing they can do, or remove the grant instead.');
+      await dbDel('profile_perms?profile_id=eq.'+pid+'&resource=eq.'+res);
+      await dbPost('profile_perms', payload);
+      toast('Access saved');
+      loadPersonPerms();
+    }});
+}
+
+function ppDelete(profileId, resource){
+  const p = PPERMS.find(x=>x.profile_id===profileId&&x.resource===resource);
+  const nm = (p&&p.profile&&(p.profile.name||p.profile.email))||'this person';
+  confirmDelete(esc(nm)+"'s extra access to "+esc(RESOURCES[resource]||resource), async()=>{
+    await dbDel('profile_perms?profile_id=eq.'+profileId+'&resource=eq.'+resource);
+    toast('Access removed');
+    loadPersonPerms();
+  });
 }
 
 function roleForm(id){
