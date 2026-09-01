@@ -1,0 +1,85 @@
+---
+layout: default
+title: Bet Tracker
+permalink: /bets/
+---
+
+{% include tools-subnav.html %}
+
+<div id="btx">
+  <div class="btx-head">
+    <h1>NFL Bet Tracker</h1>
+    <p class="btx-lede">Every NFL bet our analysts put on the board, tracked all season in units. No hidden losers, no deleted picks.</p>
+  </div>
+
+  <div class="btx-controls">
+    <div class="btx-tabs" id="btxTabs">
+      <button data-tab="board" class="on">Leaderboard</button>
+      <button data-tab="bets">All bets</button>
+    </div>
+    <label class="btx-week">Week
+      <select id="btxWeek"><option value="">Full season</option></select>
+    </label>
+  </div>
+
+  <div class="btx-strip" id="btxStrip"></div>
+  <div id="btxTrend"></div>
+  <div id="btxStage"><p class="btx-state">Loading…</p></div>
+
+  <p class="btx-disc">
+    Records are tracked in units, not dollars. A unit is a consistent fraction of a bankroll,
+    so a +5.00u season means five times a single bet's stake in profit. Odds shown are the number
+    taken at the time the bet was placed and may differ from the current line.
+    Must be 21+ and present in a state where sports wagering is legal. If you or someone you know
+    has a gambling problem, call 1-800-GAMBLER.
+  </p>
+</div>
+
+<style>
+#btx{max-width:1080px;margin:0 auto;padding:36px 20px 60px}
+#btx .btx-head h1{font-family:Oswald,sans-serif;font-size:38px;margin:0 0 8px;color:#002863}
+#btx .btx-lede{color:#606060;font-size:16px;max-width:640px;margin:0 0 26px}
+
+#btx .btx-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+#btx .btx-tabs{display:flex;gap:6px;background:#F4F4F4;padding:5px;border-radius:999px}
+#btx .btx-tabs button{border:0;background:transparent;color:#606060;font:inherit;font-weight:600;font-size:14px;padding:8px 18px;border-radius:999px;cursor:pointer}
+#btx .btx-tabs button.on{background:#002863;color:#fff}
+#btx .btx-week{font-size:14px;color:#606060;display:flex;gap:8px;align-items:center}
+#btx .btx-week select{border:1px solid #e2e2e2;border-radius:8px;padding:7px 10px;font:inherit}
+
+#btx .btx-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+#btx .btx-card{border:1px solid #e8e8e8;border-radius:12px;padding:16px 18px;background:#fff}
+#btx .btx-card .l{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#606060;font-weight:700}
+#btx .btx-card .v{font-family:Oswald,sans-serif;font-size:34px;line-height:1.1;margin-top:3px;font-variant-numeric:tabular-nums}
+#btx .btx-card .s{font-size:12px;color:#606060;margin-top:2px}
+#btx .up{color:#12a06a}#btx .down{color:#d2382a}
+
+#btx .btx-trend{border:1px solid #e8e8e8;border-radius:12px;padding:16px 18px;margin-bottom:22px;background:#fff}
+#btx .btx-trend .t{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#606060;font-weight:700;margin-bottom:10px}
+#btx .btx-trend svg{display:block;width:100%;height:130px;overflow:visible}
+
+#btx table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+#btx th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#606060;font-weight:700;padding:11px 12px;border-bottom:2px solid #e8e8e8}
+#btx td{padding:13px 12px;border-bottom:1px solid #f0f0f0;font-size:15px}
+#btx .r{text-align:right}
+#btx .rank{color:#606060;font-family:Oswald,sans-serif;font-size:19px;width:40px}
+#btx tbody tr:first-child .rank{color:#FFA515}
+#btx .nm{font-weight:600;color:#002863}
+#btx .big{font-family:Oswald,sans-serif;font-size:20px}
+#btx .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase}
+#btx .p-win{background:rgba(66,244,176,.2);color:#0d7a52}
+#btx .p-loss{background:rgba(234,78,61,.15);color:#b5301f}
+#btx .p-push{background:#eef1f6;color:#002863}
+#btx .p-pending{background:rgba(255,165,21,.2);color:#8a5900}
+#btx .p-void{background:#f4f4f4;color:#606060}
+#btx .desc{font-weight:500;color:#111}
+#btx .sub{font-size:12px;color:#606060;margin-top:2px}
+#btx .btx-state{padding:40px;text-align:center;color:#606060}
+#btx .btx-disc{margin-top:30px;font-size:12px;line-height:1.7;color:#909090;border-top:1px solid #eee;padding-top:16px}
+@media (max-width:760px){
+  #btx .btx-strip{grid-template-columns:repeat(2,1fr)}
+  #btx .hide-sm{display:none}
+}
+</style>
+
+<script src="{{ '/javascript/bets.js' | relative_url }}"></script>
