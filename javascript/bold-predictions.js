@@ -4,7 +4,7 @@
   var POLL_MS = 15000;
   var POSITIONS = ['QB','RB','WR','TE'];
   var SB_URL = '', SB_KEY = '';
-  var STATE = { season:null, week:null, rows:[], staff:{}, sig:'' };
+  var STATE = { season:null, week:null, rows:[], sig:'' };
   var REVEALED = {};
 
   function el(id){ return document.getElementById(id); }
@@ -23,9 +23,12 @@
       key:(typeof SUPABASE_ANON_KEY !== 'undefined') ? SUPABASE_ANON_KEY : ''
     };
   }
-  function api(path){
-    return fetch(SB_URL + '/rest/v1/' + path, { headers:{ apikey:SB_KEY } })
-      .then(function(r){ return r.ok ? r.json() : []; })
+  function rpc(name, body){
+    return fetch(SB_URL + '/rest/v1/rpc/' + name, {
+      method:'POST',
+      headers:{ apikey:SB_KEY, 'Content-Type':'application/json' },
+      body:JSON.stringify(body || {})
+    }).then(function(r){ return r.ok ? r.json() : []; })
       .catch(function(){ return []; });
   }
   function staffShot(v){
@@ -48,15 +51,8 @@
       });
   }
 
-  function loadStaff(){
-    return api('staff?select=id,name,headshot').then(function(rows){
-      (rows || []).forEach(function(s){ STATE.staff[s.id] = s; });
-    });
-  }
-
   function loadRows(){
-    return api('bp_predictions?select=*&season=eq.' + STATE.season +
-               '&week=eq.' + STATE.week + '&order=sort_order.asc,created_at.asc')
+    return rpc('bp_public', { p_season: STATE.season, p_week: STATE.week })
       .then(function(rows){
         rows = rows || [];
         var sig = JSON.stringify(rows);
@@ -73,8 +69,7 @@
   }
 
   function byline(r){
-    var s = r.staff_id ? STATE.staff[r.staff_id] : null;
-    var src = s ? staffShot(s.headshot) : '';
+    var src = staffShot(r.headshot);
     var av = src
       ? '<img class="bp-av" src="' + esc(src) + '" alt="" onerror="this.remove()">'
       : '<span class="bp-av ini">' + esc(initials(r.author_name)) + '</span>';
@@ -112,8 +107,7 @@
       var mine = STATE.rows.filter(function(r){ return r.featured_slot === slot; });
       if (!mine.length) return '';
       var first = mine[0];
-      var s = first.staff_id ? STATE.staff[first.staff_id] : null;
-      var src = s ? staffShot(s.headshot) : '';
+      var src = staffShot(first.headshot);
       var head = '<div class="bp-colhead">' +
         (src ? '<img class="bp-colshot" src="' + esc(src) + '" alt="" onerror="this.remove()">'
              : '<span class="bp-colshot ini">' + esc(initials(first.author_name)) + '</span>') +
@@ -210,7 +204,7 @@
       return;
     }
     bind();
-    loadState().then(loadStaff).then(loadRows).then(function(){
+    loadState().then(loadRows).then(function(){
       setInterval(function(){ if (!document.hidden) loadRows(); }, POLL_MS);
     });
   }
