@@ -1,0 +1,29 @@
+name: Start/Sit suggestions
+
+on:
+  schedule:
+    - cron: '0 12 * * 2'
+  workflow_dispatch:
+    inputs:
+      season:
+        description: Season (blank = current year)
+        required: false
+      week:
+        description: Week (blank = upcoming)
+        required: false
+
+jobs:
+  suggest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/ss-suggest.mjs
+        env:
+          FP_API_KEY: ${{ secrets.FP_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEASON: ${{ inputs.season }}
+          WEEK: ${{ inputs.week }}
