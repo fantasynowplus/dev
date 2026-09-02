@@ -112,7 +112,18 @@ async function boot(){
   go('dashboard');
 }
 
+function toggleNav(){ document.body.classList.toggle('nav-open'); syncNavToggle(); }
+function closeNav(){ document.body.classList.remove('nav-open'); syncNavToggle(); }
+function syncNavToggle(){
+  const b = document.getElementById('navToggle');
+  if(b) b.setAttribute('aria-expanded', document.body.classList.contains('nav-open'));
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape' && document.body.classList.contains('nav-open')) closeNav();
+});
+
 function go(name){
+  closeNav();
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.go===name));
   document.getElementById('pageTitle').textContent = NAV_TITLES[name] || name;
   document.getElementById('topActions').innerHTML='';

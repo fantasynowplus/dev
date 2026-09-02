@@ -27,6 +27,7 @@
 </div>
 
 <div id="app">
+  <div id="navScrim" onclick="closeNav()"></div>
   <aside class="sidebar">
     <div class="brand">
       <img class="logo" src="assets/logos/FantasyNow%2B.png" alt="FantasyNow+">
@@ -70,6 +71,9 @@
 
   <div class="main">
     <div class="topbar">
+      <button id="navToggle" class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav()">
+        <span></span><span></span><span></span>
+      </button>      
       <h1 id="pageTitle">Dashboard</h1>
       <div class="spacer"></div>
       <div id="topActions"></div>
