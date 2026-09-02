@@ -673,7 +673,11 @@ body.nav-open{overflow:hidden}
 .cal-add{opacity:.6}
 .cal-ev{font-size:13px;padding:7px 9px;white-space:normal;text-overflow:clip}
 .cal-toolbar{gap:8px}
-.cal-month{min-width:0;flex:1}
+.cal-month{min-width:0;flex:1 1 auto;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-toolbar select{flex:1 1 100%;min-width:0}
+.cal-legend{gap:10px;flex-wrap:wrap}
+.onb-tabs{flex-wrap:wrap}
+.onb-tabs button{font-size:13px;padding:7px 13px}
 }
 .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:1px}
 .tag-live{background:#fdece9;color:#EA4E3D}
@@ -806,4 +810,19 @@ body.nav-open{overflow:hidden}
   .bt-bar{flex-direction:column;align-items:stretch}
   .bt-desc{max-width:none}
   .bt-gbtns{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:700px){
+.yt-summary{padding:18px;border-radius:14px}
+.yt-summary .s-top{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.yt-summary .s-stat .n{font-size:24px}
+.yt-fullcard{grid-template-columns:repeat(3,1fr);gap:12px 10px;padding:16px}
+.yt-fullcard .fc-info{grid-column:1/-1}
+.yt-fullcard .fc-stat{text-align:left}
+.yt-fullcard .fc-stat .n{font-size:18px}
+.yt-metrics{grid-template-columns:1fr}
+.bar-row{grid-template-columns:96px 1fr auto;gap:8px;font-size:12.5px}
+.ss-pickrow{grid-template-columns:1fr;gap:8px;text-align:center}
+.ss-pickrow .btn{min-width:0;width:100%}
+.ss-scoreside{min-width:0;flex:1 1 100%}
+.yt-stats{flex-wrap:wrap;gap:14px}
 }
