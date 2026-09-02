@@ -44,8 +44,6 @@ body{
 .bp-featured{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-bottom:40px}
 .bp-colhead{display:flex;align-items:center;gap:12px;margin-bottom:14px;
     padding-bottom:11px;border-bottom:1px solid var(--line)}
-.bp-colshot{width:44px;height:44px;flex:0 0 44px;border-radius:50%;object-fit:cover;
-    object-position:top center;border:2px solid var(--orange);background:var(--panel-hi)}
 .bp-colshot.ini{display:flex;align-items:center;justify-content:center;
     font-family:"Oswald";font-weight:600;font-size:15px;color:var(--orange)}
 .bp-col h3{font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.1em;
