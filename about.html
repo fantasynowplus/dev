@@ -98,55 +98,10 @@ layout: null
   </div>
 </div>
 
-<script>
-(function(){
-  var SB_URL='https://fckobcxprmudfpxdmswi.supabase.co';
-  var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja29iY3hwcm11ZGZweGRtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTI5MzcsImV4cCI6MjA5OTE4ODkzN30.9wMb0SXAZs-jo1G9xRxk5M47fJIIU7-DTJTl1yFRwFk';
-  var form=document.getElementById('fnpJoinForm'), msg=document.getElementById('fnpJoinMsg');
-  var btn=form.querySelector('button');
-  form.addEventListener('submit', async function(e){
-    e.preventDefault();
-    var fd=new FormData(form);
-    var body={name:fd.get('name'),email:fd.get('email')||null,phone:fd.get('phone')||null,dob:fd.get('dob')||null,role:fd.get('role')||null,reason:fd.get('reason')||null,source:'website'};
-    if(!body.name){ msg.className='fnp-join-msg bad'; msg.textContent='Please enter your name.'; return; }
-    btn.disabled=true; btn.textContent='Sending…';
-    try{
-      var res=await fetch(SB_URL+'/rest/v1/recruits',{method:'POST',headers:{'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(body)});
-      if(res.ok){ form.reset(); msg.className='fnp-join-msg ok'; msg.textContent='Thanks — we\'ll be in touch!'; }
-      else { msg.className='fnp-join-msg bad'; msg.textContent='Something went wrong. Please try again.'; }
-    }catch(err){ msg.className='fnp-join-msg bad'; msg.textContent='Something went wrong. Please try again.'; }
-    btn.disabled=false; btn.textContent='Apply Now';
-  });
-})();
-</script>
+
     </main>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-      var swiper = new Swiper(".teamSwiper", {
-        loop: false,             // THIS DISABLES THE LOOP
-        slidesPerView: 3.2,      // Shows 3 full cards + a peek of the 4th
-        spaceBetween: 30,
-        centeredSlides: false,
-        grabCursor: true,
-        
-        // Auto-rotation settings
-        autoplay: {
-          delay: 3000,
-          disableOnInteraction: true, // Stops auto-play when user takes control
-        },
-        
-        navigation: {
-          nextEl: ".swiper-button-next",
-          prevEl: ".swiper-button-prev",
-        },
-        
-        // Responsive adjustments
-        breakpoints: {
-          320: { slidesPerView: 1, spaceBetween: 10, centeredSlides: true },
-          768: { slidesPerView: 3.2, spaceBetween: 30, centeredSlides: false }
-        }
-      });
-    </script>
+    <script src="javascript/about.js"></script>
+    
 {% include footer.html %}

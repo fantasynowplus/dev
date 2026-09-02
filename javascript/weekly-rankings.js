@@ -1,0 +1,152 @@
+const CONFIG = {
+  RB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=2073640362&single=true&output=csv",
+  WR_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQejXiZusS_jP9tEN61yq7A7mncVjejQtYEPWw31odAsXq3fqtF-A069MMqvtozmEuu7urzObeK48gJ/pub?gid=378173209&single=true&output=csv"
+};
+
+/* Source columns, in sheet order G..L (0-indexed 6..11).
+   Drop logos at assets/logos/<key>.png to replace the text. */
+const SOURCES = [
+  { key:"cbs",                name:"CBS",         col:6  },
+  { key:"Footballers",        name:"Footballers", col:7  },
+  { key:"FantasyLife",        name:"FantasyLife", col:8  },
+  { key:"FantasyNow+",        name:"FantasyNow+", col:9  },
+  { key:"FantasyPros",        name:"FantasyPros", col:10 },
+  { key:"RotoBaller",         name:"RotoBaller",  col:11 }
+];
+
+const PLAYER_COL = 0, RANK_COL = 1, AVG_COL = 2, HL_COL = 4, RANGE_COL = 5;
+
+const TIERS = [
+  { max:12, label:"Tier 1", range:"1-12",  color:"var(--t1)" },
+  { max:24, label:"Tier 2", range:"13-24", color:"var(--t2)" },
+  { max:36, label:"Tier 3", range:"25-36", color:"var(--t3)" },
+  { max:48, label:"Tier 4", range:"37-48", color:"var(--t4)" },
+  { max:60, label:"Tier 5", range:"49-60", color:"var(--t5)" },
+  { max:999,label:"Tier 6", range:"61-80", color:"var(--t6)" }
+];
+function tierOf(rank){ for(let i=0;i<TIERS.length;i++) if(rank<=TIERS[i].max) return i; return TIERS.length-1; }
+
+const cache = {};
+let current = "RB";
+
+function buildHead(){
+  let h = '<th class="rank">#</th><th class="player">Player</th>';
+  SOURCES.forEach(s=>{
+    h += '<th><div class="srccol">'
+       + '<img src="assets/logos/'+s.key+'.png" alt="'+s.name+'" onerror="this.remove()">';
+  });
+  h += '<th class="avg">Avg</th><th>High / Low</th><th>Range</th>';
+  document.getElementById("head").innerHTML = h;
+}
+
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===",") { row.push(cur); cur=""; }
+      else if(c==="\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c!=="\r") cur+=c;
+    }
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function toPlayers(rows){
+  const out=[];
+  rows.forEach(r=>{
+    const rank = parseInt((r[RANK_COL]||"").trim(),10);
+    const name = (r[PLAYER_COL]||"").trim();
+    if(!name || isNaN(rank) || rank<1) return;   // skips header + tier separators
+    out.push({ rank, name, avg:(r[AVG_COL]||"").trim(), row:r });
+  });
+  out.sort((a,b)=>a.rank-b.rank);
+  return out;
+}
+
+function render(players){
+  const body=document.getElementById("body");
+  if(!players.length){ body.innerHTML='<tr><td class="state">No rows found.</td></tr>'; return; }
+  const span = 5 + SOURCES.length;
+  let html="", lastTier=-1;
+  players.forEach(p=>{
+    const t=tierOf(p.rank);
+    if(t!==lastTier){
+      const T=TIERS[t];
+      html += '<tr class="tier"><td colspan="'+span+'"><span class="tierlabel">'
+            + '<span class="bar" style="background:'+T.color+'"></span>'+T.label
+            + '<span class="rng">'+T.range+'</span></span></td></tr>';
+      lastTier=t;
+    }
+    let cells="";
+    SOURCES.forEach(s=>{
+      const v=(p.row[s.col]||"").trim();
+      cells += v ? '<td>'+v+'</td>' : '<td class="src-blank">-</td>';
+    });
+    const avg = p.avg ? (isNaN(+p.avg)?p.avg:(+p.avg).toFixed(1)) : "";
+    const hl  = escapeHtml((p.row[HL_COL]||"").trim());
+    const rng = escapeHtml((p.row[RANGE_COL]||"").trim());
+    html += '<tr>'
+          + '<td><span class="rankpill" style="background:'+TIERS[t].color+'">'+p.rank+'</span></td>'
+          + '<td class="player">'+escapeHtml(p.name)+'</td>'
+          + cells
+          + '<td class="avg">'+avg+'</td>'
+          + '<td>'+hl+'</td>'
+          + '<td>'+rng+'</td></tr>';
+  });
+  body.innerHTML=html;
+}
+
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+async function load(pos, force){
+  const url=CONFIG[pos+"_URL"];
+  if(!url || url.indexOf("PASTE_")===0){
+    document.getElementById("body").innerHTML=
+      '<tr><td class="state">Add your published-CSV links in the <b>CONFIG</b> block '
+      +'(<code>'+pos+'_URL</code>) to load the '+pos+' board.</td></tr>';
+    return;
+  }
+  if(cache[pos] && !force){ render(cache[pos]); return; }
+  document.getElementById("body").innerHTML='<tr><td class="state">Loading '+pos+'&hellip;</td></tr>';
+  try{
+    const res=await fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const players=toPlayers(parseCSV(await res.text()));
+    cache[pos]=players;
+    render(players);
+    stamp();
+  }catch(e){
+    document.getElementById("body").innerHTML=
+      '<tr><td class="state">Couldn\'t load the '+pos+' data. Check that the sheet is '
+      +'<b>published to the web</b> and the link in <code>'+pos+'_URL</code> is correct.</td></tr>';
+  }
+}
+
+function stamp(){
+  const d=new Date();
+  document.getElementById("updated").textContent=
+    "Updated "+d.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+}
+
+function show(pos){
+  current=pos;
+  document.getElementById("posLabel").textContent=pos;
+  ["RB","WR"].forEach(p=>{
+    const b=document.getElementById("tab-"+p);
+    const on=p===pos;
+    b.classList.toggle("active",on);
+    b.setAttribute("aria-selected",on);
+  });
+  load(pos);
+}
+function reload(){ load(current,true); if(current==="RB") delete cache.WR; else delete cache.RB; }
+
+buildHead();
+show("RB");
+load("WR");  // warm the other tab

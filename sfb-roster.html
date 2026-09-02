@@ -42,21 +42,7 @@ layout: null
 
 <canvas id="canvas" style="display: none;"></canvas>
 
-<script>
-// Initialize the MFL league dropdown when page loads
-// (Constants MFL_YEAR and SFB16_LEAGUES are defined in sfb-generator.js)
-document.addEventListener('DOMContentLoaded', () => {
-    const leagueSelect = document.getElementById('mflLeague');
-    if (leagueSelect && typeof SFB16_LEAGUES !== 'undefined') {
-        SFB16_LEAGUES.forEach(league => {
-            const option = document.createElement('option');
-            option.value = league.id;
-            option.textContent = league.name;
-            leagueSelect.appendChild(option);
-        });
-    }
-});
-</script>
+<script src="javascript/sfb-roster.js"></script>
 </main>
 
 <script src="javascript/sfb-generator.js"></script>
