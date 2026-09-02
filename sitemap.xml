@@ -1,0 +1,14 @@
+---
+layout: null
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- assign excluded = "/admin.html,/login.html,/profile.html,/forgot-password.html,/reset-password.html,/bets-board.html,/start-sit.html,/waiver-wire.html,/weekly-rankings.html,/dfs-lineup-tools.html" | split: "," -%}
+{%- for p in site.pages -%}
+{%- if p.url contains '.html' and excluded contains p.url == false %}
+  <url>
+    <loc>{{ site.url }}{{ p.url | remove: '.html' | remove: 'index' }}</loc>
+  </url>
+{%- endif -%}
+{%- endfor %}
+</urlset>
