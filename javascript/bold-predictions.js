@@ -74,7 +74,7 @@
       ? '<img class="bp-av" src="' + esc(src) + '" alt="" onerror="this.remove()">'
       : '<span class="bp-av ini">' + esc(initials(r.author_name)) + '</span>';
     return '<div class="bp-by">' + av + '<span>' + esc(r.author_name) + '</span>' +
-           (r.guest_id ? '<span class="bp-guest">Guest</span>' : '') + '</div>';
+           (r.guest_id ? '<span class="bp-guest">Discord</span>' : '') + '</div>';
   }
 
   function cardHtml(r, big){

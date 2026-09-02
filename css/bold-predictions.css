@@ -169,3 +169,7 @@ body{
     .wrap{padding:20px 16px 48px}
     .brand .report-title{padding-left:12px}
 }
+
+.bp-guest{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+    background:rgba(88,101,242,.16);border:1px solid rgba(88,101,242,.5);
+    padding:2px 7px;border-radius:999px;color:#8b95f5}
