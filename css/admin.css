@@ -602,9 +602,9 @@
 .cal-month{font-weight:700;font-size:16px;min-width:170px;text-align:center}
 .cal-legend{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:12px;color:var(--muted)}
 .cal-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--line);gap:1px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--line);gap:1px}
 .cal-dow{background:var(--navy);color:#fff;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 6px;text-align:center;font-weight:700}
-.cal-cell{background:#fff;min-height:118px;padding:6px 6px 8px;display:flex;flex-direction:column;gap:4px}
+.cal-cell{background:#fff;min-height:118px;padding:6px 6px 8px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .cal-cell.out{background:#fafafa}
 .cal-cell.out .cal-date{color:#c4c4c4}
 .cal-cell.today{box-shadow:inset 0 0 0 2px var(--orange)}
@@ -636,6 +636,28 @@
 .cal-body{flex:1;min-width:0}
 .cal-title{font-weight:600}
 .cal-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.cal-dow-label{display:none}
+
+@media (max-width:1000px){
+.cal-cell{min-height:96px;padding:5px 4px 6px}
+.cal-ev{font-size:11px;padding:3px 5px}
+.cal-legend{margin-left:0;width:100%}
+}
+
+@media (max-width:700px){
+.cal-grid{display:block;background:transparent;border:0;border-radius:0}
+.cal-dow{display:none}
+.cal-cell{min-height:0;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:10px 12px 12px;gap:6px}
+.cal-cell.out{display:none}
+.cal-cell:not(:has(.cal-ev)):not(.today){display:none}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--orange)}
+.cal-date{font-size:14px;color:var(--navy)}
+.cal-dow-label{display:inline;font-style:normal;color:var(--muted);margin-right:6px;font-weight:700}
+.cal-add{opacity:.6}
+.cal-ev{font-size:13px;padding:7px 9px;white-space:normal;text-overflow:clip}
+.cal-toolbar{gap:8px}
+.cal-month{min-width:0;flex:1}
+}
 .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:1px}
 .tag-live{background:#fdece9;color:#EA4E3D}
 .tag-pre{background:#e7fbf3;color:#0b7a58}

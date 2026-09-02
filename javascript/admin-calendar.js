@@ -155,7 +155,7 @@ function calMonthHtml(){
     const list = byDay[key] || [];
     const show = CAL_EXPAND[key] ? list : list.slice(0,3);
     cells += `<div class="cal-cell ${d.getMonth()!==m?'out':''} ${key===todayKey?'today':''}">
-      <div class="cal-date"><span>${d.getDate()}</span>
+      <div class="cal-date"><span><i class="cal-dow-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]}</i>${d.getDate()}</span>
         ${calMarkerHtml(key)}
         ${ifCan('calendar','c',`<button class="cal-add" title="Add episode" onclick="eventForm(null,'${key}')">+</button>`)}</div>
       ${show.map(o=>`<button class="cal-ev cal-${o.kind} ${o.e.status==='canceled'?'canceled':''}"
