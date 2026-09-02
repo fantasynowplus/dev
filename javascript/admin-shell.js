@@ -135,7 +135,7 @@ function go(name){
   const fn = {dashboard:loadDashboard, staff:loadStaff, subscribers:loadSubscribers, recruitment:loadRecruitment,
     onboarding:loadOnboarding, my_onboarding:loadMyOnboarding, org:loadOrg,
     shows:loadShows, tools:loadTools, channels:loadChannels, youtube:loadYouTube, board:loadBoard, roles:loadRoles, calendar:loadCalendar,
-    startsit:loadStartsit, gamepicks:loadGamePicks, logins:loadLogins, rankings:loadRankings, bets: loadBets}[name];
+    startsit:loadStartsit, gamepicks:loadGamePicks, logins:loadLogins, rankings:loadRankings, bets: loadBets, bold_predictions:loadBoldPredictions}[name];
     
   fn().catch(err=>{
     document.getElementById('content').innerHTML =

@@ -3,7 +3,7 @@ const GATE_LEVEL = 7;
 const NAV_TITLES = {
   dashboard:'Dashboard', staff:'Staff', subscribers:'Subscribers', recruitment:'Recruitment',
   onboarding:'Onboarding', my_onboarding:'My Onboarding', org:'Org chart', logins:'Last login',
-  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates', bets: 'Bets'
+  shows:'Shows', tools:'Tools & links', channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', markers: 'Calendar key dates', bets: 'Bets', bold_predictions: 'Bold Predictions'
 };
 const STATUS = {
   todo:{label:'To Do',color:'var(--muted)'},
@@ -27,7 +27,7 @@ let PERMS = {};
 let ROLES = [];
 const RESOURCE_GROUPS = [
   {label:'People', keys:['staff','org','recruitment','onboarding','onboarding_template','subscribers','logins']},
-  {label:'Content', keys:['shows','calendar','markers','rankings','tools','channels','youtube', 'startsit', 'gamepicks', 'bets']},
+  {label:'Content', keys:['shows','calendar','markers','rankings','tools','channels','youtube', 'startsit', 'gamepicks', 'bets', 'bold predictions']},
   {label:'Work', keys:['board']},
   {label:'Access', keys:['roles']}
 ];
@@ -44,7 +44,7 @@ function resourceGroups(){
 const RESOURCES = {
   staff:'Staff', subscribers:'Subscribers', shows:'Shows', tools:'Tools & links', recruitment:'Recruitment', 
   onboarding:'Onboarding', onboarding_template:'Onboarding template', org:'Org chart', logins:'Last login',
-  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', bets:'Bets'
+  channels:'Channels', youtube:'YouTube Stats', board:'Project Board', roles:'Roles & permissions', startsit: 'Start/Sit Showdown', gamepicks: 'Game Picks', calendar: 'Content calendar', rankings: 'Rankings display', bets:'Bets', bold_predictions:'Bold Predictions'
 };
 function can(resource, action){
   if(ME && ME.admin_level >= 9) return true;
