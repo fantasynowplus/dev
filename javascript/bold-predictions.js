@@ -97,7 +97,8 @@
              '</div>' +
              '<div class="bp-veil">' +
                '<span class="bp-vpos">' + r.position + '</span>' +
-               (big ? '' : '<span class="bp-vwho">' + esc(r.author_name) + '</span>') +
+               (big ? '' : '<span class="bp-vwho">' + esc(r.author_name) +
+                 (r.guest_id ? '<span class="bp-guest">Discord</span>' : '') + '</span>') +
                '<span class="bp-vhint">Tap to reveal</span>' + shards() +
              '</div>' +
            '</div>';

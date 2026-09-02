@@ -113,7 +113,8 @@ body{
 .bp-vpos{font-family:"Oswald";font-weight:700;font-size:30px;letter-spacing:.06em;
     color:var(--pos,#fff);text-shadow:0 2px 16px rgba(0,0,0,.5);position:relative}
 .bp-card.big .bp-vpos{font-size:38px}
-.bp-vwho{font-size:12px;font-weight:600;color:#fff;opacity:.85;position:relative}
+.bp-vwho{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+    color:#fff;opacity:.85;position:relative}
 .bp-vhint{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);position:relative}
 .bp-card:hover .bp-vhint{color:var(--orange)}
 
