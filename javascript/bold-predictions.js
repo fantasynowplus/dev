@@ -36,10 +36,24 @@
     if(/^https?:\/\//i.test(v)) return v;
     return v.indexOf('/') >= 0 ? v.replace(/^\/+/,'') : 'assets/staff/' + v;
   }
-  function playerShot(r){
-    if(r.espn_id) return 'https://a.espncdn.com/i/headshots/nfl/players/full/' + r.espn_id + '.png';
-    if(r.player_id) return 'https://sleepercdn.com/content/nfl/players/thumb/' + r.player_id + '.jpg';
+  function playerShot(p){
+    if(p.espn) return 'https://a.espncdn.com/i/headshots/nfl/players/full/' + p.espn + '.png';
+    if(p.id) return 'https://sleepercdn.com/content/nfl/players/thumb/' + p.id + '.jpg';
     return '';
+  }
+  function playerList(r){
+    if (Array.isArray(r.players) && r.players.length) return r.players;
+    if (r.player_id || r.player_name)
+      return [{ id:r.player_id, name:r.player_name, espn:r.espn_id, team:r.player_team }];
+    return [];
+  }
+  function shotsHtml(r){
+    var ps = playerList(r).slice(0,3);
+    var out = ps.map(function(p){
+      var s = playerShot(p);
+      return s ? '<img class="bp-shot" src="' + esc(s) + '" alt="" onerror="this.remove()">' : '';
+    }).filter(Boolean).join('');
+    return out ? '<div class="bp-shots">' + out + '</div>' : '';
   }
 
   function loadState(){
@@ -78,16 +92,15 @@
 
   function cardHtml(r, big){
     var shown = !!REVEALED[r.id];
-    var psrc = playerShot(r);
     return '<div class="bp-card' + (big ? ' big' : '') + (shown ? ' revealed instant' : '') +
              '" data-id="' + r.id + '" data-pos="' + r.position +
              '" style="--pos:var(--pos-' + r.position + ')">' +
              '<div class="bp-body">' +
                '<div class="bp-head">' +
-                 (psrc ? '<img class="bp-shot" src="' + esc(psrc) + '" alt="" onerror="this.remove()">' : '') +
+                 shotsHtml(r) +
                  '<div class="bp-titles">' +
                    '<div class="bp-title"><span class="bp-pill">' + r.position + '</span>' +
-                     '<span class="bp-player">' + esc(r.player_name || '') + '</span>' +
+                     '<span class="bp-player">' + esc(playerList(r).map(function(p){ return p.name; }).join(' & ')) + '</span>' +
                      (r.result ? '<span class="bp-result ' + r.result + '">' +
                         (r.result === 'hit' ? 'HIT' : 'MISS') + '</span>' : '') + '</div>' +
                    (big ? '' : byline(r)) +

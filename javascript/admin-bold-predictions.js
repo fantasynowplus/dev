@@ -1,4 +1,4 @@
-let BP = { season:null, rows:[], staff:[], guests:[], players:null };
+let BP = { season:null, rows:[], staff:[], guests:[], players:null, pick:[] };
 const BP_POS = ['QB','RB','WR','TE'];
 
 function bpState(){
@@ -37,25 +37,44 @@ function bpPlayers(){
   });
 }
 
+function bpRenderChips(bg){
+  const wrap = bg.querySelector('#bpChips');
+  if(!wrap) return;
+  wrap.innerHTML = BP.pick.map((p,i)=>
+    '<button type="button" class="bp-chip" data-i="'+i+'">'+esc(p.name)+
+    (p.team?' <em>'+esc(p.team)+'</em>':'')+' <span>&times;</span></button>').join('');
+  bg.querySelector('[name="players"]').value = JSON.stringify(BP.pick);
+}
+
 function bpBindSearch(bg, list){
-  const q = bg.querySelector('[name="player_name"]');
+  const q = bg.querySelector('[name="player_q"]');
   const res = bg.querySelector('#bpRes');
+  const chips = bg.querySelector('#bpChips');
   if(!q||!res) return;
+  bpRenderChips(bg);
+
   q.addEventListener('input', ()=>{
     const term=q.value.trim().toLowerCase();
-    const pos=bg.querySelector('[name="position"]').value;
     if(term.length<2){ res.innerHTML=''; return; }
-    res.innerHTML = list.filter(p=>p.p===pos && p.n.toLowerCase().indexOf(term)>=0)
+    res.innerHTML = list.filter(p=>p.n.toLowerCase().indexOf(term)>=0)
       .slice(0,8).map(p=>'<button type="button" class="ss-hit" data-id="'+p.id+'" data-espn="'+p.e+
-        '" data-team="'+p.t+'" data-name="'+esc(p.n)+'">'+esc(p.n)+' <span class="muted">'+p.t+'</span></button>').join('');
+        '" data-team="'+p.t+'" data-pos="'+p.p+'" data-name="'+esc(p.n)+'">'+esc(p.n)+
+        ' <span class="muted">'+p.p+' '+p.t+'</span></button>').join('');
   });
+
   res.addEventListener('click', e=>{
     const b=e.target.closest('.ss-hit'); if(!b) return;
-    q.value=b.dataset.name;
-    bg.querySelector('[name="player_id"]').value=b.dataset.id;
-    bg.querySelector('[name="espn_id"]').value=b.dataset.espn;
-    bg.querySelector('[name="player_team"]').value=b.dataset.team;
-    res.innerHTML='';
+    if(!BP.pick.some(x=>x.id===b.dataset.id)){
+      BP.pick.push({id:b.dataset.id, name:b.dataset.name, espn:b.dataset.espn, team:b.dataset.team});
+      bpRenderChips(bg);
+    }
+    q.value=''; res.innerHTML=''; q.focus();
+  });
+
+  chips.addEventListener('click', e=>{
+    const c=e.target.closest('.bp-chip'); if(!c) return;
+    BP.pick.splice(Number(c.dataset.i),1);
+    bpRenderChips(bg);
   });
 }
 
@@ -145,6 +164,8 @@ function bpForm(id, presetSlot, presetPos){
   const sel = r.staff_id ? 'staff:'+r.staff_id : r.guest_id ? 'guest:'+r.guest_id : '';
   const slot = r.featured_slot != null ? String(r.featured_slot) : (presetSlot!=null?String(presetSlot):'');
   const pos = r.position || presetPos || 'QB';
+  BP.pick = Array.isArray(r.players) && r.players.length ? r.players.slice()
+          : (r.player_name ? [{id:r.player_id||'', name:r.player_name, espn:r.espn_id||'', team:r.player_team||''}] : []);
   modal({title:id?'Edit prediction':'Add bold prediction', wide:true, saveLabel:id?'Save changes':'Add prediction',
     body:'<div class="form-grid">'+
       '<div class="field"><label>Who</label><select name="author">'+bpAuthorOptions(sel)+'</select></div>'+
@@ -157,12 +178,11 @@ function bpForm(id, presetSlot, presetPos){
       '</select></div>'+
       '<div class="field"><label>Sort order</label><input name="sort_order" type="number" value="'+(r.sort_order||0)+'"></div>'+
       '<div class="field full"><label>Player(s)</label>'+
-        '<input name="player_name" class="ss-search" autocomplete="off" placeholder="Search players\u2026" value="'+esc(r.player_name||'')+'">'+
+        '<input name="player_q" class="ss-search" autocomplete="off" placeholder="Search players\u2026">'+
         '<div class="ss-results" id="bpRes"></div>'+
-        '<input type="hidden" name="player_id" value="'+esc(r.player_id||'')+'">'+
-        '<input type="hidden" name="espn_id" value="'+esc(r.espn_id||'')+'">'+
-        '<input type="hidden" name="player_team" value="'+esc(r.player_team||'')+'">'+
-        '<div class="ss-picked muted">Search to attach a headshot, or just type a name</div></div>'+
+        '<div class="bp-chips" id="bpChips"></div>'+
+        '<input type="hidden" name="players" value="">'+
+        '<div class="ss-picked muted">Click a result to add. Click a chip to remove.</div></div>'+
       '<div class="field full"><label>Prediction</label><textarea name="prediction" rows="3">'+esc(r.prediction||'')+'</textarea></div>'+
     '</div>',
     onReady:(bg)=>{ bpPlayers().then(list=>bpBindSearch(bg,list)); },
@@ -183,10 +203,11 @@ function bpForm(id, presetSlot, presetPos){
         guest_id: kind==='guest'?aid:null,
         author_name: found?found.name:'Unknown',
         prediction: prediction,
-        player_name: val(bg,'player_name')||null,
-        player_id: val(bg,'player_id')||null,
-        espn_id: val(bg,'espn_id')||null,
-        player_team: val(bg,'player_team')||null,
+        players: BP.pick,
+        player_name: BP.pick.map(x=>x.name).join(' & ')||null,
+        player_id: BP.pick[0] ? BP.pick[0].id : null,
+        espn_id: BP.pick[0] ? BP.pick[0].espn : null,
+        player_team: BP.pick[0] ? BP.pick[0].team : null,
         sort_order: Number(val(bg,'sort_order'))||0
       };
       if(id) await dbPatch('bp_predictions?id=eq.'+id, body);

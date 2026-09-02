@@ -857,3 +857,12 @@ body.nav-open{overflow:hidden}
 .bp-rtag{font-size:10px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:999px}
 .bp-rtag.hit{background:#e6f7f0;color:#0d7a54}
 .bp-rtag.miss{background:#fdecea;color:#b3382b}
+
+.bp-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.bp-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:var(--paper);border-radius:999px;padding:5px 11px;font:inherit;
+    font-size:12.5px;color:var(--ink);cursor:pointer}
+.bp-chip em{font-style:normal;color:var(--muted);font-size:11px}
+.bp-chip span{font-size:14px;line-height:1;color:var(--muted)}
+.bp-chip:hover{border-color:#d1483a;color:#d1483a}
+.bp-chip:hover span{color:#d1483a}

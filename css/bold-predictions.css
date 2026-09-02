@@ -179,3 +179,7 @@ body{
 .bp-result.hit{background:rgba(66,244,176,.16);border:1px solid rgba(66,244,176,.55);color:var(--aqua)}
 .bp-result.miss{background:rgba(234,78,61,.16);border:1px solid rgba(234,78,61,.55);color:#ff8a7d}
 .bp-card.revealed .bp-result{opacity:1}
+.bp-shots{display:flex;align-items:center;flex:none}
+.bp-shots .bp-shot{flex:none}
+.bp-shots .bp-shot + .bp-shot{margin-left:-18px}
+.bp-card.big .bp-shots .bp-shot + .bp-shot{margin-left:-20px}
