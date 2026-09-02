@@ -1,20 +1,4 @@
-:root{
-    --stream-bg:#001738;
-    --header-bg:#002863;
-    --panel:rgba(255,255,255,.035);
-    --panel-hi:rgba(255,255,255,.06);
-    --line:rgba(255,255,255,.09);
-    --orange:#FFA515;
-    --aqua:#42F4B0;
-    --redorange:#EA4E3D;
-    --text:#EAF1FF;
-    --muted:#8FA4C6;
-
-    --t1:#EA4E3D; --t2:#FFA515; --t3:#F5C518;
-    --t4:#42F4B0; --t5:#3DA5EA; --t6:#B07BEA;
-  }
-
-  *{box-sizing:border-box}
+*{box-sizing:border-box}
   html,body{margin:0}
   html{background:var(--stream-bg)}
   body{
