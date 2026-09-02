@@ -1,4 +1,4 @@
-let BP = { season:null, week:null, rows:[], staff:[], guests:[] };
+let BP = { season:null, week:null, rows:[], staff:[], guests:[], players:null };
 const BP_POS = ['QB','RB','WR','TE'];
 
 function bpState(){
@@ -14,11 +14,50 @@ async function loadBoldPredictions(){
   await bpState();
   const [rows, staff, guests] = await Promise.all([
     dbGet('bp_predictions?select=*&season=eq.'+BP.season+'&week=eq.'+BP.week+'&order=sort_order.asc,created_at.asc'),
-    dbGet('staff?select=id,name&order=name.asc'),
+    dbGet('staff?select=id,name,headshot&order=name.asc'),
     dbGet('guests?select=id,name&order=name.asc')
   ]);
   BP.rows = rows||[]; BP.staff = staff||[]; BP.guests = guests||[];
   renderBoldPredictions();
+}
+
+function bpPlayers(){
+  if(BP.players) return Promise.resolve(BP.players);
+  try{ const c=sessionStorage.getItem('ss_players'); if(c){ BP.players=JSON.parse(c); return Promise.resolve(BP.players); } }catch(e){}
+  return fetch('https://api.sleeper.app/v1/players/nfl').then(r=>r.json()).then(all=>{
+    const out=[];
+    Object.keys(all).forEach(id=>{
+      const p=all[id];
+      if(!p||!p.position||BP_POS.indexOf(p.position)<0||!p.team) return;
+      out.push({id:id, n:p.full_name||((p.first_name||'')+' '+(p.last_name||'')).trim(), t:p.team, p:p.position, e:p.espn_id||''});
+    });
+    out.sort((a,b)=>a.n.localeCompare(b.n));
+    BP.players=out;
+    try{ sessionStorage.setItem('ss_players', JSON.stringify(out)); }catch(e){}
+    return out;
+  });
+}
+
+function bpBindSearch(bg, list){
+  const q = bg.querySelector('[name="player_name"]');
+  const res = bg.querySelector('#bpRes');
+  if(!q||!res) return;
+  q.addEventListener('input', ()=>{
+    const term=q.value.trim().toLowerCase();
+    const pos=bg.querySelector('[name="position"]').value;
+    if(term.length<2){ res.innerHTML=''; return; }
+    res.innerHTML = list.filter(p=>p.p===pos && p.n.toLowerCase().indexOf(term)>=0)
+      .slice(0,8).map(p=>'<button type="button" class="ss-hit" data-id="'+p.id+'" data-espn="'+p.e+
+        '" data-team="'+p.t+'" data-name="'+esc(p.n)+'">'+esc(p.n)+' <span class="muted">'+p.t+'</span></button>').join('');
+  });
+  res.addEventListener('click', e=>{
+    const b=e.target.closest('.ss-hit'); if(!b) return;
+    q.value=b.dataset.name;
+    bg.querySelector('[name="player_id"]').value=b.dataset.id;
+    bg.querySelector('[name="espn_id"]').value=b.dataset.espn;
+    bg.querySelector('[name="player_team"]').value=b.dataset.team;
+    res.innerHTML='';
+  });
 }
 
 function bpShift(d){ BP.week = Math.min(22, Math.max(1, BP.week + d)); loadBoldPredictions(); }
@@ -32,7 +71,7 @@ function bpCardRow(r){
   const who = esc(r.author_name) + (r.guest_id ? ' <span class="chip">Guest</span>' : '');
   return '<tr><td><span class="bp-pos bp-'+r.position+'">'+r.position+'</span></td>'+
     '<td><strong>'+who+'</strong></td>'+
-    '<td>'+esc(r.prediction)+'</td>'+
+    '<td>'+(r.player_name?'<strong>'+esc(r.player_name)+'</strong><br>':'')+esc(r.prediction)+'</td>'+
     '<td>'+(r.featured_slot?badge('Column '+r.featured_slot,'var(--orange)'):'—')+'</td>'+
     '<td><div class="row-actions">'+
       ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')+
@@ -46,7 +85,7 @@ function bpFeaturedCol(slot){
     const r = mine.find(x=>x.position===p);
     return '<div class="bp-slot'+(r?'':' empty')+'">'+
       '<span class="bp-pos bp-'+p+'">'+p+'</span>'+
-      (r ? '<span class="bp-txt">'+esc(r.prediction)+'</span>'+
+      (r ? '<span class="bp-txt">'+(r.player_name?'<b>'+esc(r.player_name)+'</b> — ':'')+esc(r.prediction)+'</span>'+
            ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')
          : '<span class="bp-txt muted">Not entered</span>'+
            ifCan('bold_predictions','c','<button class="btn btn-ghost btn-sm" onclick=\'bpForm(null,'+slot+',"'+p+'")\'>Add</button>'))+
@@ -92,9 +131,7 @@ function bpForm(id, presetSlot, presetPos){
   const pos = r.position || presetPos || 'QB';
   modal({title:id?'Edit prediction':'Add bold prediction', wide:true, saveLabel:id?'Save changes':'Add prediction',
     body:'<div class="form-grid">'+
-      '<div class="field"><label>Who</label><select name="author">'+bpAuthorOptions(sel)+'</select>'+
-        '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px" '+
-        'onclick="bpAddGuest(this.closest(\'.modal-bg\'))">+ New guest</button></div>'+
+      '<div class="field"><label>Who</label><select name="author">'+bpAuthorOptions(sel)+'</select></div>'+
       '<div class="field"><label>Position</label><select name="position">'+
         BP_POS.map(p=>'<option'+(pos===p?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'+
       '<div class="field"><label>Placement</label><select name="slot">'+
@@ -103,8 +140,16 @@ function bpForm(id, presetSlot, presetPos){
         '<option value="2"'+(slot==='2'?' selected':'')+'>Featured column 2</option>'+
       '</select></div>'+
       '<div class="field"><label>Sort order</label><input name="sort_order" type="number" value="'+(r.sort_order||0)+'"></div>'+
+      '<div class="field full"><label>Player(s)</label>'+
+        '<input name="player_name" class="ss-search" autocomplete="off" placeholder="Search players\u2026" value="'+esc(r.player_name||'')+'">'+
+        '<div class="ss-results" id="bpRes"></div>'+
+        '<input type="hidden" name="player_id" value="'+esc(r.player_id||'')+'">'+
+        '<input type="hidden" name="espn_id" value="'+esc(r.espn_id||'')+'">'+
+        '<input type="hidden" name="player_team" value="'+esc(r.player_team||'')+'">'+
+        '<div class="ss-picked muted">Search to attach a headshot, or just type a name</div></div>'+
       '<div class="field full"><label>Prediction</label><textarea name="prediction" rows="3">'+esc(r.prediction||'')+'</textarea></div>'+
     '</div>',
+    onReady:(bg)=>{ bpPlayers().then(list=>bpBindSearch(bg,list)); },
     onSave:async(bg)=>{
       const author = val(bg,'author');
       const prediction = val(bg,'prediction');
@@ -122,6 +167,10 @@ function bpForm(id, presetSlot, presetPos){
         guest_id: kind==='guest'?aid:null,
         author_name: found?found.name:'Unknown',
         prediction: prediction,
+        player_name: val(bg,'player_name')||null,
+        player_id: val(bg,'player_id')||null,
+        espn_id: val(bg,'espn_id')||null,
+        player_team: val(bg,'player_team')||null,
         sort_order: Number(val(bg,'sort_order'))||0
       };
       if(id) await dbPatch('bp_predictions?id=eq.'+id, body);
@@ -137,23 +186,4 @@ function bpDelete(id){
     await loadBoldPredictions();
     toast('Prediction deleted');
   });
-}
-
-function bpAddGuest(bg){
-  modal({title:'Add guest', saveLabel:'Save guest',
-    body:'<div class="form-grid">'+
-      '<div class="field full"><label>Name</label><input name="gname"></div>'+
-      '<div class="field"><label>Organization</label><input name="gorg"></div>'+
-      '<div class="field"><label>Handle</label><input name="ghandle" placeholder="@"></div>'+
-    '</div>',
-    onSave:async(gbg)=>{
-      const name = val(gbg,'gname');
-      if(!name) throw new Error('Name is required');
-      const r = await dbPost('guests',{name:name, org:val(gbg,'gorg')||null, handle:val(gbg,'ghandle')||null});
-      const g = r[0];
-      BP.guests.push(g);
-      BP.guests.sort((a,b)=>a.name.localeCompare(b.name));
-      bg.querySelector('[name="author"]').innerHTML = bpAuthorOptions('guest:'+g.id);
-      toast('Guest added');
-    }});
 }

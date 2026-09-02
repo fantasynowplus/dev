@@ -9,26 +9,33 @@ layout: null
       <img src="assets/logos/fantasynowplus.png" alt="FantasyNow+" onerror="this.remove()">
       <span class="report-title">Bold Predictions</span>
     </div>
+    <div class="bp-view" id="viewTabs">
+      <button class="on" data-view="show">Show</button>
+      <button data-view="discord">Around Discord</button>
+    </div>
     <div class="meta">
       <span id="scope">&mdash;</span>
       <button class="revealbtn" id="revealAll">Reveal all</button>
     </div>
   </div>
 
-  <div id="featured" class="bp-featured"></div>
-
-  <div class="bp-listhead">
-    <h2>Around the staff</h2>
-    <div class="bp-tabs" id="posTabs">
-      <button class="on" data-pos="ALL">All</button>
-      <button data-pos="QB">QB</button>
-      <button data-pos="RB">RB</button>
-      <button data-pos="WR">WR</button>
-      <button data-pos="TE">TE</button>
-    </div>
+  <div id="showWrap">
+    <div id="featured" class="bp-featured"></div>
   </div>
 
-  <div id="list" class="bp-list"></div>
+  <div id="discordWrap" class="hide">
+    <div class="bp-listhead">
+      <h2>Around Discord</h2>
+      <div class="bp-tabs" id="posTabs">
+        <button class="on" data-pos="ALL">All</button>
+        <button data-pos="QB">QB</button>
+        <button data-pos="RB">RB</button>
+        <button data-pos="WR">WR</button>
+        <button data-pos="TE">TE</button>
+      </div>
+    </div>
+    <div id="list" class="bp-list"></div>
+  </div>
 
 </div>
 <script src="javascript/auth.js"></script>
