@@ -30,7 +30,6 @@ body{
 .revealbtn:hover{border-color:var(--orange);color:var(--orange)}
 .state{color:var(--muted);font-size:14px;padding:22px 0}
 
-.bp-featured{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-bottom:38px}
 .bp-col h3{font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.1em;
     font-size:15px;color:var(--orange);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 
@@ -46,18 +45,28 @@ body{
 
 .bp-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 
+.bp-featured{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px;margin-bottom:40px}
+
 .bp-card{
-    position:relative;overflow:hidden;isolation:isolate;
-    border:1px solid var(--line);border-left:3px solid var(--pos,var(--orange));
-    border-radius:10px;background:var(--panel);
-    padding:14px 16px;min-height:92px;cursor:pointer;
+    position:relative;display:flex;overflow:hidden;isolation:isolate;
+    border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+    min-height:96px;cursor:pointer;transition:border-color .2s,transform .2s;
 }
-.bp-card.big{min-height:104px;margin-bottom:12px}
+.bp-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--pos,var(--orange));z-index:1}
+.bp-card:hover{border-color:color-mix(in srgb,var(--pos) 45%,transparent);transform:translateY(-1px)}
+.bp-card.big{min-height:108px;margin-bottom:12px}
+.bp-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;
+    padding:15px 18px 15px 22px}
+.bp-head{display:flex;align-items:center;gap:9px}
+.bp-pill{font-family:"Oswald";font-weight:600;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;padding:3px 10px;border-radius:999px;
+    background:var(--pos,var(--orange));color:#04122b}
 .bp-who{font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.08em;
-    font-size:12px;color:var(--pos,var(--orange));margin-bottom:5px}
-.bp-text{font-size:14.5px;line-height:1.45;color:var(--text)}
-.bp-card.big .bp-text{font-size:16px}
-.bp-body{opacity:1}
+    font-size:12px;color:var(--muted)}
+.bp-text{font-size:14.5px;line-height:1.5;color:var(--text)}
+.bp-card.big .bp-text{font-size:16.5px;line-height:1.45}
 
 .bp-veil{
     position:absolute;inset:0;z-index:2;

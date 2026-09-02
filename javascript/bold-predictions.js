@@ -53,7 +53,10 @@
     return '<div class="bp-card' + (big ? ' big' : '') + (shown ? ' revealed instant' : '') +
              '" data-id="' + r.id + '" style="--pos:var(--pos-' + r.position + ')">' +
              '<div class="bp-body">' +
-               (big ? '' : '<div class="bp-who">' + esc(r.author_name) + '</div>') +
+               '<div class="bp-head">' +
+                 '<span class="bp-pill">' + r.position + '</span>' +
+                 (big ? '' : '<span class="bp-who">' + esc(r.author_name) + '</span>') +
+               '</div>' +
                '<div class="bp-text">' + esc(r.prediction) + '</div>' +
              '</div>' +
              '<div class="bp-veil">' +

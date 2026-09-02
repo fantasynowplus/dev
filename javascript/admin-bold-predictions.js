@@ -92,7 +92,9 @@ function bpForm(id, presetSlot, presetPos){
   const pos = r.position || presetPos || 'QB';
   modal({title:id?'Edit prediction':'Add bold prediction', wide:true, saveLabel:id?'Save changes':'Add prediction',
     body:'<div class="form-grid">'+
-      '<div class="field"><label>Who</label><select name="author">'+bpAuthorOptions(sel)+'</select></div>'+
+      '<div class="field"><label>Who</label><select name="author">'+bpAuthorOptions(sel)+'</select>'+
+        '<button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px" '+
+        'onclick="bpAddGuest(this.closest(\'.modal-bg\'))">+ New guest</button></div>'+
       '<div class="field"><label>Position</label><select name="position">'+
         BP_POS.map(p=>'<option'+(pos===p?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'+
       '<div class="field"><label>Placement</label><select name="slot">'+
@@ -135,4 +137,23 @@ function bpDelete(id){
     await loadBoldPredictions();
     toast('Prediction deleted');
   });
+}
+
+function bpAddGuest(bg){
+  modal({title:'Add guest', saveLabel:'Save guest',
+    body:'<div class="form-grid">'+
+      '<div class="field full"><label>Name</label><input name="gname"></div>'+
+      '<div class="field"><label>Organization</label><input name="gorg"></div>'+
+      '<div class="field"><label>Handle</label><input name="ghandle" placeholder="@"></div>'+
+    '</div>',
+    onSave:async(gbg)=>{
+      const name = val(gbg,'gname');
+      if(!name) throw new Error('Name is required');
+      const r = await dbPost('guests',{name:name, org:val(gbg,'gorg')||null, handle:val(gbg,'ghandle')||null});
+      const g = r[0];
+      BP.guests.push(g);
+      BP.guests.sort((a,b)=>a.name.localeCompare(b.name));
+      bg.querySelector('[name="author"]').innerHTML = bpAuthorOptions('guest:'+g.id);
+      toast('Guest added');
+    }});
 }
