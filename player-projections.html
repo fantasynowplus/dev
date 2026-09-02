@@ -1,17 +1,7 @@
 ---
 layout: null
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Player Projections | FantasyNow+</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="player-projections.css">
-</head>
-<body>
-{% include header.html %}
+{% include header.html title="Player Projections" css="player-projections" %}
 {% include back-to-tools.html %}
 
 <div class="pp-wrap">
@@ -94,8 +84,6 @@ layout: null
     <p class="pp-disc">Projections are model output, not advice. Usage shares come from recent games, so a player returning from injury or stepping into a new role may be projected low until the data catches up. Floor and ceiling are the 10th and 90th percentile of simulated outcomes.</p>
   </div>
 </div>
-
-{% include footer.html %}
 
 <script>
 (function(){
@@ -425,5 +413,4 @@ layout: null
   else boot(0);
 })();
 </script>
-</body>
-</html>
+{% include footer.html %}
