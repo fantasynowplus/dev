@@ -37,7 +37,8 @@ async function sb(path, opts = {}) {
     }
   });
   if (!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
-  return r.status === 204 ? null : r.json();
+  const body = await r.text();
+  return body ? JSON.parse(body) : null;
 }
 
 function parseCsv(text) {
@@ -153,7 +154,8 @@ function enrich(rankings, sleeper, config) {
     const hit = sleeper.get(`${k}|${r.pos}|${r.team}`) || sleeper.get(`${k}|${r.pos}`);
     if (!hit) { dropped.push(`${r.name} (no Sleeper match)`); return null; }
     if (badStatus.has(hit.status) || badInjury.has(hit.injury_status)) {
-      dropped.push(`${r.name} (${hit.injury_status || hit.status})`);
+      const why = badStatus.has(hit.status) ? hit.status : hit.injury_status;
+      dropped.push(`${r.name} (${why})`);
       return null;
     }
     return { ...r, team: hit.team, sleeper_id: hit.sleeper_id, espn_id: hit.espn_id };
@@ -196,7 +198,7 @@ console.log(`Result: ${counts}`);
 
 await sb('ss_suggestions?on_conflict=season,week', {
   method: 'POST',
-  headers: { Prefer: 'resolution=merge-duplicates' },
+  headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
   body: JSON.stringify({
     season,
     week,
