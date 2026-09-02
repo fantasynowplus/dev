@@ -168,7 +168,7 @@ table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:17%}
     <h2>Members only</h2>
     <p>DFS tools are free with a FantasyNow+ account. Create one in a few seconds and the full board opens up.</p>
     <button class="dfs-btn" id="dfsLogin">Log in or sign up</button>
-    <p class="dfs-note">Already play in the Super League? You have an account — <a href="forgot-password.html">reset your password</a> to get in.</p>
+    <p class="dfs-note">Already play in the Super League? You have an account — <a href="forgot-password">reset your password</a> to get in.</p>
   </div>
 
   <div id="dfsApp" hidden>
@@ -561,7 +561,7 @@ table.dfs th:nth-child(8),table.dfs td:nth-child(8){width:17%}
     document.getElementById('dfsGate').hidden=false;
     document.getElementById('dfsLogin').addEventListener('click',function(){
       var m=document.getElementById('loginBackdrop');
-      if(m)m.style.display='flex';else window.location.href='login.html';
+      if(m)m.style.display='flex';else window.location.href='login';
     });
   }
 

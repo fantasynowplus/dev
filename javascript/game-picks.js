@@ -360,7 +360,7 @@
     if (lb) lb.onclick = function () {
       var nav = document.querySelector('.btn-login');
       if (nav) nav.click();
-      else location.href = 'login.html';
+      else location.href = 'login';
     };
 
     Array.prototype.forEach.call(

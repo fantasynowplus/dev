@@ -151,7 +151,7 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
     <h2>Members only</h2>
     <p>Projections are free with a FantasyNow+ account. Create one in a few seconds and the full board opens up.</p>
     <button class="pp-btn" id="ppLogin">Log in or sign up</button>
-    <p class="pp-note">Already play in the Super League? You have an account — <a href="forgot-password.html">reset your password</a> to get in.</p>
+    <p class="pp-note">Already play in the Super League? You have an account — <a href="forgot-password">reset your password</a> to get in.</p>
   </div>
 
   <div id="ppApp" hidden>
@@ -535,7 +535,7 @@ table.pp tbody tr:hover{background:rgba(255,255,255,.04)}
     document.getElementById('ppGate').hidden=false;
     document.getElementById('ppLogin').addEventListener('click',function(){
       var m=document.getElementById('loginBackdrop');
-      if(m)m.style.display='flex';else window.location.href='login.html';
+      if(m)m.style.display='flex';else window.location.href='login';
     });
   }
 

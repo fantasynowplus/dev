@@ -151,7 +151,7 @@
   function promptLogin() {
     var link = document.querySelector('.btn-login');
     if (link) { link.click(); return; }
-    window.location.href = 'login.html';
+    window.location.href = 'login';
   }
 
   function downloadCsv() {

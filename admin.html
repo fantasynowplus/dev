@@ -794,7 +794,7 @@
       <div id="gErr" class="gate-err"></div>
       <button id="gBtn" class="btn" onclick="gateLogin()">Sign in</button>
     </div>
-    <a class="gate-alt" href="index.html">Or sign in on the main site &rarr;</a>
+    <a class="gate-alt" href="/">Or sign in on the main site &rarr;</a>
   </div>
 </div>
 
@@ -1081,7 +1081,7 @@ async function boot(){
       meAv.replaceWith(img);
     }).catch(()=>{});
   }
-  document.getElementById('logoutBtn').onclick = ()=>{ if(window.auth&&auth.logout)auth.logout(); else {localStorage.removeItem('sb-auth-token');location.href='index.html';} };
+  document.getElementById('logoutBtn').onclick = ()=>{ if(window.auth&&auth.logout)auth.logout(); else {localStorage.removeItem('sb-auth-token');location.href='/';} };
 
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
