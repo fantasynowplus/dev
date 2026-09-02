@@ -1,3 +1,9 @@
+:root{
+    --panel:#0a2450;
+    --line:#123566;
+    --red:#EA4E3D;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1760px;margin:0 auto;padding:24px 28px 40px}

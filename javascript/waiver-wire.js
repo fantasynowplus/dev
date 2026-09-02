@@ -6,7 +6,7 @@ const COL = { pos:0, player:1, team:2, bye:3, rost:4,
               lwPts:5, lwRank:6, l3Ppg:7, l3Rank:8, l3Gp:9,
               season:10, week:11, sleeperId:12 };
 
-const POS_COLOR = { QB:"var(--qb)", RB:"var(--rb)", WR:"var(--wr)", TE:"var(--te)" };
+const POS_COLOR = { QB:"var(--pos-QB)", RB:"var(--pos-RB)", WR:"var(--pos-WR)", TE:"var(--pos-TE)" };
 
 const COLUMNS = [
   { key:"pos",    label:"Pos",     cls:"pos",    type:"str" },

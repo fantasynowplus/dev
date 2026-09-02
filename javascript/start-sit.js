@@ -385,7 +385,7 @@
       : (waiting.length ? 'On the clock' : 'All picks in');
 
     return '<div class="center">' +
-      '<span class="posmark" style="background:var(--' + esc(m.pos) + ')">' + esc(m.pos) + '</span>' +
+      '<span class="posmark" style="background:var(--pos-' + esc(m.pos) + ')">' + esc(m.pos) + '</span>' +
       '<span class="vs">VS</span>' +
       '<span class="waiting">' + note + '</span>' +
       ctlHtml(m) +

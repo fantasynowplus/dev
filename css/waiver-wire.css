@@ -1,6 +1,10 @@
+:root{
+    --card-bg:#00204d;
+    --panel:rgba(255,255,255,.035);
+    --line:rgba(255,255,255,.09);
+}
 
-
-  *{box-sizing:border-box}
+*{box-sizing:border-box}
   html,body{margin:0}
   html{background:var(--stream-bg)}
   body{
@@ -229,3 +233,4 @@
     .ranks{gap:18px;padding:14px 18px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
