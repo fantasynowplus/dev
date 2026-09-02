@@ -222,3 +222,4 @@ table.st tbody td.pct{color:var(--aqua);font-weight:700}
   .bars{margin:0 -20px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+

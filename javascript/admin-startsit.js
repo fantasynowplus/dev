@@ -91,7 +91,10 @@ function ssPlayerWeekPts(playerId, season, week) {
 /* ---------- load ---------- */
 
 function loadStartsit() {
-  return ssFetchState().then(ssLoadWeek);
+  return ssgCan()
+    .then(function (ok) { SSG_ALLOWED = ok; })
+    .then(ssFetchState)
+    .then(ssLoadWeek);
 }
 
 function ssLoadWeek() {
@@ -132,6 +135,7 @@ function renderStartsit() {
   tabs.push(['pickers', 'Pickers'], ['picks', 'My picks']);
   if (canManage) tabs.push(['scoring', 'Scoring']);
   tabs.push(['standings', 'Standings']);
+  if (SSG_ALLOWED) tabs.push(['suggest', 'Suggestions']);
   if (!tabs.some(function (t) { return t[0] === SS.tab; })) SS.tab = 'picks';
 
   var seasons = SS_SEASONS.slice();
@@ -192,11 +196,13 @@ function ssJump() {
   SS.season = Number(document.getElementById('ssSeason').value) || SS.season;
   SS.week = Number(document.getElementById('ssWeekSel').value) || SS.week;
   SS.sched = null;
+  SSG.key = null;
   ssLoadWeek();
 }
 
 function ssRenderTab() {
   var b = document.getElementById('ssBody');
+  if (SS.tab === 'suggest') return ssgInit();
   if (!SS.weekRow) {
     b.innerHTML = '<div class="empty">No Week ' + SS.week + ' yet. ' +
       ifCan('startsit', 'c', '<button class="btn btn-primary" onclick="ssCreateWeek()">Create Week ' +
