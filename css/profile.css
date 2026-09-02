@@ -1,0 +1,30 @@
+.profile-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 40px;
+      border: 1px solid #FFA515;
+      border-radius: 8px;
+      background: #FFFFFF;
+    }
+    h1 { color: #002863; display: inline; margin: 0; }
+    .edit-link { color: #FFA515; cursor: pointer; font-weight: 600; margin-left: 15px; text-decoration: none; }
+    .edit-link:hover { color: #FF8C00; }
+    .user-email { color: #666; font-size: 14px; margin-top: 10px; display: block; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; color: #002863; font-size: 14px; margin-bottom: 6px; }
+    .view-value { padding: 10px 12px; background: #f0f0f0; border-radius: 4px; color: #333; }
+    .edit-input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; display: none; }
+    .edit-input.active { display: block; }
+    .section-title { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 16px; color: #002863; font-weight: 600; }
+    .button-row { display: none; gap: 10px; margin-top: 30px; }
+    .button-row.active { display: flex; }
+    button { flex: 1; padding: 12px; background: #FFA515; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #FF8C00; }
+    .cancel-btn { background: #999; }
+    .cancel-btn:hover { background: #777; }
+    .logout-btn { width: 100%; background: #002863; margin-top: 20px; }
+    .logout-btn:hover { background: #000000; }
+    .message { margin-top: 10px; padding: 8px; border-radius: 4px; display: none; }
+    .message.show { display: block; }
+    .success { background: #dcfce7; color: #16a34a; }
+    .error { background: #fee2e2; color: #dc2626; }
