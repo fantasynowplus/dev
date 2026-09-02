@@ -1,180 +1,146 @@
-(function () {
-  const SSG = { season: null, week: null, data: null, sel: {}, ok: false };
-  const POS = ['QB', 'RB', 'WR', 'TE'];
+var SSG_ALLOWED = false;
+var SSG = { key: null, data: null, sel: {} };
 
-  async function rpc(fn, body) {
-    const cfg = sbCfg();
-    const r = await fetch(`${cfg.url}/rest/v1/rpc/${fn}`, {
-      method: 'POST',
-      headers: {
-        apikey: cfg.key,
-        Authorization: `Bearer ${sbToken()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body || {})
+function ssgCan() {
+  return rpc('ss_suggest_can', {})
+    .then(function (r) { return r === true; })
+    .catch(function () { return false; });
+}
+
+function ssgOrd(n) {
+  if (n % 10 === 1 && n !== 11) return 'st';
+  if (n % 10 === 2 && n !== 12) return 'nd';
+  if (n % 10 === 3 && n !== 13) return 'rd';
+  return 'th';
+}
+
+function ssgOpp(p) { return (p.home ? 'vs ' : '@ ') + p.opp; }
+
+/* teams already spoken for this week: saved matchups at other positions,
+   plus anything selected but not yet saved */
+function ssgTeamsInUse(skipPos) {
+  var used = {};
+  SS.matchups.forEach(function (m) {
+    if (m.pos === skipPos) return;
+    if (m.a_team) used[m.a_team] = m.a_name;
+    if (m.b_team) used[m.b_team] = m.b_name;
+  });
+  Object.keys(SSG.sel).forEach(function (pos) {
+    if (pos === skipPos) return;
+    SSG.sel[pos].forEach(function (p) { used[p.team] = p.name; });
+  });
+  return used;
+}
+
+function ssgFind(pos, id) {
+  var g = SSG.data.payload.positions[pos];
+  return g.tough.concat(g.soft).filter(function (p) {
+    return String(p.sleeper_id) === String(id);
+  })[0];
+}
+
+function ssgCard(p, pos) {
+  var sel = SSG.sel[pos] || [];
+  var on = sel.some(function (x) { return x.sleeper_id === p.sleeper_id; });
+  var clash = ssgTeamsInUse(pos)[p.team];
+  var l3 = p.dvpPpgL3 != null
+    ? ' <span class="ssg-l3">L3 ' + p.dvpPpgL3.toFixed(1) + '</span>' : '';
+  return '<button class="ssg-card' + (on ? ' on' : '') + (clash ? ' clash' : '') + '"' +
+    ' onclick="ssgToggle(\'' + pos + '\',\'' + p.sleeper_id + '\')">' +
+    '<span class="ssg-rk">' + pos + p.rank + '</span>' +
+    '<span class="ssg-nm">' + esc(p.name) + '</span>' +
+    '<span class="ssg-mt">' + esc(p.team + ' ' + ssgOpp(p)) + '</span>' +
+    '<span class="ssg-dv">' + p.dvpPpg.toFixed(1) + ' FPA \u00b7 ' +
+      p.dvpRank + ssgOrd(p.dvpRank) + ' most' + l3 +
+      (clash ? ' \u00b7 <b>' + esc(p.team) + ' used by ' + esc(clash) + '</b>' : '') +
+    '</span></button>';
+}
+
+function ssgInit() {
+  var b = document.getElementById('ssBody');
+  var key = SS.season + '-' + SS.week;
+  if (SSG.key === key && SSG.data !== null) { ssgRender(b); return; }
+  b.innerHTML = '<div class="ss-pad"><div class="empty">Loading suggestions\u2026</div></div>';
+  SSG.key = key;
+  SSG.sel = {};
+  rpc('ss_suggestions_get', { p_season: SS.season, p_week: SS.week })
+    .then(function (rows) { SSG.data = (rows && rows[0]) || false; ssgRender(b); })
+    .catch(function () {
+      SSG.key = null;
+      b.innerHTML = '<div class="ss-pad"><div class="empty">Suggestions unavailable.</div></div>';
     });
-    if (!r.ok) throw new Error(`${fn}: ${r.status}`);
-    const t = await r.text();
-    return t ? JSON.parse(t) : null;
+}
+
+function ssgRender(b) {
+  if (!SSG.data) {
+    b.innerHTML = '<div class="ss-pad"><div class="empty">No snapshot for ' + SS.season +
+      ' Week ' + SS.week + '.<br>Run the <b>Start/Sit suggestions</b> workflow with week ' +
+      SS.week + ' to build one.</div></div>';
+    return;
   }
+  var d = SSG.data;
+  var body = ssPosList().map(function (pos) {
+    var g = (d.payload.positions || {})[pos] || { tough: [], soft: [] };
+    var sel = SSG.sel[pos] || [];
+    var exists = SS.matchups.filter(function (m) { return m.pos === pos; })[0];
+    var action = sel.length === 2
+      ? '<button class="btn btn-sm btn-primary" onclick="ssgCreate(\'' + pos + '\')">' +
+        (exists ? 'Replace' : 'Create') + ' ' + pos + ' matchup</button>'
+      : '<span class="muted">Choose two</span>';
+    return '<div class="ss-card">' +
+      '<div class="ss-cardhead"><b>' + pos + '</b>' + action + '</div>' +
+      '<div class="ssg-grid">' +
+        '<div><div class="ssg-hd">Higher rank \u00b7 tough defense</div>' +
+          g.tough.map(function (p) { return ssgCard(p, pos); }).join('') + '</div>' +
+        '<div><div class="ssg-hd">Lower rank \u00b7 soft defense</div>' +
+          g.soft.map(function (p) { return ssgCard(p, pos); }).join('') + '</div>' +
+      '</div></div>';
+  }).join('');
+  b.innerHTML =
+    '<div class="ss-bar"><span class="muted">Generated ' +
+      fmtDate(d.generated_at) + ' \u00b7 ' + esc(d.source) + ' \u00b7 DvP through week ' +
+      (d.payload.dvp_through == null ? '\u2014' : d.payload.dvp_through) + '</span></div>' +
+    '<div class="ss-pad">' + body + '</div>' +
+    '<p class="ss-note">Orange cards share a team with a player already used this week. ' +
+      'Season and week follow the selectors above.</p>';
+}
 
-  async function ssgCan() {
-    try { SSG.ok = !!(await rpc('ss_suggest_can')); }
-    catch { SSG.ok = false; }
-    return SSG.ok;
-  }
+function ssgToggle(pos, id) {
+  var p = ssgFind(pos, id);
+  if (!p) return;
+  var cur = SSG.sel[pos] || [];
+  var at = -1;
+  cur.forEach(function (x, i) { if (x.sleeper_id === p.sleeper_id) at = i; });
+  if (at >= 0) cur.splice(at, 1);
+  else if (cur.length < 2) cur.push(p);
+  else { toast('Two per position \u2014 deselect one first', true); return; }
+  SSG.sel[pos] = cur;
+  ssgRender(document.getElementById('ssBody'));
+}
 
-  async function ssgLoad() {
-    SSG.data = null;
-    SSG.sel = {};
-    const rows = await rpc('ss_suggestions_get', {
-      p_season: SSG.season,
-      p_week: SSG.week
-    });
-    SSG.data = (rows && rows[0]) || null;
-  }
+function ssgCreate(pos) {
+  if (!SS.weekRow) { toast('Create Week ' + SS.week + ' first', true); return; }
+  var sel = SSG.sel[pos] || [];
+  if (sel.length !== 2) return;
+  var used = ssgTeamsInUse(pos);
+  var bad = sel.filter(function (p) { return used[p.team]; })[0];
+  if (bad) { toast(bad.team + ' is already used this week (' + used[bad.team] + ')', true); return; }
+  if (sel[0].team === sel[1].team) { toast('Both players are on ' + sel[0].team, true); return; }
 
-  function collisions() {
-    const byTeam = {};
-    for (const p of Object.values(SSG.sel).flat()) {
-      (byTeam[p.team] ||= []).push(p.name);
-    }
-    return Object.entries(byTeam).filter(([, v]) => v.length > 1);
-  }
-
-  function cardHtml(p, pos, side) {
-    const picked = (SSG.sel[pos] || []).some(x => x.sleeper_id === p.sleeper_id);
-    const l3 = p.dvpPpgL3 != null
-      ? `<span class="ssg-l3">L3 ${p.dvpPpgL3.toFixed(1)}</span>` : '';
-    return `
-      <button class="ssg-card ${side} ${picked ? 'on' : ''}"
-              data-pos="${pos}" data-id="${p.sleeper_id}">
-        <span class="ssg-rk">${pos}${p.rank}</span>
-        <span class="ssg-nm">${p.name}</span>
-        <span class="ssg-mt">${p.home ? 'vs' : '@'} ${p.opp}</span>
-        <span class="ssg-dv">${p.dvpPpg.toFixed(1)} FPA &middot; ${p.dvpRank}${ord(p.dvpRank)} most ${l3}</span>
-      </button>`;
-  }
-
-  const ord = n => (n % 10 === 1 && n !== 11) ? 'st'
-    : (n % 10 === 2 && n !== 12) ? 'nd'
-    : (n % 10 === 3 && n !== 13) ? 'rd' : 'th';
-
-  function ssgRender() {
-    const el = document.getElementById('ss-body');
-    if (!SSG.ok) {
-      el.innerHTML = `<div class="ss-pad">Not available for your account.</div>`;
-      return;
-    }
-
-    const weeks = Array.from({ length: 18 }, (_, i) =>
-      `<option value="${i + 1}" ${SSG.week === i + 1 ? 'selected' : ''}>Week ${i + 1}</option>`
-    ).join('');
-
-    const bar = `
-      <div class="ss-bar">
-        <input id="ssg-season" type="text" value="${SSG.season}" size="5">
-        <select id="ssg-week">${weeks}</select>
-        <button id="ssg-reload" class="btn">Load</button>
-        <span class="ss-note">${SSG.data
-          ? `Generated ${new Date(SSG.data.generated_at).toLocaleString()} &middot; ${SSG.data.source}`
-          : ''}</span>
-      </div>`;
-
-    if (!SSG.data) {
-      el.innerHTML = bar + `<div class="ss-pad">
-        No snapshot for ${SSG.season} week ${SSG.week}.
-        Run the <strong>Start/Sit suggestions</strong> workflow with week ${SSG.week}
-        to build one.</div>`;
-      wire();
-      return;
-    }
-
-    const cols = collisions();
-    const warn = cols.length
-      ? `<div class="ssg-warn">Same team selected twice: ${
-          cols.map(([t, v]) => `${t} (${v.join(', ')})`).join('; ')}</div>`
-      : '';
-
-    const body = POS.map(pos => {
-      const g = SSG.data.payload.positions[pos] || { tough: [], soft: [] };
-      const sel = SSG.sel[pos] || [];
-      const btn = sel.length === 2
-        ? `<button class="btn ssg-make" data-pos="${pos}">Create ${pos} matchup</button>`
-        : `<span class="ss-note">Pick two</span>`;
-      return `
-        <div class="ss-card ssg-pos">
-          <div class="ss-bar"><strong>${pos}</strong>${btn}</div>
-          <div class="ssg-grid">
-            <div><div class="ssg-hd">Higher rank &middot; tough defense</div>
-              ${g.tough.map(p => cardHtml(p, pos, 'tough')).join('')}</div>
-            <div><div class="ssg-hd">Lower rank &middot; soft defense</div>
-              ${g.soft.map(p => cardHtml(p, pos, 'soft')).join('')}</div>
-          </div>
-        </div>`;
-    }).join('');
-
-    el.innerHTML = bar + warn + body;
-    wire();
-  }
-
-  function findPlayer(pos, id) {
-    const g = SSG.data.payload.positions[pos];
-    return [...g.tough, ...g.soft].find(p => p.sleeper_id === id);
-  }
-
-  function wire() {
-    const q = s => document.querySelectorAll(s);
-
-    document.getElementById('ssg-reload')?.addEventListener('click', async () => {
-      SSG.season = Number(document.getElementById('ssg-season').value) || SSG.season;
-      SSG.week = Number(document.getElementById('ssg-week').value);
-      await ssgLoad();
-      ssgRender();
-    });
-
-    q('.ssg-card').forEach(b => b.addEventListener('click', () => {
-      const pos = b.dataset.pos;
-      const p = findPlayer(pos, b.dataset.id);
-      const cur = SSG.sel[pos] || [];
-      const at = cur.findIndex(x => x.sleeper_id === p.sleeper_id);
-      if (at >= 0) cur.splice(at, 1);
-      else if (cur.length < 2) cur.push(p);
-      SSG.sel[pos] = cur;
-      ssgRender();
-    }));
-
-    q('.ssg-make').forEach(b => b.addEventListener('click', () => ssgCreate(b.dataset.pos)));
-  }
-
-  async function ssgCreate(pos) {
-    const [a, b] = SSG.sel[pos];
-    const wk = await dbGet(
-      `ss_weeks?season=eq.${SSG.season}&week=eq.${SSG.week}&select=id`
-    );
-    if (!wk || !wk.length) {
-      alert(`Open ${SSG.season} week ${SSG.week} in the Matchups tab first.`);
-      return;
-    }
-    const opp = p => `${p.home ? 'vs' : '@'} ${p.opp}`;
-    await dbPost('ss_matchups', {
-      week_id: wk[0].id, pos,
-      a_player_id: a.sleeper_id, a_name: a.name, a_team: a.team,
-      a_opp: opp(a), a_espn_id: a.espn_id,
-      b_player_id: b.sleeper_id, b_name: b.name, b_team: b.team,
-      b_opp: opp(b), b_espn_id: b.espn_id
-    });
-    SSG.sel[pos] = [];
-    alert(`${pos} matchup created.`);
-    ssgRender();
-  }
-
-  window.ssgInit = async function () {
-    SSG.season = SSG.season || SS.season;
-    SSG.week = SSG.week || SS.week;
-    await ssgCan();
-    if (SSG.ok) await ssgLoad();
-    ssgRender();
+  var a = sel[0], bb = sel[1];
+  var payload = {
+    week_id: SS.weekRow.id, pos: pos, sort_order: ssPosList().indexOf(pos),
+    a_player_id: a.sleeper_id, a_espn_id: a.espn_id || null,
+    a_name: a.name, a_team: a.team, a_opp: ssgOpp(a),
+    b_player_id: bb.sleeper_id, b_espn_id: bb.espn_id || null,
+    b_name: bb.name, b_team: bb.team, b_opp: ssgOpp(bb)
   };
-  window.ssgCan = ssgCan;
-})();
+  var exists = SS.matchups.filter(function (m) { return m.pos === pos; })[0];
+  var job = exists ? dbPatch('ss_matchups?id=eq.' + exists.id, payload)
+                   : dbPost('ss_matchups', payload);
+  job.then(function () {
+    SSG.sel[pos] = [];
+    toast(pos + ' matchup saved');
+    return ssLoadWeek();
+  }).catch(function () { toast('Couldn\u2019t save that matchup', true); });
+}
