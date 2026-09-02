@@ -172,7 +172,7 @@ body{
 }
 
 .bp-guest{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-    background:rgba(88,101,242,.16);border:1px solid rgba(88,101,242,.5);
+    background:var(--stream-bg);border:1px solid rgba(88,101,242,.5);
     padding:2px 7px;border-radius:999px;color:#8b95f5}
 .bp-result{flex:none;font-family:"Oswald";font-weight:600;font-size:10px;letter-spacing:.12em;
     padding:2px 8px;border-radius:999px;margin-left:auto}
@@ -181,5 +181,3 @@ body{
 .bp-card.revealed .bp-result{opacity:1}
 .bp-shots{display:flex;align-items:center;flex:none;gap:6px}
 .bp-shots .bp-shot{flex:none}
-.bp-shots .bp-shot + .bp-shot{margin-left:-18px}
-.bp-card.big .bp-shots .bp-shot + .bp-shot{margin-left:-20px}
