@@ -173,3 +173,8 @@ body{
 .bp-guest{font-size:9px;letter-spacing:.12em;text-transform:uppercase;
     background:rgba(88,101,242,.16);border:1px solid rgba(88,101,242,.5);
     padding:2px 7px;border-radius:999px;color:#8b95f5}
+.bp-result{flex:none;font-family:"Oswald";font-weight:600;font-size:10px;letter-spacing:.12em;
+    padding:2px 8px;border-radius:999px;margin-left:auto}
+.bp-result.hit{background:rgba(66,244,176,.16);border:1px solid rgba(66,244,176,.55);color:var(--aqua)}
+.bp-result.miss{background:rgba(234,78,61,.16);border:1px solid rgba(234,78,61,.55);color:#ff8a7d}
+.bp-card.revealed .bp-result{opacity:1}

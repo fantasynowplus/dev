@@ -4,7 +4,7 @@
   var POLL_MS = 15000;
   var POSITIONS = ['QB','RB','WR','TE'];
   var SB_URL = '', SB_KEY = '';
-  var STATE = { season:null, week:null, rows:[], sig:'' };
+  var STATE = { season:null, rows:[], sig:'' };
   var REVEALED = {};
 
   function el(id){ return document.getElementById(id); }
@@ -47,12 +47,11 @@
       .then(function(r){ return r.json(); }).catch(function(){ return {}; })
       .then(function(s){
         STATE.season = Number(s.season) || new Date().getFullYear();
-        STATE.week = Number(s.display_week || s.week) || 1;
       });
   }
 
   function loadRows(){
-    return rpc('bp_public', { p_season: STATE.season, p_week: STATE.week })
+    return rpc('bp_public', { p_season: STATE.season })
       .then(function(rows){
         rows = rows || [];
         var sig = JSON.stringify(rows);
@@ -88,7 +87,9 @@
                  (psrc ? '<img class="bp-shot" src="' + esc(psrc) + '" alt="" onerror="this.remove()">' : '') +
                  '<div class="bp-titles">' +
                    '<div class="bp-title"><span class="bp-pill">' + r.position + '</span>' +
-                     '<span class="bp-player">' + esc(r.player_name || '') + '</span></div>' +
+                     '<span class="bp-player">' + esc(r.player_name || '') + '</span>' +
+                     (r.result ? '<span class="bp-result ' + r.result + '">' +
+                        (r.result === 'hit' ? 'HIT' : 'MISS') + '</span>' : '') + '</div>' +
                    (big ? '' : byline(r)) +
                  '</div>' +
                '</div>' +
@@ -118,7 +119,7 @@
       }).join('');
       return '<div class="bp-col">' + head + cards + '</div>';
     }).join('');
-    return cols || '<div class="state">No featured predictions for this week yet.</div>';
+    return cols || '<div class="state">No featured predictions for this season yet.</div>';
   }
 
   function listHtml(){
@@ -134,7 +135,7 @@
   }
 
   function render(){
-    el('scope').textContent = STATE.season + ' \u00b7 Week ' + STATE.week;
+    el('scope').textContent = STATE.season + ' Season';
     el('featured').innerHTML = featuredHtml();
     el('list').innerHTML = listHtml();
     applyFilter();

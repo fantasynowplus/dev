@@ -848,3 +848,12 @@ body.nav-open{overflow:hidden}
 .bp-slot{flex-wrap:wrap}
 .bp-slot .bp-txt{flex:1 1 100%;white-space:normal}
 }
+
+.bp-res{display:inline-flex;gap:4px}
+.bp-rbtn{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;font-size:13px;line-height:1;color:var(--muted)}
+.bp-rbtn.hit:hover,.bp-rbtn.hit.on{border-color:#129b6b;background:#129b6b;color:#fff}
+.bp-rbtn.miss:hover,.bp-rbtn.miss.on{border-color:#d1483a;background:#d1483a;color:#fff}
+.bp-rtag{font-size:10px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:999px}
+.bp-rtag.hit{background:#e6f7f0;color:#0d7a54}
+.bp-rtag.miss{background:#fdecea;color:#b3382b}

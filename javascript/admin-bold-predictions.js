@@ -1,19 +1,18 @@
-let BP = { season:null, week:null, rows:[], staff:[], guests:[], players:null };
+let BP = { season:null, rows:[], staff:[], guests:[], players:null };
 const BP_POS = ['QB','RB','WR','TE'];
 
 function bpState(){
   if(BP.season) return Promise.resolve();
   return fetch('https://api.sleeper.app/v1/state/nfl')
     .then(r=>r.json()).catch(()=>({}))
-    .then(s=>{ BP.season = Number(s.season)||new Date().getFullYear();
-               BP.week = Number(s.display_week||s.week)||1; });
+    .then(s=>{ BP.season = Number(s.season)||new Date().getFullYear(); });
 }
 
 async function loadBoldPredictions(){
   topAction(ifCan('bold_predictions','c','<button class="btn btn-primary" onclick="bpForm()">+ Add prediction</button>'));
   await bpState();
   const [rows, staff, guests] = await Promise.all([
-    dbGet('bp_predictions?select=*&season=eq.'+BP.season+'&week=eq.'+BP.week+'&order=sort_order.asc,created_at.asc'),
+    dbGet('bp_predictions?select=*&season=eq.'+BP.season+'&order=sort_order.asc,created_at.asc'),
     dbGet('staff?select=id,name,headshot&order=name.asc'),
     dbGet('guests?select=id,name&order=name.asc')
   ]);
@@ -60,7 +59,7 @@ function bpBindSearch(bg, list){
   });
 }
 
-function bpShift(d){ BP.week = Math.min(22, Math.max(1, BP.week + d)); loadBoldPredictions(); }
+function bpShift(d){ BP.season = BP.season + d; loadBoldPredictions(); }
 
 function bpSlotName(slot){
   const r = BP.rows.find(x=>x.featured_slot===slot);
@@ -73,6 +72,7 @@ function bpCardRow(r){
     '<td><strong>'+who+'</strong></td>'+
     '<td>'+(r.player_name?'<strong>'+esc(r.player_name)+'</strong><br>':'')+esc(r.prediction)+'</td>'+
     '<td>'+(r.featured_slot?badge('Column '+r.featured_slot,'var(--orange)'):'—')+'</td>'+
+    '<td>'+bpResultBtns(r)+'</td>'+
     '<td><div class="row-actions">'+
       ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')+
       ifCan('bold_predictions','d','<button class="btn btn-danger btn-sm" onclick=\'bpDelete("'+r.id+'")\'>Delete</button>')+
@@ -86,6 +86,7 @@ function bpFeaturedCol(slot){
     return '<div class="bp-slot'+(r?'':' empty')+'">'+
       '<span class="bp-pos bp-'+p+'">'+p+'</span>'+
       (r ? '<span class="bp-txt">'+(r.player_name?'<b>'+esc(r.player_name)+'</b> — ':'')+esc(r.prediction)+'</span>'+
+           bpResultBtns(r)+
            ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')
          : '<span class="bp-txt muted">Not entered</span>'+
            ifCan('bold_predictions','c','<button class="btn btn-ghost btn-sm" onclick=\'bpForm(null,'+slot+',"'+p+'")\'>Add</button>'))+
@@ -100,20 +101,35 @@ function renderBoldPredictions(){
   document.getElementById('content').innerHTML =
     '<div class="cal-toolbar">'+
       '<button class="btn btn-ghost btn-sm" onclick="bpShift(-1)">&lsaquo;</button>'+
-      '<span class="cal-month">'+BP.season+' &middot; Week '+BP.week+'</span>'+
+      '<span class="cal-month">'+BP.season+' Season</span>'+
       '<button class="btn btn-ghost btn-sm" onclick="bpShift(1)">&rsaquo;</button>'+
-      '<span class="count-pill" style="margin-left:auto">'+BP.rows.length+' this week</span>'+
+      '<span class="count-pill" style="margin-left:auto">'+BP.rows.length+' this season</span>'+
     '</div>'+
     '<div class="bp-cols">'+bpFeaturedCol(1)+bpFeaturedCol(2)+'</div>'+
     '<div class="panel"><div class="table-wrap"><table><thead><tr>'+
-      '<th>Pos</th><th>Who</th><th>Prediction</th><th>Placement</th><th></th>'+
+      '<th>Pos</th><th>Who</th><th>Prediction</th><th>Placement</th><th>Result</th><th></th>'+
     '</tr></thead><tbody>'+
     (others.length ? others.map(bpCardRow).join('')
-      : '<tr><td colspan="5"><div class="empty"><h4>No other predictions yet</h4>'+
+      : '<tr><td colspan="6"><div class="empty"><h4>No other predictions yet</h4>'+
         '<p>Add staff or guest predictions and they\'ll be listed here by position.</p>'+
         ifCan('bold_predictions','c','<button class="btn btn-primary" onclick="bpForm()">+ Add prediction</button>')+
         '</div></td></tr>')+
     '</tbody></table></div></div>';
+}
+
+function bpResultBtns(r){
+  if(!can('bold_predictions','u')) return r.result ? '<span class="bp-rtag '+r.result+'">'+(r.result==='hit'?'HIT':'MISS')+'</span>' : '';
+  return '<div class="bp-res">'+
+    '<button class="bp-rbtn hit'+(r.result==='hit'?' on':'')+'" title="Hit" onclick=\'bpSetResult("'+r.id+'","hit")\'>&#10003;</button>'+
+    '<button class="bp-rbtn miss'+(r.result==='miss'?' on':'')+'" title="Miss" onclick=\'bpSetResult("'+r.id+'","miss")\'>&#10007;</button></div>';
+}
+
+async function bpSetResult(id, v){
+  const cur = BP.rows.find(x=>x.id===id);
+  const next = (cur && cur.result===v) ? null : v;
+  await dbPatch('bp_predictions?id=eq.'+id, {result:next});
+  await loadBoldPredictions();
+  toast(next ? ('Marked '+next) : 'Result cleared');
 }
 
 function bpAuthorOptions(sel){
@@ -160,7 +176,7 @@ function bpForm(id, presetSlot, presetPos){
       const found = list.find(x=>x.id===aid);
       const slotVal = val(bg,'slot');
       const body = {
-        season:BP.season, week:BP.week,
+        season:BP.season,
         position:val(bg,'position'),
         featured_slot: slotVal===''?null:Number(slotVal),
         staff_id: kind==='staff'?aid:null,
