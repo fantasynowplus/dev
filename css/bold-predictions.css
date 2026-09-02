@@ -61,7 +61,7 @@ body{
 .bp-tabs button:hover{border-color:var(--orange);color:var(--orange)}
 .bp-tabs button.on{background:var(--orange);border-color:var(--orange);color:var(--stream-bg)}
 
-.bp-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.bp-list{display:grid;grid-template-columns:1fr;gap:14px}
 
 .bp-card{
     position:relative;display:flex;overflow:hidden;isolation:isolate;
@@ -181,3 +181,6 @@ body{
 .bp-card.revealed .bp-result{opacity:1}
 .bp-shots{display:flex;align-items:center;flex:none;gap:6px}
 .bp-shots .bp-shot{flex:none}
+
+.topbar{position:sticky;top:0;z-index:20;background:var(--stream-bg);
+    padding-top:28px;margin-top:-28px}
