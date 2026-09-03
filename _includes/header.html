@@ -32,10 +32,36 @@
 </head>
 <body onload="if (typeof loadFeed === 'function') loadFeed('UCCW6qFFB7ezwJk1cLPjPHDg', document.getElementById('all-btn'));">
 
-    <header>
+<header>
         <a href="/" class="logo"><img src="assets/images/fantasy_logo-3.png" alt="FantasyNow+ Logo"></a>
         <nav class="desktop-nav">
-            <a href="/">Home</a>
+            </div>    
+            <div class="dropdown mega-trigger">
+                <a href="#">Shows</a>
+                <div class="dropdown-content mega-content">
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-latest">The Latest</div>
+                        <div id="nav-latest-feed" class="mega-latest-list">Loading...</div>
+                    </div>
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-main">FantasyNow+</div>
+                        <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg/videos" target="_blank">Latest Episodes</a>
+                        <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg?sub_confirmation=1" target="_blank">Subscribe</a>
+                    </div>
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-dynasty">Dynasty</div>
+                        <a href="https://www.youtube.com/channel/UCwbYE7IpXw0GEMB03vQcfPg/videos" target="_blank">Latest Episodes</a>
+                        <a href="https://www.youtube.com/channel/UCwbYE7IpXw0GEMB03vQcfPg?sub_confirmation=1" target="_blank">Subscribe</a>
+                    </div>
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-tilted">Get Tilted</div>
+                        <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA/videos" target="_blank">Latest Episodes</a>
+                        <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA?sub_confirmation=1" target="_blank">Subscribe</a>
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="tools">Tools</a>
             <div class="dropdown">
                 <a href="rankings-redraft">Rankings</a>
                 <div class="dropdown-content">
@@ -77,7 +103,10 @@
     </header>
 <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
     <nav id="mobileNav" class="mobile-nav">
-        <a href="/">Home</a>
+        <div class="mobile-nav-section-label">Shows</div>
+        <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg/videos" target="_blank">FantasyNow+</a>
+        <a href="https://www.youtube.com/channel/UCwbYE7IpXw0GEMB03vQcfPg/videos" target="_blank">Dynasty</a>
+        <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA/videos" target="_blank">Get Tilted</a>
         <div class="mobile-nav-section-label">Rankings</div>
         <a href="rankings-redraft">Redraft Rankings</a>
         <a href="rankings-dynasty">Dynasty Rankings</a>
@@ -113,4 +142,5 @@
 
     <script src="javascript/auth.js"></script>
     <script src="javascript/authnav.js"></script>
+    <script src="javascript/nav-feed.js"></script>
     
