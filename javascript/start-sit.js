@@ -37,7 +37,10 @@
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
   function normTeam(t) {
-    var c = String(t || '').replace(/[^A-Za-z]/g, '').toUpperCase();
+    var s = String(t || '').trim().toUpperCase();
+    s = s.replace(/^@\s*/, '').replace(/^VS\.?\s+/, '');
+    var m = s.match(/[A-Z]{2,3}/);          // first team-like token
+    var c = m ? m[0] : '';
     return TEAM_ALIAS[c] || c;
   }
   function withTimeout(p, ms, fallback) {
