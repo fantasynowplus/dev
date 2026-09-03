@@ -270,13 +270,13 @@ header nav {
   color:#FFA515;pointer-events:none;
 }
 .dropdown-cat:not(:first-child){border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
-.mega-content{min-width:480px;grid-template-columns:1fr 1fr 1fr;gap:0}
+.mega-content{min-width:480px;grid-template-columns:1fr 1fr 1fr;gap:0;left:auto;right:0}
 .mega-col{border-left:1px solid var(--border-dark);padding:14px 16px}
 .mega-content .mega-col:first-child{border-left:none}
 .mega-col-title{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:1.1rem;text-align:center;padding:8px 10px;border-radius:4px;margin-bottom:10px}
-.mega-title-main{background:var(--bright-orange);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
+.mega-title-main{background:var(--bright-orange);color:#fff;-webkit-text-stroke:.5px var(--brand-black)}
 .mega-title-dynasty{background:var(--accent-cyan);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
-.mega-title-tilted{background:var(--aqua);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
+.mega-title-tilted{background:var(--aqua);color:#fff;-webkit-text-stroke:2px var(--brand-black)}
 .mega-title-myleague{background:var(--accent-cobalt);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
 .mega-title-graphics{background:var(--accent-purple);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
 .mega-title-dfsbetting{background:var(--accent-lime);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
