@@ -1,0 +1,34 @@
+---
+layout: null
+title: Bold Predictions — FantasyNow+
+permalink: /boldpredictions/
+---
+{% include header.html css="tools,bold-predictions-public" %}
+<div class="page-container">
+  <h1>Bold Predictions</h1>
+  <p class="bpp-intro">Our analysts go on record with one bold call at every offensive position. See who nailed it, who reached, and who's still on the board.</p>
+
+  <div class="section-eyebrow"><span id="bppSeason">— Season</span></div>
+
+  <div class="bpp-feature-grid" id="bppFeatured"></div>
+
+  <div class="tools-section">
+    <div class="tools-section-head">
+      <h2>More Bold Predictions</h2>
+      <p>Staff and guest predictions from around the newsroom.</p>
+    </div>
+    <div class="bpp-tabs" id="bppTabs">
+      <button class="on" data-pos="ALL">All</button>
+      <button data-pos="QB">QB</button>
+      <button data-pos="RB">RB</button>
+      <button data-pos="WR">WR</button>
+      <button data-pos="TE">TE</button>
+    </div>
+    <div class="bpp-list" id="bppList"></div>
+  </div>
+
+  <a class="back-to-tools" href="tools"><span>&larr;</span> Back to Tools</a>
+</div>
+<script src="javascript/auth.js"></script>
+<script src="javascript/bold-predictions-public.js"></script>
+{% include footer.html %}

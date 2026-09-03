@@ -92,6 +92,7 @@ function bpCardRow(r){
     '<td>'+(r.player_name?'<strong>'+esc(r.player_name)+'</strong><br>':'')+esc(r.prediction)+'</td>'+
     '<td>'+(r.featured_slot?badge('Column '+r.featured_slot,'var(--orange)'):'—')+'</td>'+
     '<td>'+bpResultBtns(r)+'</td>'+
+    '<td>'+bpPublicBtn(r)+'</td>'+
     '<td><div class="row-actions">'+
       ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')+
       ifCan('bold_predictions','d','<button class="btn btn-danger btn-sm" onclick=\'bpDelete("'+r.id+'")\'>Delete</button>')+
@@ -105,7 +106,7 @@ function bpFeaturedCol(slot){
     return '<div class="bp-slot'+(r?'':' empty')+'">'+
       '<span class="bp-pos bp-'+p+'">'+p+'</span>'+
       (r ? '<span class="bp-txt">'+(r.player_name?'<b>'+esc(r.player_name)+'</b> — ':'')+esc(r.prediction)+'</span>'+
-           bpResultBtns(r)+
+           bpResultBtns(r)+bpPublicBtn(r)+
            ifCan('bold_predictions','u','<button class="btn btn-ghost btn-sm" onclick=\'bpForm("'+r.id+'")\'>Edit</button>')
          : '<span class="bp-txt muted">Not entered</span>'+
            ifCan('bold_predictions','c','<button class="btn btn-ghost btn-sm" onclick=\'bpForm(null,'+slot+',"'+p+'")\'>Add</button>'))+
@@ -126,7 +127,7 @@ function renderBoldPredictions(){
     '</div>'+
     '<div class="bp-cols">'+bpFeaturedCol(1)+bpFeaturedCol(2)+'</div>'+
     '<div class="panel"><div class="table-wrap"><table><thead><tr>'+
-      '<th>Pos</th><th>Who</th><th>Prediction</th><th>Placement</th><th>Result</th><th></th>'+
+      '<th>Pos</th><th>Who</th><th>Prediction</th><th>Placement</th><th>Result</th><th>Public</th><th></th>'+
     '</tr></thead><tbody>'+
     (others.length ? others.map(bpCardRow).join('')
       : '<tr><td colspan="6"><div class="empty"><h4>No other predictions yet</h4>'+
@@ -149,6 +150,18 @@ async function bpSetResult(id, v){
   await dbPatch('bp_predictions?id=eq.'+id, {result:next});
   await loadBoldPredictions();
   toast(next ? ('Marked '+next) : 'Result cleared');
+}
+
+function bpPublicBtn(r){
+  if(!can('bold_predictions','u')) return r.is_public ? '<span class="badge" style="background:var(--aqua)">Public</span>' : '';
+  return '<button class="btn btn-sm '+(r.is_public?'btn-primary':'btn-ghost')+'" onclick=\'bpTogglePublic("'+r.id+'")\'>'+(r.is_public?'Public':'Private')+'</button>';
+}
+
+async function bpTogglePublic(id){
+  const cur = BP.rows.find(x=>x.id===id);
+  await dbPatch('bp_predictions?id=eq.'+id, {is_public: !cur.is_public});
+  await loadBoldPredictions();
+  toast(!cur.is_public ? 'Published to public page' : 'Removed from public page');
 }
 
 function bpAuthorOptions(sel){
@@ -177,6 +190,7 @@ function bpForm(id, presetSlot, presetPos){
         '<option value="2"'+(slot==='2'?' selected':'')+'>Featured column 2</option>'+
       '</select></div>'+
       '<div class="field"><label>Sort order</label><input name="sort_order" type="number" value="'+(r.sort_order||0)+'"></div>'+
+      '<div class="field"><label>Public page</label><label class="bp-pub-toggle"><input type="checkbox" name="is_public"'+(r.is_public?' checked':'')+'> Show on fantasynowplus.com/bold-predictions</label></div>'+
       '<div class="field full"><label>Player(s)</label>'+
         '<input name="player_q" class="ss-search" autocomplete="off" placeholder="Search players\u2026">'+
         '<div class="ss-results" id="bpRes"></div>'+
@@ -208,7 +222,8 @@ function bpForm(id, presetSlot, presetPos){
         player_id: BP.pick[0] ? BP.pick[0].id : null,
         espn_id: BP.pick[0] ? BP.pick[0].espn : null,
         player_team: BP.pick[0] ? BP.pick[0].team : null,
-        sort_order: Number(val(bg,'sort_order'))||0
+        sort_order: Number(val(bg,'sort_order'))||0,
+        is_public: bg.querySelector('[name="is_public"]').checked
       };
       if(id) await dbPatch('bp_predictions?id=eq.'+id, body);
       else    await dbPost('bp_predictions', body);
