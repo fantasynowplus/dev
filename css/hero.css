@@ -34,15 +34,19 @@
 
 .hero-text {
     position: absolute;
-    left: 48px;
-    bottom: 44px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 2;
-    max-width: 560px;
+    max-width: 900px;
+    width: 90%;
+    text-align: center;
 }
 
 .hero-eyebrow {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     font-family: var(--font-display);
     font-size: 0.85rem;
@@ -51,7 +55,7 @@
     text-transform: uppercase;
     color: var(--bright-orange);
     margin-bottom: 14px;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 0 6px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.9);
 }
 
 .hero-eyebrow .dot {
@@ -66,13 +70,14 @@
 .hero-headline {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(2.6rem, 5vw, 4.2rem);
+    font-size: clamp(2rem, 4.2vw, 3.6rem);
     line-height: 0.95;
     text-transform: uppercase;
     letter-spacing: 0.005em;
     color: var(--pure-white);
     margin: 0 0 14px 0;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+    text-shadow: 0 0 8px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.9), 0 6px 16px rgba(0,0,0,0.7);
 }
 
 .hero-headline span { color: var(--bright-orange); }
@@ -81,7 +86,8 @@
     color: var(--light-gray);
     font-size: 1.05rem;
     max-width: 420px;
-    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
+    margin: 0 auto;
+    text-shadow: 0 0 6px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.9);
 }
 
 .hero-content {
