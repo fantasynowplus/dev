@@ -273,7 +273,7 @@ header nav {
 .mega-content{min-width:480px;grid-template-columns:1fr 1fr 1fr;gap:0}
 .mega-col{border-left:1px solid var(--border-dark);padding:14px 16px}
 .mega-content .mega-col:first-child{border-left:none}
-.mega-col-title{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:.85rem;padding:8px 10px;border-radius:4px;margin-bottom:10px}
+.mega-col-title{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:1.1rem;text-align:center;padding:8px 10px;border-radius:4px;margin-bottom:10px}
 .mega-title-main{background:var(--bright-orange);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
 .mega-title-dynasty{background:var(--accent-cyan);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
 .mega-title-tilted{background:var(--aqua);color:#fff;-webkit-text-stroke:1px var(--brand-black)}
