@@ -329,7 +329,8 @@ async function btForm(id){
 
   var games = [];
   try{
-    games = await dbGet('gp_games?select=*&season=eq.'+Number(BT.season)+'&week=eq.'+week+'&limit=40');
+    var pfx = Number(BT.season) + '_' + week + '_';
+    games = await dbGet('gp_games?select=*&game_key=like.' + encodeURIComponent(pfx) + '*&limit=40');
   }catch(e){ games = []; }
 
   var bettorField = canAny
@@ -400,6 +401,16 @@ async function btForm(id){
         var el = bg.querySelector(sel);
         if(el){ el.oninput = btfPreview; el.onchange = btfPreview; }
       });
+           var bsel = bg.querySelector('#btf-bettor');
+      if(bsel && bsel.tagName === 'SELECT' && !bsel.options.length){
+        rpc('bt_bettors').then(function(rows){
+          BT.staff = rows || [];
+          bsel.innerHTML = BT.staff.map(function(s){
+            var on = (BT_LAST.bettor || MY_STAFF_ID) === s.id;
+            return '<option value="'+s.id+'"'+(on?' selected':'')+'>'+esc(s.name)+'</option>';
+          }).join('');
+        }).catch(function(){});
+      } 
     },
     onSave: async function(bg){
       BTF.bg = bg;
