@@ -1,32 +1,38 @@
 ---
 layout: null
 ---
-{% include header.html title="Bold Predictions" css="tools,bold-predictions-public" %}
-<div class="page-container">
-  <h1>Bold Predictions</h1>
-  <p class="bpp-intro">Our analysts go on record with one bold call at every offensive position. See who nailed it, who reached, and who's still on the board.</p>
+{% include header.html title="Bold Predictions" css="bold-predictions-public" %}
 
-  <div class="section-eyebrow"><span id="bppSeason">— Season</span></div>
-
-  <div class="bpp-feature-grid" id="bppFeatured"></div>
-
-  <div class="tools-section">
-    <div class="tools-section-head">
-      <h2>More Bold Predictions</h2>
-      <p>Staff and guest predictions from around the newsroom.</p>
-    </div>
-    <div class="bpp-tabs" id="bppTabs">
-      <button class="on" data-pos="ALL">All</button>
-      <button data-pos="QB">QB</button>
-      <button data-pos="RB">RB</button>
-      <button data-pos="WR">WR</button>
-      <button data-pos="TE">TE</button>
-    </div>
-    <div class="bpp-list" id="bppList"></div>
+<main class="bpp-wrap">
+  <div class="bpp-head">
+    <h1>Bold Predictions</h1>
+    <p class="bpp-sub">One bold call per offensive position, on record before kickoff. See who nailed it, who reached, and who's still on the board.</p>
   </div>
 
-  {% include back-to-tools.html %}
-</div>
-<script src="javascript/auth.js"></script>
+  <div class="bpp-grid">
+    <div id="bppMain">
+      <div class="bpp-postabs" id="bppPosTabs">
+        <button class="on" data-pos="ALL">All</button>
+        <button data-pos="QB">QB</button>
+        <button data-pos="RB">RB</button>
+        <button data-pos="WR">WR</button>
+        <button data-pos="TE">TE</button>
+      </div>
+      <div id="bppList">
+        <p class="bpp-state">Loading…</p>
+      </div>
+    </div>
+
+    <aside class="bpp-rail">
+      <div class="bpp-railgroup" id="bppGroups"></div>
+      <div class="bpp-raillabel">Featured Analysts</div>
+      <div class="bpp-people" id="bppFeaturedPeople"></div>
+      <div class="bpp-raillabel" id="bppOtherLabel" hidden>Also predicting</div>
+      <div class="bpp-people" id="bppOtherPeople"></div>
+    </aside>
+  </div>
+</main>
+
 <script src="javascript/bold-predictions-public.js"></script>
+
 {% include footer.html %}
