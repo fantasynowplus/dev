@@ -120,7 +120,7 @@ async function loadBets(){
     BT.books = await dbGet('bt_sportsbooks?select=id,name,short_name,sort_order,is_active&order=sort_order');
   }catch(e){ BT.books = []; }
   try{
-    BT.staff = await dbGet('staff?select=id,name&order=name');
+    BT.staff = await rpc('bt_bettors');
   }catch(e){ BT.staff = []; }
 
   if(!can('bets','r') && (BT.tab === 'all' || BT.tab === 'board')) BT.tab = 'mine';
