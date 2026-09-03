@@ -35,8 +35,8 @@
 .hero-text {
     position: absolute;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    bottom: 44px;
+    transform: translateX(-50%);
     z-index: 2;
     max-width: 900px;
     width: 90%;
