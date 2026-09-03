@@ -329,7 +329,10 @@ async function btForm(id){
 
   var games = [];
   try{
-    games = await dbGet('gp_games?select=*&season=eq.'+Number(BT.season)+'&week=eq.'+week+'&limit=40');
+  var wkRows = await dbGet('gp_weeks?season=eq.'+Number(BT.season)+'&week=eq.'+week+'&select=id');
+  games = wkRows && wkRows[0]
+    ? await dbGet('gp_games?week_id=eq.'+wkRows[0].id+'&select=*&order=kickoff,sort_order&limit=40')
+    : [];
   }catch(e){ games = []; }
 
   var bettorField = canAny
