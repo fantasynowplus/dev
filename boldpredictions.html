@@ -2,8 +2,6 @@
 layout: null
 ---
 {% include header.html title="Bold Predictions" css="tools,bold-predictions-public" %}
-{% include back-to-tools.html %}
-
 <div class="page-container">
   <h1>Bold Predictions</h1>
   <p class="bpp-intro">Our analysts go on record with one bold call at every offensive position. See who nailed it, who reached, and who's still on the board.</p>
@@ -27,7 +25,7 @@ layout: null
     <div class="bpp-list" id="bppList"></div>
   </div>
 
-  <a class="back-to-tools" href="tools"><span>&larr;</span> Back to Tools</a>
+  {% include back-to-tools.html %}
 </div>
 <script src="javascript/auth.js"></script>
 <script src="javascript/bold-predictions-public.js"></script>

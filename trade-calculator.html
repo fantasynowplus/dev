@@ -1,32 +1,41 @@
 ---
 layout: null
 ---
-{% include header.html title="Bold Predictions" css="tools,bold-predictions-public" %}
-<div class="page-container">
-  <h1>Bold Predictions</h1>
-  <p class="bpp-intro">Our analysts go on record with one bold call at every offensive position. See who nailed it, who reached, and who's still on the board.</p>
+{% include header.html title="Trade Calculator" css="trade-calculator" %}
+{% include back-to-tools.html %}
 
-  <div class="section-eyebrow"><span id="bppSeason">— Season</span></div>
 
-  <div class="bpp-feature-grid" id="bppFeatured"></div>
-
-  <div class="tools-section">
-    <div class="tools-section-head">
-      <h2>More Bold Predictions</h2>
-      <p>Staff and guest predictions from around the newsroom.</p>
-    </div>
-    <div class="bpp-tabs" id="bppTabs">
-      <button class="on" data-pos="ALL">All</button>
-      <button data-pos="QB">QB</button>
-      <button data-pos="RB">RB</button>
-      <button data-pos="WR">WR</button>
-      <button data-pos="TE">TE</button>
-    </div>
-    <div class="bpp-list" id="bppList"></div>
+<main class="tc-wrap">
+  <div class="tc-head">
+    <h1>Trade Calculator</h1>
+    <p class="tc-sub">Value any trade on FantasyNow+ rankings — players and rookie picks.</p>
   </div>
 
-  {% include back-to-tools.html %}
-</div>
-<script src="javascript/auth.js"></script>
-<script src="javascript/bold-predictions-public.js"></script>
+  <div class="tc-fmt">
+    <button class="tc-fmt-btn active" data-fmt="dynasty">Dynasty</button>
+    <button class="tc-fmt-btn" data-fmt="redraft">Redraft</button>
+  </div>
+
+  <div id="tc-status" class="tc-status">Loading rankings…</div>
+
+  <div class="tc-grid">
+    <div class="tc-side">
+      <div class="tc-side-head">Side A <span class="tc-total" id="tc-total-A">0</span></div>
+      <div class="tc-searchwrap"><input class="tc-search" id="tc-search-A" data-side="A" placeholder="Search a player…" autocomplete="off"><div class="tc-results" id="tc-results-A"></div></div>
+      <div class="tc-pickadd" id="tc-pickadd-A"></div>
+      <div class="tc-list" id="tc-list-A"></div>
+    </div>
+    <div class="tc-side">
+      <div class="tc-side-head">Side B <span class="tc-total" id="tc-total-B">0</span></div>
+      <div class="tc-searchwrap"><input class="tc-search" id="tc-search-B" data-side="B" placeholder="Search a player…" autocomplete="off"><div class="tc-results" id="tc-results-B"></div></div>
+      <div class="tc-pickadd" id="tc-pickadd-B"></div>
+      <div class="tc-list" id="tc-list-B"></div>
+    </div>
+  </div>
+
+  <div class="tc-verdict" id="tc-verdict"></div>
+</main>
+
+<script src="javascript/trade-calculator.js"></script>
+
 {% include footer.html %}
