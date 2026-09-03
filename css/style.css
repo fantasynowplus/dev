@@ -274,8 +274,11 @@ header nav {
 .mega-content .mega-col:first-child{border-left:none}
 .mega-col-title{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:.85rem;padding:8px 10px;border-radius:4px;margin-bottom:10px}
 .mega-title-main{background:var(--bright-orange);color:var(--brand-black)}
-.mega-title-dynasty{background:var(--red-orange);color:#fff}
-.mega-title-tilted{background:var(--accent-purple);color:#fff}
+.mega-title-dynasty{background:var(--accent-cyan);color:var(--brand-black)}
+.mega-title-tilted{background:var(--aqua);color:var(--brand-black)}
+.mega-title-myleague{background:var(--accent-cobalt);color:var(--brand-black)}
+.mega-title-graphics{background:var(--accent-purple);color:var(--brand-black)}
+.mega-title-dfsbetting{background:var(--accent-lime);color:var(--brand-black)}
 .mega-col a{display:block;color:#fff;font-size:.85rem;padding:8px 4px;text-decoration:none;border-bottom:1px solid var(--border-dark)}
 .mega-col a:last-child{border-bottom:none}
 .mega-col a:hover{color:var(--bright-orange);background:none}
