@@ -35,9 +35,8 @@
 <header>
         <a href="/" class="logo"><img src="assets/images/fantasy_logo-3.png" alt="FantasyNow+ Logo"></a>
         <nav class="desktop-nav">
-            </div>    
             <div class="dropdown mega-trigger">
-                <a href="#" onclick="return false;">Shows</a>
+                <a href="#" class="nav-label" onclick="return false;">Shows</a>
                 <div class="dropdown-content mega-content">
                     <div class="mega-col">
                         <div class="mega-col-title mega-title-main">FantasyNow+</div>
@@ -55,10 +54,9 @@
                         <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA?sub_confirmation=1" target="_blank">Subscribe</a>
                     </div>
                 </div>
-            </div>
             </div>    
             <div class="dropdown mega-trigger">
-                <a href="#" onclick="return false;">Tools</a>
+                <a href="#" class="nav-label" onclick="return false;">Tools</a>
                 <div class="dropdown-content mega-content">
                     <div class="mega-col">
                         <div class="mega-col-title mega-title-myleague">MyLeague</div>
@@ -81,18 +79,27 @@
                     </div>
                 </div>
             </div>            
-            <div class="dropdown">
-                <a href="rankings-redraft">Rankings</a>
-                <div class="dropdown-content">
-                    <a href="rankings-redraft">Redraft Rankings</a>
-                    <a href="rankings-dynasty">Dynasty Rankings</a>
-                    <a href="rankings-rookie">Rookie Rankings</a>
-                    <a href="rankings-idp">IDP Rankings</a>
-                    <a href="rankings-bestball">Best Ball Rankings</a>
-                    <a href="rankings-staff">Our Analysts</a>
-                </div> 
-
-            </div>
+            <div class="dropdown mega-trigger">
+                <a href="#" class="nav-label" onclick="return false;">Rankings</a>
+                <div class="dropdown-content mega-content">
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-rankredraft">Redraft</div>
+                            <a href="rankings-redraft">Draft Rankings</a>
+                            <a href="rankings-waivers">Waiver Wire Rankings</a>
+                    </div>
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-rankdynasty">Dynasty</div>
+                            <a href="rankings-dynasty">Dynasty Rankings</a>
+                            <a href="rankings-rookie">Rookie Rankings</a>
+                    </div>
+                    <div class="mega-col">
+                        <div class="mega-col-title mega-title-rankother">Other</div>
+                            <a href="rankings-staff">Our Analysts Rankings</a>
+                            <a href="rankings-bestball">Best Ball Rankings</a>
+                            <a href="rankings-idp">IDP Rankings</a>
+                    </div>
+                </div>
+            </div>              
             <a href="about">About Us</a>
             <a href="https://superleagueff.org" target="_blank">Super League</a>
             <a href="login" class="btn-login">Login</a>
@@ -102,34 +109,37 @@
         </button>
     </header>
 <div id="mobileNavOverlay" class="mobile-nav-overlay"></div>
-    <nav id="mobileNav" class="mobile-nav">
+       <nav id="mobileNav" class="mobile-nav">
         <div class="mobile-nav-section-label">Shows</div>
         <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg/videos" target="_blank">FantasyNow+</a>
         <a href="https://www.youtube.com/channel/UCwbYE7IpXw0GEMB03vQcfPg/videos" target="_blank">Dynasty</a>
         <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA/videos" target="_blank">Get Tilted</a>
-        <div class="mobile-nav-section-label">Rankings</div>
-        <a href="rankings-redraft">Redraft Rankings</a>
+
+        <div class="mobile-nav-section-label">Rankings — Redraft</div>
+        <a href="rankings-redraft">Draft Rankings</a>
+        <a href="rankings-waivers">Waiver Wire Rankings</a>
+        <div class="mobile-nav-section-label">Rankings — Dynasty</div>
         <a href="rankings-dynasty">Dynasty Rankings</a>
         <a href="rankings-rookie">Rookie Rankings</a>
-        <a href="rankings-idp">IDP Rankings</a>
+        <div class="mobile-nav-section-label">Rankings — Other</div>
+        <a href="rankings-staff">Our Analysts Rankings</a>
         <a href="rankings-bestball">Best Ball Rankings</a>
+        <a href="rankings-idp">IDP Rankings</a>
 
-        <div class="mobile-nav-section-label">Tools</div>
-        <a href="tools">All Tools</a>
-        <div class="mobile-nav-section-label">Leagues &amp; Players</div>
-        <a href="player-projections">Player Projections</a>
+        <div class="mobile-nav-section-label">Tools — My League</div>
         <a href="my-leagues">My Leagues</a>
         <a href="trade-calculator">Trade Calculator</a>
-        <div class="mobile-nav-section-label">Graphics</div>
+        <a href="draft-guide">Live Draft Guide</a>
+        <div class="mobile-nav-section-label">Tools — Graphics</div>
         <a href="sfb-roster">SFB Draft Graphic</a>
         <a href="fantasy-roster">League Flex Graphic</a>
         <a href="rookie-recap">Dynasty Rookie Recap</a>
-        <div class="mobile-nav-section-label">Sports Betting &amp; DFS</div>
-        <a href="nfl-simulator">NFL Simulator</a>
-        <a href="game-picks">Staff Game Picks</a>
+        <div class="mobile-nav-section-label">Tools — DFS &amp; Betting</div>
         <a href="bets">Bet Tracker</a>
-        <div class="mobile-nav-section-label">Draft</div>
-        <a href="draft-guide">Live Draft Guide</a>
+        <a href="game-picks">Staff Game Picks</a>
+        <a href="nfl-simulator">NFL Simulator</a>
+        <a href="player-projections">Player Projections</a>
+
         <div class="mobile-nav-section-label">More</div>
         <a href="about">About Us</a>
         <a href="https://superleagueff.org" target="_blank">Super League</a>
