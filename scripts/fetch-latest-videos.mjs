@@ -3,7 +3,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const CHANNELS = [
-  { ucId: 'UCCW6qFFB7ezwJk1cLPjPHDg', allVideosPlaylistId: 'PLX9LyZ57O4HCZOz665YESxq60eiU0c6Gz', limit: 15 }
+  { ucId: 'UCCW6qFFB7ezwJk1cLPjPHDg', allVideosPlaylistId: 'PLX9LyZ57O4HCZOz665YESxq60eiU0c6Gz', limit: 15 },
+  { ucId: 'UCwbYE7IpXw0GEMB03vQcfPg', allVideosPlaylistId: 'PLD17XfyD48QU', limit: 15 },
+  { ucId: 'UCYVj7kCSQ5iogXUGoVV5uqA', allVideosPlaylistId: 'PLeOI83uRg6RY', limit: 15 }
 ];
 
 async function getPlaylistVideos(playlistId, limit){
