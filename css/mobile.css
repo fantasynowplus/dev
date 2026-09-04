@@ -130,7 +130,7 @@
 
   .main-content        { order: 1; }
   .promo-banner        { order: 2; }
-  .quick-nav-card       { order: 2.5; }
+  .quick-nav-card       { order: 2.5; margin-top: 0; }
   .fn-plus-container   { order: 3; width: 100%; max-width: 400px; margin: 0 auto; }
   .partner-banner-link { order: 4; }
   .youtube-channels-card { order: 5; }

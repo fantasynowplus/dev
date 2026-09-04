@@ -107,6 +107,7 @@ nav a:hover::after { width: 100%; }
 
 .social-links { 
     display: flex; 
+    flex-wrap: wrap;
     gap: 12px; 
     justify-content: flex-end; 
     align-items: center; /* Ensures text and icons are vertically centered */
@@ -115,11 +116,13 @@ nav a:hover::after { width: 100%; }
 }
 
 .social-text {
+    width: 100%;
+    text-align: right;
     font-size: 0.75rem; /* Small, clean font size */
     font-weight: 700;
     color: var(--text-light);
     letter-spacing: 0.05rem;
-    margin-right: 5px; /* Adds space between text and the first icon */
+    margin-bottom: 6px;
     opacity: 0.8;
 }
 

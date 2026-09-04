@@ -12,6 +12,10 @@
     top: 135px;
 }
 
+.quick-nav-card {
+    margin-top: 72px;
+}
+
 .quick-nav-body {
     background: var(--bg-card);
     padding: 6px 0;
