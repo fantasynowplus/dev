@@ -234,3 +234,6 @@
     @media (max-width: 760px) {
     .tools-grid-2 { grid-template-columns: 1fr; }
     }    
+
+    .dgf-title-row{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+    .dgf-logo{width:48px;height:48px;object-fit:contain;border-radius:6px;flex:none}    
