@@ -346,3 +346,5 @@ header nav {
   .back-to-tools{transition:none}
 }
 
+.nav-label{cursor:default}
+.nav-label:hover{color:inherit}
