@@ -1,7 +1,7 @@
 ---
 layout: null
 ---
-{% include header.html title="Tools" css="tools" %}
+{% include header.html title="All Tools" css="tools" %}
 
 <main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
     <h1 style="text-align: center;">Tools & Graphics</h1>
@@ -15,107 +15,54 @@ layout: null
         <div class="dgf-feature">
             <div class="dgf-inner">
                 <div>
-                    <span class="dgf-badge">New</span>
-                    <h2>Live Draft Guide</h2>
-                    <p>Get expert analyst rankings live on draft night. Track every pick in real time, check best-available talent and bye-week advice, or run a quick mock draft before you are on the clock.</p>
+                    <h2>MyLeague Tools</h2>
+                    <p>Enhance your fantasy football experience with our suite of MyLeague tools including live draft assistance, mock drafts, and comprehensive rankings.</p>
                     <ul class="dgf-list">
-                        <li>Live assist, mock draft, and full rankings in one board.</li>
-                        <li>Snake, linear, and third-round-reversal formats.</li>
-                        <li>Updates automatically from our published rankings.</li>
+                        <li>League analyzer ranking your team against your opponents</li>
+                        <li>Free trade calculator with real-time rankings evaluations</li>
+                        <li>Draft guide tools for strategic planning</li>
                     </ul>
                 </div>
                 <div class="dgf-cta">
-                    <a href="draft-guide" class="tool-card-link">Open Draft Guide</a>
-                    {% assign pdfs = site.static_files | where: "extname", ".pdf" %}
-                    {% for f in pdfs %}{% if f.path contains "/assets/" %}{% assign guide = f %}{% break %}{% endif %}{% endfor %}
-                    {% if guide %}
-                    <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
-                        <i class="fa-solid fa-file-arrow-down"></i> Download PDF
-                    </a>
-                    {% endif %}
+                    <a href="draft-guide" class="tool-card-link">Open MyLeague</a>
                 </div>
             </div>
         </div>
     </section>
-    <section id="leagues" class="tools-section">
-        <div class="tools-section-head"><h2>Leagues &amp; Players</h2></div>
-        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-            <div class="tool-card">
-                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
-                <h3>Player Projections</h3>
-                <p>Thousands of simulations give every player a floor, a median and a ceiling, scored with your league's exact settings or imported from Sleeper.</p>
-                <a href="player-projections" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card">
-                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
-                <h3>My Leagues</h3>
-                <p>Link your Sleeper account to see every league in one hub, with format, scoring, rosters and contender insights at a glance.</p>
-                <a href="my-leagues" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
-                <h3>Trade Calculator</h3>
-                <p>Evaluate any trade against our analyst rankings, built for dynasty and redraft, with instant value on both sides of the deal.</p>
-                <a href="trade-calculator" class="tool-card-link">Open Tool</a>
+        <section id="draft" class="tools-section">
+        <div class="dgf-feature">
+            <div class="dgf-inner">
+                <div>
+                    <h2>Graphics Generators</h2>
+                    <p>Enhance your fantasy football experience with our suite of Graphics Generators including custom roster views, draft graphics, and rookie recaps.</p>
+                    <ul class="dgf-list">
+                        <li>Custom Scott Fish Bowl roster views for quick trash-talk</li>
+                        <li>Draft graphics with your specific division and full roster breakdown</li>
+                        <li>Rookie recaps highlighting your haul and pick value</li>
+                    </ul>
+                </div>
+                <div class="dgf-cta">
+                    <a href="draft-guide" class="tool-card-link">Open Graphics Generators</a>
+                </div>
             </div>
         </div>
     </section>
-
-    <section id="graphics" class="tools-section">
-        <div class="tools-section-head"><h2>Graphics</h2></div>
-        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-            <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
-                <h3>SFB Draft Graphic</h3>
-                <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
-                <a href="sfb-roster" class="tool-card-link">Open Tool</a>
+        <section id="draft" class="tools-section">
+        <div class="dgf-feature">
+            <div class="dgf-inner">
+                <div>
+                    <h2>DFS & Sports Betting Tools</h2>
+                    <p>Enhance your fantasy football experience with our suite of DFS & Sports Betting tools including bet trackers, player projections, and more.</p>
+                    <ul class="dgf-list">
+                        <li>Live bet trackers from our analysts</li>
+                        <li>Game picks from all of our team of analysts</li>
+                        <li>NFL Simulator and Player projections for live bets</li>
+                    </ul>
+                </div>
+                <div class="dgf-cta">
+                    <a href="draft-guide" class="tool-card-link">Open DFS & Betting Tools</a>
+                </div>
             </div>
-            <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>             
-                <h3>League Flex Graphic</h3>
-                <p>Transform your draft results into a single roster view for quick trash-talk.</p>
-                <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>            
-                <h3>Dynasty Rookie Recap</h3>
-                <p>High-impact graphic highlighting your rookie haul and pick value.</p>
-                <a href="rookie-recap" class="tool-card-link">Open Tool</a>
-            </div>
-        </div>
-    </section>
-
-    <section id="betting" class="tools-section">
-        <div class="tools-section-head">
-            <h2>Sports Betting &amp; DFS</h2>
-            <p>Model-driven betting and DFS tools. Completely free with any FantasyNow+ account, just log in to see the numbers.</p>
-        </div>
-        <div class="tools-grid tools-grid-2">
-            <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>
-                <h3>Bet Tracker</h3>
-                <p>Every NFL bet our analysts put on the board, graded and tracked in units all season. Filter by analyst or see how the Beat the Bookie crew is running.</p>
-                <a href="bets" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card tool-card-nolock">
-                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>
-                <h3>Staff Game Picks</h3>
-                <p>Every analyst picks the moneyline, spread and total on all 16 games. Log in to play along and the crowd rides as one line in the standings.</p>
-                <a href="game-picks" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card">
-                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
-                <h3>NFL Simulator</h3>
-                <p>We run 20,000 simulations per game to compare against sportsbooks. Spot where our model beats the market, updated fresh every single morning.</p>
-                <a href="nfl-simulator" class="tool-card-link">Open Tool</a>
-            </div>
-            <div class="tool-card">
-                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
-                <h3>DFS Lineup Tools</h3>
-                <p>Access projections and a lineup optimizer built for daily fantasy slates. We are putting the finishing touches on this tool, so check back soon.</p>
-                <span class="tool-card-link disabled">Coming 2027</span>
-            </div>
-        </div>
         </div>
     </section>
 </main>
