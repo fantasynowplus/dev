@@ -134,8 +134,8 @@ async function staffForm(id){
         department:val(bg,'department'),address:val(bg,'address'),notes:val(bg,'notes'),
         headshot:val(bg,'headshot')||null,
         dob:val(bg,'dob')||null,start_date:val(bg,'start_date')||null,
-        is_active: bg.querySelector('[name="is_active"]').value==='true'};
-        show_on_team: bg.querySelector('[name="show_on_team"]').value==='true',
+        is_active: bg.querySelector('[name="is_active"]').value==='true',
+        show_on_team: bg.querySelector('[name="show_on_team"]').value==='true'};
       if(!body.name)throw new Error('Name is required');
       if(id){body.updated_at=new Date().toISOString();await dbPatch('staff?id=eq.'+id,body);}
       else{await dbPost('staff',body);}
