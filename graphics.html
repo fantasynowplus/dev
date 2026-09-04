@@ -1,0 +1,37 @@
+---
+layout: null
+---
+{% include header.html title="Graphic Generator" css="tools" %}
+
+<main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
+    <h1 style="text-align: center;">Graphic Generator</h1>
+    <p style="text-align: center; color: #ffffff; margin-bottom: 24px;">Create custom graphics for your fantasy football teams.</p>
+    <div class="tools-cta" id="toolsCta" hidden></div>
+    
+    <section id="graphics" class="tools-section">
+        <div class="tools-section-head"><h2>Graphics</h2></div>
+        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
+                <h3>SFB Draft Graphic</h3>
+                <p>SFB16 branding with your specific division and full 20-round breakdown.</p>
+                <a href="sfb-roster" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>             
+                <h3>League Flex Graphic</h3>
+                <p>Transform your draft results into a single roster view for quick trash-talk.</p>
+                <a href="fantasy-roster" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>            
+                <h3>Dynasty Rookie Recap</h3>
+                <p>High-impact graphic highlighting your rookie haul and pick value.</p>
+                <a href="rookie-recap" class="tool-card-link">Open Tool</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+<script src="javascript/tools.js"></script>
+{% include footer.html %}
