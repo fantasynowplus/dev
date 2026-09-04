@@ -96,23 +96,25 @@ layout: null
                 <a href="https://www.tiktok.com/@fantasynowplus" target="_blank" class="social-icon tiktok"><i class="fa-brands fa-tiktok"></i></a>
                 <a href="https://discord.gg/EgZcDynavK" target="_blank" class="social-icon discord"><i class="fa-brands fa-discord"></i></a>
             </div>
-            <div class="fn-plus-container">
-                <div class="fn-plus-header">
-                    FANTASYNOW+ RANKINGS
-                </div>
-
-                <div class="fnp-nav">
-                    <div id="draft-tab" class="bubble cat-bubble active" onclick="switchTab('format', 'draft', this)">Draft</div>
-                    <div class="bubble cat-bubble" onclick="switchTab('format', 'dynasty', this)">Dynasty</div>
-                </div>
+            <div class="fnp-position-toggle">
                 <div class="fnp-nav">
                     <div class="bubble pos-bubble active" onclick="switchTab('position', 'QB', this)">QB</div>
                     <div class="bubble pos-bubble" onclick="switchTab('position', 'RB', this)">RB</div>
                     <div class="bubble pos-bubble" onclick="switchTab('position', 'WR', this)">WR</div>
                     <div class="bubble pos-bubble" onclick="switchTab('position', 'TE', this)">TE</div>
                 </div>
-                
-                <div id="rank-list">Loading...</div>
+            </div>
+            <div class="fn-plus-container">
+                <div class="fn-plus-header">
+                    DRAFT RANKINGS
+                </div>
+                <div id="rank-list-draft" class="rank-list">Loading...</div>
+            </div>
+            <div class="fn-plus-container">
+                <div class="fn-plus-header">
+                    DYNASTY RANKINGS
+                </div>
+                <div id="rank-list-dynasty" class="rank-list">Loading...</div>
             </div>
             <a href="https://play.underdogfantasy.com/p-fnplus" target="_blank" class="partner-banner-link">
                 <img src="assets/images/UD_P5G50.png" alt="Underdog Fantasy Partner Banner" class="partner-img">

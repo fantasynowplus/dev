@@ -1,15 +1,8 @@
-/**
- * FantasyNow+ Rankings Widget
- * ----------------------------
- * Replaces the old Google Sheets-based rankings script. Pulls from the
- * Cloudflare Worker proxy (never calls FantasyPros directly from the browser).
- */
-
 const WORKER_URL = "https://fantasynowplus-rankings-proxy.fantasynowplus.workers.dev/rankings";
+const RANK_LIMIT = 12;
 
 const state = {
-  format: "draft", // 'draft' | 'dynasty' | 'rookie'
-  position: "QB",  // 'QB' | 'RB' | 'WR' | 'TE'
+  position: "QB", // 'QB' | 'RB' | 'WR' | 'TE'
 };
 
 const cache = {};
@@ -36,8 +29,8 @@ function handleImgError(imgEl, fallbackUrl) {
   }
 }
 
-function renderRankings(data) {
-  const container = document.getElementById("rank-list");
+function renderRankings(data, containerId) {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   if (!data.players || data.players.length === 0) {
@@ -46,6 +39,7 @@ function renderRankings(data) {
   }
 
   container.innerHTML = data.players
+    .slice(0, RANK_LIMIT)
     .map(
       (p, i) => `
         <a href="${p.pageUrl || "#"}" target="_blank" class="fnp-row">
@@ -66,13 +60,13 @@ function renderRankings(data) {
     .join("");
 }
 
-async function loadAndRender() {
-  const container = document.getElementById("rank-list");
+async function loadFormat(format, containerId) {
+  const container = document.getElementById(containerId);
   if (container) container.innerHTML = "Loading...";
 
   try {
-    const data = await fetchRankings(state.format, state.position);
-    renderRankings(data);
+    const data = await fetchRankings(format, state.position);
+    renderRankings(data, containerId);
   } catch (err) {
     console.error("Rankings error:", err);
     if (container) {
@@ -81,11 +75,13 @@ async function loadAndRender() {
   }
 }
 
+function loadAndRender() {
+  loadFormat("draft", "rank-list-draft");
+  loadFormat("dynasty", "rank-list-dynasty");
+}
+
 function switchTab(kind, value, el) {
-  if (kind === "format") {
-    state.format = value;
-    document.querySelectorAll(".cat-bubble").forEach((b) => b.classList.remove("active"));
-  } else if (kind === "position") {
+  if (kind === "position") {
     state.position = value;
     document.querySelectorAll(".pos-bubble").forEach((b) => b.classList.remove("active"));
   }
