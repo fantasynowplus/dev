@@ -149,7 +149,7 @@ nav a:hover::after { width: 100%; }
 .partner-banner-link {
     display: block;
     margin-bottom: 15px; /* Separates it from the rankings */
-    border-radius: 0;
+    border-radius: 12px;
     overflow: hidden;
     transition: transform 0.3s ease;
 }
@@ -162,8 +162,8 @@ nav a:hover::after { width: 100%; }
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 0;
-    border: 1px solid var(--border-dark);
+    border-radius: 12px;
+    border: 1px solid var(--border-panel);
 }
 
 .sidebar-motto {
