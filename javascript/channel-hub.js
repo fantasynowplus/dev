@@ -4,6 +4,7 @@
   var CFG = null;
   var STAFF_DATA = [];
   var ACTIVE_SOURCE = { type: 'playlist', id: null };
+  var ACTIVE_LABEL = 'All Videos';
 
   function sbCfg(){
     var url=(typeof SUPABASE_URL!=='undefined')?SUPABASE_URL:window.SUPABASE_URL;
@@ -35,11 +36,11 @@
   function showStaffForShow(showId){
     var section=document.getElementById('ytStaffSection');
     var grid=document.getElementById('ytStaffGrid');
+    var layout=document.getElementById('ytLayout');
     if(!section||!grid) return;
     var filtered=STAFF_DATA.filter(function(s){
       return (s.shows||[]).some(function(sh){ return sh.show_id===showId; });
     });
-    var layout=document.getElementById('ytLayout');
     if(!filtered.length){ section.hidden=true; grid.innerHTML=''; if(layout) layout.classList.add('yt-layout-full'); return; }
     grid.innerHTML=filtered.map(staffCard).join('');
     section.hidden=false;
@@ -71,6 +72,7 @@
       b.addEventListener('click', function(){
         wrap.querySelectorAll('.team-filter-btn').forEach(function(x){ x.classList.remove('on'); });
         b.classList.add('on');
+        ACTIVE_LABEL = b.textContent.trim();
         if(b.dataset.playlist){
           ACTIVE_SOURCE={type:'playlist',id:b.dataset.playlist};
           showStaffForShow(b.dataset.show);
@@ -119,6 +121,19 @@
     '</div>';
   }
 
+  function emptyStateHtml(label){
+    var isAll = label==='All Videos';
+    var title = isAll ? 'New videos are on the way' : esc(label)+' content is on the way';
+    var body = isAll
+      ? 'We drop new videos throughout the week as the news breaks. Check back soon.'
+      : 'We drop new videos throughout the week as the news breaks. Check back later — or hit the All Videos tab for the latest from every show.';
+    return '<div class="yt-empty-card">'+
+      '<span class="yt-empty-badge">Coming Soon</span>'+
+      '<h3 class="yt-empty-title">'+title+'</h3>'+
+      '<p class="yt-empty-text">'+body+'</p>'+
+    '</div>';
+  }
+
   function playVideo(container){
     var media=container.querySelector('.yt-media');
     if(!media||media.classList.contains('playing')) return;
@@ -131,7 +146,7 @@
     var featuredWrap=document.getElementById('ytFeatured');
     var grid=document.getElementById('ytVideoFeed');
     if(!rows||!rows.length){
-      if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">No videos yet — check back soon.</p>';
+      if(featuredWrap) featuredWrap.innerHTML=emptyStateHtml(ACTIVE_LABEL);
       if(grid) grid.innerHTML='';
       return;
     }
