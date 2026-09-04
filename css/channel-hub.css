@@ -4,10 +4,10 @@
 .yt-sub{color:#94a1bd;margin:6px 0 0}
 
 .yt-subscribe{display:flex;margin-bottom:20px;border-radius:4px;overflow:hidden}
-.yt-sub-btn{flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:13px;padding:14px 10px;transition:filter .15s ease}
+.yt-sub-btn{flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:18px;padding:8px 10px;transition:filter .15s ease}
 .yt-sub-youtube{background:#FF0000;color:#fff}
 .yt-sub-apple{background:linear-gradient(135deg,#F452FF,#832BC1);color:#fff}
-.yt-sub-spotify{background:#1DB954;color:#000}
+.yt-sub-spotify{background:#1DB954;color:#fff}
 .yt-sub-btn:hover{filter:brightness(1.08)}
 
 .yt-filters{display:flex;justify-content:center;margin-bottom:36px}
@@ -38,6 +38,11 @@
 .yt-staff-title{color:#94a1bd;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 16px}
 .yt-staff-stack{display:flex;flex-direction:column;gap:16px}
 .yt-staff-stack .team-card{flex:none;width:100%}
+
+.yt-load-more-wrap{display:flex;justify-content:center;margin-top:36px}
+.yt-load-more{background:none;border:1px solid var(--border-dark);color:#c9d2e6;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.05em;font-size:13px;font-weight:700;padding:12px 30px;border-radius:4px;cursor:pointer;transition:border-color .15s,color .15s}
+.yt-load-more:hover{border-color:var(--bright-orange);color:var(--bright-orange)}
+.yt-load-more:disabled{opacity:.5;cursor:default}
 
 .yt-empty-card{border:1px dashed var(--border-dark);border-radius:6px;padding:60px 24px;text-align:center;max-width:640px;margin:0 auto}
 .yt-empty-badge{display:inline-block;background:var(--bright-orange);color:#000;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.06em;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:18px}
