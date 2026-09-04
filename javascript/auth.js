@@ -8,21 +8,72 @@ class AuthManager {
     this.loadSession();
   }
 
+  getTokenStorage() {
+    return localStorage.getItem('sb-remember') === 'false' ? sessionStorage : localStorage;
+  }
+
+  saveTokens(accessToken, refreshToken, remember) {
+    if (remember !== undefined) {
+      localStorage.setItem('sb-remember', remember ? 'true' : 'false');
+    }
+    const store = this.getTokenStorage();
+    store.setItem('sb-auth-token', accessToken);
+    if (refreshToken) store.setItem('sb-refresh-token', refreshToken);
+  }
+
+  clearTokens() {
+    localStorage.removeItem('sb-auth-token');
+    localStorage.removeItem('sb-refresh-token');
+    sessionStorage.removeItem('sb-auth-token');
+    sessionStorage.removeItem('sb-refresh-token');
+  }
+
+  async refreshSession() {
+    const store = this.getTokenStorage();
+    const refreshToken = store.getItem('sb-refresh-token');
+    if (!refreshToken) return false;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        this.clearTokens();
+        return false;
+      }
+      this.saveTokens(data.access_token, data.refresh_token);
+      this.user = this.decodeJWT(data.access_token);
+      return true;
+    } catch (e) {
+      console.error('Refresh failed:', e);
+      this.clearTokens();
+      return false;
+    }
+  }
+
   async loadSession() {
-    const token = localStorage.getItem('sb-auth-token');
+    const store = this.getTokenStorage();
+    const token = store.getItem('sb-auth-token');
     if (!token) return false;
     try {
       const decoded = this.decodeJWT(token);
       if (decoded.exp * 1000 < Date.now()) {
-        localStorage.removeItem('sb-auth-token');
-        return false;
+        const refreshed = await this.refreshSession();
+        if (!refreshed) return false;
+        await this.fetchProfile();
+        return true;
       }
       this.user = decoded;
       await this.fetchProfile();
       return true;
     } catch (e) {
       console.error('Session invalid:', e);
-      localStorage.removeItem('sb-auth-token');
+      this.clearTokens();
       return false;
     }
   }
@@ -62,7 +113,7 @@ class AuthManager {
       throw new Error(this.getErrorMessage(data));
     }
     if (data.session && data.session.access_token) {
-      localStorage.setItem('sb-auth-token', data.session.access_token);
+      this.saveTokens(data.session.access_token, data.session.refresh_token, true);
       this.user = data.user;
     }
     if (data.user) {
@@ -89,7 +140,7 @@ class AuthManager {
     }
   }
 
-  async login(email, password) {
+  async login(email, password, remember = true) {
     if (!email || !password) {
       throw new Error('Please enter both email and password.');
     }
@@ -108,14 +159,14 @@ class AuthManager {
       }
       throw new Error(this.getErrorMessage(data));
     }
-    localStorage.setItem('sb-auth-token', data.access_token);
+    this.saveTokens(data.access_token, data.refresh_token, remember);
     this.user = this.decodeJWT(data.access_token);
     await this.fetchProfile();
     return this.user;
   }
 
   async logout() {
-    localStorage.removeItem('sb-auth-token');
+    this.clearTokens();
     this.user = null;
     this.profile = null;
   }
@@ -151,7 +202,7 @@ class AuthManager {
 
   async fetchProfile() {
     if (!this.user) return null;
-    const token = localStorage.getItem('sb-auth-token');
+    const token = this.getTokenStorage().getItem('sb-auth-token');
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?id=eq.${this.user.sub}`,
       {
@@ -169,7 +220,7 @@ class AuthManager {
 
   async updateProfile(updates) {
     if (!this.user) throw new Error('Not authenticated');
-    const token = localStorage.getItem('sb-auth-token');
+    const token = this.getTokenStorage().getItem('sb-auth-token');
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?id=eq.${this.user.sub}`,
       {
