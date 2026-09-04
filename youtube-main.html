@@ -1,0 +1,41 @@
+---
+layout: null
+---
+{% include header.html title="FantasyNow+ on YouTube" css="team,channel-hub" %}
+
+<main class="yt-wrap">
+  <div class="yt-head">
+    <h1>FantasyNow+ on YouTube</h1>
+    <p class="yt-sub">Analysis, rankings and hot takes — new videos every week.</p>
+  </div>
+
+  <div class="yt-subscribe">
+    <a href="https://youtube.com/@fantasynowplus" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-youtube"><i class="fa-brands fa-youtube"></i> Subscribe on YouTube</a>
+    <a href="https://podcasts.apple.com/us/podcast/fantasynow+/id1794804794" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-apple"><i class="fa-brands fa-apple"></i> Apple Podcasts</a>
+    <a href="https://open.spotify.com/show/1go1UYBvBQxsTYanS97m0B" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-spotify"><i class="fa-brands fa-spotify"></i> Spotify</a>
+  </div>
+
+  <section class="yt-section">
+    <h2 class="yt-section-title">The Analysts</h2>
+    <div class="team-grid" id="ytStaffGrid">
+      <p class="team-empty">Loading…</p>
+    </div>
+  </section>
+
+  <section class="yt-section">
+    <h2 class="yt-section-title">Latest Videos</h2>
+    <div class="yt-feed" id="ytVideoFeed">
+      <p class="team-empty">Loading…</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  window.CHANNEL_CONFIG = {
+    channelName: 'FantasyNow+',
+    ytChannelId: 'UCCW6qFFB7ezwJk1cLPjPHDg',
+    videoLimit: 10
+  };
+</script>
+<script src="javascript/channel-hub.js"></script>
+{% include footer.html %}
