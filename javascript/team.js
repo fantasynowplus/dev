@@ -32,26 +32,45 @@
     SHOWS=Object.keys(swMap).map(function(id){return {id:id,name:swMap[id].name};}).sort(function(a,b){return a.name.localeCompare(b.name);});
   }
 
-  function renderFilters(){
-    var el=document.getElementById('teamFilters'); if(!el) return;
-    var html='<button class="team-filter-btn'+(ACTIVE.type==='all'?' on':'')+'" data-type="all">All Staff</button>';
-    if(CHANNELS.length){
-      html+='<span class="team-filter-label">Channels</span>';
-      CHANNELS.forEach(function(c){
-        html+='<button class="team-filter-btn'+(ACTIVE.type==='channel'&&ACTIVE.id===c.id?' on':'')+'" data-type="channel" data-id="'+esc(c.id)+'">'+esc(c.name)+'</button>';
-      });
-    }
-    if(SHOWS.length){
-      html+='<span class="team-filter-label">Shows</span>';
-      SHOWS.forEach(function(s){
-        html+='<button class="team-filter-btn'+(ACTIVE.type==='show'&&ACTIVE.id===s.id?' on':'')+'" data-type="show" data-id="'+esc(s.id)+'">'+esc(s.name)+'</button>';
-      });
-    }
-    el.innerHTML=html;
-    el.querySelectorAll('.team-filter-btn').forEach(function(b){
-      b.addEventListener('click', function(){ ACTIVE={type:b.dataset.type, id:b.dataset.id||null}; renderFilters(); renderCards(); });
+  function chunkEven(list, maxPerRow){
+  if(!list.length) return [];
+  var rows=Math.max(1, Math.ceil(list.length/maxPerRow));
+  var perRow=Math.ceil(list.length/rows);
+  var out=[];
+  for(var i=0;i<list.length;i+=perRow){ out.push(list.slice(i,i+perRow)); }
+  return out;
+}
+
+function filterBtn(type, id, label){
+  var on=ACTIVE.type===type&&(id==null||ACTIVE.id===id);
+  return '<button class="team-filter-btn'+(on?' on':'')+'" data-type="'+type+'"'+(id?' data-id="'+esc(id)+'"':'')+'>'+esc(label)+'</button>';
+}
+
+function renderFilters(){
+  var el=document.getElementById('teamFilters'); if(!el) return;
+  var html='<div class="team-filter-row">'+filterBtn('all',null,'All Staff')+'</div>';
+
+  if(CHANNELS.length){
+    html+='<div class="team-filter-section"><div class="team-filter-label-row">Channels</div>';
+    chunkEven(CHANNELS,6).forEach(function(row){
+      html+='<div class="team-filter-row">'+row.map(function(c){return filterBtn('channel',c.id,c.name);}).join('')+'</div>';
     });
+    html+='</div>';
   }
+
+  if(SHOWS.length){
+    html+='<div class="team-filter-section"><div class="team-filter-label-row">Shows</div>';
+    chunkEven(SHOWS,5).forEach(function(row){
+      html+='<div class="team-filter-row">'+row.map(function(s){return filterBtn('show',s.id,s.name);}).join('')+'</div>';
+    });
+    html+='</div>';
+  }
+
+  el.innerHTML=html;
+  el.querySelectorAll('.team-filter-btn').forEach(function(b){
+    b.addEventListener('click', function(){ ACTIVE={type:b.dataset.type, id:b.dataset.id||null}; renderFilters(); renderCards(); });
+  });
+}
 
   function matchesFilter(s){
     if(ACTIVE.type==='all') return true;

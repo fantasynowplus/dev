@@ -118,6 +118,7 @@ async function staffForm(id){
       f('department','Department','text',s.department)+
       f('headshot','Headshot file','text',s.headshot,{full:true})+
       '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(s.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(s.is_active===false?' selected':'')+'>Inactive</option></select></div>'+
+      '<div class="field"><label>Show on public Team page</label><select name="show_on_team"><option value="true"'+(s.show_on_team!==false?' selected':'')+'>Yes</option><option value="false"'+(s.show_on_team===false?' selected':'')+'>No</option></select></div>'+
       '<div class="field"><label>Reports to</label><select name="manager_id"><option value="">— nobody —</option>'+
         STAFF.filter(x=>x.id!==id).map(x=>'<option value="'+x.id+'"'+(s.manager_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>'+
       '<div class="field"><label>Team</label><select name="team_id"><option value="">— none —</option>'+
@@ -134,6 +135,7 @@ async function staffForm(id){
         headshot:val(bg,'headshot')||null,
         dob:val(bg,'dob')||null,start_date:val(bg,'start_date')||null,
         is_active: bg.querySelector('[name="is_active"]').value==='true'};
+        show_on_team: bg.querySelector('[name="show_on_team"]').value==='true',
       if(!body.name)throw new Error('Name is required');
       if(id){body.updated_at=new Date().toISOString();await dbPatch('staff?id=eq.'+id,body);}
       else{await dbPost('staff',body);}
