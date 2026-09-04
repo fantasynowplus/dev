@@ -1,0 +1,56 @@
+---
+layout: null
+---
+{% include header.html title="Advertise & Partner" css="join" %}
+
+<main class="join-wrap">
+  <h1 class="join-title">Advertise &amp; Partner With Us</h1>
+  <p class="join-sub">Interested in advertising, sponsoring a show, or partnering with FantasyNow+? Tell us about it and we'll follow up.</p>
+
+  <div class="join-card">
+    <form id="fnpPartnerForm" autocomplete="on">
+      <div class="join-field full">
+        <label for="pName">Full name</label>
+        <input id="pName" name="name" class="tool-input join-input" placeholder="Your name" required>
+      </div>
+      <div class="join-row">
+        <div class="join-field">
+          <label for="pCompany">Company / Brand</label>
+          <input id="pCompany" name="company" class="tool-input join-input" placeholder="Company name">
+        </div>
+        <div class="join-field">
+          <label for="pEmail">Email</label>
+          <input id="pEmail" name="email" type="email" class="tool-input join-input" placeholder="you@company.com" required>
+        </div>
+      </div>
+      <div class="join-row">
+        <div class="join-field">
+          <label for="pPhone">Phone number</label>
+          <input id="pPhone" name="phone" class="tool-input join-input" placeholder="555-555-5555">
+        </div>
+        <div class="join-field">
+          <label for="pType">What are you interested in?</label>
+          <select id="pType" name="inquiry_type" class="tool-input join-input">
+            <option value="Advertising">Advertising</option>
+            <option value="Sponsorship">Sponsorship</option>
+            <option value="Partnership">Partnership</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="join-field full">
+        <label for="pMessage">Tell us more</label>
+        <textarea id="pMessage" name="message" rows="5" class="tool-input join-input join-textarea" placeholder="What did you have in mind?" required></textarea>
+      </div>
+      <div class="join-hp" aria-hidden="true">
+        <label for="pWebsite">Website</label>
+        <input id="pWebsite" name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <button type="submit" class="tool-btn btn-find">Send Inquiry</button>
+      <p id="fnpPartnerMsg" class="join-msg"></p>
+    </form>
+  </div>
+</main>
+
+<script src="javascript/partnerships.js"></script>
+{% include footer.html %}

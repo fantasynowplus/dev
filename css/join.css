@@ -15,5 +15,6 @@
 .join-msg{margin:14px 0 0;text-align:center;font-size:14px;font-weight:600;min-height:2px}
 .join-msg.ok{color:#42F4B0}
 .join-msg.bad{color:#EA4E3D}
+.join-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 @media(max-width:560px){.join-row{flex-direction:column;gap:0}.join-card{padding:26px 20px}}
