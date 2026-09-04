@@ -235,5 +235,6 @@
     .tools-grid-2 { grid-template-columns: 1fr; }
     }    
 
-    .dgf-title-row{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-    .dgf-logo{width:48px;height:48px;object-fit:contain;border-radius:6px;flex:none}    
+.dgf-title-row{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.dgf-logo-wrap{width:72px;height:72px;border-radius:8px;overflow:hidden;flex:none}
+.dgf-logo{width:100%;height:100%;object-fit:cover;transform:scale(1.35)}   
