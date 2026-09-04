@@ -12,6 +12,7 @@
     --bg-panel: #0a0f1a;
     --text-light: #F4F4F4;
     --border-dark: #14294d;
+    --border-panel: #2a3450;
     --accent-yellow:  #FFD21A;
     --accent-lime:    #A6E22E;
     --accent-cyan:    #17C3FF;
@@ -138,10 +139,11 @@ nav a:hover::after { width: 100%; }
     border: 1px solid var(--border-dark);
 }
 
-.social-icon.youtube:hover { background-color: #FF0000; color: white; border-color: #FF0000; }
 .social-icon.bluesky:hover { background-color: #0085FF; color: white; border-color: #0085FF; }
 .social-icon.discord:hover { background-color: #5865F2; color: white; border-color: #5865F2; }
 .social-icon.tiktok:hover { background-color: #fe2858; color: white; border-color: #fe2858; }
+.social-icon.facebook:hover { background-color: #1877F2; color: white; border-color: #1877F2; }
+.social-icon.x:hover { background-color: #ffffff; color: #000000; border-color: #ffffff; }
 
 /* Underdog CSS */
 .partner-banner-link {
@@ -247,13 +249,14 @@ header nav {
 .dropdown-content a::after { display: none; }
 .dropdown-content a:hover { color: var(--bright-orange); background: rgba(255,165,21,0.08); }
 
-.fnplus-promo{display:flex;align-items:stretch;max-width:1200px;margin:16px auto;background:var(--deep-blue);border:1px solid var(--border-dark);border-top:3px solid var(--bright-orange);border-radius:0;overflow:hidden;text-decoration:none;font-family:'Inter',Arial,Helvetica,sans-serif}
-.fnplus-promo-logo{flex:0 0 200px;background:var(--bg-card);display:flex;align-items:center;justify-content:center;padding:18px}
+.fnplus-promo{display:flex;align-items:stretch;max-width:1200px;margin:16px auto;background:linear-gradient(135deg, var(--bg-card) 0%, #0f1420 100%);border:1px solid var(--border-panel);border-radius:16px;overflow:hidden;text-decoration:none;font-family:'Inter',Arial,Helvetica,sans-serif;position:relative}
+.fnplus-promo::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--bright-orange),var(--red-orange))}
+.fnplus-promo-logo{flex:0 0 200px;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;padding:18px}
 .fnplus-promo-img{max-width:100%;max-height:70px;display:block}
 .fnplus-promo-text{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 20px}
 .fnplus-promo-code{color:var(--bright-orange);font-weight:700;font-size:15px;letter-spacing:.5px}
 .fnplus-promo-offer{color:var(--pure-white);font-weight:800;font-size:22px;margin-top:4px}
-.fnplus-promo-btn{flex:0 0 auto;align-self:center;margin:0 40px;background:var(--bright-orange);color:var(--brand-black);font-weight:800;font-size:22px;letter-spacing:.5px;padding:14px 40px;border-radius:0;clip-path:polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);transition:background .15s ease}
+.fnplus-promo-btn{flex:0 0 auto;align-self:center;margin:0 40px;background:var(--bright-orange);color:var(--brand-black);font-weight:800;font-size:22px;letter-spacing:.5px;padding:14px 40px;border-radius:8px;transition:background .15s ease}
 .fnplus-promo:hover .fnplus-promo-btn{background:#e89410}
 @media(max-width:700px){.fnplus-promo{flex-direction:column}.fnplus-promo-logo{flex-basis:auto}.fnplus-promo-btn{margin:16px}}
 

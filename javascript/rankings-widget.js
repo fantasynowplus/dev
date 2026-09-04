@@ -2,7 +2,13 @@ const WORKER_URL = "https://fantasynowplus-rankings-proxy.fantasynowplus.workers
 const RANK_LIMIT = 12;
 
 const state = {
-  position: "QB", // 'QB' | 'RB' | 'WR' | 'TE'
+  draft: "QB",
+  dynasty: "QB",
+};
+
+const CONTAINER_IDS = {
+  draft: "rank-list-draft",
+  dynasty: "rank-list-dynasty",
 };
 
 const cache = {};
@@ -60,12 +66,13 @@ function renderRankings(data, containerId) {
     .join("");
 }
 
-async function loadFormat(format, containerId) {
+async function loadFormat(format) {
+  const containerId = CONTAINER_IDS[format];
   const container = document.getElementById(containerId);
   if (container) container.innerHTML = "Loading...";
 
   try {
-    const data = await fetchRankings(format, state.position);
+    const data = await fetchRankings(format, state[format]);
     renderRankings(data, containerId);
   } catch (err) {
     console.error("Rankings error:", err);
@@ -76,17 +83,22 @@ async function loadFormat(format, containerId) {
 }
 
 function loadAndRender() {
-  loadFormat("draft", "rank-list-draft");
-  loadFormat("dynasty", "rank-list-dynasty");
+  loadFormat("draft");
+  loadFormat("dynasty");
 }
 
-function switchTab(kind, value, el) {
-  if (kind === "position") {
-    state.position = value;
-    document.querySelectorAll(".pos-bubble").forEach((b) => b.classList.remove("active"));
+function switchTab(format, position, el) {
+  state[format] = position;
+
+  if (el) {
+    const group = el.closest(".fnp-nav");
+    if (group) {
+      group.querySelectorAll(".pos-bubble").forEach((b) => b.classList.remove("active"));
+    }
+    el.classList.add("active");
   }
-  if (el) el.classList.add("active");
-  loadAndRender();
+
+  loadFormat(format);
 }
 
 document.addEventListener("DOMContentLoaded", loadAndRender);

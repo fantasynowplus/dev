@@ -1,36 +1,30 @@
 .sleeper-card { 
     background-color: var(--bg-card);
-    background-image:
-        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange)),
-        linear-gradient(var(--bright-orange), var(--bright-orange)), linear-gradient(var(--bright-orange), var(--bright-orange));
-    background-repeat: no-repeat;
-    background-size: 18px 2px, 2px 18px, 18px 2px, 2px 18px;
-    background-position: bottom left, bottom left, bottom right, bottom right;
-    border: 1px solid var(--border-dark);
-    border-radius: 0;
+    border: 1px solid var(--border-panel);
+    border-radius: 12px;
     overflow: hidden; 
-    margin-bottom: 25px; 
+    margin-bottom: 20px; 
     width: 100%; 
     color: var(--text-light); 
 }
 
 .sleeper-header { 
     background: var(--deep-blue); 
-    padding: 15px 20px; 
+    padding: 14px 18px; 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    border-bottom: 2px solid var(--bright-orange); 
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+    border-bottom: 1px solid var(--border-panel);
 }
 
 .sleeper-logo { color: var(--text-light); font-weight: 700; font-family: var(--font-display); letter-spacing: 0.03em; text-transform: uppercase; }
 
-.badge-add { background: var(--aqua); color: #00110a; border: 1px solid var(--aqua); padding: 2px 9px; border-radius: 999px; font-family: var(--font-display); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-.badge-drop { background: var(--red-orange); color: #1a0503; border: 1px solid var(--red-orange); padding: 2px 9px; border-radius: 999px; font-family: var(--font-display); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.badge-add { background: rgba(66,244,176,.12); color: var(--aqua); border: 1px solid rgba(66,244,176,.3); padding: 3px 10px; border-radius: 999px; font-family: var(--font-display); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.badge-drop { background: rgba(234,78,61,.12); color: var(--red-orange); border: 1px solid rgba(234,78,61,.3); padding: 3px 10px; border-radius: 999px; font-family: var(--font-display); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
 
 .sleeper-body { padding: 10px; }
-.player-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-dark); }
+.player-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-panel); }
+.player-row:last-child { border-bottom: none; }
 .player-img { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; background: #333; }
 .player-info { flex-grow: 1; }
 .player-name { font-size: 0.9rem; font-weight: 600; }

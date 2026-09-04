@@ -16,8 +16,6 @@ layout: null
         <div class="hero-content">
             <img 
                 src="assets/images/PlayerOverlay.png" 
-                srcset="assets/images/PlayerOverlay.png 800w, assets/images/PlayerOverlay.png 1600w"
-                sizes="(max-width: 768px) 100vw, 50vw"
                 alt="Featured Players" 
                 class="hero-graphic">
         </div>
@@ -37,9 +35,9 @@ layout: null
     </section>
 
     <main class="dashboard-container">
-         
-         <!-- Left Sidebar: Trending -->
-         <aside class="sidebar">
+        
+        <!-- Left Sidebar: Trending -->
+        <aside class="sidebar">
           <div class="sidebar-sticky">
             <div class="sleeper-card quick-nav-card">
                 <div class="sleeper-header"><div class="sleeper-logo">Quick Links</div></div>
@@ -50,7 +48,26 @@ layout: null
                     <a href="my-leagues" class="quick-nav-link"><i class="fa-solid fa-users"></i> My Leagues</a>
                 </div>
             </div>
-            <div class="section-eyebrow">Trending Now</div>
+            <div class="sleeper-card youtube-channels-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Our Channels</div></div>
+                <div class="youtube-channels-body">
+                    <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg?sub_confirmation=1" target="_blank" class="yt-channel-row">
+                        <div class="yt-channel-icon"><i class="fa-brands fa-youtube"></i></div>
+                        <div class="yt-channel-name">FantasyNow+</div>
+                        <span class="yt-subscribe-btn">Subscribe</span>
+                    </a>
+                    <a href="https://www.youtube.com/channel/UCwbYE7IpXw0GEMB03vQcfPg?sub_confirmation=1" target="_blank" class="yt-channel-row">
+                        <div class="yt-channel-icon"><i class="fa-brands fa-youtube"></i></div>
+                        <div class="yt-channel-name">Dynasty</div>
+                        <span class="yt-subscribe-btn">Subscribe</span>
+                    </a>
+                    <a href="https://www.youtube.com/channel/UCYVj7kCSQ5iogXUGoVV5uqA?sub_confirmation=1" target="_blank" class="yt-channel-row">
+                        <div class="yt-channel-icon"><i class="fa-brands fa-youtube"></i></div>
+                        <div class="yt-channel-name">Get Tilted</div>
+                        <span class="yt-subscribe-btn">Subscribe</span>
+                    </a>
+                </div>
+            </div>
             <div id="trending-adds" class="sleeper-card">
                 <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>
                 <div class="sleeper-body" id="adds-list">Loading...</div>
@@ -68,20 +85,22 @@ layout: null
         <!-- Middle Content -->
         <section class="main-content">
             <div class="youtube-feed-container">
-        <!-- Category Navigation -->
-                <div class="section-eyebrow">Live Feed</div>
-                <div class="feed-nav">
-                    <button id="all-btn" class="nav-btn active" onclick="loadAllFeed(this)">ALL</button>
-                    <button class="nav-btn" onclick="loadFeed('PLX89o1TM7t-o', this)">WAIVERS</button>
-                    <button class="nav-btn" onclick="loadFeed('PLTcuVkkTRFt4', this)">START/SITS</button>
-                    <button class="nav-btn" onclick="loadRankingsFeed(this)">RANKINGS</button>
-                    <button class="nav-btn" onclick="loadFeed('PLD17XfyD48QU', this)">DYNASTY</button>
-                    <button class="nav-btn" onclick="loadFeed('PLeOI83uRg6RY', this)">GET TILTED</button>
-                </div>
-        
-                <!-- Video Grid -->
-                <div id="youtube-feed" class="video-grid">
-                    <!-- Videos injected here -->
+                <div class="live-feed-card">
+                    <div class="sleeper-header"><div class="sleeper-logo">Live Feed</div></div>
+                    <div class="live-feed-body">
+                        <div class="feed-nav">
+                            <button id="all-btn" class="nav-btn active" onclick="loadAllFeed(this)">ALL</button>
+                            <button class="nav-btn" onclick="loadFeed('PLX89o1TM7t-o', this)">WAIVERS</button>
+                            <button class="nav-btn" onclick="loadFeed('PLTcuVkkTRFt4', this)">START/SITS</button>
+                            <button class="nav-btn" onclick="loadRankingsFeed(this)">RANKINGS</button>
+                            <button class="nav-btn" onclick="loadFeed('PLD17XfyD48QU', this)">DYNASTY</button>
+                            <button class="nav-btn" onclick="loadFeed('PLeOI83uRg6RY', this)">GET TILTED</button>
+                        </div>
+
+                        <div id="youtube-feed" class="video-grid">
+                            <!-- Videos injected here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -91,28 +110,33 @@ layout: null
           <div class="sidebar-sticky">
             <div class="social-links">
                 <span class="social-text">FOLLOW US</span>
-                <a href="https://youtube.com/@fantasynowplus" target="_blank" class="social-icon youtube"><i class="fa-brands fa-youtube"></i></a>
                 <a href="https://bsky.app/profile/fantasynowplus.com" target="_blank" class="social-icon bluesky"><i class="fa-brands fa-bluesky"></i></a>
                 <a href="https://www.tiktok.com/@fantasynowplus" target="_blank" class="social-icon tiktok"><i class="fa-brands fa-tiktok"></i></a>
                 <a href="https://discord.gg/EgZcDynavK" target="_blank" class="social-icon discord"><i class="fa-brands fa-discord"></i></a>
-            </div>
-            <div class="fnp-position-toggle">
-                <div class="fnp-nav">
-                    <div class="bubble pos-bubble active" onclick="switchTab('position', 'QB', this)">QB</div>
-                    <div class="bubble pos-bubble" onclick="switchTab('position', 'RB', this)">RB</div>
-                    <div class="bubble pos-bubble" onclick="switchTab('position', 'WR', this)">WR</div>
-                    <div class="bubble pos-bubble" onclick="switchTab('position', 'TE', this)">TE</div>
-                </div>
+                <a href="#" target="_blank" class="social-icon facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" target="_blank" class="social-icon x"><i class="fa-brands fa-x-twitter"></i></a>
             </div>
             <div class="fn-plus-container">
                 <div class="fn-plus-header">
                     DRAFT RANKINGS
+                </div>
+                <div class="fnp-nav">
+                    <div class="bubble pos-bubble active" onclick="switchTab('draft', 'QB', this)">QB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('draft', 'RB', this)">RB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('draft', 'WR', this)">WR</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('draft', 'TE', this)">TE</div>
                 </div>
                 <div id="rank-list-draft" class="rank-list">Loading...</div>
             </div>
             <div class="fn-plus-container">
                 <div class="fn-plus-header">
                     DYNASTY RANKINGS
+                </div>
+                <div class="fnp-nav">
+                    <div class="bubble pos-bubble active" onclick="switchTab('dynasty', 'QB', this)">QB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('dynasty', 'RB', this)">RB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('dynasty', 'WR', this)">WR</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('dynasty', 'TE', this)">TE</div>
                 </div>
                 <div id="rank-list-dynasty" class="rank-list">Loading...</div>
             </div>
