@@ -1,5 +1,3 @@
-
-
 .hamburger-btn {
   display: none;
   background: none;
@@ -132,23 +130,23 @@
   .sidebar {
     display: contents;
   }
-  
-  .main-content {
-    order: 1;
-    height: auto;
+
+  .sidebar-sticky {
+    display: contents;
+    position: static;
   }
 
-  .main-scroll {
-    overflow: visible;
-  }
-
+  .main-content        { order: 1; }
   .promo-banner        { order: 2; }
   .quick-nav-card       { order: 2.5; }
-  .rankings-scroll      { order: 3; width: 100%; max-width: 400px; margin: 0 auto; overflow: visible; }
+  .fn-plus-container   { order: 3; width: 100%; max-width: 400px; margin: 0 auto; }
   .partner-banner-link { order: 4; }
-  .trending-scroll      { order: 6; overflow: visible; }
+  .sidebar-sticky > .section-eyebrow { order: 5; }
+  #trending-adds       { order: 6; }
+  #trending-drops      { order: 7; }
   .social-links        { order: 8; justify-content: center; }
   .sidebar-motto        { order: 9; }
+}
 
 /* ============ 600px — phone ============ */
 @media (max-width: 600px) {

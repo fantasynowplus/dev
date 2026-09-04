@@ -40,6 +40,7 @@ layout: null
          
          <!-- Left Sidebar: Trending -->
          <aside class="sidebar">
+          <div class="sidebar-sticky">
             <div class="sleeper-card quick-nav-card">
                 <div class="sleeper-header"><div class="sleeper-logo">Quick Links</div></div>
                 <div class="quick-nav-body">
@@ -49,20 +50,19 @@ layout: null
                     <a href="my-leagues" class="quick-nav-link"><i class="fa-solid fa-users"></i> My Leagues</a>
                 </div>
             </div>
-            <div class="trending-scroll">
-                <div class="section-eyebrow">Trending Now</div>
-                <div id="trending-adds" class="sleeper-card">
-                    <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>
-                    <div class="sleeper-body" id="adds-list">Loading...</div>
-                </div>
-                <div id="trending-drops" class="sleeper-card">
-                    <div class="sleeper-header"><div class="sleeper-logo">Trending Drops</div><div class="badge-drop">VIA SLEEPER</div></div>
-                    <div class="sleeper-body" id="drops-list">Loading...</div>
-                </div>
+            <div class="section-eyebrow">Trending Now</div>
+            <div id="trending-adds" class="sleeper-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>
+                <div class="sleeper-body" id="adds-list">Loading...</div>
+            </div>
+            <div id="trending-drops" class="sleeper-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Trending Drops</div><div class="badge-drop">VIA SLEEPER</div></div>
+                <div class="sleeper-body" id="drops-list">Loading...</div>
             </div>
             <h2 class="sidebar-motto">
                 <span class="highlight">WIN</span> YOUR LEAGUE
             </h2>
+          </div>
         </aside>
 
         <!-- Middle Content -->
@@ -80,16 +80,15 @@ layout: null
                 </div>
         
                 <!-- Video Grid -->
-                <div class="main-scroll">
-                    <div id="youtube-feed" class="video-grid">
-                        <!-- Videos injected here -->
-                    </div>
+                <div id="youtube-feed" class="video-grid">
+                    <!-- Videos injected here -->
                 </div>
             </div>
         </section>
 
         <!-- Right Sidebar: Rankings Widget -->
         <aside class="sidebar" id="rankings-widget">
+          <div class="sidebar-sticky">
             <div class="social-links">
                 <span class="social-text">FOLLOW US</span>
                 <a href="https://youtube.com/@fantasynowplus" target="_blank" class="social-icon youtube"><i class="fa-brands fa-youtube"></i></a>
@@ -97,30 +96,28 @@ layout: null
                 <a href="https://www.tiktok.com/@fantasynowplus" target="_blank" class="social-icon tiktok"><i class="fa-brands fa-tiktok"></i></a>
                 <a href="https://discord.gg/EgZcDynavK" target="_blank" class="social-icon discord"><i class="fa-brands fa-discord"></i></a>
             </div>
-            <div class="rankings-scroll">
-                <div class="fn-plus-container">
-                    <div class="fn-plus-header">
-                        FANTASYNOW+ RANKINGS
-                    </div>
-
-                    <div class="fnp-nav">
-                        <div id="draft-tab" class="bubble cat-bubble active" onclick="switchTab('format', 'draft', this)">Draft</div>
-                        <div class="bubble cat-bubble" onclick="switchTab('format', 'dynasty', this)">Dynasty</div>
-                    </div>
-                    <div class="fnp-nav">
-                        <div class="bubble pos-bubble active" onclick="switchTab('position', 'QB', this)">QB</div>
-                        <div class="bubble pos-bubble" onclick="switchTab('position', 'RB', this)">RB</div>
-                        <div class="bubble pos-bubble" onclick="switchTab('position', 'WR', this)">WR</div>
-                        <div class="bubble pos-bubble" onclick="switchTab('position', 'TE', this)">TE</div>
-                    </div>
-                    
-                    <div id="rank-list">Loading...</div>
+            <div class="fn-plus-container">
+                <div class="fn-plus-header">
+                    FANTASYNOW+ RANKINGS
                 </div>
+
+                <div class="fnp-nav">
+                    <div id="draft-tab" class="bubble cat-bubble active" onclick="switchTab('format', 'draft', this)">Draft</div>
+                    <div class="bubble cat-bubble" onclick="switchTab('format', 'dynasty', this)">Dynasty</div>
+                </div>
+                <div class="fnp-nav">
+                    <div class="bubble pos-bubble active" onclick="switchTab('position', 'QB', this)">QB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'RB', this)">RB</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'WR', this)">WR</div>
+                    <div class="bubble pos-bubble" onclick="switchTab('position', 'TE', this)">TE</div>
+                </div>
+                
+                <div id="rank-list">Loading...</div>
             </div>
             <a href="https://play.underdogfantasy.com/p-fnplus" target="_blank" class="partner-banner-link">
                 <img src="assets/images/UD_P5G50.png" alt="Underdog Fantasy Partner Banner" class="partner-img">
             </a>
-
+          </div>
         </aside>
     </main>
 
