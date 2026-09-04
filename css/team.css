@@ -11,7 +11,8 @@
 .team-filter-btn:hover{border-color:#3c4a6e}
 .team-filter-btn.on{background:var(--bright-orange);border-color:var(--bright-orange);color:#000}
 
-.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px}
+.team-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:24px}
+.team-card{flex:0 1 220px}
 .team-empty{grid-column:1/-1;text-align:center;color:#7d8aa5;padding:40px 0}
 
 .team-card{background:linear-gradient(145deg,#071a3d,#000000);padding:26px 18px;text-align:center;border:1px solid var(--border-dark);border-top:3px solid var(--bright-orange)}
@@ -29,4 +30,4 @@
 .team-discord-link{display:inline-flex;align-items:center;gap:8px;color:#FFA515;text-decoration:none;font-weight:700;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em}
 .team-discord-link:hover{color:#fff}
 
-@media(max-width:520px){.team-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+@media(max-width:520px){.team-card{flex:0 1 150px}}
