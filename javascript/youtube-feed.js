@@ -102,7 +102,7 @@ async function loadFeed(playlistId, buttonElement) {
             renderEmptyState(container, buttonElement);
             return;
         }
-        renderVideos(items.slice(0, 8));
+        renderVideos(items.slice(0, 12));
     } catch (err) {
         console.error('Feed load failed:', err);
         container.innerHTML = '<p class="feed-error">Feed unavailable right now — please refresh.</p>';

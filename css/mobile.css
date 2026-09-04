@@ -78,6 +78,14 @@
   font-weight: 700;
 }
 
+/* ============ 1300px — small desktop/laptop ============ */
+@media (max-width: 1300px) {
+
+  .video-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ============ 900px — tablet ============ */
 @media (max-width: 900px) {
 
@@ -127,6 +135,7 @@
   
   .main-content        { order: 1; }
   .promo-banner        { order: 2; }
+  .quick-nav-card       { order: 2.5; }
   .fn-plus-container   { order: 3; width: 100%; max-width: 400px; margin: 0 auto; }
   .partner-banner-link { order: 4; }
   .sidebar > .section-eyebrow { order: 5; }

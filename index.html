@@ -1,7 +1,7 @@
 ---
 layout: null
 ---
-{% include header.html css="hero,sleeper-trends,youtube,rankings" %}
+{% include header.html css="hero,sleeper-trends,youtube,rankings,dashboard" %}
     
    <section class="hero-banner">
         <div class="hero-scrim"></div>
@@ -36,10 +36,19 @@ layout: null
     </a>
     </section>
 
-    <main class="dashboard-container" style="max-width: 1400px; margin: 15px auto 40px auto; display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; padding: 0 20px;">
-        
-        <!-- Left Sidebar: Trending -->
-        <aside class="sidebar">
+    <main class="dashboard-container">
+         
+         <!-- Left Sidebar: Trending -->
+         <aside class="sidebar">
+            <div class="sleeper-card quick-nav-card">
+                <div class="sleeper-header"><div class="sleeper-logo">Quick Links</div></div>
+                <div class="quick-nav-body">
+                    <a href="tools" class="quick-nav-link"><i class="fa-solid fa-toolbox"></i> Tools</a>
+                    <a href="rankings-draft" class="quick-nav-link"><i class="fa-solid fa-ranking-star"></i> Rankings</a>
+                    <a href="https://www.youtube.com/channel/UCCW6qFFB7ezwJk1cLPjPHDg/videos" target="_blank" class="quick-nav-link"><i class="fa-solid fa-video"></i> Shows</a>
+                    <a href="my-leagues" class="quick-nav-link"><i class="fa-solid fa-users"></i> My Leagues</a>
+                </div>
+            </div>
             <div class="section-eyebrow">Trending Now</div>
             <div id="trending-adds" class="sleeper-card">
                 <div class="sleeper-header"><div class="sleeper-logo">Trending Adds</div><div class="badge-add">VIA SLEEPER</div></div>

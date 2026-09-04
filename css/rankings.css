@@ -11,7 +11,7 @@
     border-radius: 0;
     padding: 0; /* Remove padding here, handle it in children */
     color: var(--text-light); 
-    width: 300px;
+    width: 100%;
     overflow: hidden; /* Important for rounding */
 }
 

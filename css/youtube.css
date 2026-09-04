@@ -4,10 +4,10 @@
     margin-bottom: 40px;
 }
 
-/* Two-column grid */
+/* Three-column grid */
 .video-grid { 
     display: grid; 
-    grid-template-columns: 1fr 1fr; /* Exactly 2 columns */
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px; 
     width: 100%;
 }

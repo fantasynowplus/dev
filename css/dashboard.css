@@ -1,10 +1,10 @@
 .dashboard-container {
-    max-width: 1400px;
+    max-width: 1800px;
     margin: 15px auto 40px auto;
     display: grid;
-    grid-template-columns: 300px 1fr 300px;
-    gap: 20px;
-    padding: 0 20px;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 24px;
+    padding: 0 30px;
     align-items: stretch;
 }
 
@@ -51,11 +51,21 @@
 }
 
 .quick-nav-link i {
-    width: 18px;
-    text-align: center;
-    color: var(--bright-orange);
-    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--bright-orange);
+    color: #08111f;
+    font-size: 0.8rem;
 }
+
+.quick-nav-link:nth-child(1) i { background: var(--accent-cobalt); }
+.quick-nav-link:nth-child(2) i { background: var(--accent-yellow); }
+.quick-nav-link:nth-child(3) i { background: var(--aqua); }
+.quick-nav-link:nth-child(4) i { background: var(--accent-magenta); }
 
 .quick-nav-link:hover {
     background-color: var(--bg-panel);
