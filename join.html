@@ -1,0 +1,47 @@
+---
+layout: null
+---
+{% include header.html title="Join the Team" css="join" %}
+
+<main class="join-wrap">
+  <h1 class="join-title">Join Our Team</h1>
+  <p class="join-sub">Interested in joining FantasyNow+? Tell us a bit about yourself and we'll be in touch about the opportunity.</p>
+
+  <div class="join-card">
+    <form id="fnpJoinForm" autocomplete="on">
+      <div class="join-field full">
+        <label for="jName">Full name</label>
+        <input id="jName" name="name" class="tool-input join-input" placeholder="Your name" required>
+      </div>
+      <div class="join-row">
+        <div class="join-field">
+          <label for="jEmail">Email</label>
+          <input id="jEmail" name="email" type="email" class="tool-input join-input" placeholder="you@email.com">
+        </div>
+        <div class="join-field">
+          <label for="jPhone">Phone number</label>
+          <input id="jPhone" name="phone" class="tool-input join-input" placeholder="555-555-5555">
+        </div>
+      </div>
+      <div class="join-row">
+        <div class="join-field">
+          <label for="jDob">Date of birth</label>
+          <input id="jDob" name="dob" type="date" class="tool-input join-input">
+        </div>
+        <div class="join-field">
+          <label for="jRole">Role you're interested in</label>
+          <input id="jRole" name="role" class="tool-input join-input" placeholder="e.g. Content, Social Media">
+        </div>
+      </div>
+      <div class="join-field full">
+        <label for="jReason">Why do you want to join?</label>
+        <textarea id="jReason" name="reason" rows="4" class="tool-input join-input join-textarea" placeholder="Tell us what draws you to FantasyNow+…"></textarea>
+      </div>
+      <button type="submit" class="tool-btn btn-find">Apply Now</button>
+      <p id="fnpJoinMsg" class="join-msg"></p>
+    </form>
+  </div>
+</main>
+
+<script src="javascript/join.js"></script>
+{% include footer.html %}

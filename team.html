@@ -1,0 +1,27 @@
+---
+layout: null
+---
+{% include header.html title="Meet the Team" css="team" %}
+
+<main class="team-wrap">
+  <div class="team-head">
+    <h1>Meet the Team</h1>
+    <p class="team-sub">The analysts, hosts and crew behind FantasyNow+.</p>
+  </div>
+
+  <div class="team-filters" id="teamFilters">
+    <button class="team-filter-btn on" data-type="all">All Staff</button>
+  </div>
+
+  <div class="team-grid" id="teamGrid">
+    <p class="team-empty">Loading…</p>
+  </div>
+
+  <div class="team-cta">
+    <a href="join" class="tool-card-link">Join Our Team</a>
+    <a href="https://discord.gg/EgZcDynavK" target="_blank" class="team-discord-link"><i class="fa-brands fa-discord"></i> Join the Community</a>
+  </div>
+</main>
+
+<script src="javascript/team.js"></script>
+{% include footer.html %}
