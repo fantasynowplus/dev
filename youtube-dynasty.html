@@ -1,0 +1,42 @@
+---
+layout: null
+---
+{% include header.html title="FantasyNow+ Dynasty on YouTube" css="team,channel-hub" %}
+{% include back-to-youtube.html %}
+
+<main class="yt-wrap">
+  <div class="yt-head">
+    <h1>FantasyNow+ Dynasty on YouTube</h1>
+    <p class="yt-sub">Analysis, rankings and hot takes — new videos every week.</p>
+  </div>
+
+  <div class="yt-subscribe">
+    <a href="https://youtube.com/@fantasynowplugettilted" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-youtube">Watch</a>
+    <a href="https://podcasts.apple.com/us/podcast/fantasynow+-get-tilted/id1837683580" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-apple">Listen</a>
+    <a href="https://open.spotify.com/show/0soxO1wO8zTmYheqoSdzDb" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-spotify">Listen</a>
+  </div>
+
+  <div class="yt-filters" id="ytShowFilters"></div>
+
+  <div class="yt-layout" id="ytLayout">
+    <div class="yt-main">
+        <div id="ytFeatured"><p class="team-empty">Loading…</p></div>
+      <div class="yt-grid" id="ytVideoFeed"></div>
+    </div>
+    <aside class="yt-sidebar" id="ytStaffSection" hidden>
+      <p class="yt-staff-title">Hosted by</p>
+      <div class="yt-staff-stack" id="ytStaffGrid"></div>
+    </aside>
+  </div>
+</main>
+
+<script>
+  window.CHANNEL_CONFIG = {
+    channelName: 'FantasyNow+ Dynasty',
+    ytChannelId: 'UCwbYE7IpXw0GEMB03vQcfPg',
+    allVideosPlaylistId: 'PLD17XfyD48QU',
+    videoLimit: 13
+  };
+</script>
+<script src="javascript/channel-hub.js"></script>
+{% include footer.html %}
