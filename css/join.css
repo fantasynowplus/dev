@@ -35,7 +35,7 @@
 .join-input:hover{border-color:rgba(255,165,21,.3)}
 .join-input:focus{
   border-color:var(--bright-orange);
-  background:#111d38;
+  background:#d8dde9;
   box-shadow:0 0 0 3px rgba(255,165,21,.15);
 }
 .join-textarea{padding:13px 15px;line-height:1.5}
