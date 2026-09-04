@@ -15,6 +15,7 @@
 .yt-section{margin-bottom:60px}
 .yt-section-title{color:#eef2fb;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:1.3rem;margin:0 0 24px;text-align:center}
 
+.yt-filters{display:flex;justify-content:center;margin-bottom:28px}
 .yt-feed{display:flex;flex-direction:column;gap:18px;max-width:900px;margin:0 auto}
 .yt-item{display:flex;gap:18px;background:linear-gradient(145deg,#071a3d,#000000);border:1px solid var(--border-dark);border-left:3px solid var(--bright-orange);padding:16px;cursor:pointer;transition:border-color .15s}
 .yt-item:hover{border-color:#3c4a6e}

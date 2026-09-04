@@ -2,6 +2,7 @@
   'use strict';
   var CONFIG = window.CHANNEL_CONFIG || {};
   var CFG = null;
+  var ACTIVE_SOURCE = { type: 'channel', id: null };
 
   function sbCfg(){
     var url=(typeof SUPABASE_URL!=='undefined')?SUPABASE_URL:window.SUPABASE_URL;
@@ -41,6 +42,29 @@
     rpc('team_public').then(renderStaff).catch(function(e){
       console.error(e);
       var grid=document.getElementById('ytStaffGrid'); if(grid) grid.innerHTML='<p class="team-empty">Unable to load staff right now.</p>';
+    });
+  }
+
+  function renderShowFilters(shows){
+    var wrap=document.getElementById('ytShowFilters'); if(!wrap||!shows.length) return;
+    var all='<button class="team-filter-btn on" data-playlist="">All Videos</button>';
+    var rest=shows.map(function(s){
+      return '<button class="team-filter-btn" data-playlist="'+esc(s.youtube_playlist_id)+'">'+esc(s.name)+'</button>';
+    }).join('');
+    wrap.innerHTML='<div class="team-filter-row">'+all+rest+'</div>';
+    wrap.querySelectorAll('.team-filter-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        wrap.querySelectorAll('.team-filter-btn').forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        ACTIVE_SOURCE = b.dataset.playlist ? {type:'playlist',id:b.dataset.playlist} : {type:'channel',id:CONFIG.ytChannelId};
+        loadVideos();
+      });
+    });
+  }
+
+  function loadShowFilters(){
+    rpc('show_playlists_public',{p_channel_uc_id:CONFIG.ytChannelId}).then(renderShowFilters).catch(function(e){
+      console.error(e);
     });
   }
 
@@ -88,10 +112,13 @@
   }
 
   function loadVideos(){
-    rpc('latest_videos_public',{p_channel_id:CONFIG.ytChannelId,p_limit:CONFIG.videoLimit||10}).then(renderVideos).catch(function(e){
-      console.error(e);
-      var wrap=document.getElementById('ytVideoFeed'); if(wrap) wrap.innerHTML='<p class="team-empty">Unable to load videos right now.</p>';
-    });
+    var wrap=document.getElementById('ytVideoFeed'); if(wrap) wrap.innerHTML='<p class="team-empty">Loading…</p>';
+    rpc('latest_videos_public',{p_source_type:ACTIVE_SOURCE.type,p_source_id:ACTIVE_SOURCE.id,p_limit:CONFIG.videoLimit||10})
+      .then(renderVideos)
+      .catch(function(e){
+        console.error(e);
+        if(wrap) wrap.innerHTML='<p class="team-empty">Unable to load videos right now.</p>';
+      });
   }
 
   function boot(){
@@ -101,7 +128,9 @@
       var v=document.getElementById('ytVideoFeed'); if(v) v.innerHTML='<p class="team-empty">Unable to load right now.</p>';
       return;
     }
+    ACTIVE_SOURCE={type:'channel',id:CONFIG.ytChannelId};
     loadStaff();
+    loadShowFilters();
     loadVideos();
   }
   document.addEventListener('DOMContentLoaded', boot);

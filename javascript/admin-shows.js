@@ -39,6 +39,7 @@ async function showForm(id){
       '<div class="field"><label>Content type</label><select name="content_type">'+types.map(t=>'<option'+(s.content_type===t?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'+
       '<div class="field"><label>Schedule day</label><select name="schedule_day">'+days.map(d=>'<option'+(s.schedule_day===d?' selected':'')+'>'+d+'</option>').join('')+'</select></div>'+
       '<div class="field"><label>Channel</label><select name="channel_id"><option value="">— none —</option>'+CHANNELS_CACHE.map(c=>'<option value="'+c.id+'"'+(s.channel_id===c.id?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label>YouTube playlist ID</label><input name="youtube_playlist_id" placeholder="PL…" value="'+esc(s.youtube_playlist_id||'')+'"></div>'+
       '<div class="field"><label>Status</label><select name="is_active"><option value="true"'+(s.is_active!==false?' selected':'')+'>Active</option><option value="false"'+(s.is_active===false?' selected':'')+'>Off air</option></select></div>'+
       '<div class="field full"><label>Hosts</label>'+hostPicker+'</div>'+
       '<div class="field full"><label>Description</label><textarea name="description">'+esc(s.description||'')+'</textarea></div>'+
@@ -46,6 +47,7 @@ async function showForm(id){
     onSave:async(bg)=>{
       const body={name:val(bg,'name'),content_type:val(bg,'content_type')||null,
         schedule_day:val(bg,'schedule_day')||null,channel_id:val(bg,'channel_id')||null,
+        youtube_playlist_id:val(bg,'youtube_playlist_id')||null,
         description:val(bg,'description'),is_active:bg.querySelector('[name="is_active"]').value==='true'};
       if(!body.name)throw new Error('Show name is required');
       let showId=id;
