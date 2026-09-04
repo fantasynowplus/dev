@@ -288,7 +288,7 @@ header nav {
 .mega-col a{display:block;color:#fff;font-size:.85rem;padding:8px 4px;text-decoration:none;border-bottom:1px solid var(--border-dark)}
 .mega-col a:last-child{border-bottom:none}
 .mega-col a:hover{color:var(--bright-orange);background:none}
-#two-column .mega-content{min-width:426px;grid-template-columns:1fr 1fr}
+#two-column .mega-content{min-width:320px;grid-template-columns:1fr 1fr}
 
   .fn-modal-backdrop { position: fixed; inset: 0; background: rgba(6,25,43,0.55); backdrop-filter: blur(2px); display: none; align-items: flex-start; justify-content: center; z-index: 2000; overflow-y: auto; padding: 40px 16px; }
   .fn-modal-backdrop.open { display: flex; }
