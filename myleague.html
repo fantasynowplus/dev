@@ -1,0 +1,62 @@
+---
+layout: null
+---
+{% include header.html title="MyLeague" css="tools" %}
+
+<main class="page-container" style="padding: 40px 20px; max-width: 1200px; margin: auto;">
+    <h1 style="text-align: center;">MyLeague</h1>
+    <p style="text-align: center; color: #ffffff; margin-bottom: 24px;">Level up your teams with these free tools from FantasyNow+</p>
+    <div class="tools-cta" id="toolsCta" hidden>
+        <p><b>Accounts are free.</b> Sign up in a few seconds to unlock tools dedicated to your leagues! Super League players already have one.</p>
+        <button onclick="var m=document.getElementById('loginBackdrop'); if(m){m.style.display='flex';}else{window.location.href='login';}">Create free account</button>
+    </div>
+    
+    <section id="draft" class="tools-section">
+        <div class="dgf-feature">
+            <div class="dgf-inner">
+                <div>
+                    <span class="dgf-badge">New</span>
+                    <h2>Live Draft Guide</h2>
+                    <p>Get expert analyst rankings live on draft night. Track every pick in real time, check best-available talent and bye-week advice, or run a quick mock draft before you are on the clock.</p>
+                    <ul class="dgf-list">
+                        <li>Live assist, mock draft, and full rankings in one board.</li>
+                        <li>Snake, linear, and third-round-reversal formats.</li>
+                        <li>Updates automatically from our published rankings.</li>
+                    </ul>
+                </div>
+                <div class="dgf-cta">
+                    <a href="draft-guide" class="tool-card-link">Open Draft Guide</a>
+                    {% assign pdfs = site.static_files | where: "extname", ".pdf" %}
+                    {% for f in pdfs %}{% if f.path contains "/assets/" %}{% assign guide = f %}{% break %}{% endif %}{% endfor %}
+                    {% if guide %}
+                    <a href="{{ guide.path | remove_first: '/' | uri_escape }}?v={{ site.time | date: '%s' }}" class="dgf-pdf" download="FantasyNow-2026-Draft-Guide.pdf">
+                        <i class="fa-solid fa-file-arrow-down"></i> Download PDF
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="leagues" class="tools-section">
+        <div class="tools-section-head"><h2>Leagues &amp; Players</h2></div>
+        <div class="tools-grid tools-grid-2">
+            <div class="tool-card">
+                <span class="tool-lock"><i class="fa-solid fa-lock"></i> Account required</span>
+                <h3>My Leagues</h3>
+                <p>Link your Sleeper account to see every league in one hub, with format, scoring, rosters and contender insights at a glance.</p>
+                <a href="my-leagues" class="tool-card-link">Open Tool</a>
+            </div>
+            <div class="tool-card tool-card-nolock">
+                <span class="tool-open"><i class="fa-solid fa-circle-check"></i> No account required</span>           
+                <h3>Trade Calculator</h3>
+                <p>Evaluate any trade against our analyst rankings, built for dynasty and redraft, with instant value on both sides of the deal.</p>
+                <a href="trade-calculator" class="tool-card-link">Open Tool</a>
+            </div>
+        </div>
+    </section>
+
+    
+</main>
+<script src="javascript/tools.js"></script>
+{% include footer.html %}
