@@ -34,8 +34,9 @@
       loginError.classList.remove('show');
       button.classList.add('loading');
 
+      const remember = document.getElementById('remember-me').checked;
       try {
-        await auth.login(email, password);
+        await auth.login(email, password, remember);
         window.location.href = './index.html';
       } catch (err) {
         loginError.textContent = err.message;
