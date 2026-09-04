@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
 
-  // honeypot — bots fill hidden fields, real users never do
   if (body.website) return json({ ok: true });
 
   const name = String(body.name || '').trim();
