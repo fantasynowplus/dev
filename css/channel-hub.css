@@ -4,8 +4,7 @@
 .yt-sub{color:#94a1bd;margin:6px 0 0}
 
 .yt-subscribe{display:flex;margin-bottom:20px;border-radius:4px;overflow:hidden}
-.yt-sub-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:13px;padding:14px 10px;transition:filter .15s ease}
-.yt-sub-btn i{font-size:16px}
+.yt-sub-btn{flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:13px;padding:14px 10px;transition:filter .15s ease}
 .yt-sub-youtube{background:#FF0000;color:#fff}
 .yt-sub-apple{background:linear-gradient(135deg,#F452FF,#832BC1);color:#fff}
 .yt-sub-spotify{background:#1DB954;color:#000}
@@ -14,6 +13,7 @@
 .yt-filters{display:flex;justify-content:center;margin-bottom:36px}
 
 .yt-layout{display:grid;grid-template-columns:1fr 300px;gap:36px;align-items:start}
+.yt-layout.yt-layout-full{grid-template-columns:1fr}
 .yt-main{min-width:0}
 
 .yt-media{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:4px;background:#000;cursor:pointer}

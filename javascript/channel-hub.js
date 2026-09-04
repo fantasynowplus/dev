@@ -39,16 +39,20 @@
     var filtered=STAFF_DATA.filter(function(s){
       return (s.shows||[]).some(function(sh){ return sh.show_id===showId; });
     });
-    if(!filtered.length){ section.hidden=true; grid.innerHTML=''; return; }
+    var layout=document.getElementById('ytLayout');
+    if(!filtered.length){ section.hidden=true; grid.innerHTML=''; if(layout) layout.classList.add('yt-layout-full'); return; }
     grid.innerHTML=filtered.map(staffCard).join('');
     section.hidden=false;
+    if(layout) layout.classList.remove('yt-layout-full');
   }
 
   function hideStaff(){
     var section=document.getElementById('ytStaffSection');
     var grid=document.getElementById('ytStaffGrid');
+    var layout=document.getElementById('ytLayout');
     if(section) section.hidden=true;
     if(grid) grid.innerHTML='';
+    if(layout) layout.classList.add('yt-layout-full');
   }
 
   function loadStaffData(){
@@ -158,6 +162,8 @@
       return;
     }
     ACTIVE_SOURCE={type:'playlist',id:CONFIG.allVideosPlaylistId};
+    var layout=document.getElementById('ytLayout');
+    if(layout) layout.classList.add('yt-layout-full');
     loadStaffData();
     loadShowFilters();
     loadVideos();
