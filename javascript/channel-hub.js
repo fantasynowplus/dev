@@ -97,51 +97,64 @@
     return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
   }
 
-  function videoCard(v){
-    return '<div class="yt-item" data-video="'+esc(v.video_id)+'">'+
-      '<div class="yt-thumb-wrap">'+
-        '<img class="yt-thumb" src="'+esc(v.thumbnail_url)+'" alt="'+esc(v.title)+'">'+
-        '<span class="yt-play"><i class="fa-solid fa-circle-play"></i></span>'+
-      '</div>'+
-      '<div class="yt-info">'+
-        '<h3>'+esc(v.title)+'</h3>'+
-        '<p class="yt-date">'+esc(fmtDate(v.published_at))+'</p>'+
-        '<p class="yt-desc">'+esc(firstParagraph(v.description))+'</p>'+
-      '</div>'+
+  function mediaHtml(v){
+    return '<div class="yt-media"><img src="'+esc(v.thumbnail_url)+'" alt="'+esc(v.title)+'"><span class="yt-play"><i class="fa-solid fa-circle-play"></i></span></div>';
+  }
+  function featuredCard(v){
+    return '<div class="yt-featured" data-video="'+esc(v.video_id)+'">'+
+      mediaHtml(v)+
+      '<div class="yt-featured-title">'+esc(v.title)+'</div>'+
+      '<p class="yt-featured-date">'+esc(fmtDate(v.published_at))+'</p>'+
+    '</div>';
+  }
+  function gridCard(v){
+    return '<div class="yt-card" data-video="'+esc(v.video_id)+'">'+
+      mediaHtml(v)+
+      '<h3>'+esc(v.title)+'</h3>'+
+      '<p class="yt-date">'+esc(fmtDate(v.published_at))+'</p>'+
     '</div>';
   }
 
-  function playVideo(el){
-    if(el.classList.contains('playing')) return;
-    var id=el.dataset.video;
-    var wrap=el.querySelector('.yt-thumb-wrap');
-    wrap.innerHTML='<iframe src="https://www.youtube.com/embed/'+encodeURIComponent(id)+'?autoplay=1" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-    el.classList.add('playing');
+  function playVideo(container){
+    var media=container.querySelector('.yt-media');
+    if(!media||media.classList.contains('playing')) return;
+    var id=container.dataset.video;
+    media.innerHTML='<iframe src="https://www.youtube.com/embed/'+encodeURIComponent(id)+'?autoplay=1" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    media.classList.add('playing');
   }
 
   function renderVideos(rows){
-    var wrap=document.getElementById('ytVideoFeed'); if(!wrap) return;
-    if(!rows||!rows.length){ wrap.innerHTML='<p class="team-empty">No videos yet — check back soon.</p>'; return; }
-    wrap.innerHTML=rows.map(videoCard).join('');
-    wrap.querySelectorAll('.yt-item').forEach(function(el){
+    var featuredWrap=document.getElementById('ytFeatured');
+    var grid=document.getElementById('ytVideoFeed');
+    if(!rows||!rows.length){
+      if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">No videos yet — check back soon.</p>';
+      if(grid) grid.innerHTML='';
+      return;
+    }
+    var featured=rows[0];
+    var rest=rows.slice(1);
+    if(featuredWrap) featuredWrap.innerHTML=featuredCard(featured);
+    if(grid) grid.innerHTML=rest.map(gridCard).join('');
+    document.querySelectorAll('.yt-featured[data-video], .yt-card[data-video]').forEach(function(el){
       el.addEventListener('click', function(){ playVideo(el); });
     });
   }
 
   function loadVideos(){
-    var wrap=document.getElementById('ytVideoFeed'); if(wrap) wrap.innerHTML='<p class="team-empty">Loading…</p>';
+    var featuredWrap=document.getElementById('ytFeatured'); if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">Loading…</p>';
+    var grid=document.getElementById('ytVideoFeed'); if(grid) grid.innerHTML='';
     rpc('latest_videos_public',{p_source_type:ACTIVE_SOURCE.type,p_source_id:ACTIVE_SOURCE.id,p_limit:CONFIG.videoLimit||10})
       .then(renderVideos)
       .catch(function(e){
         console.error(e);
-        if(wrap) wrap.innerHTML='<p class="team-empty">Unable to load videos right now.</p>';
+        if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">Unable to load videos right now.</p>';
       });
   }
 
   function boot(){
     CFG=sbCfg();
     if(!CFG || !CONFIG.allVideosPlaylistId){
-      var v=document.getElementById('ytVideoFeed'); if(v) v.innerHTML='<p class="team-empty">Unable to load right now.</p>';
+      var f=document.getElementById('ytFeatured'); if(f) f.innerHTML='<p class="team-empty">Unable to load right now.</p>';
       return;
     }
     ACTIVE_SOURCE={type:'playlist',id:CONFIG.allVideosPlaylistId};

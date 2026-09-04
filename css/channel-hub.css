@@ -3,33 +3,40 @@
 .yt-head h1{color:#eef2fb}
 .yt-sub{color:#94a1bd;margin:6px 0 0}
 
-.yt-subscribe{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-bottom:56px}
-.yt-sub-btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:13px;padding:12px 22px;border-radius:4px;transition:filter .15s ease,transform .1s ease}
-.yt-sub-btn:active{transform:translateY(1px)}
+.yt-subscribe{display:flex;margin-bottom:20px;border-radius:4px;overflow:hidden}
+.yt-sub-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-family:var(--font-display);text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:13px;padding:14px 10px;transition:filter .15s ease}
 .yt-sub-btn i{font-size:16px}
 .yt-sub-youtube{background:#FF0000;color:#fff}
 .yt-sub-apple{background:linear-gradient(135deg,#F452FF,#832BC1);color:#fff}
 .yt-sub-spotify{background:#1DB954;color:#000}
 .yt-sub-btn:hover{filter:brightness(1.08)}
 
-.yt-section{margin-bottom:60px}
-.yt-section-title{color:#eef2fb;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:1.3rem;margin:0 0 24px;text-align:center}
+.yt-filters{display:flex;justify-content:center;margin-bottom:36px}
 
-.yt-filters{display:flex;justify-content:center;margin-bottom:28px}
-.yt-staff-inline{max-width:1180px;margin:0 auto 40px}
-.yt-staff-title{color:#94a1bd;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 18px}
-.yt-feed{display:flex;flex-direction:column;gap:18px;max-width:900px;margin:0 auto}
-.yt-item{display:flex;gap:18px;background:linear-gradient(145deg,#071a3d,#000000);border:1px solid var(--border-dark);border-left:3px solid var(--bright-orange);padding:16px;cursor:pointer;transition:border-color .15s}
-.yt-item:hover{border-color:#3c4a6e}
-.yt-thumb-wrap{position:relative;flex:0 0 240px;aspect-ratio:16/9;background:#000;overflow:hidden;border-radius:4px}
-.yt-thumb-wrap iframe{width:100%;height:100%;border:0}
-.yt-thumb{width:100%;height:100%;object-fit:cover;display:block}
-.yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);color:#fff;font-size:34px;transition:background .15s}
-.yt-item:hover .yt-play{background:rgba(0,0,0,.4)}
-.yt-item.playing .yt-play{display:none}
-.yt-info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
-.yt-info h3{color:#eef2fb;font-family:var(--font-display);font-size:1.05rem;margin:0 0 6px;line-height:1.3}
-.yt-date{color:#6b7890;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px}
-.yt-desc{color:#c9d2e6;font-size:.9rem;line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.yt-layout{display:grid;grid-template-columns:1fr 300px;gap:36px;align-items:start}
+.yt-main{min-width:0}
 
-@media(max-width:640px){.yt-item{flex-direction:column}.yt-thumb-wrap{flex:0 0 auto;width:100%}}
+.yt-media{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:4px;background:#000;cursor:pointer}
+.yt-media img{width:100%;height:100%;object-fit:cover;display:block}
+.yt-media iframe{width:100%;height:100%;border:0}
+.yt-media .yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.22);color:#fff;font-size:30px;transition:background .15s}
+.yt-media:hover .yt-play{background:rgba(0,0,0,.4)}
+.yt-media.playing .yt-play{display:none}
+
+.yt-featured{margin-bottom:44px;cursor:pointer}
+.yt-featured .yt-play{font-size:52px}
+.yt-featured-title{margin:14px 0 4px;color:#eef2fb;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.03em;font-size:1.2rem;line-height:1.3}
+.yt-featured-date{color:#6b7890;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;margin:0}
+
+.yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:26px}
+.yt-card{cursor:pointer}
+.yt-card .yt-media{margin-bottom:10px}
+.yt-card h3{color:#eef2fb;font-family:var(--font-display);font-size:.92rem;margin:0 0 5px;line-height:1.35}
+.yt-card .yt-date{color:#6b7890;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;margin:0}
+
+.yt-sidebar{position:sticky;top:24px}
+.yt-staff-title{color:#94a1bd;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 16px}
+.yt-staff-stack{display:flex;flex-direction:column;gap:16px}
+.yt-staff-stack .team-card{flex:none;width:100%}
+
+@media(max-width:900px){.yt-layout{grid-template-columns:1fr}.yt-sidebar{position:static}}

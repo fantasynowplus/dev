@@ -10,22 +10,23 @@ layout: null
   </div>
 
   <div class="yt-subscribe">
-    <a href="https://youtube.com/@fantasynowplus" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-youtube"><i class="fa-brands fa-youtube"></i> Subscribe on YouTube</a>
-    <a href="https://podcasts.apple.com/us/podcast/fantasynow+/id1794804794" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-apple"><i class="fa-brands fa-apple"></i> Apple Podcasts</a>
-    <a href="https://open.spotify.com/show/1go1UYBvBQxsTYanS97m0B" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-spotify"><i class="fa-brands fa-spotify"></i> Spotify</a>
+    <a href="https://youtube.com/@fantasynowplus" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-youtube"><i class="fa-brands fa-youtube"></i> Watch</a>
+    <a href="https://podcasts.apple.com/us/podcast/fantasynow+/id1794804794" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-apple"><i class="fa-brands fa-apple"></i> Listen</a>
+    <a href="https://open.spotify.com/show/1go1UYBvBQxsTYanS97m0B" target="_blank" rel="noopener" class="yt-sub-btn yt-sub-spotify"><i class="fa-brands fa-spotify"></i> Listen</a>
   </div>
 
-  <section class="yt-section">
-    <h2 class="yt-section-title">Latest Videos</h2>
-    <div class="yt-filters" id="ytShowFilters"></div>
-    <div class="yt-staff-inline" id="ytStaffSection" hidden>
+  <div class="yt-filters" id="ytShowFilters"></div>
+
+  <div class="yt-layout">
+    <div class="yt-main">
+      <div id="ytFeatured"><p class="team-empty">Loading…</p></div>
+      <div class="yt-grid" id="ytVideoFeed"></div>
+    </div>
+    <aside class="yt-sidebar" id="ytStaffSection" hidden>
       <p class="yt-staff-title">Hosted by</p>
-      <div class="team-grid" id="ytStaffGrid"></div>
-    </div>
-    <div class="yt-feed" id="ytVideoFeed">
-      <p class="team-empty">Loading…</p>
-    </div>
-  </section>
+      <div class="yt-staff-stack" id="ytStaffGrid"></div>
+    </aside>
+  </div>
 </main>
 
 <script>
