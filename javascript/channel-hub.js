@@ -5,8 +5,6 @@
   var STAFF_DATA = [];
   var ACTIVE_SOURCE = { type: 'playlist', id: null };
   var ACTIVE_LABEL = 'All Videos';
-  var LOADED = [];
-  var HAS_MORE = false;
 
   function sbCfg(){
     var url=(typeof SUPABASE_URL!=='undefined')?SUPABASE_URL:window.SUPABASE_URL;
@@ -136,14 +134,6 @@
     '</div>';
   }
 
-  function bindPlayHandlers(){
-    document.querySelectorAll('.yt-featured[data-video], .yt-card[data-video]').forEach(function(el){
-      if(el.dataset.bound) return;
-      el.dataset.bound='1';
-      el.addEventListener('click', function(){ playVideo(el); });
-    });
-  }
-
   function playVideo(container){
     var media=container.querySelector('.yt-media');
     if(!media||media.classList.contains('playing')) return;
@@ -152,57 +142,31 @@
     media.classList.add('playing');
   }
 
-  function updateLoadMoreVisibility(){
-    var wrap=document.getElementById('ytLoadMoreWrap');
-    if(wrap) wrap.hidden = !HAS_MORE;
-  }
-
-  function renderVideos(rows, appending){
+  function renderVideos(rows){
     var featuredWrap=document.getElementById('ytFeatured');
     var grid=document.getElementById('ytVideoFeed');
-    var pageSize=CONFIG.videoLimit||13;
-    HAS_MORE = rows.length===pageSize;
-
-    if(!appending){
-      LOADED = rows;
-      if(!rows.length){
-        if(featuredWrap) featuredWrap.innerHTML=emptyStateHtml(ACTIVE_LABEL);
-        if(grid) grid.innerHTML='';
-        updateLoadMoreVisibility();
-        return;
-      }
-      var featured=rows[0];
-      var rest=rows.slice(1);
-      if(featuredWrap) featuredWrap.innerHTML=featuredCard(featured);
-      if(grid) grid.innerHTML=rest.map(gridCard).join('');
-    }else{
-      LOADED = LOADED.concat(rows);
-      if(grid) grid.insertAdjacentHTML('beforeend', rows.map(gridCard).join(''));
+    if(!rows||!rows.length){
+      if(featuredWrap) featuredWrap.innerHTML=emptyStateHtml(ACTIVE_LABEL);
+      if(grid) grid.innerHTML='';
+      return;
     }
-    bindPlayHandlers();
-    updateLoadMoreVisibility();
+    var featured=rows[0];
+    var rest=rows.slice(1);
+    if(featuredWrap) featuredWrap.innerHTML=featuredCard(featured);
+    if(grid) grid.innerHTML=rest.map(gridCard).join('');
+    document.querySelectorAll('.yt-featured[data-video], .yt-card[data-video]').forEach(function(el){
+      el.addEventListener('click', function(){ playVideo(el); });
+    });
   }
 
   function loadVideos(){
     var featuredWrap=document.getElementById('ytFeatured'); if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">Loading…</p>';
     var grid=document.getElementById('ytVideoFeed'); if(grid) grid.innerHTML='';
-    var wrap=document.getElementById('ytLoadMoreWrap'); if(wrap) wrap.hidden=true;
-    rpc('latest_videos_public',{p_source_type:ACTIVE_SOURCE.type,p_source_id:ACTIVE_SOURCE.id,p_limit:CONFIG.videoLimit||13,p_offset:0})
-      .then(function(rows){ renderVideos(rows,false); })
+    rpc('latest_videos_public',{p_source_type:ACTIVE_SOURCE.type,p_source_id:ACTIVE_SOURCE.id,p_limit:CONFIG.videoLimit||13})
+      .then(renderVideos)
       .catch(function(e){
         console.error(e);
         if(featuredWrap) featuredWrap.innerHTML='<p class="team-empty">Unable to load videos right now.</p>';
-      });
-  }
-
-  function loadMoreVideos(){
-    var btn=document.getElementById('ytLoadMoreBtn');
-    if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
-    rpc('latest_videos_public',{p_source_type:ACTIVE_SOURCE.type,p_source_id:ACTIVE_SOURCE.id,p_limit:CONFIG.videoLimit||13,p_offset:LOADED.length})
-      .then(function(rows){ renderVideos(rows,true); })
-      .catch(function(e){ console.error(e); })
-      .finally(function(){
-        if(btn){ btn.disabled=false; btn.textContent='Load More'; }
       });
   }
 
@@ -215,8 +179,6 @@
     ACTIVE_SOURCE={type:'playlist',id:CONFIG.allVideosPlaylistId};
     var layout=document.getElementById('ytLayout');
     if(layout) layout.classList.add('yt-layout-full');
-    var loadMoreBtn=document.getElementById('ytLoadMoreBtn');
-    if(loadMoreBtn) loadMoreBtn.addEventListener('click', loadMoreVideos);
     loadStaffData();
     loadShowFilters();
     loadVideos();
