@@ -3,18 +3,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const CHANNELS = [
-  { ucId: 'UCCW6qFFB7ezwJk1cLPjPHDg', limit: 15 }
+  { ucId: 'UCCW6qFFB7ezwJk1cLPjPHDg', allVideosPlaylistId: 'PLX9LyZ57O4HCZOz665YESxq60eiU0c6Gz', limit: 15 }
 ];
-
-async function getUploadsPlaylistId(ucId){
-  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${ucId}&key=${YOUTUBE_API_KEY}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('channels.list ' + r.status);
-  const data = await r.json();
-  const item = data.items && data.items[0];
-  if (!item) throw new Error('channel not found: ' + ucId);
-  return item.contentDetails.relatedPlaylists.uploads;
-}
 
 async function getPlaylistVideos(playlistId, limit){
   const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=${limit}&key=${YOUTUBE_API_KEY}`;
@@ -64,10 +54,9 @@ async function getShowPlaylists(){
 async function run(){
   for (const ch of CHANNELS) {
     try {
-      const playlistId = await getUploadsPlaylistId(ch.ucId);
-      const videos = await getPlaylistVideos(playlistId, ch.limit);
-      await upsertVideos('channel', ch.ucId, videos);
-      console.log(`synced ${videos.length} videos for channel ${ch.ucId}`);
+      const videos = await getPlaylistVideos(ch.allVideosPlaylistId, ch.limit);
+      await upsertVideos('playlist', ch.allVideosPlaylistId, videos);
+      console.log(`synced ${videos.length} videos for All Videos (${ch.ucId})`);
     } catch (e) {
       console.error(`failed for channel ${ch.ucId}:`, e.message);
     }

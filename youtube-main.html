@@ -16,15 +16,12 @@ layout: null
   </div>
 
   <section class="yt-section">
-    <h2 class="yt-section-title">The Analysts</h2>
-    <div class="team-grid" id="ytStaffGrid">
-      <p class="team-empty">Loading…</p>
-    </div>
-  </section>
-
-  <section class="yt-section">
     <h2 class="yt-section-title">Latest Videos</h2>
     <div class="yt-filters" id="ytShowFilters"></div>
+    <div class="yt-staff-inline" id="ytStaffSection" hidden>
+      <p class="yt-staff-title">Hosted by</p>
+      <div class="team-grid" id="ytStaffGrid"></div>
+    </div>
     <div class="yt-feed" id="ytVideoFeed">
       <p class="team-empty">Loading…</p>
     </div>
@@ -35,6 +32,7 @@ layout: null
   window.CHANNEL_CONFIG = {
     channelName: 'FantasyNow+',
     ytChannelId: 'UCCW6qFFB7ezwJk1cLPjPHDg',
+    allVideosPlaylistId: 'PLX9LyZ57O4HCZOz665YESxq60eiU0c6Gz',
     videoLimit: 10
   };
 </script>

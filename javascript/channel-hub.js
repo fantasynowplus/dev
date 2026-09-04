@@ -2,7 +2,8 @@
   'use strict';
   var CONFIG = window.CHANNEL_CONFIG || {};
   var CFG = null;
-  var ACTIVE_SOURCE = { type: 'channel', id: null };
+  var STAFF_DATA = [];
+  var ACTIVE_SOURCE = { type: 'playlist', id: null };
 
   function sbCfg(){
     var url=(typeof SUPABASE_URL!=='undefined')?SUPABASE_URL:window.SUPABASE_URL;
@@ -22,48 +23,64 @@
       .then(function(r){ if(!r.ok) throw new Error(fn+' '+r.status); return r.json(); });
   }
 
-  function renderStaff(rows){
-    var grid=document.getElementById('ytStaffGrid'); if(!grid) return;
-    var filtered=(rows||[]).filter(function(s){
-      return (s.shows||[]).some(function(sh){ return sh.channel_name===CONFIG.channelName; });
-    });
-    if(!filtered.length){ grid.innerHTML='<p class="team-empty">Staff coming soon.</p>'; return; }
-    grid.innerHTML=filtered.map(function(s){
-      return '<div class="team-card">'+
-        '<img src="'+esc(headshotUrl(s.headshot))+'" alt="'+esc(s.name)+'" onerror="this.src=\'assets/headshots/placeholder.png\'">'+
-        '<h3>'+esc(s.name)+'</h3>'+
-        (s.role?'<p class="team-role">'+esc(s.role)+'</p>':'')+
-        (s.department?'<span class="team-dept">'+esc(s.department)+'</span>':'')+
-      '</div>';
-    }).join('');
+  function staffCard(s){
+    return '<div class="team-card">'+
+      '<img src="'+esc(headshotUrl(s.headshot))+'" alt="'+esc(s.name)+'" onerror="this.src=\'assets/headshots/placeholder.png\'">'+
+      '<h3>'+esc(s.name)+'</h3>'+
+      (s.role?'<p class="team-role">'+esc(s.role)+'</p>':'')+
+      (s.department?'<span class="team-dept">'+esc(s.department)+'</span>':'')+
+    '</div>';
   }
 
-  function loadStaff(){
-    rpc('team_public').then(renderStaff).catch(function(e){
-      console.error(e);
-      var grid=document.getElementById('ytStaffGrid'); if(grid) grid.innerHTML='<p class="team-empty">Unable to load staff right now.</p>';
+  function showStaffForShow(showId){
+    var section=document.getElementById('ytStaffSection');
+    var grid=document.getElementById('ytStaffGrid');
+    if(!section||!grid) return;
+    var filtered=STAFF_DATA.filter(function(s){
+      return (s.shows||[]).some(function(sh){ return sh.show_id===showId; });
     });
+    if(!filtered.length){ section.hidden=true; grid.innerHTML=''; return; }
+    grid.innerHTML=filtered.map(staffCard).join('');
+    section.hidden=false;
+  }
+
+  function hideStaff(){
+    var section=document.getElementById('ytStaffSection');
+    var grid=document.getElementById('ytStaffGrid');
+    if(section) section.hidden=true;
+    if(grid) grid.innerHTML='';
+  }
+
+  function loadStaffData(){
+    return rpc('team_public').then(function(rows){ STAFF_DATA=rows||[]; }).catch(function(e){ console.error(e); });
   }
 
   function renderShowFilters(shows){
-    var wrap=document.getElementById('ytShowFilters'); if(!wrap||!shows.length) return;
+    var wrap=document.getElementById('ytShowFilters'); if(!wrap) return;
+    if(!shows.length){ wrap.innerHTML=''; return; }
     var all='<button class="team-filter-btn on" data-playlist="">All Videos</button>';
     var rest=shows.map(function(s){
-      return '<button class="team-filter-btn" data-playlist="'+esc(s.youtube_playlist_id)+'">'+esc(s.name)+'</button>';
+      return '<button class="team-filter-btn" data-playlist="'+esc(s.youtube_playlist_id)+'" data-show="'+esc(s.id)+'">'+esc(s.name)+'</button>';
     }).join('');
     wrap.innerHTML='<div class="team-filter-row">'+all+rest+'</div>';
     wrap.querySelectorAll('.team-filter-btn').forEach(function(b){
       b.addEventListener('click', function(){
         wrap.querySelectorAll('.team-filter-btn').forEach(function(x){ x.classList.remove('on'); });
         b.classList.add('on');
-        ACTIVE_SOURCE = b.dataset.playlist ? {type:'playlist',id:b.dataset.playlist} : {type:'channel',id:CONFIG.ytChannelId};
+        if(b.dataset.playlist){
+          ACTIVE_SOURCE={type:'playlist',id:b.dataset.playlist};
+          showStaffForShow(b.dataset.show);
+        }else{
+          ACTIVE_SOURCE={type:'playlist',id:CONFIG.allVideosPlaylistId};
+          hideStaff();
+        }
         loadVideos();
       });
     });
   }
 
   function loadShowFilters(){
-    rpc('show_playlists_public',{p_channel_uc_id:CONFIG.ytChannelId}).then(renderShowFilters).catch(function(e){
+    return rpc('show_playlists_public',{p_channel_uc_id:CONFIG.ytChannelId}).then(renderShowFilters).catch(function(e){
       console.error(e);
     });
   }
@@ -123,13 +140,12 @@
 
   function boot(){
     CFG=sbCfg();
-    if(!CFG || !CONFIG.ytChannelId){
-      var g=document.getElementById('ytStaffGrid'); if(g) g.innerHTML='<p class="team-empty">Unable to load right now.</p>';
+    if(!CFG || !CONFIG.allVideosPlaylistId){
       var v=document.getElementById('ytVideoFeed'); if(v) v.innerHTML='<p class="team-empty">Unable to load right now.</p>';
       return;
     }
-    ACTIVE_SOURCE={type:'channel',id:CONFIG.ytChannelId};
-    loadStaff();
+    ACTIVE_SOURCE={type:'playlist',id:CONFIG.allVideosPlaylistId};
+    loadStaffData();
     loadShowFilters();
     loadVideos();
   }
