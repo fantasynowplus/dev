@@ -288,7 +288,7 @@ header nav {
 .mega-title-rankother{background:var(--charcoal);color:#fff;text-shadow:-1.5px -1.5px 0 var(--brand-black),1.5px -1.5px 0 var(--brand-black),-1.5px 1.5px 0 var(--brand-black),1.5px 1.5px 0 var(--brand-black),0 -1.5px 0 var(--brand-black),0 1.5px 0 var(--brand-black),-1.5px 0 0 var(--brand-black),1.5px 0 0 var(--brand-black)}
 .mega-title-join{background:var(--bright-orange);color:#fff;text-shadow:-1.5px -1.5px 0 var(--brand-black),1.5px -1.5px 0 var(--brand-black),-1.5px 1.5px 0 var(--brand-black),1.5px 1.5px 0 var(--brand-black),0 -1.5px 0 var(--brand-black),0 1.5px 0 var(--brand-black),-1.5px 0 0 var(--brand-black),1.5px 0 0 var(--brand-black)}
 .mega-title-team{background:var(--deep-blue);color:#fff;text-shadow:-1.5px -1.5px 0 var(--brand-black),1.5px -1.5px 0 var(--brand-black),-1.5px 1.5px 0 var(--brand-black),1.5px 1.5px 0 var(--brand-black),0 -1.5px 0 var(--brand-black),0 1.5px 0 var(--brand-black),-1.5px 0 0 var(--brand-black),1.5px 0 0 var(--brand-black)}
-.mega-col a{display:block;color:#fff;font-size:.85rem;padding:8px 4px;text-decoration:none;border-bottom:1px solid var(--border-dark)}
+.mega-col a{display:block;color:#fff;font-size:1rem;font-weight:500;padding:10px 6px;text-decoration:none;border-bottom:1px solid var(--border-dark)}
 .mega-col a:last-child{border-bottom:none}
 .mega-col a:hover{color:var(--bright-orange);background:none}
 #two-column .mega-content{min-width:320px;grid-template-columns:1fr 1fr}
