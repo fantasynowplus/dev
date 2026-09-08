@@ -234,3 +234,4 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
+.l3note{display:block;margin-top:4px;font-size:12px;color:var(--muted)}

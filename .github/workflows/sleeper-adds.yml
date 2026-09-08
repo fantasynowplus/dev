@@ -1,0 +1,43 @@
+name: Sleeper waiver adds
+
+on:
+  schedule:
+    # Every 6 hours. Tuesday/Wednesday mornings ET are the ones that matter for
+    # the waiver show; the rest keep the number from going stale on air.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sleeper-adds
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch trending adds
+        env:
+          SLEEPER_LOOKBACK_HOURS: '48'
+          SLEEPER_TRENDING_LIMIT: '300'
+        run: python scripts/sleeper_adds.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sleeper-adds.json data/sleeper-players.json
+          if git diff --staged --quiet; then
+            echo "No change"
+          else
+            git commit -m "Update Sleeper waiver adds"
+            git push
+          fi

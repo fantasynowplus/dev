@@ -1,5 +1,6 @@
 const CONFIG = {
-  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv"
+  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv",
+  ADDS_URL: "data/sleeper-adds.json"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
@@ -14,6 +15,7 @@ const COLUMNS = [
   { key:"team",   label:"Team",    cls:"",       type:"str" },
   { key:"bye",    label:"Bye",     cls:"",       type:"num" },
   { key:"rost",   label:"Rost %",  cls:"",       type:"num" },
+  { key:"adds",   label:"Adds",    cls:"",       type:"num" },
   { key:"lwPts",  label:"LW Pts",  cls:"",       type:"num" },
   { key:"lwRank", label:"LW Rank", cls:"",       type:"num" },
   { key:"l3Ppg",  label:"L3 PPG",  cls:"key",    type:"num" },
@@ -42,6 +44,9 @@ let minGP = 1;
 let sort = { key:"l3Ppg", dir:-1 };
 let schedule = null;
 const logCache = {};
+let ADDS = {};
+let ADDS_BY_NAME = {};
+let weeksPlayed = 0;
 
 function parseCSV(text){
   const rows=[]; let row=[], cur="", q=false;
@@ -80,6 +85,48 @@ function pct(v){
   return n>1 ? n/100 : n;
 }
 
+function normName(s){
+  const t=(s||"").toLowerCase()
+    .replace(/[\u2019'`.]/g,"")
+    .replace(/[^a-z\s-]/g,"");
+  return t.split(/\s+/).filter(x=>x && NAME_SUFFIXES.indexOf(x)===-1).join(" ").trim();
+}
+ 
+async function loadAdds(){
+  try{
+    const res=await fetch(CONFIG.ADDS_URL+"?_="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const d=await res.json();
+    ADDS=d.players||{};
+    ADDS_BY_NAME=d.by_name||{};
+  }catch(e){
+    console.warn("Sleeper adds unavailable:",e);
+    ADDS={}; ADDS_BY_NAME={};
+  }
+}
+ 
+function attachAdds(){
+  ALL.forEach(r=>{
+    let hit = r.sleeperId ? ADDS[r.sleeperId] : null;
+    if(!hit){
+      const id=ADDS_BY_NAME[normName(r.player)+"|"+r.pos];
+      if(id) hit=ADDS[id];
+    }
+    r.adds    = hit ? hit.adds : null;
+    r.addRank = hit ? hit.add_rank : null;
+  });
+}
+ 
+function l3Label(){
+  return weeksPlayed<3 ? "L3 PPG*" : "L3 PPG";
+}
+function l3Note(){
+  if(weeksPlayed>=3) return "";
+  if(weeksPlayed<=0) return "* No games played yet this season \u2014 sorted by Sleeper adds.";
+  return "* Last 3 games of the "+(season||"current")+" season \u2014 only "
+       + weeksPlayed+" week"+(weeksPlayed===1?"":"s")+" played so far.";
+}
+
 function toRows(raw){
   const out=[];
   raw.forEach((r,i)=>{
@@ -100,7 +147,9 @@ function toRows(raw){
       l3Gp:num(r[COL.l3Gp]),
       season:(r[COL.season]||"").trim(),
       week:num(r[COL.week]),
-      sleeperId:(r[COL.sleeperId]||"").trim()
+      sleeperId:(r[COL.sleeperId]||"").trim(),
+      adds:null,
+      addRank:null
     });
   });
   out.slice().sort((a,b)=>(b.l3Ppg||0)-(a.l3Ppg||0)).forEach((r,i)=>{ r.ovr=i+1; });
@@ -112,8 +161,9 @@ function buildHead(){
   COLUMNS.forEach(c=>{
     const on = sort.key===c.key;
     const arrow = on ? (sort.dir===1?"&#9650;":"&#9660;") : "&#9670;";
+    const label = c.key==="l3Ppg" ? l3Label() : c.label;
     h += '<th class="'+c.cls+(on?" sorted":"")+'" onclick="setSort(\''+c.key+'\')">'
-       + c.label + '<span class="arrow">'+arrow+'</span></th>';
+       + label + '<span class="arrow">'+arrow+'</span></th>';
   });
   document.getElementById("head").innerHTML=h;
 }
@@ -142,14 +192,17 @@ function bumpGP(d){
   draw();
 }
 
+function defaultMinGP(){ return weeksPlayed>=3 ? 1 : 0; }
+function defaultSortKey(){ return weeksPlayed>=1 ? "l3Ppg" : "adds"; }
+
 function resetFilters(){
   document.getElementById("q").value="";
   document.getElementById("rost").value=60;
   document.getElementById("limit").value="10";
   document.getElementById("hideBye").checked=true;
-  minGP=1;
-  document.getElementById("gpVal").textContent="1";
-  sort={key:"l3Ppg",dir:-1};
+  minGP=defaultMinGP();
+  document.getElementById("gpVal").textContent=minGP;
+  sort={key:defaultSortKey(),dir:-1};
   buildHead();
   setPos("ALL");
 }
@@ -199,9 +252,11 @@ function draw(){
 
   shownRows = limit>0 ? rows.slice(0,limit) : rows;
 
+  const note=l3Note();
   document.getElementById("count").innerHTML =
     "Showing <b>"+shownRows.length+"</b> of "+rows.length+" matching"
-    + (rows.length!==ALL.length ? " &middot; "+ALL.length+" total" : "");
+    + (rows.length!==ALL.length ? " &middot; "+ALL.length+" total" : "")
+    + (note ? '<span class="l3note">'+note+'</span>' : "");
 
   if(!shownRows.length){
     body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
@@ -221,6 +276,7 @@ function draw(){
       + '<td>'+escapeHtml(r.team)+'</td>'
       + byeCell
       + '<td>'+(r.rost==null?'<span class="dim">&ndash;</span>':(r.rost*100).toFixed(1)+"%")+'</td>'
+      + '<td'+(r.adds?'':' class="dim"')+'>'+(r.adds==null?"&ndash;":r.adds.toLocaleString())+'</td>'      
       + '<td'+(r.lwPts?'':' class="dim"')+'>'+(r.lwPts==null?"&ndash;":r.lwPts.toFixed(1))+'</td>'
       + '<td'+(r.lwRank?'':' class="dim"')+'>'+(r.lwRank==null?"&ndash;":r.pos+r.lwRank)+'</td>'
       + '<td class="key">'+(r.l3Ppg==null?"&ndash;":r.l3Ppg.toFixed(1))+'</td>'
@@ -408,10 +464,14 @@ async function load(force){
   }
   body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">Loading waiver board&hellip;</td></tr>';
   try{
-    const res=await fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now());
+    const [res]=await Promise.all([
+      fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now()),
+      loadAdds()
+    ]);
     if(!res.ok) throw new Error("HTTP "+res.status);
     const grid=parseCSV(await res.text());
     ALL=toRows(grid);
+    attachAdds();
     if(!ALL.length){
       console.log("Web_Data header row:", grid[0]);
       console.log("Web_Data first data row:", grid[1]);
@@ -419,6 +479,12 @@ async function load(force){
     if(ALL.length){
       upcomingWeek=ALL[0].week;
       season=ALL[0].season;
+      weeksPlayed=Math.max(0,(upcomingWeek||1)-1);
+      minGP=defaultMinGP();
+      const gpVal=document.getElementById("gpVal");
+      if(gpVal) gpVal.textContent=minGP;
+      sort={key:defaultSortKey(),dir:-1};
+      buildHead();
     }
     const wk = upcomingWeek!=null ? "Week "+upcomingWeek : "";
     document.getElementById("weekLabel").textContent=[season,wk].filter(Boolean).join(" \u00b7 ") || "\u2014";
