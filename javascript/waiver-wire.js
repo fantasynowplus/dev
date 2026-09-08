@@ -1,6 +1,6 @@
 const CONFIG = {
   WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv",
-  ADDS_URL: "data/sleeper-adds.json"
+  ADDS_URL: "/data/sleeper-adds.json"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
