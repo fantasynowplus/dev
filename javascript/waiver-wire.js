@@ -85,6 +85,7 @@ function pct(v){
   return n>1 ? n/100 : n;
 }
 
+const NAME_SUFFIXES = ["jr","sr","ii","iii","iv","v"];
 function normName(s){
   const t=(s||"").toLowerCase()
     .replace(/[\u2019'`.]/g,"")
