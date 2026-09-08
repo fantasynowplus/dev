@@ -6,7 +6,7 @@
 
   var MOUNT_ID = 'rankings-board';
   var HEADSHOT_DIR = 'assets/staff/';
-  var POSITION_LABELS = { OP: 'Superflex', ALL: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex' };
+  var POSITION_LABELS = { OP: 'Superflex', ALL: 'Overall', DST: 'D/ST', IDP: 'All IDP', FLEX: 'Flex', FLX: 'Flex' };
   var SCORING_OPTIONS = [['PPR', 'PPR'], ['HALF', 'Half PPR'], ['STD', 'Standard']];
 
   var PAGES = [];
@@ -101,13 +101,21 @@
     return null;
   }
 
+  var WEEK1_START = Date.UTC(2026, 8, 8);
+
+  function currentWeek() {
+    var w = Math.floor((Date.now() - WEEK1_START) / 604800000) + 1;
+    return Math.max(1, Math.min(18, w));
+  }
+
   function requestFor(p, pos, sc, filterIds) {
+    var wk = Number(p.week) < 0 ? currentWeek() : (p.week || 0);
     var qs = new URLSearchParams({
       type: p.wtype || 'ST',
       position: pos,
       scoring: sc,
       year: String(p.year || 2026),
-      week: String(p.week || 0)
+      week: String(wk)
     });
     if (p.expert) qs.set('expert', p.expert);
     if (filterIds) qs.set('filters', filterIds);
