@@ -12,6 +12,7 @@
     ['spread',    'Spread'],
     ['total',     'Over / Under'],
     ['moneyline', 'Moneyline'],
+    ['futures',   'Season futures'],
     ['other',     'Other']
   ];
 

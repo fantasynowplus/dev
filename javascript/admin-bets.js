@@ -30,7 +30,7 @@ function btStatLabel(key){
 
 var BT_RESULTS = ['pending','win','loss','push','void'];
 var BT_KINDS = [['prop','Player prop'],['spread','Spread'],['total','Total'],
-                ['moneyline','Moneyline'],['other','Other']];
+                ['moneyline','Moneyline'],['other','Other'],['futures','Season/Futures']];
 
 /* ---------- formatting ---------- */
 
@@ -54,6 +54,7 @@ function btResultPill(r){
   return '<span class="bt-pill bt-'+r+'">'+r.charAt(0).toUpperCase()+r.slice(1)+'</span>';
 }
 function btWeekLabel(w){
+  if(!w) return 'Season';
   var pl = {19:'Wild Card',20:'Divisional',21:'Conference',22:'Super Bowl'};
   return pl[w] || ('Week '+w);
 }
@@ -216,7 +217,7 @@ function btBetsHtml(){
     var canEdit = can('bets','u') || b.result === 'pending';
     h += '<tr class="bt-row bt-r-'+b.result+'">'+
       '<td class="nowrap">'+esc(fmtDate(b.placed_on))+'</td>'+
-      '<td>'+(b.week||'')+'</td>'+
+      '<td>'+(b.week ? b.week : '<span class="muted">Season</span>')+'</td>'+
       '<td class="bt-desc"><div class="bt-d">'+esc(b.description)+'</div>'+
         (b.player_team || b.matchup
           ? '<div class="bt-sub">'+esc(b.player_team||'')+
@@ -348,7 +349,7 @@ async function btForm(id){
       bettorField+
       '<div class="field"><label>Date</label><input type="date" id="btf-date" value="'+
         esc((bet&&bet.placed_on)||BT_LAST.date||new Date().toISOString().slice(0,10))+'"></div>'+
-      '<div class="field"><label>Week</label><select id="btf-week">'+btWeekOpts(week,false)+'</select></div>'+
+      '<div class="field" id="btf-weekfield"><label>Week</label><select id="btf-week">'+btWeekOpts(week,false)+'</select></div>'+
     '</div>'+
     '<div class="btf-kinds" id="btf-kinds">'+
       BT_KINDS.map(function(k){
@@ -390,6 +391,7 @@ async function btForm(id){
           ? { id: bet.player_id, n: bet.player_name, t: bet.player_team, p: bet.player_pos } : null
       };
       btfFields();
+      btfToggleWeek();
       bg.querySelector('#btf-kinds').addEventListener('click', function(e){
         var b = e.target.closest('[data-kind]');
         if(!b) return;
@@ -398,6 +400,7 @@ async function btForm(id){
           x.classList.toggle('on', x === b);
         });
         btfFields();
+        btfToggleWeek();
       });
       ['#btf-odds','#btf-units','#btf-book'].forEach(function(sel){
         var el = bg.querySelector(sel);
@@ -411,7 +414,7 @@ async function btForm(id){
       if(f.odds === null || (f.odds > -100 && f.odds < 100)) throw new Error('Odds must be American, e.g. -110 or +175.');
       if(!(f.units > 0)) throw new Error('Units must be greater than zero.');
       if(!f.bettor_id) throw new Error('No staff record is linked to your login — ask an admin to link it.');
-      if(!f.season || !f.week) throw new Error('Pick a season and week.');
+      if(!f.season || (f.bet_scope !== 'season' && !f.week)) throw new Error('Pick a season and week.');
 
       if(bet) await dbPatch('bt_bets?id=eq.'+bet.id, f);
       else await dbPost('bt_bets', f);
@@ -441,6 +444,11 @@ function btfGameOpts(sel){
     return '<option value="'+g.id+'" data-lab="'+esc(lab)+'" data-a="'+esc(g[k.away])+
            '" data-h="'+esc(g[k.home])+'"'+(sel===g.id?' selected':'')+'>'+esc(lab)+'</option>';
   }).join('');
+}
+
+function btfToggleWeek(){
+  var f = btq('#btf-weekfield');
+  if(f) f.style.display = (BTF.kind === 'futures') ? 'none' : '';
 }
 
 function btfFields(){
@@ -486,12 +494,12 @@ function btfFields(){
     st.onchange();
     btq('#btf-line').oninput = btfPreview;
 
-  }else if(k === 'other'){
+  }else if(k === 'other' || k === 'futures'){
     el.innerHTML = '<div class="form-grid">'+
       '<div class="field full"><label>Bet</label><input id="btf-desc" placeholder="Describe the bet" value="'+
         esc((bet&&bet.description)||'')+'"></div>'+
-      '<div class="field"><label>Matchup (optional)</label>'+
-        '<input id="btf-matchup" placeholder="NYG@CAR" value="'+esc((bet&&bet.matchup)||'')+'"></div>'+
+      '<div class="field"><label>'+(k==='futures'?'Team / player (optional)':'Matchup (optional)')+'</label>'+
+        '<input id="btf-matchup" placeholder="'+(k==='futures'?'Eagles, Josh Allen…':'NYG@CAR')+'" value="'+esc((bet&&bet.matchup)||'')+'"></div>'+
       '</div>';
     btq('#btf-desc').oninput = btfPreview;
 
@@ -601,9 +609,10 @@ function btfCollect(){
   var k = BTF.kind;
   var f = {
     season: Number(BT.season),
-    week: Number(btv('#btf-week')),
+    week: (k === 'futures') ? null : Number(btv('#btf-week')),
     placed_on: btv('#btf-date'),
     bet_type: k,
+    bet_scope: (k === 'futures') ? 'season' : 'weekly',
     odds: btOdds(btv('#btf-odds')),
     units: Number(btv('#btf-units')),
     sportsbook_id: btv('#btf-book') || null,
@@ -626,7 +635,7 @@ function btfCollect(){
     f.side = needsLine ? btfSide() : 'yes';
     f.line = needsLine ? line : null;
 
-  }else if(k === 'other'){
+  }else if(k === 'other' || k === 'futures'){
     f.description = btv('#btf-desc');
     f.matchup = btv('#btf-matchup') || null;
 
@@ -642,7 +651,7 @@ function btfCollect(){
     f.line = (k === 'moneyline') ? null : line;
   }
 
-  if(k !== 'other') f.description = btDescribe(f);
+  if(k !== 'other' && k !== 'futures') f.description = btDescribe(f);
   return f;
 }
 

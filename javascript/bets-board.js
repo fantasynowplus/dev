@@ -92,7 +92,9 @@
       return;
     }
 
-    var scope = STATE.tab === 'season'
+    var scope = STATE.tab === 'futures'
+      ? STATE.season + ' futures'
+      : STATE.tab === 'season'
       ? STATE.season + ' season'
       : weekLabel(STATE.week) + ' \u2022 ' + STATE.season;
     sub.textContent = scope + ' bet card';
@@ -211,14 +213,19 @@
   /* ---------- data ---------- */
 
   async function load() {
-    var wk = STATE.tab === 'season' ? null : STATE.week;
     try {
-      var res = await Promise.all([
-        rpc('bt_board', { p_season: STATE.season, p_week: wk }),
-        rpc('bt_leaderboard', { p_season: STATE.season, p_week: null })
-      ]);
-      STATE.bets = (res[0] || []).filter(function (b) { return onBoard(b.bettor_name); });
-      STATE.board = (res[2] || []).filter(function (r) { return onBoard(r.name); });
+      if (STATE.tab === 'futures') {
+        var fb = await rpc('bt_season_bets', { p_season: STATE.season });
+        STATE.bets = (fb || []).filter(function (b) { return onBoard(b.bettor_name); });
+      } else {
+        var wk = STATE.tab === 'season' ? null : STATE.week;
+        var res = await Promise.all([
+          rpc('bt_board', { p_season: STATE.season, p_week: wk }),
+          rpc('bt_leaderboard', { p_season: STATE.season, p_week: null })
+        ]);
+        STATE.bets = (res[0] || []).filter(function (b) { return onBoard(b.bettor_name); });
+        STATE.board = (res[1] || []).filter(function (r) { return onBoard(r.name); });
+      }
       document.getElementById('updated').textContent =
         'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       render();
@@ -263,7 +270,7 @@
     document.getElementById('refresh').onclick = load;
 
     document.addEventListener('keydown', function (e) {
-      var map = { '1': 'card', '2': 'season', '3': 'board' };
+      var map = { '1': 'card', '2': 'season', '3': 'futures', '4': 'board' };
       if (map[e.key]) document.querySelector('[data-tab="' + map[e.key] + '"]').click();
     });
     var wk = document.getElementById('weekSel');
