@@ -25,6 +25,29 @@ const MFL = {
     });
     if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL leagues');
     return res.json();
+  },
+  async league(host, year, leagueId, cookie) {
+    const res = await fetch(MFL_WORKER + '/league', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL league');
+    return res.json();
+  },
+  async rosters(host, year, leagueId, cookie) {
+    const res = await fetch(MFL_WORKER + '/rosters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL rosters');
+    return res.json();
+  },
+  async players(year) {
+    const res = await fetch(MFL_WORKER + '/players?year=' + year);
+    if (!res.ok) throw new Error('Could not load MFL player database');
+    return res.json();
   }
 };
 

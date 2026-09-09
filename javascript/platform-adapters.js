@@ -66,8 +66,53 @@ const Adapters = (function () {
 
   const mfl = {
     platform: 'mfl',
-    normalizeLeague() { throw new Error('MFL adapter not built yet'); },
-    normalizeTeams() { throw new Error('MFL adapter not built yet'); }
+    normalizeLeague(leagueRaw, row) {
+      const starters = parseInt(leagueRaw.starters && leagueRaw.starters.count, 10) || null;
+      const totalTeams = parseInt(leagueRaw.franchises && leagueRaw.franchises.count, 10) || null;
+      const taxiSquad = parseInt(leagueRaw.taxiSquad, 10) || 0;
+      return {
+        id: leagueRaw.id || (row && row.league_id),
+        platform: 'mfl',
+        name: leagueRaw.name || (row && row.name) || 'League',
+        season: (row && row.season) || null,
+        totalTeams: totalTeams,
+        format: taxiSquad > 0 ? 'dynasty' : 'redraft',
+        scoring: null,
+        starters: starters,
+        bestBall: false,
+        raw: leagueRaw
+      };
+    },
+    normalizeTeams(leagueRaw, rosterFranchises, playersMap, userFranchiseId) {
+      const nameMap = {};
+      const franchiseList = (leagueRaw.franchises && leagueRaw.franchises.franchise) || [];
+      (Array.isArray(franchiseList) ? franchiseList : [franchiseList]).forEach(function (f) {
+        nameMap[f.id] = f.name;
+      });
+      return (rosterFranchises || []).map(function (fr) {
+        const rawPlayers = fr.player || [];
+        const playerList = Array.isArray(rawPlayers) ? rawPlayers : [rawPlayers];
+        const players = playerList.map(function (p) {
+          const meta = playersMap[p.id] || {};
+          let slot = 'bench';
+          if (p.status === 'TAXI_SQUAD') slot = 'taxi';
+          else if (p.status === 'INJURED_RESERVE') slot = 'ir';
+          return { id: p.id, name: meta.name || p.id, pos: meta.position || '', nflTeam: meta.team || '', slot: slot };
+        });
+        return {
+          id: fr.id,
+          leagueId: leagueRaw.id,
+          ownerName: nameMap[fr.id] || 'Team',
+          isUser: fr.id === userFranchiseId,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          pointsFor: 0,
+          potentialPoints: 0,
+          players: players
+        };
+      });
+    }
   };
 
   return { sleeper: sleeper, mfl: mfl };
