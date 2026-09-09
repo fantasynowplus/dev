@@ -11,8 +11,8 @@ const MFL = {
     if (!res.ok) {
       var msg = data.error || 'MFL login failed';
       if (data.upstreamStatus != null) {
-        msg += ' — upstream ' + data.upstreamStatus + ' (' + (data.upstreamContentType || 'no content-type') + ')';
-        if (data.redirectedTo) msg += ', redirected to ' + data.redirectedTo;
+        msg += ' — host ' + data.host + ' (' + data.hops + ' hop(s)), upstream ' + data.upstreamStatus + ' (' + (data.upstreamContentType || 'no content-type') + ')';
+        if (data.setCookieHeader) msg += ', set-cookie: ' + data.setCookieHeader;
         msg += ': ' + data.upstreamBody;
       }
       throw new Error(msg);
