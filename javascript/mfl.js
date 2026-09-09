@@ -10,7 +10,11 @@ const MFL = {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       var msg = data.error || 'MFL login failed';
-      if (data.upstreamBody) msg += ' — upstream (' + data.upstreamStatus + '): ' + data.upstreamBody;
+      if (data.upstreamStatus != null) {
+        msg += ' — upstream ' + data.upstreamStatus + ' (' + (data.upstreamContentType || 'no content-type') + ')';
+        if (data.redirectedTo) msg += ', redirected to ' + data.redirectedTo;
+        msg += ': ' + data.upstreamBody;
+      }
       throw new Error(msg);
     }
     return data;
