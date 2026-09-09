@@ -5,6 +5,7 @@
   .ml-gate p { color: #eef2fb; font-size: 17px; margin: 0 0 16px; }
   .ml-btn { background: #FFA515; color: #1a1204; border: none; border-radius: 6px; padding: 11px 22px; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
   .ml-btn:hover { background: #ED9405; }
+  .ml-pill-mfl { background: #1f6feb; color: #eef2fb; }
   .ml-btn-sm { padding: 8px 16px; font-size: 13px; }
   .ml-btn-sm:disabled { opacity: 0.6; cursor: default; }
   .ml-sync-row { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; flex-wrap: wrap; }

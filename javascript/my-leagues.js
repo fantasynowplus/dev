@@ -25,7 +25,7 @@
     DB: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]]
   };
   var PROJ_SCALE = 700;
-  var PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
+  var PLAYERS = null, MFL_PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
   function loggedIn() { return typeof auth !== 'undefined' && auth.isAuthenticated(); }
@@ -38,7 +38,19 @@
       '&select=league_id,name,season,total_rosters,status,raw&order=season.desc,name.asc';
     const res = await fetch(url, { headers: sbHeaders() });
     if (!res.ok) throw new Error('Could not load leagues (' + res.status + ')');
-    return res.json();
+    const rows = await res.json();
+    rows.forEach(function (l) { l.platform = 'sleeper'; l.key = 'sleeper:' + l.league_id; });
+    return rows;
+  }
+
+  async function fetchMFLLeagues() {
+    const url = SUPABASE_URL + '/rest/v1/mfl_leagues?user_id=eq.' + auth.user.sub +
+      '&select=league_id,name,season,host,franchise_id,franchise_name,raw&order=season.desc,name.asc';
+    const res = await fetch(url, { headers: sbHeaders() });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    rows.forEach(function (l) { l.platform = 'mfl'; l.key = 'mfl:' + l.league_id; });
+    return rows;
   }
 
   function typeLabel(t) { return t === 2 ? 'Dynasty' : t === 1 ? 'Keeper' : 'Redraft'; }
@@ -54,7 +66,8 @@
     if (s.taxi_slots > 0) return true;
     return (raw.roster_positions || []).indexOf('TAXI') !== -1;
   }
-  function bubbles(raw) {
+  function isMflDynasty(raw) { return (parseInt(raw.taxiSquad, 10) || 0) > 0; }
+  function sleeperBubbles(raw) {
     const settings = raw.settings || {};
     const out = [typeLabel(settings.type)];
     const teams = raw.total_rosters || settings.num_teams;
@@ -65,6 +78,20 @@
     if (settings.best_ball === 1) out.push('Best Ball');
     return out;
   }
+  function mflBubbles(raw) {
+    const out = [isMflDynasty(raw) ? 'Dynasty' : 'Redraft'];
+    const teams = raw.franchises && raw.franchises.count;
+    if (teams) out.push(teams + ' Teams');
+    const starters = raw.starters && raw.starters.count;
+    if (starters) out.push(starters + ' Starters');
+    if (raw.rules && typeof Adapters !== 'undefined') {
+      var s = Adapters.mfl.normalizeLeague(raw, {}, raw.rules).scoring;
+      out.push(s === 'PPR' ? 'PPR' : s === 'HALF' ? '1/2 PPR' : 'Standard');
+    }
+    if (raw.bestLineup === 'Yes') out.push('Best Ball');
+    return out;
+  }
+  function bubbles(l) { return l.platform === 'mfl' ? mflBubbles(l.raw || {}) : sleeperBubbles(l.raw || {}); }
 
   function cellTier(ins) { return (ins && ins.tier) ? '<span class="ml-tier ml-tier-' + tierClass(ins.tier) + '">' + ins.tier + '</span>' : '<span class="ml-dim">-</span>'; }
   function cellRank(ins) { return (ins && ins.rank) ? (ins.rank + ' <span style="color:#5f6c85">/ ' + ins.n + '</span>') : '<span class="ml-dim">-</span>'; }
@@ -74,21 +101,31 @@
     insights = insights || {};
     const body = el('leaguesBody');
     if (!leagues.length) {
-      body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Add your Sleeper handle in <strong>Edit Profile</strong>, then click <strong>Sync my Sleeper leagues</strong> above.</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Add your Sleeper or MFL info in <strong>Edit Profile</strong>, then click <strong>Sync</strong> above.</td></tr>';
       return;
     }
     body.innerHTML = leagues.map(function (l) {
       const raw = l.raw || {};
-      const ins = insights[l.league_id];
-      const avatar = raw.avatar
-        ? '<img class="ml-avatar" src="https://sleepercdn.com/avatars/thumbs/' + raw.avatar + '" alt="">'
-        : '<span class="ml-avatar ml-avatar-blank"></span>';
-      const pills = bubbles(raw).map(function (b) { return '<span class="ml-pill">' + b + '</span>'; }).join('');
-      return '<tr style="cursor:pointer" onclick="MLDetail.open(\'' + l.league_id + '\')">' +
+      const ins = insights[l.key];
+      var avatar;
+      if (l.platform === 'mfl') {
+        const flist = (raw.franchises && raw.franchises.franchise) || [];
+        const mine = (Array.isArray(flist) ? flist : [flist]).find(function (f) { return f.id === l.franchise_id; });
+        avatar = (mine && (mine.icon || mine.logo))
+          ? '<img class="ml-avatar" src="' + (mine.icon || mine.logo) + '" alt="">'
+          : '<span class="ml-avatar ml-avatar-blank"></span>';
+      } else {
+        avatar = raw.avatar
+          ? '<img class="ml-avatar" src="https://sleepercdn.com/avatars/thumbs/' + raw.avatar + '" alt="">'
+          : '<span class="ml-avatar ml-avatar-blank"></span>';
+      }
+      const pills = bubbles(l).map(function (b) { return '<span class="ml-pill">' + b + '</span>'; }).join('') +
+        (l.platform === 'mfl' ? '<span class="ml-pill ml-pill-mfl">MFL</span>' : '');
+      return '<tr style="cursor:pointer" onclick="MLDetail.open(\'' + l.key + '\')">' +
         '<td><div class="ml-league">' + avatar + '<div><div class="ml-name">' + (l.name || 'League') + '</div><div class="ml-season">' + (l.season || '') + '</div></div></div></td>' +
-        '<td id="tier-' + l.league_id + '">' + cellTier(ins) + '</td>' +
-        '<td id="rank-' + l.league_id + '">' + cellRank(ins) + '</td>' +
-        '<td id="value-' + l.league_id + '">' + cellValue(ins) + '</td>' +
+        '<td id="tier-' + l.key + '">' + cellTier(ins) + '</td>' +
+        '<td id="rank-' + l.key + '">' + cellRank(ins) + '</td>' +
+        '<td id="value-' + l.key + '">' + cellValue(ins) + '</td>' +
         '<td>' + pills + '</td>' +
         '</tr>';
     }).join('');
@@ -101,6 +138,19 @@
     if (PLAYERS) return PLAYERS;
     PLAYERS = await Sleeper.get('/players/nfl');
     return PLAYERS;
+  }
+
+  async function loadMFLPlayers() {
+    if (MFL_PLAYERS) return MFL_PLAYERS;
+    var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
+    var raw = await MFL.players(year);
+    var map = {};
+    Object.keys(raw).forEach(function (id) {
+      var p = raw[id];
+      map[id] = { full_name: p.name, position: p.position, team: p.team };
+    });
+    MFL_PLAYERS = map;
+    return MFL_PLAYERS;
   }
 
   function fpScoring(raw) {
@@ -226,8 +276,11 @@
     return t === 'Title Favorite' ? 'title' : t === 'Contender' ? 'contender' : t === 'On the Bubble' ? 'bubble' : t === 'Rebuilding' ? 'rebuild' : t === 'Drafting' ? 'drafting' : 'tank';
   }
 
-  async function insightsForLeague(l, playersMap) {
+  async function insightsForLeague(l) {
+    if (l.platform === 'mfl') return insightsForMFLLeague(l);
+    if (!USER_SLEEPER_ID) return { rank: null, n: null, tier: null, score: null };
     var raw = l.raw || {};
+    var playersMap = await loadPlayers();
     var rankData = await rankingsFor(isDynasty(raw) ? 'dynasty' : 'draft');
     var rosters = await Sleeper.get('/league/' + l.league_id + '/rosters');
     var topN = (startersCount(raw.roster_positions) || 12) + 6;
@@ -242,8 +295,31 @@
     return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score, players: scored[idx].players, roster: scored[idx].roster, dynasty: isDynasty(raw) };
   }
 
-  function setInsight(leagueId, ins) {
-    var tc = el('tier-' + leagueId), rc = el('rank-' + leagueId), vc = el('value-' + leagueId);
+  async function insightsForMFLLeague(l) {
+    var raw = l.raw || {};
+    var cookie = auth.profile && auth.profile.mfl_cookie;
+    var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
+    if (!cookie || !l.host) return { rank: null, n: null, tier: null, score: null };
+    var dynasty = isMflDynasty(raw);
+    var rankData = await rankingsFor(dynasty ? 'dynasty' : 'draft');
+    var playersMap = await loadMFLPlayers();
+    var franchises = await MFL.rosters(l.host, year, l.league_id, cookie);
+    var topN = ((raw.starters && parseInt(raw.starters.count, 10)) || 12) + 6;
+    var scored = franchises.map(function (fr) {
+      var ids = fr.player || [];
+      var roster = { players: (Array.isArray(ids) ? ids : [ids]).map(function (p) { return p.id; }) };
+      var ev = evalRoster(roster, playersMap, rankData.map, topN);
+      return { ownerId: fr.id, score: ev.total, players: ev.players, roster: roster };
+    }).sort(function (a, b) { return b.score - a.score; });
+    var n = scored.length;
+    var idx = scored.findIndex(function (s) { return s.ownerId === l.franchise_id; });
+    if (idx < 0 || !n) return { rank: null, n: n, tier: null, score: null };
+    var rank = idx + 1;
+    return { rank: rank, n: n, tier: tierFor(rank, n, scored[idx].score), score: scored[idx].score, players: scored[idx].players, roster: scored[idx].roster, dynasty: dynasty };
+  }
+
+  function setInsight(key, ins) {
+    var tc = el('tier-' + key), rc = el('rank-' + key), vc = el('value-' + key);
     if (tc) tc.innerHTML = cellTier(ins);
     if (rc) rc.innerHTML = cellRank(ins);
     if (vc) vc.innerHTML = cellValue(ins);
@@ -387,41 +463,42 @@
   async function computeInsights(leagues) {
     var formatCounts = { Redraft: 0, Dynasty: 0, Keeper: 0, BestBall: 0 };
     leagues.forEach(function (l) {
+      if (l.platform === 'mfl') {
+        var mraw = l.raw || {};
+        if (isMflDynasty(mraw)) formatCounts.Dynasty++; else formatCounts.Redraft++;
+        if (mraw.bestLineup === 'Yes') formatCounts.BestBall++;
+        return;
+      }
       var s = (l.raw && l.raw.settings) || {};
       if (s.type === 2) formatCounts.Dynasty++; else if (s.type === 1) formatCounts.Keeper++; else formatCounts.Redraft++;
       if (s.best_ball === 1) formatCounts.BestBall++;
     });
     var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0, 'Drafting': 0 };
     var topTeams = [], insightsMap = {}; var portEntries = [];
-    try {
-      USER_SLEEPER_ID = await getSleeperUserId();
-      if (USER_SLEEPER_ID) {
-        var playersMap = await loadPlayers();
-        for (var i = 0; i < leagues.length; i++) {
-          try {
-            var ins = await insightsForLeague(leagues[i], playersMap);
-            insightsMap[leagues[i].league_id] = ins;
-            if (ins.players && ins.roster) {
-              var lraw = leagues[i].raw || {};
-              portEntries.push({
-                players: ins.players, roster: ins.roster, dynasty: ins.dynasty,
-                leagueName: leagues[i].name || 'League',
-                slots: (lraw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; })
-              });
-            }
-            setInsight(leagues[i].league_id, ins);
-            if (ins.tier) tierCounts[ins.tier]++;
-            if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
-          } catch (e) {}
+    try { USER_SLEEPER_ID = await getSleeperUserId(); } catch (e) {}
+    for (var i = 0; i < leagues.length; i++) {
+      try {
+        var ins = await insightsForLeague(leagues[i]);
+        insightsMap[leagues[i].key] = ins;
+        if (ins.players && ins.roster && leagues[i].platform === 'sleeper') {
+          var lraw = leagues[i].raw || {};
+          portEntries.push({
+            players: ins.players, roster: ins.roster, dynasty: ins.dynasty,
+            leagueName: leagues[i].name || 'League',
+            slots: (lraw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; })
+          });
         }
-      }
-    } catch (e) {}
+        setInsight(leagues[i].key, ins);
+        if (ins.tier) tierCounts[ins.tier]++;
+        if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
+      } catch (e) {}
+    }
     topTeams.sort(function (a, b) { return b.score - a.score; });
     renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
     renderPortfolio(portEntries);
 
     var sorted = leagues.slice().sort(function (a, b) {
-      var ia = insightsMap[a.league_id], ib = insightsMap[b.league_id];
+      var ia = insightsMap[a.key], ib = insightsMap[b.key];
       var ta = (ia && ia.tier) ? TIER_ORDER.indexOf(ia.tier) : 99;
       var tb = (ib && ib.tier) ? TIER_ORDER.indexOf(ib.tier) : 99;
       if (ta !== tb) return ta - tb;
@@ -780,10 +857,18 @@
       '<div class="ml-dgrid">' + cards + '</div></div>';
   }
 
-  async function openDetail(leagueId) {
-    var league = LEAGUES[leagueId]; if (!league) return;
+  async function openDetail(key) {
+    var league = LEAGUES[key]; if (!league) return;
     el('ml-content').style.display = 'none';
     var detail = el('ml-detail'); detail.style.display = 'block';
+    if (league.platform === 'mfl') {
+      detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
+        '<div class="ml-panel"><div class="ml-sum-title">' + (league.name || 'League') + '</div>' +
+        '<p class="ml-subtitle">Full league detail (Draft Analyzer, Start/Sit, Trade Finder) is coming soon for MFL leagues. Tier, Rank, and Value on the main list are already live.</p></div>';
+      window.scrollTo(0, 0);
+      return;
+    }
+    var leagueId = league.league_id;
     detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Analyzing ' + (league.name || 'league') + '…</div>';
     window.scrollTo(0, 0);
     try {
@@ -1072,9 +1157,10 @@
     var body = el('leaguesBody');
     body.innerHTML = '<tr><td colspan="5" class="ml-empty">Loading your leagues…</td></tr>';
     try {
-      var leagues = await fetchLeagues();
+      var results = await Promise.all([fetchLeagues(), fetchMFLLeagues()]);
+      var leagues = results[0].concat(results[1]);
       LEAGUES = {};
-      leagues.forEach(function (l) { LEAGUES[l.league_id] = l; });
+      leagues.forEach(function (l) { LEAGUES[l.key] = l; });
       render(leagues);
       if (leagues.length) {
         el('ml-chart-slot').textContent = 'Analyzing your rosters…';

@@ -88,7 +88,7 @@ async function saveMFLLeagues(userId, leagues) {
     host: l.host,
     franchise_id: l.franchise_id,
     franchise_name: l.franchise_name,
-    raw: l,
+    raw: l.raw || {},
     synced_at: new Date().toISOString()
   }));
   const res = await fetch(SUPABASE_URL + '/rest/v1/mfl_leagues?on_conflict=user_id,league_id', {
@@ -118,6 +118,19 @@ async function syncMyMFLLeagues() {
     const login = await MFL.login(username, password, year);
     out.textContent = 'Finding your leagues…';
     const leagues = await MFL.leagues(login.cookie, year);
+
+    out.textContent = 'Loading league details…';
+    for (const l of leagues) {
+      try {
+        const [leagueCfg, rules] = await Promise.all([
+          MFL.league(l.host, year, l.league_id, login.cookie),
+          MFL.rules(l.host, year, l.league_id, login.cookie)
+        ]);
+        l.raw = Object.assign({}, leagueCfg, { rules: rules });
+      } catch (e) {
+        l.raw = {};
+      }
+    }
 
     await auth.updateProfile({
       mfl_username: username,
