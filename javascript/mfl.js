@@ -86,6 +86,7 @@ async function syncMyMFLLeagues() {
       '<p>Synced <strong>' + leagues.length + '</strong> MFL leagues for <strong>' + username + '</strong> (' + year + '):</p>' +
       '<ul>' + leagues.map(l => '<li>' + l.name + '</li>').join('') + '</ul>';
   } catch (e) {
-    out.textContent = e.message;
+    console.error('MFL sync error:', e.message);
+    out.textContent = "We couldn't sign in to MFL. Double-check your username and password and try again. If this keeps happening, email fantasynowplus@gmail.com and we'll take a look.";
   }
 }
