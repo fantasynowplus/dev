@@ -64,12 +64,48 @@ const Adapters = (function () {
     }
   };
 
+  function mflRecPointsByPosition(rulesRaw) {
+    const rules = rulesRaw && rulesRaw.positionRules;
+    if (!Array.isArray(rules)) return {};
+    const out = {};
+    rules.forEach(function (entry) {
+      const items = Array.isArray(entry.rule) ? entry.rule : [entry.rule];
+      items.forEach(function (r) {
+        if (r && r.event && r.event.$t === 'CC') {
+          const raw = (r.points && r.points.$t) || '0';
+          const val = parseFloat(String(raw).replace('*', '')) || 0;
+          String(entry.positions).split('|').forEach(function (pos) { out[pos] = val; });
+        }
+      });
+    });
+    return out;
+  }
+  function mflStarterSetsFromWeeklyResults(weeklyRaw) {
+    const map = {};
+    const matchups = weeklyRaw && weeklyRaw.matchup;
+    const list = Array.isArray(matchups) ? matchups : (matchups ? [matchups] : []);
+    list.forEach(function (m) {
+      const franchises = Array.isArray(m.franchise) ? m.franchise : (m.franchise ? [m.franchise] : []);
+      franchises.forEach(function (fr) {
+        if (fr.starters) map[fr.id] = String(fr.starters).split(',').filter(Boolean);
+      });
+    });
+    return map;
+  }
+  function mflScoringLabel(recPoints) {
+    const v = recPoints.WR != null ? recPoints.WR : (recPoints.RB != null ? recPoints.RB : (recPoints.TE != null ? recPoints.TE : 0));
+    if (v >= 1) return 'PPR';
+    if (v >= 0.5) return 'HALF';
+    return 'STD';
+  }
+
   const mfl = {
     platform: 'mfl',
-    normalizeLeague(leagueRaw, row) {
+    normalizeLeague(leagueRaw, row, rulesRaw) {
       const starters = parseInt(leagueRaw.starters && leagueRaw.starters.count, 10) || null;
       const totalTeams = parseInt(leagueRaw.franchises && leagueRaw.franchises.count, 10) || null;
       const taxiSquad = parseInt(leagueRaw.taxiSquad, 10) || 0;
+      const recPoints = rulesRaw ? mflRecPointsByPosition(rulesRaw) : {};
       return {
         id: leagueRaw.id || (row && row.league_id),
         platform: 'mfl',
@@ -77,37 +113,43 @@ const Adapters = (function () {
         season: (row && row.season) || null,
         totalTeams: totalTeams,
         format: taxiSquad > 0 ? 'dynasty' : 'redraft',
-        scoring: null,
+        scoring: rulesRaw ? mflScoringLabel(recPoints) : null,
+        recPointsByPosition: recPoints,
         starters: starters,
-        bestBall: false,
+        bestBall: leagueRaw.bestLineup === 'Yes',
         raw: leagueRaw
       };
     },
-    normalizeTeams(leagueRaw, rosterFranchises, playersMap, userFranchiseId) {
+    normalizeTeams(leagueRaw, rosterFranchises, playersMap, userFranchiseId, standingsList, starterSets) {
       const nameMap = {};
       const franchiseList = (leagueRaw.franchises && leagueRaw.franchises.franchise) || [];
       (Array.isArray(franchiseList) ? franchiseList : [franchiseList]).forEach(function (f) {
         nameMap[f.id] = f.name;
       });
+      const standingsMap = {};
+      (standingsList || []).forEach(function (s) { standingsMap[s.id] = s; });
       return (rosterFranchises || []).map(function (fr) {
         const rawPlayers = fr.player || [];
         const playerList = Array.isArray(rawPlayers) ? rawPlayers : [rawPlayers];
+        const starterIds = starterSets && starterSets[fr.id];
         const players = playerList.map(function (p) {
           const meta = playersMap[p.id] || {};
           let slot = 'bench';
           if (p.status === 'TAXI_SQUAD') slot = 'taxi';
           else if (p.status === 'INJURED_RESERVE') slot = 'ir';
+          else if (starterIds && starterIds.indexOf(p.id) !== -1) slot = 'starter';
           return { id: p.id, name: meta.name || p.id, pos: meta.position || '', nflTeam: meta.team || '', slot: slot };
         });
+        const st = standingsMap[fr.id] || {};
         return {
           id: fr.id,
           leagueId: leagueRaw.id,
           ownerName: nameMap[fr.id] || 'Team',
           isUser: fr.id === userFranchiseId,
-          wins: 0,
-          losses: 0,
-          ties: 0,
-          pointsFor: 0,
+          wins: parseInt(st.h2hw, 10) || 0,
+          losses: parseInt(st.h2hl, 10) || 0,
+          ties: parseInt(st.h2ht, 10) || 0,
+          pointsFor: parseFloat(st.pf) || 0,
           potentialPoints: 0,
           players: players
         };

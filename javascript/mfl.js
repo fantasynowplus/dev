@@ -48,6 +48,33 @@ const MFL = {
     const res = await fetch(MFL_WORKER + '/players?year=' + year);
     if (!res.ok) throw new Error('Could not load MFL player database');
     return res.json();
+  },
+  async rules(host, year, leagueId, cookie) {
+    const res = await fetch(MFL_WORKER + '/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL rules');
+    return res.json();
+  },
+  async standings(host, year, leagueId, cookie) {
+    const res = await fetch(MFL_WORKER + '/standings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL standings');
+    return res.json();
+  },
+  async weeklyResults(host, year, leagueId, week, cookie) {
+    const res = await fetch(MFL_WORKER + '/weeklyresults', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, week, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL weekly results');
+    return res.json();
   }
 };
 
