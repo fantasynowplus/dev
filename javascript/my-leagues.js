@@ -74,7 +74,7 @@
     insights = insights || {};
     const body = el('leaguesBody');
     if (!leagues.length) {
-      body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Open <strong>Edit Profile</strong>, add your Sleeper handle, and hit <strong>Sync my Sleeper leagues</strong>.</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" class="ml-empty">No leagues synced yet. Add your Sleeper handle in <strong>Edit Profile</strong>, then click <strong>Sync my Sleeper leagues</strong> above.</td></tr>';
       return;
     }
     body.innerHTML = leagues.map(function (l) {
@@ -1020,7 +1020,40 @@
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
+  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetailBody(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
+
+  window.MLSync = {
+    async run() {
+      var btn = el('ml-sync-btn'), status = el('ml-sync-status');
+      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
+      var handle = auth.profile && auth.profile.sleeper_handle;
+      if (!handle) {
+        status.className = 'ml-sync-status err';
+        status.textContent = 'Add your Sleeper handle in Edit Profile first.';
+        var acct = document.querySelector('.btn-login');
+        if (acct) acct.click();
+        return;
+      }
+      btn.disabled = true;
+      status.className = 'ml-sync-status';
+      status.textContent = 'Syncing…';
+      try {
+        var user = await Sleeper.resolveUser(handle);
+        var season = await Sleeper.currentSeason();
+        var leagues = await Sleeper.leaguesForUser(user.user_id, season);
+        await auth.updateProfile({ sleeper_user_id: user.user_id, sleeper_synced_at: new Date().toISOString() });
+        await saveSleeperLeagues(auth.user.sub, leagues);
+        status.className = 'ml-sync-status ok';
+        status.textContent = 'Synced ' + leagues.length + ' leagues.';
+        await init();
+      } catch (e) {
+        status.className = 'ml-sync-status err';
+        status.textContent = e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  };
 
   async function init() {
     if (!loggedIn()) {
@@ -1031,6 +1064,11 @@
     }
     el('ml-gate').style.display = 'none';
     el('ml-content').style.display = 'block';
+    var status = el('ml-sync-status');
+    if (status && auth.profile && auth.profile.sleeper_synced_at) {
+      status.className = 'ml-sync-status';
+      status.textContent = 'Last synced ' + new Date(auth.profile.sleeper_synced_at).toLocaleString();
+    }
     var body = el('leaguesBody');
     body.innerHTML = '<tr><td colspan="5" class="ml-empty">Loading your leagues…</td></tr>';
     try {

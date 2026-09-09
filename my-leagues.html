@@ -9,6 +9,10 @@ layout: null
   <div class="ml-head">
     <h1>My Leagues</h1>
     <p class="ml-subtitle">Your linked Sleeper leagues, all in one place.</p>
+    <div class="ml-sync-row">
+      <button id="ml-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.run()">Sync my Sleeper leagues</button>
+      <span id="ml-sync-status" class="ml-sync-status"></span>
+    </div>
   </div>
 
   <div id="ml-gate" class="ml-gate" style="display:none;">
