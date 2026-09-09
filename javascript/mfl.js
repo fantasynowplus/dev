@@ -11,9 +11,7 @@ const MFL = {
     if (!res.ok) {
       var msg = data.error || 'MFL login failed';
       if (data.upstreamStatus != null) {
-        msg += ' — host ' + data.host + ' (' + data.hops + ' hop(s)), upstream ' + data.upstreamStatus + ' (' + (data.upstreamContentType || 'no content-type') + ')';
-        if (data.setCookieHeader) msg += ', set-cookie: ' + data.setCookieHeader;
-        msg += ': ' + data.upstreamBody;
+        msg += ' — host ' + data.host + ', upstream ' + data.upstreamStatus;
       }
       throw new Error(msg);
     }
