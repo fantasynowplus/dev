@@ -7,8 +7,13 @@ const MFL = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, year })
     });
-    if (!res.ok) throw new Error((await res.json()).error || 'MFL login failed');
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      var msg = data.error || 'MFL login failed';
+      if (data.upstreamBody) msg += ' — upstream (' + data.upstreamStatus + '): ' + data.upstreamBody;
+      throw new Error(msg);
+    }
+    return data;
   },
   async leagues(cookie, year) {
     const res = await fetch(MFL_WORKER + '/leagues', {
