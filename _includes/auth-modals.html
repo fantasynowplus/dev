@@ -36,16 +36,20 @@
       </div>
       <div class="fn-field"><label>Discord</label><input type="text" id="fp_discord_handle" placeholder="username#0000"></div>
       <div class="fn-section-label">Fantasy Football</div>
-      <div class="fn-row2">
-        <div class="fn-field"><label>Sleeper Handle</label><input type="text" id="fp_sleeper_handle"></div>
-        <div class="fn-field"><label>MFL Handle</label><input type="text" id="fp_mfl_handle"></div>
-      </div>
+      <div class="fn-field"><label>Sleeper Handle</label><input type="text" id="fp_sleeper_handle"></div>
       <button type="submit" class="fn-primary-btn">Save changes</button>
       <div class="fn-msg" id="fnProfileMsg"></div>
     </form>
     <div class="fn-section-label">Sleeper Leagues</div>
     <button type="button" class="fn-primary-btn" style="background:#06192b;" onclick="syncMySleeperLeagues()">Sync my Sleeper leagues</button>
     <div id="sleeperResult" style="margin-top:14px; font-size:14px; color:#333;"></div>
+    <div class="fn-section-label">MFL Leagues</div>
+    <div class="fn-row2">
+      <div class="fn-field"><label>MFL Username</label><input type="text" id="fp_mfl_username" autocomplete="username"></div>
+      <div class="fn-field"><label>MFL Password</label><input type="password" id="fp_mfl_password" autocomplete="current-password"></div>
+    </div>
+    <button type="button" class="fn-primary-btn" style="background:#06192b;" onclick="syncMyMFLLeagues()">Sync my MFL leagues</button>
+    <div id="mflResult" style="margin-top:14px; font-size:14px; color:#333;"></div>
     <button type="button" class="fn-primary-btn" style="background:#999; margin-top:18px;" data-logout>Log out</button>
   </div>
 </div>
