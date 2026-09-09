@@ -13,6 +13,12 @@ layout: null
       <button id="ml-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.run()">Sync my Sleeper leagues</button>
       <span id="ml-sync-status" class="ml-sync-status"></span>
     </div>
+    <div class="ml-sync-row">
+      <input id="ml-mfl-username" class="ml-mfl-input" placeholder="MFL Username" autocomplete="username">
+      <input id="ml-mfl-password" class="ml-mfl-input" type="password" placeholder="MFL Password" autocomplete="current-password">
+      <button id="ml-mfl-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.runMFL()">Sync my MFL leagues</button>
+      <span id="ml-mfl-sync-status" class="ml-sync-status"></span>
+    </div>
   </div>
 
   <div id="ml-gate" class="ml-gate" style="display:none;">

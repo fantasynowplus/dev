@@ -1137,6 +1137,21 @@
       } finally {
         btn.disabled = false;
       }
+    },
+    async runMFL() {
+      var btn = el('ml-mfl-sync-btn');
+      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
+      btn.disabled = true;
+      try {
+        await syncMyMFLLeagues({
+          usernameId: 'ml-mfl-username',
+          passwordId: 'ml-mfl-password',
+          statusId: 'ml-mfl-sync-status',
+          onDone: function () { init(); }
+        });
+      } finally {
+        btn.disabled = false;
+      }
     }
   };
 

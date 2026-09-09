@@ -105,11 +105,15 @@ async function saveMFLLeagues(userId, leagues) {
   return rows.length;
 }
 
-async function syncMyMFLLeagues() {
-  const out = document.getElementById('mflResult');
+async function syncMyMFLLeagues(opts) {
+  opts = opts || {};
+  const usernameId = opts.usernameId || 'fp_mfl_username';
+  const passwordId = opts.passwordId || 'fp_mfl_password';
+  const statusId = opts.statusId || 'mflResult';
+  const out = document.getElementById(statusId);
   if (!auth.isAuthenticated()) { out.textContent = 'Please log in first.'; return; }
-  const username = document.getElementById('fp_mfl_username').value.trim();
-  const password = document.getElementById('fp_mfl_password').value;
+  const username = document.getElementById(usernameId).value.trim();
+  const password = document.getElementById(passwordId).value;
   if (!username || !password) { out.textContent = 'Enter your MFL username and password above.'; return; }
 
   out.textContent = 'Signing in to MFL…';
@@ -139,15 +143,16 @@ async function syncMyMFLLeagues() {
       mfl_synced_at: new Date().toISOString()
     });
     await saveMFLLeagues(auth.user.sub, leagues);
-    document.getElementById('fp_mfl_password').value = '';
+    document.getElementById(passwordId).value = '';
 
     if (!leagues.length) {
       out.textContent = 'No ' + year + ' MFL leagues found for ' + username + '.';
-      return;
+    } else {
+      out.innerHTML =
+        '<p>Synced <strong>' + leagues.length + '</strong> MFL leagues for <strong>' + username + '</strong> (' + year + '):</p>' +
+        '<ul>' + leagues.map(l => '<li>' + l.name + '</li>').join('') + '</ul>';
     }
-    out.innerHTML =
-      '<p>Synced <strong>' + leagues.length + '</strong> MFL leagues for <strong>' + username + '</strong> (' + year + '):</p>' +
-      '<ul>' + leagues.map(l => '<li>' + l.name + '</li>').join('') + '</ul>';
+    if (opts.onDone) opts.onDone(leagues);
   } catch (e) {
     console.error('MFL sync error:', e.message);
     out.textContent = "We couldn't sign in to MFL. Double-check your username and password and try again. If this keeps happening, email fantasynowplus@gmail.com and we'll take a look.";
