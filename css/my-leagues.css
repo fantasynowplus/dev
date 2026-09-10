@@ -193,6 +193,12 @@
   .ml-mu-win .ml-mu-name { color: #56d364; }
   .ml-mu-tproj { color: #7d8aa5; font-size: 11px; font-weight: 600; margin-top: 2px; }
   .ml-mu-note { color: #7d8aa5; font-size: 11px; text-align: center; margin-top: 8px; }
+  .ml-mu-adj { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #232c42; font-size: 13px; }
+  .ml-mu-adj-label { color: #8a97b3; margin-right: 4px; }
+  .ml-mu-adj-cur { color: #8a97b3; font-weight: 600; }
+  .ml-mu-adj-arr { color: #5f6c85; }
+  .ml-mu-adj-new { color: #56d364; font-weight: 800; font-size: 15px; }
+  .ml-mu-adj-flip { color: #56d364; font-weight: 700; margin-left: 6px; }
   .ml-mu-optbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #232c42; font-size: 13px; color: #c9d2e6; }
   .ml-mu-opt-label { color: #8a97b3; }
   .ml-mu-opt-diff { color: #ffb84d; font-weight: 700; }
