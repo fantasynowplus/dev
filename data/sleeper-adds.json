@@ -5,6 +5,7 @@
   "alvin kamara|RB": "4035",
   "andrei iosivas|WR": "10226",
   "barion brown|WR": "13533",
+  "blake corum|RB": "11586",
   "brenton strange|TE": "9480",
   "brian robinson|RB": "8154",
   "cade otton|TE": "8111",
@@ -46,7 +47,6 @@
   "justice hill|RB": "5995",
   "juwan johnson|TE": "7002",
   "kaelon black|RB": "13414",
-  "kayshon boutte|WR": "9504",
   "kc concepcion|WR": "13298",
   "keaton mitchell|RB": "9511",
   "keenan allen|WR": "1479",
@@ -63,6 +63,7 @@
   "mark andrews|TE": "5012",
   "marshawn lloyd|RB": "11581",
   "matthew golden|WR": "12501",
+  "matthew stafford|QB": "421",
   "michael mayer|TE": "9482",
   "najee harris|RB": "7528",
   "odell beckham|WR": "2078",
@@ -87,611 +88,618 @@
   "xavier worthy|WR": "11624",
   "zavion thomas|WR": "13411"
  },
- "count": 86,
+ "count": 87,
  "lookback_hours": 48,
  "players": {
   "10213": {
-   "add_rank": 10,
-   "adds": 164670,
+   "add_rank": 8,
+   "adds": 177450,
    "name": "Tre Tucker",
    "pos": "WR",
    "team": "LV"
   },
   "10219": {
-   "add_rank": 29,
-   "adds": 64827,
+   "add_rank": 35,
+   "adds": 60327,
    "name": "Chris Rodriguez",
    "pos": "RB",
    "team": "JAX"
   },
   "10222": {
-   "add_rank": 52,
-   "adds": 37845,
+   "add_rank": 51,
+   "adds": 36171,
    "name": "Jayden Reed",
    "pos": "WR",
    "team": "GB"
   },
   "10226": {
-   "add_rank": 71,
-   "adds": 22860,
+   "add_rank": 72,
+   "adds": 21960,
    "name": "Andrei Iosivas",
    "pos": "WR",
    "team": "CIN"
   },
   "10235": {
    "add_rank": 2,
-   "adds": 422688,
+   "adds": 391632,
    "name": "Roschon Johnson",
    "pos": "RB",
    "team": "CHI"
   },
   "11237": {
-   "add_rank": 62,
-   "adds": 27730,
+   "add_rank": 67,
+   "adds": 25540,
    "name": "Jacob Saylors",
    "pos": "RB",
    "team": "DET"
   },
   "11571": {
-   "add_rank": 72,
-   "adds": 21969,
+   "add_rank": 69,
+   "adds": 22392,
    "name": "Isaiah Davis",
    "pos": "RB",
    "team": "NYJ"
   },
   "11581": {
-   "add_rank": 11,
-   "adds": 143919,
+   "add_rank": 13,
+   "adds": 136575,
    "name": "MarShawn Lloyd",
    "pos": "RB",
    "team": "GB"
   },
+  "11586": {
+   "add_rank": 87,
+   "adds": 17736,
+   "name": "Blake Corum",
+   "pos": "RB",
+   "team": "LAR"
+  },
   "11603": {
    "add_rank": 7,
-   "adds": 185928,
+   "adds": 180510,
    "name": "AJ Barner",
    "pos": "TE",
    "team": "SEA"
   },
   "11610": {
-   "add_rank": 38,
-   "adds": 54496,
+   "add_rank": 40,
+   "adds": 52048,
    "name": "Malik Washington",
    "pos": "WR",
    "team": "MIA"
   },
   "11624": {
    "add_rank": 61,
-   "adds": 28620,
+   "adds": 27324,
    "name": "Xavier Worthy",
    "pos": "WR",
    "team": "KC"
   },
   "11625": {
-   "add_rank": 56,
-   "adds": 31456,
+   "add_rank": 57,
+   "adds": 31160,
    "name": "Adonai Mitchell",
    "pos": "WR",
    "team": "NYJ"
   },
   "1166": {
-   "add_rank": 33,
-   "adds": 61360,
+   "add_rank": 30,
+   "adds": 63088,
    "name": "Kirk Cousins",
    "pos": "QB",
    "team": "LV"
   },
   "11783": {
-   "add_rank": 60,
-   "adds": 28656,
+   "add_rank": 62,
+   "adds": 27144,
    "name": "Ryan Flournoy",
    "pos": "WR",
    "team": "DAL"
   },
   "11834": {
    "add_rank": 3,
-   "adds": 337911,
+   "adds": 321468,
    "name": "Devaughn Vele",
    "pos": "WR",
    "team": "NO"
   },
   "12469": {
    "add_rank": 47,
-   "adds": 44195,
+   "adds": 42715,
    "name": "Dylan Sampson",
    "pos": "RB",
    "team": "CLE"
   },
   "12487": {
-   "add_rank": 17,
-   "adds": 103248,
+   "add_rank": 16,
+   "adds": 102600,
    "name": "Terrance Ferguson",
    "pos": "TE",
    "team": "LAR"
   },
   "12491": {
    "add_rank": 36,
-   "adds": 58650,
+   "adds": 59070,
    "name": "Corey Kiner",
    "pos": "RB",
    "team": "NE"
   },
   "12492": {
    "add_rank": 64,
-   "adds": 26712,
+   "adds": 26696,
    "name": "Pat Bryant",
    "pos": "WR",
    "team": "DEN"
   },
   "12501": {
-   "add_rank": 78,
-   "adds": 20930,
+   "add_rank": 77,
+   "adds": 20692,
    "name": "Matthew Golden",
    "pos": "WR",
    "team": "GB"
   },
   "12533": {
    "add_rank": 48,
-   "adds": 43983,
+   "adds": 42156,
    "name": "Jacory Croskey-Merritt",
    "pos": "RB",
    "team": "WAS"
   },
   "12545": {
    "add_rank": 27,
-   "adds": 68608,
+   "adds": 68016,
    "name": "Tyler Shough",
    "pos": "QB",
    "team": "NO"
   },
   "13281": {
-   "add_rank": 51,
-   "adds": 37880,
+   "add_rank": 52,
+   "adds": 36112,
    "name": "Jordyn Tyson",
    "pos": "WR",
    "team": "NO"
   },
   "13285": {
-   "add_rank": 19,
-   "adds": 93735,
+   "add_rank": 20,
+   "adds": 89165,
    "name": "Malachi Fields",
    "pos": "WR",
    "team": "NYG"
   },
   "13296": {
-   "add_rank": 18,
-   "adds": 102600,
+   "add_rank": 19,
+   "adds": 95888,
    "name": "Caleb Douglas",
    "pos": "WR",
    "team": "MIA"
   },
   "13298": {
    "add_rank": 76,
-   "adds": 21186,
+   "adds": 20853,
    "name": "KC Concepcion",
    "pos": "WR",
    "team": "CLE"
   },
   "13311": {
    "add_rank": 14,
-   "adds": 120827,
+   "adds": 128716,
    "name": "Chris Bell",
    "pos": "WR",
    "team": "MIA"
   },
   "13330": {
-   "add_rank": 73,
-   "adds": 21843,
+   "add_rank": 74,
+   "adds": 21636,
    "name": "Kenyon Sadiq",
    "pos": "TE",
    "team": "NYJ"
   },
   "13337": {
    "add_rank": 49,
-   "adds": 42354,
+   "adds": 40437,
    "name": "Emmett Johnson",
    "pos": "RB",
    "team": "KC"
   },
   "13411": {
-   "add_rank": 42,
-   "adds": 49086,
+   "add_rank": 45,
+   "adds": 44415,
    "name": "Zavion Thomas",
    "pos": "WR",
    "team": "CHI"
   },
   "13413": {
-   "add_rank": 80,
-   "adds": 20004,
+   "add_rank": 84,
+   "adds": 18438,
    "name": "Cyrus Allen",
    "pos": "WR",
    "team": "KC"
   },
   "13414": {
-   "add_rank": 8,
-   "adds": 168350,
+   "add_rank": 10,
+   "adds": 149681,
    "name": "Kaelon Black",
    "pos": "RB",
    "team": "SF"
   },
   "13421": {
    "add_rank": 43,
-   "adds": 47551,
+   "adds": 47152,
    "name": "Eli Raridon",
    "pos": "TE",
    "team": "NE"
   },
   "13424": {
-   "add_rank": 37,
-   "adds": 56824,
+   "add_rank": 42,
+   "adds": 48632,
    "name": "Seth McGowan",
    "pos": "RB",
    "team": "IND"
   },
   "13477": {
-   "add_rank": 84,
-   "adds": 18960,
+   "add_rank": 86,
+   "adds": 17814,
    "name": "Colbie Young",
    "pos": "WR",
    "team": "CIN"
   },
   "13533": {
-   "add_rank": 35,
-   "adds": 59040,
+   "add_rank": 37,
+   "adds": 55008,
    "name": "Barion Brown",
    "pos": "WR",
    "team": "NO"
   },
   "1479": {
-   "add_rank": 58,
-   "adds": 28808,
+   "add_rank": 60,
+   "adds": 27632,
    "name": "Keenan Allen",
    "pos": "WR",
    "team": "IND"
   },
   "2078": {
    "add_rank": 21,
-   "adds": 92449,
+   "adds": 85386,
    "name": "Odell Beckham",
    "pos": "WR",
    "team": "NYG"
   },
   "2505": {
    "add_rank": 4,
-   "adds": 262197,
+   "adds": 266256,
    "name": "Darren Waller",
    "pos": "TE",
    "team": "CAR"
   },
   "3163": {
    "add_rank": 53,
-   "adds": 33185,
+   "adds": 33645,
    "name": "Jared Goff",
    "pos": "QB",
    "team": "DET"
   },
   "3214": {
-   "add_rank": 67,
-   "adds": 23658,
+   "add_rank": 68,
+   "adds": 23070,
    "name": "Hunter Henry",
    "pos": "TE",
    "team": "NE"
   },
   "3321": {
    "add_rank": 41,
-   "adds": 49912,
+   "adds": 50448,
    "name": "Tyreek Hill",
    "pos": "WR",
    "team": ""
   },
   "4017": {
    "add_rank": 55,
-   "adds": 31768,
+   "adds": 31352,
    "name": "Deshaun Watson",
    "pos": "QB",
    "team": "CLE"
   },
   "4035": {
-   "add_rank": 57,
-   "adds": 29176,
+   "add_rank": 54,
+   "adds": 32104,
    "name": "Alvin Kamara",
    "pos": "RB",
    "team": "NO"
   },
   "4039": {
-   "add_rank": 16,
-   "adds": 107802,
+   "add_rank": 15,
+   "adds": 108486,
    "name": "Cooper Kupp",
    "pos": "WR",
    "team": "SEA"
   },
   "4147": {
-   "add_rank": 30,
-   "adds": 63412,
+   "add_rank": 34,
+   "adds": 60380,
    "name": "Samaje Perine",
    "pos": "RB",
    "team": "CIN"
   },
   "4177": {
-   "add_rank": 69,
-   "adds": 23112,
+   "add_rank": 58,
+   "adds": 28284,
    "name": "Mack Hollins",
    "pos": "WR",
    "team": "NE"
   },
+  "421": {
+   "add_rank": 85,
+   "adds": 18315,
+   "name": "Matthew Stafford",
+   "pos": "QB",
+   "team": "LAR"
+  },
   "5012": {
    "add_rank": 9,
-   "adds": 167265,
+   "adds": 171531,
    "name": "Mark Andrews",
    "pos": "TE",
    "team": "BAL"
   },
   "5022": {
-   "add_rank": 79,
-   "adds": 20612,
+   "add_rank": 73,
+   "adds": 21738,
    "name": "Dallas Goedert",
    "pos": "TE",
    "team": "PHI"
   },
   "5849": {
-   "add_rank": 32,
-   "adds": 63216,
+   "add_rank": 29,
+   "adds": 64040,
    "name": "Kyler Murray",
    "pos": "QB",
    "team": "MIN"
   },
   "5850": {
-   "add_rank": 45,
-   "adds": 44665,
+   "add_rank": 38,
+   "adds": 53395,
    "name": "Josh Jacobs",
    "pos": "RB",
    "team": "GB"
   },
   "5854": {
-   "add_rank": 40,
-   "adds": 50391,
+   "add_rank": 33,
+   "adds": 62242,
    "name": "Drew Lock",
    "pos": "QB",
    "team": "SEA"
   },
   "5995": {
    "add_rank": 22,
-   "adds": 87768,
+   "adds": 84942,
    "name": "Justice Hill",
    "pos": "RB",
    "team": "BAL"
   },
   "6783": {
-   "add_rank": 75,
-   "adds": 21519,
+   "add_rank": 78,
+   "adds": 20511,
    "name": "Jerry Jeudy",
    "pos": "WR",
    "team": "CLE"
   },
   "7002": {
-   "add_rank": 13,
-   "adds": 136192,
+   "add_rank": 12,
+   "adds": 136700,
    "name": "Juwan Johnson",
    "pos": "TE",
    "team": "NO"
   },
   "7049": {
    "add_rank": 59,
-   "adds": 28784,
+   "adds": 27916,
    "name": "Jauan Jennings",
    "pos": "WR",
    "team": "MIN"
   },
   "7090": {
    "add_rank": 31,
-   "adds": 63279,
+   "adds": 62802,
    "name": "Darnell Mooney",
    "pos": "WR",
    "team": "NYG"
   },
   "7528": {
-   "add_rank": 54,
-   "adds": 32685,
+   "add_rank": 56,
+   "adds": 31225,
    "name": "Najee Harris",
    "pos": "RB",
    "team": "NYG"
   },
   "7567": {
    "add_rank": 66,
-   "adds": 24744,
+   "adds": 25984,
    "name": "Kenny Gainwell",
    "pos": "RB",
    "team": "TB"
   },
   "7611": {
    "add_rank": 28,
-   "adds": 66348,
+   "adds": 67320,
    "name": "Rhamondre Stevenson",
    "pos": "RB",
    "team": "NE"
   },
   "8110": {
-   "add_rank": 81,
-   "adds": 19650,
+   "add_rank": 80,
+   "adds": 19855,
    "name": "Jake Ferguson",
    "pos": "TE",
    "team": "DAL"
   },
   "8111": {
    "add_rank": 39,
-   "adds": 51324,
+   "adds": 52608,
    "name": "Cade Otton",
    "pos": "TE",
    "team": "TB"
   },
   "8121": {
    "add_rank": 44,
-   "adds": 45984,
+   "adds": 46760,
    "name": "Romeo Doubs",
    "pos": "WR",
    "team": "NE"
   },
   "8127": {
-   "add_rank": 15,
-   "adds": 109077,
+   "add_rank": 17,
+   "adds": 100947,
    "name": "Charlie Kolar",
    "pos": "TE",
    "team": "LAC"
   },
   "8132": {
-   "add_rank": 12,
-   "adds": 143905,
+   "add_rank": 11,
+   "adds": 140255,
    "name": "Tyler Allgeier",
    "pos": "RB",
    "team": "ARI"
   },
   "8134": {
    "add_rank": 25,
-   "adds": 72792,
+   "adds": 71217,
    "name": "Khalil Shakir",
    "pos": "WR",
    "team": "BUF"
   },
   "8136": {
-   "add_rank": 74,
-   "adds": 21627,
+   "add_rank": 75,
+   "adds": 21321,
    "name": "Rachaad White",
    "pos": "RB",
    "team": "WAS"
   },
   "8154": {
-   "add_rank": 70,
-   "adds": 23016,
+   "add_rank": 71,
+   "adds": 21972,
    "name": "Brian Robinson",
    "pos": "RB",
    "team": "ATL"
   },
   "8161": {
    "add_rank": 26,
-   "adds": 71729,
+   "adds": 68740,
    "name": "Malik Willis",
    "pos": "QB",
    "team": "MIA"
   },
   "8172": {
    "add_rank": 83,
-   "adds": 19138,
+   "adds": 18442,
    "name": "Greg Dulcich",
    "pos": "TE",
    "team": "MIA"
   },
   "8180": {
-   "add_rank": 20,
-   "adds": 92619,
+   "add_rank": 18,
+   "adds": 99801,
    "name": "Jalen Nailor",
    "pos": "WR",
    "team": "LV"
   },
   "8188": {
-   "add_rank": 68,
-   "adds": 23464,
+   "add_rank": 70,
+   "adds": 22309,
    "name": "Tyquan Thornton",
    "pos": "WR",
    "team": "KC"
   },
   "8205": {
    "add_rank": 24,
-   "adds": 79688,
+   "adds": 74088,
    "name": "Isiah Pacheco",
    "pos": "RB",
    "team": "DET"
   },
   "8225": {
    "add_rank": 63,
-   "adds": 27678,
+   "adds": 27013,
    "name": "Daniel Bellinger",
    "pos": "TE",
    "team": "TEN"
   },
   "8800": {
    "add_rank": 5,
-   "adds": 253530,
+   "adds": 245655,
    "name": "Malik Davis",
    "pos": "RB",
    "team": "DAL"
   },
   "9225": {
    "add_rank": 50,
-   "adds": 40215,
+   "adds": 39655,
    "name": "Tank Bigsby",
    "pos": "RB",
    "team": "PHI"
   },
   "9480": {
-   "add_rank": 34,
-   "adds": 60453,
+   "add_rank": 32,
+   "adds": 62280,
    "name": "Brenton Strange",
    "pos": "TE",
    "team": "JAX"
   },
   "9482": {
    "add_rank": 1,
-   "adds": 1617552,
+   "adds": 1711926,
    "name": "Michael Mayer",
    "pos": "TE",
    "team": "LV"
   },
   "9486": {
    "add_rank": 46,
-   "adds": 44433,
+   "adds": 43443,
    "name": "Dontayvion Wicks",
    "pos": "WR",
    "team": "PHI"
   },
   "9500": {
    "add_rank": 65,
-   "adds": 26580,
+   "adds": 26230,
    "name": "Josh Downs",
    "pos": "WR",
    "team": "IND"
   },
   "9502": {
    "add_rank": 6,
-   "adds": 210144,
+   "adds": 198992,
    "name": "Tank Dell",
    "pos": "WR",
    "team": "HOU"
   },
-  "9504": {
-   "add_rank": 85,
-   "adds": 18670,
-   "name": "Kayshon Boutte",
-   "pos": "WR",
-   "team": "HOU"
-  },
   "9508": {
-   "add_rank": 86,
-   "adds": 18534,
+   "add_rank": 82,
+   "adds": 18584,
    "name": "Tyjae Spears",
    "pos": "RB",
    "team": "TEN"
   },
   "9511": {
    "add_rank": 23,
-   "adds": 79785,
+   "adds": 77886,
    "name": "Keaton Mitchell",
    "pos": "RB",
    "team": "LAC"
   },
   "9754": {
-   "add_rank": 82,
-   "adds": 19390,
+   "add_rank": 81,
+   "adds": 19320,
    "name": "Quentin Johnston",
    "pos": "WR",
    "team": "LAC"
   },
   "9758": {
-   "add_rank": 77,
-   "adds": 20972,
+   "add_rank": 79,
+   "adds": 20321,
    "name": "C.J. Stroud",
    "pos": "QB",
    "team": "HOU"
   }
  },
- "updated": "2026-09-10T15:19:28Z"
+ "updated": "2026-09-10T20:08:50Z"
 }
