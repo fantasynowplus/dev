@@ -259,6 +259,52 @@
     return set;
   }
 
+  var volCache = {};
+  async function volatilityFor(currentWeek, scoringSettings) {
+    var cacheKey = currentWeek + '|' + (scoringSettings ? 'custom' : 'generic');
+    if (volCache[cacheKey]) return volCache[cacheKey];
+    var season = await Sleeper.currentSeason();
+    var weeks = [];
+    for (var w = currentWeek - 1; w >= 1 && weeks.length < 5; w--) weeks.push(w);
+    // gather each past week's stat lines
+    var perPlayer = {}; // pid -> [scores]
+    for (var i = 0; i < weeks.length; i++) {
+      var wk = weeks[i];
+      try {
+        var res = await fetch('https://api.sleeper.app/stats/nfl/' + season + '/' + wk + '?season_type=regular');
+        if (!res.ok) continue;
+        var arr = await res.json();
+        (arr || []).forEach(function (row) {
+          if (!row || !row.player_id || !row.stats) return;
+          if ((row.stats.gp || 0) < 1) return; // didn't play that week — skip (bye/inactive)
+          var pts = scoringSettings ? scoreStatLine(row.stats, scoringSettings) : null;
+          if (pts == null) pts = row.stats.pts_ppr;
+          if (pts == null) return;
+          var pid = String(row.player_id);
+          (perPlayer[pid] = perPlayer[pid] || []).push(pts);
+        });
+      } catch (e) {}
+    }
+    var out = {};
+    Object.keys(perPlayer).forEach(function (pid) {
+      var s = perPlayer[pid];
+      if (s.length < 2) return; // need at least 2 games to say anything about spread
+      var mean = s.reduce(function (a, b) { return a + b; }, 0) / s.length;
+      var variance = s.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / s.length;
+      var sd = Math.sqrt(variance);
+      // Coefficient of variation classifies volatility relative to the player's own scoring level.
+      var cv = mean > 1 ? sd / mean : 0;
+      var tag = cv >= 0.55 ? 'boom' : cv <= 0.28 ? 'steady' : 'mid';
+      out[pid] = {
+        mean: mean, sd: sd, n: s.length, tag: tag,
+        floor: Math.max(0, mean - sd),
+        ceil: mean + sd
+      };
+    });
+    volCache[cacheKey] = out;
+    return out;
+  }
+
   async function loadSheet(url, fnMap, lists) {
     try {
       var res = await fetch(url);
@@ -1197,9 +1243,10 @@
       var fetched = await Promise.all([
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
         Sleeper.get('/league/' + DETAIL.leagueId + '/rosters'),
-        playedPlayersFor(week)
+        playedPlayersFor(week),
+        volatilityFor(week, raw.scoring_settings)
       ]);
-      var matchups = fetched[0] || [], rosters = fetched[1] || [], played = fetched[2] || {};
+      var matchups = fetched[0] || [], rosters = fetched[1] || [], played = fetched[2] || {}, vol = fetched[3] || {};
       var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; });
       if (!myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
       var myMatch = matchups.find(function (m) { return m.roster_id === myRoster.roster_id; });
@@ -1223,7 +1270,8 @@
         var o = playerProj(pid, players, projMap);
         var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
         return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
-          proj: proj, actual: actualFor(pp, pid), inj: (players[pid] && players[pid].injury_status) || null };
+          proj: proj, actual: actualFor(pp, pid), inj: (players[pid] && players[pid].injury_status) || null,
+          vol: vol[String(pid)] || null };
       }
 
       function sideData(roster, matchObj) {
@@ -1329,6 +1377,16 @@
     var actualTotalNow = isLive ? mine.actualTotal : mine.projTotal;
     var starterIds = {};
     mine.rows.forEach(function (r) { if (r.id) starterIds[r.id] = true; });
+    var VOL_LABEL = { boom: 'BOOM/BUST', steady: 'STEADY', mid: 'VARIES' };
+    function volCell(o, mirror) {
+      // Only show pre-score; once the player's game has produced a result, drop it.
+      if (!o.vol || o.actual != null) return '<div class="ml-mu-volcell"></div>';
+      var v = o.vol;
+      var range = v.floor.toFixed(0) + '–' + v.ceil.toFixed(0);
+      return '<div class="ml-mu-volcell' + (mirror ? ' ml-mu-volcell-mirror' : '') + '">' +
+        '<span class="ml-mu-voltag ml-mu-vol-' + v.tag + '">' + VOL_LABEL[v.tag] + '</span>' +
+        '<span class="ml-mu-volrange">' + range + '</span></div>';
+    }
     function ptsCell(o, mirror) {
       var proj = o.proj ? o.proj.toFixed(1) : '–';
       var actual = (o.actual != null) ? o.actual.toFixed(1) : null;
@@ -1352,9 +1410,11 @@
       }
       return '<div class="ml-mu-row' + (swap ? ' ml-mu-hasswap' : '') + '">' +
         '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + nameCell + '</div>' +
+        volCell(m) +
         ptsCell(m) +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
         ptsCell(t, true) +
+        volCell(t, true) +
         '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }
