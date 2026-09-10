@@ -191,10 +191,13 @@
   .ml-mu-right { text-align: right; }
   .ml-mu-name { color: #c9d2e6; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ml-mu-win .ml-mu-name { color: #56d364; }
-  .ml-mu-live { color: #ff7b72; font-size: 8px; vertical-align: middle; }
+  .ml-mu-tproj { color: #7d8aa5; font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .ml-mu-note { color: #7d8aa5; font-size: 11px; text-align: center; margin-top: 8px; }
+  .ml-mu-actual { color: #eef2fb; font-weight: 700; margin-right: 6px; }
+  .ml-mu-proj { color: #7d8aa5; font-weight: 600; }
   .ml-mu-sub { color: #7d8aa5; font-size: 11px; }
-  .ml-mu-pts { flex-shrink: 0; width: 36px; text-align: center; font-weight: 700; font-size: 13px; color: #8a97b3; }
-  .ml-mu-pts.ml-mu-win { color: #56d364; }
+  .ml-mu-pts { flex-shrink: 0; min-width: 64px; text-align: center; font-size: 12px; }
+  .ml-mu-pts.ml-mu-win .ml-mu-actual, .ml-mu-pts.ml-mu-win .ml-mu-proj { color: #56d364; }
   .ml-mu-slotlbl { flex-shrink: 0; width: 48px; text-align: center; font-size: 10px; font-weight: 700; color: #5f6c85; text-transform: uppercase; }
   .ml-trade-card { background: #131a29; border: 1px solid #2a3450; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .ml-trade-head { color: #8a97b3; font-size: 13px; margin-bottom: 12px; }

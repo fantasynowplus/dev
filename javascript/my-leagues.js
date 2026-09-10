@@ -197,6 +197,29 @@
     return { id: pid, name: isDef ? (name || (p.team ? p.team + ' Defense' : pid)) : name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
+  var sleeperProjCache = {};
+  async function sleeperProjectionsFor(week, scoring) {
+    var key = week + '|' + scoring;
+    if (sleeperProjCache[key]) return sleeperProjCache[key];
+    var field = scoring === 'PPR' ? 'pts_ppr' : scoring === 'HALF' ? 'pts_half_ppr' : 'pts_std';
+    var url = 'https://api.sleeper.app/projections/nfl/' + (await Sleeper.currentSeason()) + '/' + week +
+      '?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF';
+    var map = {};
+    try {
+      var res = await fetch(url);
+      if (res.ok) {
+        var arr = await res.json();
+        (arr || []).forEach(function (row) {
+          if (!row || !row.player_id || !row.stats) return;
+          var v = row.stats[field];
+          if (v != null) map[String(row.player_id)] = v;
+        });
+      }
+    } catch (e) {}
+    sleeperProjCache[key] = map;
+    return map;
+  }
+
   async function loadSheet(url, fnMap, lists) {
     try {
       var res = await fetch(url);
@@ -1131,7 +1154,7 @@
       var week = DETAIL.week || 1;
       var scoring = fpScoring(raw);
       var players = await loadPlayers();
-      var projMap = await projectionsFor(week, scoring);
+      var projMap = await sleeperProjectionsFor(week, scoring);
       var fetched = await Promise.all([
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
         Sleeper.get('/league/' + DETAIL.leagueId + '/rosters')
@@ -1147,26 +1170,26 @@
       var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
       var startingSlots = startingSlotsFor(league);
 
-      function slotRows(roster, matchObj, isLive) {
-        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', pts: 0, live: false }; }), total: 0 };
+      function slotRows(roster, matchObj) {
+        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', proj: 0, actual: null }; }), projTotal: 0, actualTotal: 0 };
         var pp = (matchObj && matchObj.players_points) || {};
-        var total = 0;
+        var projTotal = 0, actualTotal = 0;
         var rows = startingSlots.map(function (slot, i) {
           var pid = roster.starters && roster.starters[i];
-          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', pts: 0, live: false };
+          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', proj: 0, actual: null };
           var o = playerProj(pid, players, projMap);
-          var actual = pp[pid];
-          var rowLive = !!(isLive && actual != null);
-          var pts = rowLive ? actual : (o.pts || 0);
-          total += pts;
-          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', pts: pts, live: rowLive };
+          var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
+          var actual = (pp[pid] != null) ? pp[pid] : null;
+          projTotal += proj;
+          if (actual != null) actualTotal += actual;
+          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual };
         });
-        return { rows: rows, total: total };
+        return { rows: rows, projTotal: projTotal, actualTotal: actualTotal };
       }
 
       var isLive = ((myMatch && myMatch.points) || 0) > 0 || ((oppMatch && oppMatch.points) || 0) > 0;
-      var mine = slotRows(myRoster, myMatch, isLive);
-      var theirs = slotRows(oppRoster, oppMatch, isLive);
+      var mine = slotRows(myRoster, myMatch);
+      var theirs = slotRows(oppRoster, oppMatch);
       body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
@@ -1174,27 +1197,41 @@
   }
 
   function matchupHTML(mine, theirs, oppName, week, isLive) {
-    var diff = mine.total - theirs.total;
+    var diff = mine.projTotal - theirs.projTotal;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
+    function ptsCell(o, hi) {
+      var proj = o.proj ? o.proj.toFixed(1) : '–';
+      var actual = (o.actual != null) ? o.actual.toFixed(1) : null;
+      return '<div class="ml-mu-pts' + (hi ? ' ml-mu-win' : '') + '">' +
+        (actual != null ? '<span class="ml-mu-actual">' + actual + '</span>' : '') +
+        '<span class="ml-mu-proj">' + proj + '</span></div>';
+    }
     var rows = mine.rows.map(function (m, i) {
-      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', pts: 0, live: false };
-      var mHi = m.pts > t.pts, tHi = t.pts > m.pts;
+      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', proj: 0, actual: null };
+      var mv = (m.actual != null ? m.actual : m.proj), tv = (t.actual != null ? t.actual : t.proj);
+      var mHi = mv > tv, tHi = tv > mv;
       return '<div class="ml-mu-row">' +
-        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + (m.live ? ' <span class="ml-mu-live">●</span>' : '') + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
-        '<div class="ml-mu-pts' + (mHi ? ' ml-mu-win' : '') + '">' + (m.pts ? m.pts.toFixed(1) : '–') + '</div>' +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
+        ptsCell(m, mHi) +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
-        '<div class="ml-mu-pts' + (tHi ? ' ml-mu-win' : '') + '">' + (t.pts ? t.pts.toFixed(1) : '–') + '</div>' +
-        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + (t.live ? '<span class="ml-mu-live">●</span> ' : '') + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
+        ptsCell(t, tHi) +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }).join('');
+    function teamScore(s) {
+      return isLive
+        ? '<div class="ml-mu-tscore">' + s.actualTotal.toFixed(1) + '</div><div class="ml-mu-tproj">proj ' + s.projTotal.toFixed(1) + '</div>'
+        : '<div class="ml-mu-tscore">' + s.projTotal.toFixed(1) + '</div><div class="ml-mu-tproj">projected</div>';
+    }
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
-        '<div class="ml-mu-team"><div class="ml-mu-tname">You</div><div class="ml-mu-tscore">' + mine.total.toFixed(1) + '</div></div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">You</div>' + teamScore(mine) + '</div>' +
         '<div class="ml-mu-vs">Week ' + week + '<br>' + (isLive ? 'Live' : 'Projected') + '</div>' +
-        '<div class="ml-mu-team"><div class="ml-mu-tname">' + oppName + '</div><div class="ml-mu-tscore">' + theirs.total.toFixed(1) + '</div></div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + oppName + '</div>' + teamScore(theirs) + '</div>' +
       '</div>' +
       '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
       '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
+      (isLive ? '' : '<div class="ml-mu-note">Win % based on projected totals</div>') +
       '</div>' +
       '<div class="ml-panel">' + rows + '</div>';
   }
