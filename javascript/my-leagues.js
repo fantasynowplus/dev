@@ -197,9 +197,24 @@
     return { id: pid, name: isDef ? (name || (p.team ? p.team + ' Defense' : pid)) : name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
+  var NON_SCORING_STATS = { pts_ppr: 1, pts_half_ppr: 1, pts_std: 1, adp_dd_ppr: 1, pos_adp_dd_ppr: 1, gp: 1, gs: 1, gms_active: 1 };
+
+  function scoreStatLine(stats, scoringSettings) {
+    if (!stats || !scoringSettings) return null;
+    var total = 0, matched = 0;
+    for (var k in stats) {
+      if (NON_SCORING_STATS[k]) continue;
+      if (scoringSettings[k] != null) {
+        total += stats[k] * scoringSettings[k];
+        matched++;
+      }
+    }
+    return matched > 0 ? total : null;
+  }
+
   var sleeperProjCache = {};
-  async function sleeperProjectionsFor(week, scoring) {
-    var key = week + '|' + scoring;
+  async function sleeperProjectionsFor(week, scoring, scoringSettings) {
+    var key = week + '|' + scoring + '|' + (scoringSettings ? 'custom' : 'generic');
     if (sleeperProjCache[key]) return sleeperProjCache[key];
     var field = scoring === 'PPR' ? 'pts_ppr' : scoring === 'HALF' ? 'pts_half_ppr' : 'pts_std';
     var url = 'https://api.sleeper.app/projections/nfl/' + (await Sleeper.currentSeason()) + '/' + week +
@@ -212,8 +227,9 @@
         var arr = await res.json();
         (arr || []).forEach(function (row) {
           if (!row || !row.player_id || !row.stats) return;
-          var v = row.stats[field];
-          if (v != null) map[String(row.player_id)] = v;
+          var custom = scoringSettings ? scoreStatLine(row.stats, scoringSettings) : null;
+          var v = (custom != null) ? custom : row.stats[field];
+          if (v != null) map[String(row.player_id)] = Math.round(v * 100) / 100;
         });
       }
     } catch (e) {}
@@ -1155,7 +1171,7 @@
       var week = DETAIL.week || 1;
       var scoring = fpScoring(raw);
       var players = await loadPlayers();
-      var projMap = await sleeperProjectionsFor(week, scoring);
+      var projMap = await sleeperProjectionsFor(week, scoring, raw.scoring_settings);
       var fetched = await Promise.all([
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
         Sleeper.get('/league/' + DETAIL.leagueId + '/rosters')
