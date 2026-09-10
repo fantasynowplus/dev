@@ -25,6 +25,7 @@
     DB: [[6, 120, 95], [12, 70, 55], [24, 40, 30], [40, 20, 12], [60, 8, 4]]
   };
   var PROJ_SCALE = 700;
+  var WEEK_PROJ_SCALE = 18;
   var PLAYERS = null, MFL_PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
@@ -626,23 +627,27 @@
     var d = DETAIL, tab = d.tab || 'overview', isMFL = d.league.platform === 'mfl';
     var tabs = '<div class="ml-dtabs">' +
       '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
-      (isMFL ? '' : '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
-        '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>') +
+      (isMFL ? '' : '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>') +
+      (isMFL ? '' :
+        '<span class="ml-dtab-sep">Lineup</span>' +
+        '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>' +
+        '<button class="ml-dtab' + (tab === 'matchup' ? ' active' : '') + '" onclick="MLDetail.tab(\'matchup\')">Matchup</button>') +
+      '<span class="ml-dtab-sep">Trade</span>' +
       '<button class="ml-dtab' + (tab === 'trades' ? ' active' : '') + '" onclick="MLDetail.tab(\'trades\')">Trade Finder</button>' +
-      (isMFL ? '<span class="ml-pill ml-pill-mfl" style="margin-left:auto;align-self:center">MFL</span>' : '') +
       '</div>';
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
-      '<h2 class="ml-detail-title">' + (d.league.name || 'League') + '</h2>' +
+      '<h2 class="ml-detail-title">' + (d.league.name || 'League') + (isMFL ? ' <span class="ml-pill ml-pill-mfl" style="margin-left:8px;vertical-align:middle">MFL</span>' : '') + '</h2>' +
       tabs + '<div id="ml-detail-body"></div>';
     renderDetailBody();
   }
 
   function renderDetailBody() {
     var t = DETAIL.tab || 'overview';
-    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'startsit')) t = DETAIL.tab = 'overview';
+    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'startsit' || t === 'matchup')) t = DETAIL.tab = 'overview';
     if (t === 'draft') renderDraft();
     else if (t === 'startsit') renderStartSit();
+    else if (t === 'matchup') renderMatchup();
     else if (t === 'trades') renderTrades();
     else el('ml-detail-body').innerHTML = overviewHTML();
   }
@@ -1035,6 +1040,78 @@
       }
     });
     return assign;
+  }
+
+  async function renderMatchup() {
+    var body = el('ml-detail-body');
+    body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Loading matchup…</div></div>';
+    try {
+      var league = DETAIL.league, raw = league.raw || {};
+      var week = DETAIL.week || 1;
+      var scoring = fpScoring(raw);
+      var players = await loadPlayers();
+      var projMap = await projectionsFor(week, scoring);
+      var fetched = await Promise.all([
+        Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
+        Sleeper.get('/league/' + DETAIL.leagueId + '/rosters')
+      ]);
+      var matchups = fetched[0] || [], rosters = fetched[1] || [];
+      var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; });
+      if (!myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
+      var myMatch = matchups.find(function (m) { return m.roster_id === myRoster.roster_id; });
+      if (!myMatch || myMatch.matchup_id == null) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">No matchup found for Week ' + week + ' yet.</div></div>'; return; }
+      var oppMatch = matchups.find(function (m) { return m.matchup_id === myMatch.matchup_id && m.roster_id !== myRoster.roster_id; });
+      var oppRoster = oppMatch ? rosters.find(function (r) { return r.roster_id === oppMatch.roster_id; }) : null;
+      var oppTeam = oppRoster ? DETAIL.teams.find(function (t) { return t.rosterId === oppRoster.roster_id; }) : null;
+      var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
+      var startingSlots = startingSlotsFor(league);
+
+      function slotRows(roster) {
+        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', pts: 0 }; }), total: 0 };
+        var total = 0;
+        var rows = startingSlots.map(function (slot, i) {
+          var pid = roster.starters && roster.starters[i];
+          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', pts: 0 };
+          var o = playerProj(pid, players, projMap);
+          var pts = o.pts || 0;
+          total += pts;
+          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', pts: pts };
+        });
+        return { rows: rows, total: total };
+      }
+
+      var mine = slotRows(myRoster);
+      var theirs = slotRows(oppRoster);
+      body.innerHTML = matchupHTML(mine, theirs, oppName, week);
+    } catch (e) {
+      body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
+    }
+  }
+
+  function matchupHTML(mine, theirs, oppName, week) {
+    var diff = mine.total - theirs.total;
+    var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
+    var rows = mine.rows.map(function (m, i) {
+      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', pts: 0 };
+      var mHi = m.pts > t.pts, tHi = t.pts > m.pts;
+      return '<div class="ml-mu-row">' +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
+        '<div class="ml-mu-pts' + (mHi ? ' ml-mu-win' : '') + '">' + (m.pts ? m.pts.toFixed(1) : '–') + '</div>' +
+        '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
+        '<div class="ml-mu-pts' + (tHi ? ' ml-mu-win' : '') + '">' + (t.pts ? t.pts.toFixed(1) : '–') + '</div>' +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
+        '</div>';
+    }).join('');
+    return '<div class="ml-panel">' +
+      '<div class="ml-mu-head">' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">You</div><div class="ml-mu-tscore">' + mine.total.toFixed(1) + '</div></div>' +
+        '<div class="ml-mu-vs">Week ' + week + '<br>Projected</div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + oppName + '</div><div class="ml-mu-tscore">' + theirs.total.toFixed(1) + '</div></div>' +
+      '</div>' +
+      '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
+      '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
+      '</div>' +
+      '<div class="ml-panel">' + rows + '</div>';
   }
 
   async function renderStartSit() {
