@@ -656,16 +656,20 @@
     return 'Overview';
   }
 
-  function navHTML(nav, tab) {
+  function navHTML(nav, tab, collapsible) {
     return nav.map(function (n) {
       if (n.type === 'item') {
         return '<button class="ml-nav-item' + (tab === n.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + n.id + '\')">' + n.label + '</button>';
       }
-      if (NAV_EXPANDED[n.id] == null) NAV_EXPANDED[n.id] = true;
-      var open = NAV_EXPANDED[n.id];
+      var open = true;
+      if (collapsible) {
+        if (NAV_EXPANDED[n.id] == null) NAV_EXPANDED[n.id] = true;
+        open = NAV_EXPANDED[n.id];
+      }
       var items = open ? n.items.map(function (it) {
         return '<button class="ml-nav-item ml-nav-sub' + (tab === it.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + it.id + '\')">' + it.label + '</button>';
       }).join('') : '';
+      if (!collapsible) return '<div class="ml-nav-grp-static">' + n.label + '</div>' + items;
       return '<button class="ml-nav-grp" onclick="MLDetail.toggleGroup(\'' + n.id + '\')"><span>' + n.label + '</span><i>' + (open ? '▴' : '▾') + '</i></button>' + items;
     }).join('');
   }
@@ -684,8 +688,6 @@
       var sw = document.getElementById(id);
       if (sw && sw.classList.contains('open') && !e.target.closest('.ml-lswitch')) sw.classList.remove('open');
     });
-    var nv = document.getElementById('ml-sidenav');
-    if (nv && nv.classList.contains('open') && !e.target.closest('.ml-nav-shell')) nv.classList.remove('open');
   });
 
   function renderPageSidebar(isMFL, tab, league) {
@@ -700,7 +702,7 @@
         '</button>' +
         '<div class="ml-lswitch-menu" id="ml-lswitch-menu-side">' + switcherHTML(league.key) + '</div>' +
       '</div>' +
-      '<nav class="ml-sidenav-desktop">' + navHTML(nav, tab) + '</nav>';
+      '<nav class="ml-sidenav-desktop">' + navHTML(nav, tab, true) + '</nav>';
   }
 
   function renderDetail() {
@@ -715,10 +717,7 @@
         '</button>' +
         '<div class="ml-lswitch-menu" id="ml-lswitch-menu">' + switcherHTML(d.league.key) + '</div>' +
       '</div>' +
-      '<div class="ml-nav-shell">' +
-        '<button class="ml-nav-toggle" onclick="event.stopPropagation();MLDetail.toggleNav()"><span>' + navLabel(nav, tab) + '</span><i>▾</i></button>' +
-        '<nav class="ml-sidenav" id="ml-sidenav">' + navHTML(nav, tab) + '</nav>' +
-      '</div>' +
+      '<nav class="ml-nav-mobile">' + navHTML(nav, tab, false) + '</nav>' +
       '<div id="ml-detail-body"></div>';
     renderPageSidebar(isMFL, tab, d.league);
     renderDetailBody();
