@@ -89,7 +89,7 @@
   align-items: center;
   gap: 5px;
   font-size: 0.65rem;
-  color: var(--charcoal, #606060);
+  color: var(--charcoal, #c4c4c4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -121,7 +121,7 @@
   font-weight: 800;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--charcoal, #606060);
+  color: var(--charcoal, #c4c4c4);
   background: var(--bg-card, #161d2e);
   border-radius: 2px;
   padding: 1px 4px;
