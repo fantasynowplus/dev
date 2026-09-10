@@ -1186,7 +1186,7 @@
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetailBody(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
+  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
 
   window.MLSync = {
     openModal: function () {
