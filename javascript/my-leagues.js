@@ -632,6 +632,8 @@
       '<div class="ml-rost-head"><span class="ml-rost-pos"></span><span class="ml-rost-name">Player</span><span class="ml-rost-team">Team</span><span class="ml-rost-rank">Rank</span><span class="ml-rost-val">Value</span></div>' + rows;
   }
 
+  var NAV_EXPANDED = {};
+
   function navFor(isMFL) {
     var nav = [{ type: 'item', id: 'overview', label: 'Overview' }];
     if (!isMFL) nav.push({ type: 'item', id: 'draft', label: 'Draft Analyzer' });
@@ -659,10 +661,12 @@
       if (n.type === 'item') {
         return '<button class="ml-nav-item' + (tab === n.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + n.id + '\')">' + n.label + '</button>';
       }
-      var items = n.items.map(function (it) {
+      if (NAV_EXPANDED[n.id] == null) NAV_EXPANDED[n.id] = true;
+      var open = NAV_EXPANDED[n.id];
+      var items = open ? n.items.map(function (it) {
         return '<button class="ml-nav-item ml-nav-sub' + (tab === it.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + it.id + '\')">' + it.label + '</button>';
-      }).join('');
-      return '<div class="ml-nav-grp-label">' + n.label + '</div>' + items;
+      }).join('') : '';
+      return '<button class="ml-nav-grp" onclick="MLDetail.toggleGroup(\'' + n.id + '\')"><span>' + n.label + '</span><i>' + (open ? '▴' : '▾') + '</i></button>' + items;
     }).join('');
   }
 
@@ -676,31 +680,47 @@
   }
 
   document.addEventListener('click', function (e) {
-    var sw = document.getElementById('ml-lswitch-menu');
-    if (sw && sw.classList.contains('open') && !e.target.closest('.ml-lswitch')) sw.classList.remove('open');
+    ['ml-lswitch-menu', 'ml-lswitch-menu-side'].forEach(function (id) {
+      var sw = document.getElementById(id);
+      if (sw && sw.classList.contains('open') && !e.target.closest('.ml-lswitch')) sw.classList.remove('open');
+    });
     var nv = document.getElementById('ml-sidenav');
     if (nv && nv.classList.contains('open') && !e.target.closest('.ml-nav-shell')) nv.classList.remove('open');
   });
+
+  function renderPageSidebar(isMFL, tab, league) {
+    var side = el('ml-sidebar');
+    if (!side) return;
+    var nav = navFor(isMFL);
+    side.innerHTML =
+      '<div class="ml-lswitch">' +
+        '<button class="ml-lswitch-btn" onclick="event.stopPropagation();MLDetail.toggleSwitcher(\'ml-lswitch-menu-side\')">' +
+          '<span class="ml-switch-name">' + (league.name || 'League') + (isMFL ? ' <span class="ml-pill ml-pill-mfl">MFL</span>' : '') + '</span>' +
+          '<i>▾</i>' +
+        '</button>' +
+        '<div class="ml-lswitch-menu" id="ml-lswitch-menu-side">' + switcherHTML(league.key) + '</div>' +
+      '</div>' +
+      '<nav class="ml-sidenav-desktop">' + navHTML(nav, tab) + '</nav>';
+  }
 
   function renderDetail() {
     var d = DETAIL, tab = d.tab || 'overview', isMFL = d.league.platform === 'mfl';
     var nav = navFor(isMFL);
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
-      '<div class="ml-lswitch">' +
-        '<button class="ml-lswitch-btn" onclick="event.stopPropagation();MLDetail.toggleSwitcher()">' +
+      '<div class="ml-lswitch ml-lswitch-mobile">' +
+        '<button class="ml-lswitch-btn" onclick="event.stopPropagation();MLDetail.toggleSwitcher(\'ml-lswitch-menu\')">' +
           '<span class="ml-switch-name">' + (d.league.name || 'League') + (isMFL ? ' <span class="ml-pill ml-pill-mfl">MFL</span>' : '') + '</span>' +
           '<i>▾</i>' +
         '</button>' +
         '<div class="ml-lswitch-menu" id="ml-lswitch-menu">' + switcherHTML(d.league.key) + '</div>' +
       '</div>' +
-      '<div class="ml-detail-layout">' +
-        '<div class="ml-nav-shell">' +
-          '<button class="ml-nav-toggle" onclick="event.stopPropagation();MLDetail.toggleNav()"><span>' + navLabel(nav, tab) + '</span><i>▾</i></button>' +
-          '<nav class="ml-sidenav" id="ml-sidenav">' + navHTML(nav, tab) + '</nav>' +
-        '</div>' +
-        '<div class="ml-detail-main"><div id="ml-detail-body"></div></div>' +
-      '</div>';
+      '<div class="ml-nav-shell">' +
+        '<button class="ml-nav-toggle" onclick="event.stopPropagation();MLDetail.toggleNav()"><span>' + navLabel(nav, tab) + '</span><i>▾</i></button>' +
+        '<nav class="ml-sidenav" id="ml-sidenav">' + navHTML(nav, tab) + '</nav>' +
+      '</div>' +
+      '<div id="ml-detail-body"></div>';
+    renderPageSidebar(isMFL, tab, d.league);
     renderDetailBody();
   }
 
@@ -717,7 +737,6 @@
   function overviewHTML() {
     var d = DETAIL, teams = d.teams, sel = d.selected, n = d.n;
     var maxTotal = teams.reduce(function (m, t) { return Math.max(m, t.total); }, 0);
-    var bars = teams.map(function (t, i) { return barHTML(t, i, maxTotal, sel); }).join('');
     var hbars = teams.map(function (t, i) { return mobileBarHTML(t, i, maxTotal, sel); }).join('');
     var posLegend = RANK_POS.map(function (pos) { return '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + POS_COL[pos] + '"></span>' + pos + '</span>'; }).join('');
     var rows = teams.map(function (t, i) {
@@ -728,7 +747,7 @@
         '<td class="ml-center">' + ordinal(t.posRank.QB) + '</td><td class="ml-center">' + ordinal(t.posRank.RB) + '</td>' +
         '<td class="ml-center">' + ordinal(t.posRank.WR) + '</td><td class="ml-center">' + ordinal(t.posRank.TE) + '</td></tr>';
     }).join('');
-    return '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div><div class="ml-chartlist">' + hbars + '</div></div>' +
+    return '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartlist">' + hbars + '</div></div>' +
       '<div class="ml-detail-grid"><div class="ml-panel">' + rosterPanelHTML(teams[sel], n) + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table ml-allteams-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
       '<div class="ml-panel">' + standingsHTML(teams) + '</div>' +
@@ -1007,6 +1026,7 @@
   async function openDetail(key) {
     var league = LEAGUES[key]; if (!league) return;
     el('ml-content').style.display = 'none';
+    document.body.classList.add('ml-detail-open');
     var detail = el('ml-detail'); detail.style.display = 'block';
     if (league.platform === 'mfl') { await openMFLDetail(league); return; }
     var leagueId = league.league_id;
@@ -1343,7 +1363,12 @@
   }
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
-  function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
+  function closeDetail() {
+    el('ml-detail').style.display = 'none';
+    el('ml-content').style.display = 'block';
+    document.body.classList.remove('ml-detail-open');
+    var side = el('ml-sidebar'); if (side) side.innerHTML = '';
+  }
   window.MLDetail = {
     open: openDetail,
     select: selectTeam,
@@ -1351,7 +1376,8 @@
     tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } },
     chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } },
     toggleNav: function () { var n = el('ml-sidenav'); if (n) n.classList.toggle('open'); },
-    toggleSwitcher: function () { var m = el('ml-lswitch-menu'); if (m) m.classList.toggle('open'); },
+    toggleSwitcher: function (menuId) { var m = el(menuId || 'ml-lswitch-menu'); if (m) m.classList.toggle('open'); },
+    toggleGroup: function (id) { NAV_EXPANDED[id] = !NAV_EXPANDED[id]; renderDetail(); },
     switchLeague: function (key) { openDetail(key); }
   };
 
