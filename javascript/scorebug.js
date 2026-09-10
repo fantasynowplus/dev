@@ -65,6 +65,17 @@
 
     var card = document.createElement('div');
     card.className = 'scorebug-game';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', function () {
+      if (typeof window.openBoxscore === 'function') window.openBoxscore(event.id);
+    });
+    card.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && typeof window.openBoxscore === 'function') {
+        e.preventDefault();
+        window.openBoxscore(event.id);
+      }
+    });
 
     card.appendChild(teamRow(away, isFinal));
     card.appendChild(teamRow(home, isFinal));

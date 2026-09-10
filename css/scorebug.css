@@ -29,11 +29,19 @@
   flex: 0 0 auto;
   width: 126px;
   padding: 6px 10px;
-  border-right: 1px solid var(--border-dark, #14294d);
+  border-right: 1px solid var(--border-dark);
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.scorebug-game:hover,
+.scorebug-game:focus-visible {
+  background: rgba(255, 165, 21, 0.08);
+  outline: none;
 }
 
 .scorebug-team {
