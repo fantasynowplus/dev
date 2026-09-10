@@ -197,6 +197,47 @@
     return { id: pid, name: isDef ? (name || (p.team ? p.team + ' Defense' : pid)) : name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
+  var ESPN_TO_SLEEPER_TEAM = { WSH: 'WAS' };
+  function espnTeam(a) { var u = (a || '').toUpperCase(); return ESPN_TO_SLEEPER_TEAM[u] || u; }
+  var scheduleCache = null;
+  async function nflScheduleMap() {
+    if (scheduleCache) return scheduleCache;
+    var map = {};
+    try {
+      var res = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
+      if (res.ok) {
+        var data = await res.json();
+        (data.events || []).forEach(function (ev) {
+          var comp = (ev.competitions || [])[0];
+          if (!comp) return;
+          var state = (ev.status && ev.status.type && ev.status.type.state) || 'pre';
+          var kickoff = new Date(ev.date);
+          var day = kickoff.getDay(), hour = kickoff.getHours();
+          var slot;
+          if (day === 4 || day === 5) slot = 0;
+          else if (day === 6) slot = 1;
+          else if (day === 0 && hour < 15) slot = 2;
+          else if (day === 0 && hour < 18) slot = 3;
+          else if (day === 0) slot = 4;
+          else slot = 5;
+          (comp.competitors || []).forEach(function (c) {
+            var abbr = espnTeam(c.team && c.team.abbreviation);
+            if (abbr) map[abbr] = { kickoff: kickoff, state: state, slot: slot };
+          });
+        });
+      }
+    } catch (e) {}
+    scheduleCache = map;
+    return map;
+  }
+  function gameLabel(g) {
+    if (!g) return '';
+    var d = g.kickoff;
+    if (g.state === 'post') return 'Final';
+    if (g.state === 'in') return 'Live';
+    return d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
   var NON_SCORING_STATS = { pts_ppr: 1, pts_half_ppr: 1, pts_std: 1, adp_dd_ppr: 1, pos_adp_dd_ppr: 1, gp: 1, gs: 1, gms_active: 1 };
 
   function scoreStatLine(stats, scoringSettings) {
@@ -1244,9 +1285,10 @@
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
         Sleeper.get('/league/' + DETAIL.leagueId + '/rosters'),
         playedPlayersFor(week),
-        volatilityFor(week, raw.scoring_settings)
+        volatilityFor(week, raw.scoring_settings),
+        nflScheduleMap()
       ]);
-      var matchups = fetched[0] || [], rosters = fetched[1] || [], played = fetched[2] || {}, vol = fetched[3] || {};
+      var matchups = fetched[0] || [], rosters = fetched[1] || [], played = fetched[2] || {}, vol = fetched[3] || {}, sched = fetched[4] || {};
       var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; });
       if (!myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
       var myMatch = matchups.find(function (m) { return m.roster_id === myRoster.roster_id; });
@@ -1271,7 +1313,7 @@
         var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
         return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
           proj: proj, actual: actualFor(pp, pid), inj: (players[pid] && players[pid].injury_status) || null,
-          vol: vol[String(pid)] || null };
+          vol: vol[String(pid)] || null, game: sched[teamCode((players[pid] && players[pid].team) || '')] || null };
       }
 
       function sideData(roster, matchObj) {
@@ -1406,7 +1448,7 @@
         nameCell = '<div class="ml-mu-name"><span class="ml-mu-swap-out">' + m.name + '</span> <span class="ml-mu-swap-arr">◀</span> <span class="ml-mu-swap-in">' + swap.name + ' <span class="ml-mu-swap-pts">' + swapVal + '</span></span></div>' +
           '<div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + ' \u2192 start ' + swap.pos + (swap.team ? ' · ' + swap.team : '') + '</div>';
       } else {
-        nameCell = '<div class="ml-mu-name">' + m.name + injTag(m.inj) + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
+        nameCell = '<div class="ml-mu-name">' + m.name + injTag(m.inj) + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + (gameLabel(m.game) ? ' · <span class="ml-mu-gametime">' + gameLabel(m.game) + '</span>' : '') + '</div>';
       }
       return '<div class="ml-mu-row' + (swap ? ' ml-mu-hasswap' : '') + '">' +
         '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + nameCell + '</div>' +
@@ -1415,7 +1457,7 @@
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
         ptsCell(t, true) +
         volCell(t, true) +
-        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + (gameLabel(t.game) ? '<span class="ml-mu-gametime">' + gameLabel(t.game) + '</span> · ' : '') + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }
     var rows = mine.rows.map(function (m, i) {
@@ -1463,6 +1505,29 @@
     if (optimal && !(optTotal > currentLive + 0.05)) {
       perfectLine = '<div class="ml-mu-optbar"><span class="ml-mu-opt-perfect">You\'re starting your optimal lineup</span></div>';
     }
+    var SLOT_ORD = ['Thu/Fri', 'Sat', 'Sun 1pm', 'Sun late', 'SNF', 'MNF'];
+    var timingNotes = [];
+    mine.rows.forEach(function (r) {
+      if (!r.id || !r.game || r.actual != null) return;
+      if (r.inj && (r.inj === 'Questionable' || r.inj === 'Doubtful' || r.inj === 'Out') && r.game.slot >= 4) {
+        timingNotes.push('<span class="ml-mu-tn-inj">' + r.name + ' (' + r.inj + ') plays ' + SLOT_ORD[r.game.slot] + ' — have a backup ready in case they sit.</span>');
+      }
+    });
+    (function () {
+      mine.rows.forEach(function (starter) {
+        if (!starter.id || !starter.game || starter.actual != null) return;
+        if (slotEligibility(starter.slot).length < 2) return;
+        (mine.bench || []).forEach(function (b) {
+          if (!b.game || b.actual != null) return;
+          if (slotEligibility(starter.slot).indexOf(b.pos) === -1) return;
+          if (b.game.slot > starter.game.slot && Math.abs((b.proj || 0) - (starter.proj || 0)) <= 3) {
+            timingNotes.push('<span class="ml-mu-tn-flex">' + b.name + ' plays ' + SLOT_ORD[b.game.slot] + ' (vs ' + starter.name + ' ' + SLOT_ORD[starter.game.slot] + ') — keeping the later game in your flex lets you pivot on how your day goes.</span>');
+          }
+        });
+      });
+    })();
+    var timingHTML = timingNotes.length ? '<div class="ml-mu-timing">' + timingNotes.slice(0, 4).map(function (n) { return '<div class="ml-mu-tn">🕐 ' + n + '</div>'; }).join('') + '</div>' : '';
+
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
         '<div class="ml-mu-team"><div class="ml-mu-tname">You</div>' + teamScore(mine) + '</div>' +
@@ -1473,6 +1538,7 @@
       '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
       (isLive ? '' : '<div class="ml-mu-note">Win % based on projected totals</div>') +
       adjustedLine +
+      timingHTML +
       perfectLine +
       '</div>' +
       '<div class="ml-panel">' + rows + '</div>' +

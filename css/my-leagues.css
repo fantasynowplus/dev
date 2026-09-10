@@ -211,6 +211,11 @@
   .ml-mu-hasswap { background: rgba(255,184,77,0.05); }
   .ml-mu-benchrow { opacity: 0.82; }
   .ml-mu-benchrow .ml-mu-name { font-weight: 600; }
+  .ml-mu-gametime { color: #6b7890; }
+  .ml-mu-timing { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .ml-mu-tn { background: #131a29; border: 1px solid #2a3450; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #c9d2e6; }
+  .ml-mu-tn-inj { color: #ffb84d; }
+  .ml-mu-tn-flex { color: #79c0ff; }
   .ml-mu-volcell { flex-shrink: 0; min-width: 62px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
   .ml-mu-volcell-mirror { align-items: center; }
   .ml-mu-voltag { font-size: 8px; font-weight: 800; letter-spacing: 0.03em; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
