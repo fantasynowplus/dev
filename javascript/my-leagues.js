@@ -1375,7 +1375,18 @@
     tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } },
     chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } },
     toggleNav: function () { var n = el('ml-sidenav'); if (n) n.classList.toggle('open'); },
-    toggleSwitcher: function (menuId) { var m = el(menuId || 'ml-lswitch-menu'); if (m) m.classList.toggle('open'); },
+    toggleSwitcher: function (menuId) {
+      var m = el(menuId || 'ml-lswitch-menu');
+      if (!m) return;
+      if (m.classList.contains('open')) { m.classList.remove('open'); return; }
+      var btn = m.previousElementSibling;
+      if (btn) {
+        var r = btn.getBoundingClientRect();
+        m.style.top = (r.bottom + 6) + 'px';
+        m.style.left = r.left + 'px';
+      }
+      m.classList.add('open');
+    },
     toggleGroup: function (id) { NAV_EXPANDED[id] = !NAV_EXPANDED[id]; renderDetail(); },
     switchLeague: function (key) { openDetail(key); }
   };
