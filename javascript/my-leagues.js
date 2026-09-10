@@ -1335,8 +1335,8 @@
       var cls = '';
       if (o.actual != null) cls = (o.actual >= (o.proj - 1)) ? ' ml-mu-beat' : ' ml-mu-miss';
       var projSpan = '<span class="ml-mu-proj">' + proj + '</span>';
-      var actualSpan = (actual != null) ? '<span class="ml-mu-actual' + cls + '">' + actual + '</span>' : '';
-      return '<div class="ml-mu-pts">' + (mirror ? (projSpan + actualSpan) : (actualSpan + projSpan)) + '</div>';
+      var actualSpan = '<span class="ml-mu-actual' + cls + '">' + (actual != null ? actual : '') + '</span>';
+      return '<div class="ml-mu-pts' + (mirror ? ' ml-mu-pts-mirror' : '') + '">' + (mirror ? (projSpan + actualSpan) : (actualSpan + projSpan)) + '</div>';
     }
     function rowHTML(m, t, swap) {
       // Slot-winner highlight only once BOTH players in the pairing have really played.
