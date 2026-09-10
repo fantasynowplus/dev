@@ -203,7 +203,8 @@
     if (sleeperProjCache[key]) return sleeperProjCache[key];
     var field = scoring === 'PPR' ? 'pts_ppr' : scoring === 'HALF' ? 'pts_half_ppr' : 'pts_std';
     var url = 'https://api.sleeper.app/projections/nfl/' + (await Sleeper.currentSeason()) + '/' + week +
-      '?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF';
+      '?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF' +
+      '&position[]=DL&position[]=LB&position[]=DB';
     var map = {};
     try {
       var res = await fetch(url);
@@ -1170,7 +1171,7 @@
       var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
       var startingSlots = startingSlotsFor(league);
 
-      function slotRows(roster, matchObj) {
+      function slotRows(roster, matchObj, live) {
         if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', proj: 0, actual: null }; }), projTotal: 0, actualTotal: 0 };
         var pp = (matchObj && matchObj.players_points) || {};
         var projTotal = 0, actualTotal = 0;
@@ -1179,7 +1180,7 @@
           if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', proj: 0, actual: null };
           var o = playerProj(pid, players, projMap);
           var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
-          var actual = (pp[pid] != null) ? pp[pid] : null;
+          var actual = (live && pp[pid] != null) ? pp[pid] : null;
           projTotal += proj;
           if (actual != null) actualTotal += actual;
           return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual };
@@ -1187,23 +1188,51 @@
         return { rows: rows, projTotal: projTotal, actualTotal: actualTotal };
       }
 
-      var isLive = ((myMatch && myMatch.points) || 0) > 0 || ((oppMatch && oppMatch.points) || 0) > 0;
-      var mine = slotRows(myRoster, myMatch);
-      var theirs = slotRows(oppRoster, oppMatch);
+      var myLive = ((myMatch && myMatch.points) || 0) > 0;
+      var oppLive = ((oppMatch && oppMatch.points) || 0) > 0;
+      var isLive = myLive || oppLive;
+      var mine = slotRows(myRoster, myMatch, myLive);
+      var theirs = slotRows(oppRoster, oppMatch, oppLive);
 
       var pp = (myMatch && myMatch.players_points) || {};
       var allMine = (myRoster.players || []).map(function (pid) {
         var o = playerProj(pid, players, projMap);
         return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
           proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
-          actual: (pp[pid] != null ? pp[pid] : null) };
+          actual: (myLive && pp[pid] != null ? pp[pid] : null) };
       });
-      var oppTotalNow = isLive ? theirs.actualTotal : theirs.projTotal;
-      var optimal = optimalFromRoster(allMine, startingSlots, isLive);
-      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow);
+      var oppTotalNow = oppLive ? theirs.actualTotal : theirs.projTotal;
+      var optimal = optimalFromRoster(allMine, startingSlots, myLive);
+      var starterIdSet = {};
+      mine.rows.forEach(function (r) { if (r.id) starterIdSet[r.id] = true; });
+      var swaps = computeSwaps(allMine, mine.rows, startingSlots, myLive, starterIdSet);
+      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
+  }
+
+  function computeSwaps(allPlayers, starterRows, startingSlots, useActual, starterIdSet) {
+    function val(p) { return (useActual ? p.actual : p.proj) || 0; }
+    var benchAvail = allPlayers.filter(function (p) {
+      if (starterIdSet[p.id]) return false;
+      if (useActual && p.actual == null) return false;
+      return p.pos;
+    });
+    var usedBench = {};
+    var swapByIndex = {};
+    starterRows.forEach(function (row, i) {
+      if (!row.id) return;
+      var elig = slotEligibility(row.slot);
+      var starterVal = (useActual ? (row.actual != null ? row.actual : 0) : row.proj) || 0;
+      var best = null;
+      benchAvail.forEach(function (b) {
+        if (usedBench[b.id] || elig.indexOf(b.pos) === -1) return;
+        if (val(b) > starterVal && (!best || val(b) > val(best))) best = b;
+      });
+      if (best) { usedBench[best.id] = true; swapByIndex[i] = best; }
+    });
+    return swapByIndex;
   }
 
   function optimalFromRoster(allPlayers, startingSlots, useActual) {
@@ -1231,32 +1260,40 @@
     return { assign: assign, used: used, total: total };
   }
 
-  function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow) {
+    function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps) {
+    swaps = swaps || {};
     var diff = mine.projTotal - theirs.projTotal;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
     var actualTotalNow = isLive ? mine.actualTotal : mine.projTotal;
     var starterIds = {};
     mine.rows.forEach(function (r) { if (r.id) starterIds[r.id] = true; });
-    function ptsCell(o) {
+    function ptsCell(o, mirror) {
       var proj = o.proj ? o.proj.toFixed(1) : '–';
       var actual = (o.actual != null) ? o.actual.toFixed(1) : null;
       var cls = '';
       if (o.actual != null) cls = (o.actual >= (o.proj - 1)) ? ' ml-mu-beat' : ' ml-mu-miss';
-      return '<div class="ml-mu-pts">' +
-        (actual != null ? '<span class="ml-mu-actual' + cls + '">' + actual + '</span>' : '') +
-        '<span class="ml-mu-proj">' + proj + '</span></div>';
+      var projSpan = '<span class="ml-mu-proj">' + proj + '</span>';
+      var actualSpan = (actual != null) ? '<span class="ml-mu-actual' + cls + '">' + actual + '</span>' : '';
+      return '<div class="ml-mu-pts">' + (mirror ? (projSpan + actualSpan) : (actualSpan + projSpan)) + '</div>';
     }
-    var optUsed = (optimal && optimal.used) || {};
     var rows = mine.rows.map(function (m, i) {
       var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', proj: 0, actual: null };
       var mv = (m.actual != null ? m.actual : m.proj), tv = (t.actual != null ? t.actual : t.proj);
       var mHi = mv > tv, tHi = tv > mv;
-      var benched = m.id && !optUsed[m.id] && optimal;
-      return '<div class="ml-mu-row">' +
-        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + (benched ? ' <span class="ml-mu-subopt" title="A bench player would have scored more in this slot">▼</span>' : '') + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
+      var swap = swaps[i];
+      var nameCell;
+      if (swap) {
+        var swapVal = ((isLive ? swap.actual : swap.proj) || 0).toFixed(1);
+        nameCell = '<div class="ml-mu-name"><span class="ml-mu-swap-in">' + swap.name + ' <span class="ml-mu-swap-pts">' + swapVal + '</span></span> <span class="ml-mu-swap-arr">▶</span> <span class="ml-mu-swap-out">' + m.name + '</span></div>' +
+          '<div class="ml-mu-sub">' + swap.pos + (swap.team ? ' · ' + swap.team : '') + ' over ' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
+      } else {
+        nameCell = '<div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
+      }
+      return '<div class="ml-mu-row' + (swap ? ' ml-mu-hasswap' : '') + '">' +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + nameCell + '</div>' +
         ptsCell(m) +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
-        ptsCell(t) +
+        ptsCell(t, true) +
         '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }).join('');

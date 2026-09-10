@@ -198,7 +198,13 @@
   .ml-mu-opt-diff { color: #ffb84d; font-weight: 700; }
   .ml-mu-opt-flip { color: #56d364; font-weight: 700; }
   .ml-mu-opt-perfect { color: #56d364; font-weight: 600; }
-  .ml-mu-subopt { color: #ffb84d; font-size: 10px; }
+  .ml-mu-swap-in { color: #56d364; font-weight: 700; }
+  .ml-mu-swap-pts { color: #8a97b3; font-weight: 600; font-size: 11px; }
+  .ml-mu-swap-arr { color: #ffb84d; }
+  .ml-mu-swap-out { color: #7d8aa5; text-decoration: line-through; }
+  .ml-mu-hasswap { background: rgba(255,184,77,0.05); }
+  .ml-mu-actual.ml-mu-proj { margin-right: 0; }
+  .ml-mu-pts .ml-mu-proj + .ml-mu-actual { margin-left: 6px; margin-right: 0; }
   .ml-mu-actual { color: #eef2fb; font-weight: 700; margin-right: 6px; }
   .ml-mu-actual.ml-mu-beat { color: #56d364; }
   .ml-mu-actual.ml-mu-miss { color: #e5534b; }
