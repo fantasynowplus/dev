@@ -747,7 +747,7 @@
     if (!isMFL) nav.push({ type: 'item', id: 'draft', label: 'Draft Analyzer' });
     if (!isMFL) nav.push({
       type: 'group', id: 'lineup', label: 'Lineup', items: [
-        { id: 'startsit', label: 'Start / Sit' },
+        { id: 'startsit', label: 'Roster Management' },
         { id: 'matchup', label: 'Matchup' }
       ]
     });
@@ -1527,6 +1527,11 @@
     }
     var objById = {}; all.forEach(function (pid) { objById[pid] = obj(pid); });
 
+    var startablePos = {};
+    startingSlots.forEach(function (slot) {
+      slotEligibility(slot).forEach(function (p) { startablePos[p] = true; });
+    });
+
     var available = all.filter(function (pid) { return !inTaxi[pid] && !inRes[pid]; }).map(function (pid) { return objById[pid]; });
     var maxProj = 0, maxValue = 0;
     available.forEach(function (o) { if (o.pts > maxProj) maxProj = o.pts; if (o.value > maxValue) maxValue = o.value; });
@@ -1576,6 +1581,7 @@
       if (rostered[pid]) continue;
       var p = playersMap[pid];
       if (!p || ALL_POS.indexOf(posGroup(p.position)) === -1) continue;
+      if (!startablePos[posGroup(p.position)] && !startablePos[p.position]) continue;
       var nm = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
       var k = matchKey(nm, p.position);
       var pts = projMap[k], val = playerValue(p.position, rankMap[k]);
@@ -1590,14 +1596,7 @@
       : '<div style="color:#8a97b3">No clear free-agent upgrade over your bench right now.</div>';
     var faRows = topFAs.map(function (o) { return row(o.pos, o, false, false); }).join('') || '<div class="ml-empty">No notable free agents available.</div>';
 
-    var sugHTML = suggestions.map(function (s) { return '<div class="ml-ss-sug"><i class="fa-solid fa-arrow-up" style="color:#56d364"></i> Start <b>' + s.best.name + '</b> over ' + (s.cur ? '<b>' + s.cur.name + '</b>' : 'an empty slot') + ' at ' + (SLOT_LABEL[s.slot] || s.slot).replace(/_/g, ' ') + '</div>'; }).join('');
-    var wkLabel = (week && String(week) !== '0') ? ('Week ' + week) : 'Season';
-
-    return '<div class="ml-panel"><div class="ml-sum-title">Lineup Grade</div>' +
-      '<div class="ml-ss-grade"><span class="ml-ss-gbadge ml-grade-' + grade.charAt(0).toLowerCase() + '">' + grade + '</span>' +
-      '<span style="color:#8a97b3;font-size:14px">You\'re starting ' + Math.round(eff * 100) + '% of your best lineup · ' + wkLabel + ' · ' + scoring + ' (based on projections + rankings)</span></div>' +
-      (sugHTML ? '<div style="margin-top:12px">' + sugHTML + '</div>' : '') + '</div>' +
-      '<div class="ml-detail-grid">' +
+    return '<div class="ml-detail-grid">' +
         '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div>' + lineupRows + '</div>' +
         '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + benchRows + '</div>' +
       '</div>' +
