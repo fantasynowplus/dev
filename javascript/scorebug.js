@@ -1,8 +1,10 @@
 // Score bug — pulls current-week NFL games from ESPN's public scoreboard
 // endpoint (no key required) and renders them into #scorebug-root.
+// Polls faster while a game is actually live, slower otherwise.
 (function () {
   var ENDPOINT = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
-  var REFRESH_MS = 30000;
+  var LIVE_REFRESH_MS = 15000;
+  var IDLE_REFRESH_MS = 60000;
 
   function formatStatus(event) {
     var status = event.status && event.status.type ? event.status.type : {};
@@ -12,7 +14,6 @@
     if (status.state === 'post') {
       return { text: 'Final' + (status.detail && status.detail.indexOf('OT') > -1 ? '/OT' : ''), live: false };
     }
-    // Pre-game: show day + time, e.g. "Sun 12:00 PM"
     var date = new Date(event.date);
     var day = date.toLocaleDateString('en-US', { weekday: 'short' });
     var time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -95,14 +96,13 @@
     return card;
   }
 
-  function updateNavVisibility(root, inner, prevBtn, nextBtn) {
+  function updateNavVisibility(inner, prevBtn, nextBtn) {
     var scrollable = inner.scrollWidth > inner.clientWidth + 4;
     prevBtn.classList.toggle('is-visible', scrollable && inner.scrollLeft > 4);
     nextBtn.classList.toggle('is-visible', scrollable && inner.scrollLeft < inner.scrollWidth - inner.clientWidth - 4);
   }
 
-  function render(root, events) {
-    var inner = root.querySelector('.scorebug-inner');
+  function render(inner, events) {
     inner.innerHTML = '';
 
     if (!events || !events.length) {
@@ -110,27 +110,21 @@
       empty.className = 'scorebug-empty';
       empty.textContent = 'No NFL games scheduled this week.';
       inner.appendChild(empty);
-      return;
+      return false;
     }
 
+    var anyLive = false;
     events
       .slice()
       .sort(function (a, b) { return new Date(a.date) - new Date(b.date); })
       .forEach(function (event) {
         var card = gameCard(event);
         if (card) inner.appendChild(card);
+        if (event.status && event.status.type && event.status.type.state === 'in') {
+          anyLive = true;
+        }
       });
-  }
-
-  function fetchScores(root) {
-    fetch(ENDPOINT)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        render(root, data.events);
-      })
-      .catch(function (err) {
-        console.error('scorebug: failed to load scores', err);
-      });
+    return anyLive;
   }
 
   function init() {
@@ -144,7 +138,6 @@
         '<button class="scorebug-nav scorebug-nav-next" aria-label="Scroll right">&#8250;</button>' +
       '</div>';
 
-    var bug = root.querySelector('.scorebug');
     var inner = root.querySelector('.scorebug-inner');
     var prevBtn = root.querySelector('.scorebug-nav-prev');
     var nextBtn = root.querySelector('.scorebug-nav-next');
@@ -156,17 +149,27 @@
       inner.scrollBy({ left: 300, behavior: 'smooth' });
     });
     inner.addEventListener('scroll', function () {
-      updateNavVisibility(bug, inner, prevBtn, nextBtn);
+      updateNavVisibility(inner, prevBtn, nextBtn);
     });
     window.addEventListener('resize', function () {
-      updateNavVisibility(bug, inner, prevBtn, nextBtn);
+      updateNavVisibility(inner, prevBtn, nextBtn);
     });
 
-    fetchScores(root);
-    setInterval(function () { fetchScores(root); }, REFRESH_MS);
+    function tick() {
+      fetch(ENDPOINT)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          var anyLive = render(inner, data.events);
+          updateNavVisibility(inner, prevBtn, nextBtn);
+          setTimeout(tick, anyLive ? LIVE_REFRESH_MS : IDLE_REFRESH_MS);
+        })
+        .catch(function (err) {
+          console.error('scorebug: failed to load scores', err);
+          setTimeout(tick, IDLE_REFRESH_MS);
+        });
+    }
 
-    // Recheck arrow visibility once the first render lands.
-    setTimeout(function () { updateNavVisibility(bug, inner, prevBtn, nextBtn); }, 500);
+    tick();
   }
 
   if (document.readyState === 'loading') {
