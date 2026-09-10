@@ -609,12 +609,13 @@
   }
 
   function renderDetail() {
-    var d = DETAIL, tab = d.tab || 'overview';
+    var d = DETAIL, tab = d.tab || 'overview', isMFL = d.league.platform === 'mfl';
     var tabs = '<div class="ml-dtabs">' +
       '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
-      '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
-      '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>' +
+      (isMFL ? '' : '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>' +
+        '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>') +
       '<button class="ml-dtab' + (tab === 'trades' ? ' active' : '') + '" onclick="MLDetail.tab(\'trades\')">Trade Finder</button>' +
+      (isMFL ? '<span class="ml-pill ml-pill-mfl" style="margin-left:auto;align-self:center">MFL</span>' : '') +
       '</div>';
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
@@ -625,6 +626,7 @@
 
   function renderDetailBody() {
     var t = DETAIL.tab || 'overview';
+    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'startsit')) t = DETAIL.tab = 'overview';
     if (t === 'draft') renderDraft();
     else if (t === 'startsit') renderStartSit();
     else if (t === 'trades') renderTrades();
@@ -648,7 +650,7 @@
       '<div class="ml-detail-grid"><div class="ml-panel">' + rosterPanelHTML(teams[sel], n) + '</div>' +
       '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
       '<div class="ml-panel">' + standingsHTML(teams) + '</div>' +
-      '<div class="ml-panel">' + txChartHTML(teams, d.tx || {}) + '</div>';
+      (d.league.platform === 'mfl' ? '' : '<div class="ml-panel">' + txChartHTML(teams, d.tx || {}) + '</div>');
   }
 
   function pickLabel(e, n) { var inRound = ((e.pickNo - 1) % n) + 1; return e.round + '.' + (inRound < 10 ? '0' + inRound : inRound); }
@@ -697,7 +699,7 @@
 
   function computeLineup(players, startingSlots) {
     var pool = players.map(function (p) { return { id: p.name, name: p.name, pos: p.pos, team: p.team, value: p.value }; }).sort(function (a, b) { return b.value - a.value; });
-    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
+    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return slotEligibility(x.slot).length > 0; });
     var opt = optimalLineup(optSlots, pool);
     var startIds = {}; Object.keys(opt).forEach(function (i) { if (opt[i]) startIds[opt[i].id] = true; });
     var starters = [], bench = [];
@@ -706,17 +708,17 @@
   }
 
   function renderTrades() {
-    var raw = DETAIL.league.raw || {};
-    var startingSlots = (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
+    var startingSlots = startingSlotsFor(DETAIL.league);
     var teams = DETAIL.teams, me = null;
-    for (var i = 0; i < teams.length; i++) { if (teams[i].ownerId === USER_SLEEPER_ID) { me = teams[i]; break; } }
+    var myId = DETAIL.league.platform === 'mfl' ? DETAIL.league.franchise_id : USER_SLEEPER_ID;
+    for (var i = 0; i < teams.length; i++) { if (teams[i].ownerId === myId) { me = teams[i]; break; } }
     if (!me) me = teams[DETAIL.selected] || teams[0];
     if (!DETAIL.tradeData) DETAIL.tradeData = computeTrades(me, teams, startingSlots);
     el('ml-detail-body').innerHTML = tradesHTML(DETAIL.tradeData, DETAIL.tradeChip || 0);
   }
 
   function computeTrades(me, teams, startingSlots) {
-    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return SLOT_ELIG[x.slot]; });
+    var optSlots = startingSlots.map(function (s, i) { return { slot: s, i: i }; }).filter(function (x) { return slotEligibility(x.slot).length > 0; });
     var mine = asAssets(me.players).filter(function (p) { return p.value > 0; }).sort(function (a, b) { return b.value - a.value; });
     var myBase = lineupValue(mine, optSlots);
     var myLineup = computeLineup(me.players, startingSlots);
@@ -865,17 +867,66 @@
       '<div class="ml-dgrid">' + cards + '</div></div>';
   }
 
+  async function openMFLDetail(league) {
+    var detail = el('ml-detail');
+    detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Analyzing ' + (league.name || 'league') + '…</div>';
+    window.scrollTo(0, 0);
+    try {
+      var raw = league.raw || {};
+      var cookie = auth.profile && auth.profile.mfl_cookie;
+      var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
+      if (!cookie || !league.host) throw new Error('MFL session expired. Re-sync your MFL leagues from the Sync Leagues button.');
+      var dynasty = isMflDynasty(raw);
+      var rankData = await rankingsFor(dynasty ? 'dynasty' : 'draft');
+      var playersMap = await loadMFLPlayers();
+      var fetched = await Promise.all([
+        MFL.rosters(league.host, year, league.league_id, cookie),
+        MFL.standings(league.host, year, league.league_id, cookie)
+      ]);
+      var franchises = fetched[0], standings = fetched[1];
+      var nameMap = {};
+      var flist = (raw.franchises && raw.franchises.franchise) || [];
+      (Array.isArray(flist) ? flist : [flist]).forEach(function (f) { nameMap[f.id] = f.name; });
+      var standingsMap = {};
+      (standings || []).forEach(function (s) { standingsMap[s.id] = s; });
+      var rosteredIds = {};
+      franchises.forEach(function (fr) {
+        (Array.isArray(fr.player) ? fr.player : (fr.player ? [fr.player] : [])).forEach(function (p) { rosteredIds[p.id] = true; });
+      });
+      var topN = ((raw.starters && parseInt(raw.starters.count, 10)) || 12) + 6;
+      var teams = franchises.map(function (fr) {
+        var ids = fr.player || [];
+        var roster = { players: (Array.isArray(ids) ? ids : [ids]).map(function (p) { return p.id; }) };
+        var ev = evalRoster(roster, playersMap, rankData.map, topN);
+        var st = standingsMap[fr.id] || {};
+        return {
+          ownerId: fr.id, rosterId: fr.id,
+          name: nameMap[fr.id] || 'Team',
+          total: ev.total, byPos: ev.byPos, players: ev.players, posRank: {},
+          wins: parseInt(st.h2hw, 10) || 0, losses: parseInt(st.h2hl, 10) || 0, ties: parseInt(st.h2ht, 10) || 0,
+          pf: parseFloat(st.pf) || 0, maxpf: 0,
+          projWins: parseInt(st.h2hw, 10) || 0, projLosses: parseInt(st.h2hl, 10) || 0, projGames: 0
+        };
+      }).sort(function (a, b) { return b.total - a.total; });
+      var n = teams.length;
+      teams.forEach(function (t, i) { t.overallRank = i + 1; t.tier = tierFor(i + 1, n, t.total); });
+      RANK_POS.forEach(function (pos) {
+        teams.slice().sort(function (a, b) { return (b.byPos[pos] || 0) - (a.byPos[pos] || 0); })
+          .forEach(function (t, i) { t.posRank[pos] = i + 1; });
+      });
+      var selIdx = teams.findIndex(function (t) { return t.ownerId === league.franchise_id; });
+      DETAIL = { league: league, leagueId: league.league_id, teams: teams, n: n, rankData: rankData, tx: {}, rosteredIds: rosteredIds, week: 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
+      renderDetail();
+    } catch (e) {
+      detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
+    }
+  }
+
   async function openDetail(key) {
     var league = LEAGUES[key]; if (!league) return;
     el('ml-content').style.display = 'none';
     var detail = el('ml-detail'); detail.style.display = 'block';
-    if (league.platform === 'mfl') {
-      detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
-        '<div class="ml-panel"><div class="ml-sum-title">' + (league.name || 'League') + '</div>' +
-        '<p class="ml-subtitle">Full league detail (Draft Analyzer, Start/Sit, Trade Finder) is coming soon for MFL leagues. Tier, Rank, and Value on the main list are already live.</p></div>';
-      window.scrollTo(0, 0);
-      return;
-    }
+    if (league.platform === 'mfl') { await openMFLDetail(league); return; }
     var leagueId = league.league_id;
     detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Analyzing ' + (league.name || 'league') + '…</div>';
     window.scrollTo(0, 0);
@@ -926,6 +977,25 @@
   var SLOT_ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['RB', 'WR'], REC_FLEX: ['WR', 'TE'], WRRB_WRT_FLEX: ['RB', 'WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'], DL: ['DL'], LB: ['LB'], DB: ['DB'], IDP_FLEX: ['DL', 'LB', 'DB'] };
   var SLOT_LABEL = { WRRB_FLEX: 'W/R', REC_FLEX: 'W/T', WRRB_WRT_FLEX: 'FLEX', SUPER_FLEX: 'SFLEX' };
 
+  function slotEligibility(slot) {
+    if (SLOT_ELIG[slot]) return SLOT_ELIG[slot];
+    return String(slot).split('+').filter(function (p) { return ALL_POS.indexOf(p) !== -1; });
+  }
+  function mflStartingSlots(raw) {
+    var specs = (raw.starters && raw.starters.position) || [];
+    var out = [];
+    (Array.isArray(specs) ? specs : [specs]).forEach(function (spec) {
+      var limit = String(spec.limit || '0-0').split('-');
+      var max = parseInt(limit[1], 10) || 0;
+      for (var i = 0; i < max; i++) out.push(spec.name);
+    });
+    return out;
+  }
+  function startingSlotsFor(league) {
+    var raw = league.raw || {};
+    return league.platform === 'mfl' ? mflStartingSlots(raw) : (raw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; });
+  }
+
   function playerInfo(pid, playersMap, rankMap) {
     var p = playersMap[pid];
     if (!p) return { id: pid, name: pid, pos: '', value: 0, rank: null };
@@ -936,10 +1006,13 @@
 
   function optimalLineup(optSlots, pool) {
     var order = { QB: 1, RB: 1, WR: 1, TE: 1, DL: 1, LB: 1, DB: 1, REC_FLEX: 2, WRRB_FLEX: 2, WRRB_WRT_FLEX: 3, FLEX: 3, IDP_FLEX: 3, SUPER_FLEX: 4 };
-    var sorted = optSlots.slice().sort(function (a, b) { return (order[a.slot] || 9) - (order[b.slot] || 9); });
+    var sorted = optSlots.slice().sort(function (a, b) {
+      var oa = order[a.slot] || slotEligibility(a.slot).length, ob = order[b.slot] || slotEligibility(b.slot).length;
+      return oa - ob;
+    });
     var used = {}, assign = {};
     sorted.forEach(function (sl) {
-      var elig = SLOT_ELIG[sl.slot] || [];
+      var elig = slotEligibility(sl.slot);
       for (var k = 0; k < pool.length; k++) {
         var pl = pool[k];
         if (used[pl.id] || elig.indexOf(pl.pos) === -1) continue;
