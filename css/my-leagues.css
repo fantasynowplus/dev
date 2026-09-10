@@ -93,6 +93,8 @@
   @media (max-width: 560px) {
     .ml-allteams-table th:nth-child(n+4), .ml-allteams-table td:nth-child(n+4) { display: none; }
   }
+  .ml-roster-head { margin-bottom: 4px; }
+  .ml-roster-sub { color: #94a1bd; font-size: 14px; font-weight: 600; }
   .ml-needs { margin: 12px 0 16px; color: #c9d2e6; font-size: 14px; }
   .ml-needs-label { color: #8a97b3; margin-right: 6px; }
   .ml-rost-head, .ml-rost-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; border-top: 1px solid #232c42; }

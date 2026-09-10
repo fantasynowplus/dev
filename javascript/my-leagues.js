@@ -616,7 +616,8 @@
         '<span class="ml-rost-rank">' + (pl.rank ? ('#' + pl.rank) : '—') + '</span>' +
         '<span class="ml-rost-val">' + comma(pl.value) + '</span></div>';
     }).join('');
-    return '<div class="ml-sum-title">' + team.name + ' — <span class="ml-tier ml-tier-' + tierClass(team.tier) + '">' + team.tier + '</span> · #' + team.overallRank + ' of ' + n + ' · ' + comma(team.total) + ' value</div>' +
+    return '<div class="ml-roster-head"><div class="ml-sum-title" style="margin-bottom:6px">' + team.name + ' — <span class="ml-tier ml-tier-' + tierClass(team.tier) + '">' + team.tier + '</span></div>' +
+      '<div class="ml-roster-sub">#' + team.overallRank + ' of ' + n + ' · ' + comma(team.total) + ' value</div></div>' +
       '<div class="ml-needs"><span class="ml-needs-label">Team needs:</span> ' + needHTML + '</div>' +
       '<div class="ml-rost-head"><span class="ml-rost-pos"></span><span class="ml-rost-name">Player</span><span class="ml-rost-team">Team</span><span class="ml-rost-rank">Rank</span><span class="ml-rost-val">Value</span></div>' + rows;
   }
