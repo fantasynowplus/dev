@@ -14,9 +14,7 @@ layout: null
       <span id="ml-sync-status" class="ml-sync-status"></span>
     </div>
     <div class="ml-sync-row">
-      <input id="ml-mfl-username" class="ml-mfl-input" placeholder="MFL Username" autocomplete="username">
-      <input id="ml-mfl-password" class="ml-mfl-input" type="password" placeholder="MFL Password" autocomplete="current-password">
-      <button id="ml-mfl-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.runMFL()">Sync my MFL leagues</button>
+      <button id="ml-mfl-open-btn" class="ml-btn ml-btn-sm" onclick="MLSync.openMFLModal()">Sync my MFL leagues</button>
       <span id="ml-mfl-sync-status" class="ml-sync-status"></span>
     </div>
   </div>
@@ -64,6 +62,16 @@ layout: null
     <div class="ml-modal-panel">
       <button class="ml-modal-close" onclick="MLPort.close()">&times;</button>
       <div id="ml-modal-body"></div>
+    </div>
+  </div>
+  <div id="ml-mfl-modal" class="ml-modal" style="display:none;" onclick="if(event.target===this)MLSync.closeMFLModal()">
+    <div class="ml-modal-panel">
+      <button class="ml-modal-close" onclick="MLSync.closeMFLModal()">&times;</button>
+      <div class="ml-sum-title" style="margin:0 0 14px">Sync my MFL leagues</div>
+      <div class="ml-mfl-field"><label>MFL Username</label><input id="ml-mfl-username" class="ml-mfl-input" autocomplete="username"></div>
+      <div class="ml-mfl-field"><label>MFL Password</label><input id="ml-mfl-password" class="ml-mfl-input" type="password" autocomplete="current-password"></div>
+      <button id="ml-mfl-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.runMFL()">Sync</button>
+      <div id="ml-mfl-modal-status" class="ml-sync-status" style="margin-top:10px"></div>
     </div>
   </div>
 </main>

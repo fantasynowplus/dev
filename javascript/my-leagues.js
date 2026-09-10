@@ -476,9 +476,15 @@
     var tierCounts = { 'Title Favorite': 0, 'Contender': 0, 'On the Bubble': 0, 'Rebuilding': 0, 'Tank Mode': 0, 'Drafting': 0 };
     var topTeams = [], insightsMap = {}; var portEntries = [];
     try { USER_SLEEPER_ID = await getSleeperUserId(); } catch (e) {}
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timed out after ' + ms + 'ms')); }, ms); })
+      ]);
+    }
     for (var i = 0; i < leagues.length; i++) {
       try {
-        var ins = await insightsForLeague(leagues[i]);
+        var ins = await withTimeout(insightsForLeague(leagues[i]), 20000);
         insightsMap[leagues[i].key] = ins;
         if (ins.players && ins.roster && leagues[i].platform === 'sleeper') {
           var lraw = leagues[i].raw || {};
@@ -491,7 +497,9 @@
         setInsight(leagues[i].key, ins);
         if (ins.tier) tierCounts[ins.tier]++;
         if (ins.score != null) topTeams.push({ name: leagues[i].name || 'League', tier: ins.tier, score: ins.score });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Insight failed for', leagues[i].key, e);
+      }
     }
     topTeams.sort(function (a, b) { return b.score - a.score; });
     renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
@@ -1138,16 +1146,30 @@
         btn.disabled = false;
       }
     },
+    openMFLModal: function () {
+      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
+      el('ml-mfl-username').value = '';
+      el('ml-mfl-password').value = '';
+      el('ml-mfl-modal-status').textContent = '';
+      el('ml-mfl-modal').style.display = 'flex';
+    },
+    closeMFLModal: function () {
+      el('ml-mfl-modal').style.display = 'none';
+    },
     async runMFL() {
       var btn = el('ml-mfl-sync-btn');
-      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
       btn.disabled = true;
       try {
         await syncMyMFLLeagues({
           usernameId: 'ml-mfl-username',
           passwordId: 'ml-mfl-password',
-          statusId: 'ml-mfl-sync-status',
-          onDone: function () { init(); }
+          statusId: 'ml-mfl-modal-status',
+          onDone: function (leagues) {
+            el('ml-mfl-sync-status').className = 'ml-sync-status ok';
+            el('ml-mfl-sync-status').textContent = 'Synced ' + leagues.length + ' MFL league' + (leagues.length === 1 ? '' : 's') + '.';
+            MLSync.closeMFLModal();
+            init();
+          }
         });
       } finally {
         btn.disabled = false;
@@ -1179,7 +1201,10 @@
       render(leagues);
       if (leagues.length) {
         el('ml-chart-slot').textContent = 'Analyzing your rosters…';
-        computeInsights(leagues);
+        computeInsights(leagues).catch(function (e) {
+          console.error('computeInsights failed:', e);
+          el('ml-chart-slot').style.display = 'none';
+        });
       } else {
         el('ml-chart-slot').style.display = 'none';
       }

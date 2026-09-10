@@ -6,7 +6,9 @@
   .ml-btn { background: #FFA515; color: #1a1204; border: none; border-radius: 6px; padding: 11px 22px; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
   .ml-btn:hover { background: #ED9405; }
   .ml-pill-mfl { background: #1f6feb; color: #eef2fb; }
-  .ml-mfl-input { background: #161d2e; border: 1px solid #2a3450; color: #eef2fb; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
+  .ml-mfl-field { margin-bottom: 12px; }
+  .ml-mfl-field label { display: block; font-size: 12px; color: #94a1bd; margin-bottom: 4px; }
+  .ml-mfl-input { width: 100%; box-sizing: border-box; background: #161d2e; border: 1px solid #2a3450; color: #eef2fb; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
   .ml-btn-sm { padding: 8px 16px; font-size: 13px; }
   .ml-btn-sm:disabled { opacity: 0.6; cursor: default; }
   .ml-sync-row { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; flex-wrap: wrap; }
