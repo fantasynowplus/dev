@@ -519,6 +519,19 @@
 
   function shortName(s) { return (s || '').length > 11 ? (s.slice(0, 10) + '…') : (s || ''); }
 
+  function mobileBarHTML(team, idx, maxTotal, sel) {
+    var w = maxTotal > 0 ? Math.round(team.total / maxTotal * 100) : 0;
+    var segs = ALL_POS.map(function (pos) {
+      var v = team.byPos[pos] || 0;
+      var sw = team.total > 0 ? Math.round(v / team.total * 100) : 0;
+      return sw > 0 ? '<div style="width:' + sw + '%;background:' + POS_COL[pos] + '"></div>' : '';
+    }).join('');
+    return '<div class="ml-hbar-row' + (idx === sel ? ' ml-hbar-sel' : '') + '" onclick="MLDetail.select(' + idx + ')">' +
+      '<div class="ml-hbar-label">' + shortName(team.name) + '</div>' +
+      '<div class="ml-hbar-track"><div class="ml-hbar-fill" style="width:' + w + '%">' + segs + '</div></div>' +
+      '<div class="ml-hbar-val">' + comma(team.total) + '</div></div>';
+  }
+
   function barHTML(team, idx, maxTotal, sel) {
     var h = maxTotal > 0 ? Math.round(team.total / maxTotal * 220) : 0;
     var segs = ALL_POS.map(function (pos) {
@@ -637,6 +650,7 @@
     var d = DETAIL, teams = d.teams, sel = d.selected, n = d.n;
     var maxTotal = teams.reduce(function (m, t) { return Math.max(m, t.total); }, 0);
     var bars = teams.map(function (t, i) { return barHTML(t, i, maxTotal, sel); }).join('');
+    var hbars = teams.map(function (t, i) { return mobileBarHTML(t, i, maxTotal, sel); }).join('');
     var posLegend = RANK_POS.map(function (pos) { return '<span class="ml-legend-item"><span class="ml-legend-dot" style="background:' + POS_COL[pos] + '"></span>' + pos + '</span>'; }).join('');
     var rows = teams.map(function (t, i) {
       return '<tr class="' + (i === sel ? 'ml-row-sel' : '') + '" style="cursor:pointer" onclick="MLDetail.select(' + i + ')">' +
@@ -646,9 +660,9 @@
         '<td class="ml-center">' + ordinal(t.posRank.QB) + '</td><td class="ml-center">' + ordinal(t.posRank.RB) + '</td>' +
         '<td class="ml-center">' + ordinal(t.posRank.WR) + '</td><td class="ml-center">' + ordinal(t.posRank.TE) + '</td></tr>';
     }).join('');
-    return '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div></div>' +
+    return '<div class="ml-panel"><div class="ml-panel-head"><span class="ml-sum-title" style="margin:0">Roster Value — Best to Worst</span><span class="ml-poslegend">' + posLegend + '</span></div><div class="ml-chartrow">' + bars + '</div><div class="ml-chartlist">' + hbars + '</div></div>' +
       '<div class="ml-detail-grid"><div class="ml-panel">' + rosterPanelHTML(teams[sel], n) + '</div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
+      '<div class="ml-panel"><div class="ml-sum-title">All Teams</div><div class="ml-table-wrap" style="margin-top:12px"><table class="ml-table ml-allteams-table"><thead><tr><th>Team</th><th class="ml-center">Tier</th><th class="ml-center">Rank</th><th class="ml-center">QB</th><th class="ml-center">RB</th><th class="ml-center">WR</th><th class="ml-center">TE</th></tr></thead><tbody>' + rows + '</tbody></table></div></div></div>' +
       '<div class="ml-panel">' + standingsHTML(teams) + '</div>' +
       (d.league.platform === 'mfl' ? '' : '<div class="ml-panel">' + txChartHTML(teams, d.tx || {}) + '</div>');
   }
