@@ -1513,6 +1513,7 @@
         timingNotes.push('<span class="ml-mu-tn-inj">' + r.name + ' (' + r.inj + ') plays ' + SLOT_ORD[r.game.slot] + ' — have a backup ready in case they sit.</span>');
       }
     });
+    var flexNotes = [];
     (function () {
       mine.rows.forEach(function (starter) {
         if (!starter.id || !starter.game || starter.actual != null) return;
@@ -1521,12 +1522,21 @@
           if (!b.game || b.actual != null) return;
           if (slotEligibility(starter.slot).indexOf(b.pos) === -1) return;
           if (b.game.slot > starter.game.slot && Math.abs((b.proj || 0) - (starter.proj || 0)) <= 3) {
-            timingNotes.push('<span class="ml-mu-tn-flex">' + b.name + ' plays ' + SLOT_ORD[b.game.slot] + ' (vs ' + starter.name + ' ' + SLOT_ORD[starter.game.slot] + ') — keeping the later game in your flex lets you pivot on how your day goes.</span>');
+            flexNotes.push('<b>' + b.name + '</b> (' + SLOT_ORD[b.game.slot] + ') over <b>' + starter.name + '</b> (' + SLOT_ORD[starter.game.slot] + ')');
           }
         });
       });
     })();
-    var timingHTML = timingNotes.length ? '<div class="ml-mu-timing">' + timingNotes.slice(0, 4).map(function (n) { return '<div class="ml-mu-tn">🕐 ' + n + '</div>'; }).join('') + '</div>' : '';
+    var timingHTML = '';
+    if (timingNotes.length || flexNotes.length) {
+      timingHTML = '<div class="ml-mu-timing">';
+      timingNotes.slice(0, 4).forEach(function (n) { timingHTML += '<div class="ml-mu-tn">🕐 ' + n + '</div>'; });
+      if (flexNotes.length) {
+        timingHTML += '<div class="ml-mu-tn ml-mu-tn-flexgroup"><span class="ml-mu-tn-flex">Flex timing: ' + flexNotes.slice(0, 4).join(', ') + '</span>' +
+          '<div class="ml-mu-tn-foot">Slotting your later game in a flex spot lets you pivot based on how earlier games go.</div></div>';
+      }
+      timingHTML += '</div>';
+    }
 
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
