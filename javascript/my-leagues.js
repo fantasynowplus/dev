@@ -1199,7 +1199,7 @@
           var actual = (live && pp[pid] != null) ? pp[pid] : null;
           projTotal += proj;
           if (actual != null) actualTotal += actual;
-          return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual };
+          return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual, inj: (players[pid] && players[pid].injury_status) || null };
         });
         return { rows: rows, projTotal: projTotal, actualTotal: actualTotal };
       }
@@ -1276,7 +1276,14 @@
     return { assign: assign, used: used, total: total };
   }
 
-    function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps) {
+  var INJ_TAG = { Questionable: 'Q', Doubtful: 'D', Out: 'O', IR: 'IR', PUP: 'PUP', Sus: 'SUS', NA: 'NA', COV: 'COV' };
+  var INJ_CLASS = { Questionable: 'q', Doubtful: 'd', Out: 'o', IR: 'o', PUP: 'o', Sus: 'o', NA: 'o', COV: 'd' };
+  function injTag(status) {
+    if (!status || !INJ_TAG[status]) return '';
+    return ' <span class="ml-mu-inj ml-mu-inj-' + (INJ_CLASS[status] || 'q') + '" title="' + status + '">' + INJ_TAG[status] + '</span>';
+  }
+
+  function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps) {
     swaps = swaps || {};
     var diff = mine.projTotal - theirs.projTotal;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
@@ -1300,17 +1307,17 @@
       var nameCell;
       if (swap) {
         var swapVal = ((isLive ? swap.actual : swap.proj) || 0).toFixed(1);
-        nameCell = '<div class="ml-mu-name"><span class="ml-mu-swap-in">' + swap.name + ' <span class="ml-mu-swap-pts">' + swapVal + '</span></span> <span class="ml-mu-swap-arr">▶</span> <span class="ml-mu-swap-out">' + m.name + '</span></div>' +
-          '<div class="ml-mu-sub">' + swap.pos + (swap.team ? ' · ' + swap.team : '') + ' over ' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
+        nameCell = '<div class="ml-mu-name"><span class="ml-mu-swap-out">' + m.name + '</span> <span class="ml-mu-swap-arr">◀</span> <span class="ml-mu-swap-in">' + swap.name + ' <span class="ml-mu-swap-pts">' + swapVal + '</span></span></div>' +
+          '<div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + ' \u2192 start ' + swap.pos + (swap.team ? ' · ' + swap.team : '') + '</div>';
       } else {
-        nameCell = '<div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
+        nameCell = '<div class="ml-mu-name">' + m.name + injTag(m.inj) + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>';
       }
       return '<div class="ml-mu-row' + (swap ? ' ml-mu-hasswap' : '') + '">' +
         '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + nameCell + '</div>' +
         ptsCell(m) +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
         ptsCell(t, true) +
-        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }).join('');
     function teamScore(s) {

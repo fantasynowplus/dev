@@ -203,6 +203,10 @@
   .ml-mu-swap-arr { color: #ffb84d; }
   .ml-mu-swap-out { color: #7d8aa5; text-decoration: line-through; }
   .ml-mu-hasswap { background: rgba(255,184,77,0.05); }
+  .ml-mu-inj { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; vertical-align: middle; }
+  .ml-mu-inj-q { background: rgba(255,184,77,0.18); color: #ffb84d; }
+  .ml-mu-inj-d { background: rgba(229,120,75,0.2); color: #ff9d6b; }
+  .ml-mu-inj-o { background: rgba(229,83,75,0.18); color: #ff7b72; }
   .ml-mu-actual.ml-mu-proj { margin-right: 0; }
   .ml-mu-pts .ml-mu-proj + .ml-mu-actual { margin-left: 6px; margin-right: 0; }
   .ml-mu-actual { color: #eef2fb; font-weight: 700; margin-right: 6px; }
