@@ -1182,7 +1182,7 @@
           var actual = (pp[pid] != null) ? pp[pid] : null;
           projTotal += proj;
           if (actual != null) actualTotal += actual;
-          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual };
+          return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual };
         });
         return { rows: rows, projTotal: projTotal, actualTotal: actualTotal };
       }
@@ -1190,31 +1190,73 @@
       var isLive = ((myMatch && myMatch.points) || 0) > 0 || ((oppMatch && oppMatch.points) || 0) > 0;
       var mine = slotRows(myRoster, myMatch);
       var theirs = slotRows(oppRoster, oppMatch);
-      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive);
+
+      var pp = (myMatch && myMatch.players_points) || {};
+      var allMine = (myRoster.players || []).map(function (pid) {
+        var o = playerProj(pid, players, projMap);
+        return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
+          proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
+          actual: (pp[pid] != null ? pp[pid] : null) };
+      });
+      var oppTotalNow = isLive ? theirs.actualTotal : theirs.projTotal;
+      var optimal = optimalFromRoster(allMine, startingSlots, isLive);
+      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
   }
 
-  function matchupHTML(mine, theirs, oppName, week, isLive) {
+  function optimalFromRoster(allPlayers, startingSlots, useActual) {
+    var pool = allPlayers.filter(function (p) {
+      var val = useActual ? p.actual : p.proj;
+      if (useActual && p.actual == null) return false;
+      return val != null && p.pos;
+    }).map(function (p) {
+      return { id: p.id, name: p.name, pos: p.pos, team: p.team, val: (useActual ? p.actual : p.proj) || 0 };
+    }).sort(function (a, b) { return b.val - a.val; });
+
+    var slots = startingSlots.map(function (s, i) { return { slot: s, i: i }; })
+      .filter(function (x) { return slotEligibility(x.slot).length > 0; })
+      .sort(function (a, b) { return slotEligibility(a.slot).length - slotEligibility(b.slot).length; });
+
+    var used = {}, assign = {}, total = 0;
+    slots.forEach(function (sl) {
+      var elig = slotEligibility(sl.slot);
+      for (var k = 0; k < pool.length; k++) {
+        var pl = pool[k];
+        if (used[pl.id] || elig.indexOf(pl.pos) === -1) continue;
+        used[pl.id] = true; assign[sl.slot + ':' + sl.i] = pl; total += pl.val; break;
+      }
+    });
+    return { assign: assign, used: used, total: total };
+  }
+
+  function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow) {
     var diff = mine.projTotal - theirs.projTotal;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
-    function ptsCell(o, hi) {
+    var actualTotalNow = isLive ? mine.actualTotal : mine.projTotal;
+    var starterIds = {};
+    mine.rows.forEach(function (r) { if (r.id) starterIds[r.id] = true; });
+    function ptsCell(o) {
       var proj = o.proj ? o.proj.toFixed(1) : '–';
       var actual = (o.actual != null) ? o.actual.toFixed(1) : null;
-      return '<div class="ml-mu-pts' + (hi ? ' ml-mu-win' : '') + '">' +
-        (actual != null ? '<span class="ml-mu-actual">' + actual + '</span>' : '') +
+      var cls = '';
+      if (o.actual != null) cls = (o.actual >= (o.proj - 1)) ? ' ml-mu-beat' : ' ml-mu-miss';
+      return '<div class="ml-mu-pts">' +
+        (actual != null ? '<span class="ml-mu-actual' + cls + '">' + actual + '</span>' : '') +
         '<span class="ml-mu-proj">' + proj + '</span></div>';
     }
+    var optUsed = (optimal && optimal.used) || {};
     var rows = mine.rows.map(function (m, i) {
       var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', proj: 0, actual: null };
       var mv = (m.actual != null ? m.actual : m.proj), tv = (t.actual != null ? t.actual : t.proj);
       var mHi = mv > tv, tHi = tv > mv;
+      var benched = m.id && !optUsed[m.id] && optimal;
       return '<div class="ml-mu-row">' +
-        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
-        ptsCell(m, mHi) +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + (benched ? ' <span class="ml-mu-subopt" title="A bench player would have scored more in this slot">▼</span>' : '') + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
+        ptsCell(m) +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
-        ptsCell(t, tHi) +
+        ptsCell(t) +
         '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }).join('');
@@ -1222,6 +1264,22 @@
       return isLive
         ? '<div class="ml-mu-tscore">' + s.actualTotal.toFixed(1) + '</div><div class="ml-mu-tproj">proj ' + s.projTotal.toFixed(1) + '</div>'
         : '<div class="ml-mu-tscore">' + s.projTotal.toFixed(1) + '</div><div class="ml-mu-tproj">projected</div>';
+    }
+    var optTotal = optimal ? optimal.total : 0;
+    var leftOnBench = optTotal - actualTotalNow;
+    var optBeats = (oppTotalNow != null) && optTotal > oppTotalNow;
+    var youWonAlready = (oppTotalNow != null) && actualTotalNow > oppTotalNow;
+    var optLabel = isLive ? 'Optimal lineup' : 'Optimal projected lineup';
+    var banner = '';
+    if (optimal) {
+      var verdict = '';
+      if (leftOnBench > 0.05) {
+        verdict = '<span class="ml-mu-opt-diff">+' + leftOnBench.toFixed(1) + ' left on your bench</span>';
+        if (optBeats && !youWonAlready) verdict += ' <span class="ml-mu-opt-flip">— optimal would have ' + (isLive ? 'won' : 'been favored') + '</span>';
+      } else {
+        verdict = '<span class="ml-mu-opt-perfect">You\'re starting your optimal lineup</span>';
+      }
+      banner = '<div class="ml-mu-optbar"><div><span class="ml-mu-opt-label">' + optLabel + '</span> <b>' + optTotal.toFixed(1) + '</b></div><div>' + verdict + '</div></div>';
     }
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
@@ -1232,6 +1290,7 @@
       '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
       '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
       (isLive ? '' : '<div class="ml-mu-note">Win % based on projected totals</div>') +
+      banner +
       '</div>' +
       '<div class="ml-panel">' + rows + '</div>';
   }

@@ -193,11 +193,18 @@
   .ml-mu-win .ml-mu-name { color: #56d364; }
   .ml-mu-tproj { color: #7d8aa5; font-size: 11px; font-weight: 600; margin-top: 2px; }
   .ml-mu-note { color: #7d8aa5; font-size: 11px; text-align: center; margin-top: 8px; }
+  .ml-mu-optbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #232c42; font-size: 13px; color: #c9d2e6; }
+  .ml-mu-opt-label { color: #8a97b3; }
+  .ml-mu-opt-diff { color: #ffb84d; font-weight: 700; }
+  .ml-mu-opt-flip { color: #56d364; font-weight: 700; }
+  .ml-mu-opt-perfect { color: #56d364; font-weight: 600; }
+  .ml-mu-subopt { color: #ffb84d; font-size: 10px; }
   .ml-mu-actual { color: #eef2fb; font-weight: 700; margin-right: 6px; }
+  .ml-mu-actual.ml-mu-beat { color: #56d364; }
+  .ml-mu-actual.ml-mu-miss { color: #e5534b; }
   .ml-mu-proj { color: #7d8aa5; font-weight: 600; }
   .ml-mu-sub { color: #7d8aa5; font-size: 11px; }
   .ml-mu-pts { flex-shrink: 0; min-width: 64px; text-align: center; font-size: 12px; }
-  .ml-mu-pts.ml-mu-win .ml-mu-actual, .ml-mu-pts.ml-mu-win .ml-mu-proj { color: #56d364; }
   .ml-mu-slotlbl { flex-shrink: 0; width: 48px; text-align: center; font-size: 10px; font-weight: 700; color: #5f6c85; text-transform: uppercase; }
   .ml-trade-card { background: #131a29; border: 1px solid #2a3450; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .ml-trade-head { color: #8a97b3; font-size: 13px; margin-bottom: 12px; }
