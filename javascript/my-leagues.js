@@ -26,7 +26,7 @@
   };
   var PROJ_SCALE = 700;
   var WEEK_PROJ_SCALE = 18;
-  var PROJ_POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+  var PROJ_POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST', 'DL', 'LB', 'DB'];
   var TEAM_ALIASES2 = { JAC: 'JAX', WSH: 'WAS', ARZ: 'ARI', LA: 'LAR' };
   function teamCode(t) { var u = (t || '').toUpperCase(); return TEAM_ALIASES2[u] || u; }
   var PLAYERS = null, MFL_PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
@@ -632,22 +632,75 @@
       '<div class="ml-rost-head"><span class="ml-rost-pos"></span><span class="ml-rost-name">Player</span><span class="ml-rost-team">Team</span><span class="ml-rost-rank">Rank</span><span class="ml-rost-val">Value</span></div>' + rows;
   }
 
+  function navFor(isMFL) {
+    var nav = [{ type: 'item', id: 'overview', label: 'Overview' }];
+    if (!isMFL) nav.push({ type: 'item', id: 'draft', label: 'Draft Analyzer' });
+    if (!isMFL) nav.push({
+      type: 'group', id: 'lineup', label: 'Lineup', items: [
+        { id: 'startsit', label: 'Start / Sit' },
+        { id: 'matchup', label: 'Matchup' }
+      ]
+    });
+    nav.push({ type: 'group', id: 'trade', label: 'Trade', items: [{ id: 'trades', label: 'Trade Finder' }] });
+    return nav;
+  }
+
+  function navLabel(nav, tab) {
+    for (var i = 0; i < nav.length; i++) {
+      var n = nav[i];
+      if (n.type === 'item' && n.id === tab) return n.label;
+      if (n.type === 'group') for (var j = 0; j < n.items.length; j++) if (n.items[j].id === tab) return n.items[j].label;
+    }
+    return 'Overview';
+  }
+
+  function navHTML(nav, tab) {
+    return nav.map(function (n) {
+      if (n.type === 'item') {
+        return '<button class="ml-nav-item' + (tab === n.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + n.id + '\')">' + n.label + '</button>';
+      }
+      var items = n.items.map(function (it) {
+        return '<button class="ml-nav-item ml-nav-sub' + (tab === it.id ? ' active' : '') + '" onclick="MLDetail.tab(\'' + it.id + '\')">' + it.label + '</button>';
+      }).join('');
+      return '<div class="ml-nav-grp-label">' + n.label + '</div>' + items;
+    }).join('');
+  }
+
+  function switcherHTML(currentKey) {
+    var all = Object.keys(LEAGUES).map(function (k) { return LEAGUES[k]; });
+    return all.map(function (l) {
+      return '<button class="ml-switch-opt' + (l.key === currentKey ? ' active' : '') + '" onclick="MLDetail.switchLeague(\'' + l.key + '\')">' +
+        '<span class="ml-switch-name">' + (l.name || 'League') + '</span>' +
+        '<span class="ml-switch-plat">' + (l.platform === 'mfl' ? 'MFL' : 'Sleeper') + '</span></button>';
+    }).join('');
+  }
+
+  document.addEventListener('click', function (e) {
+    var sw = document.getElementById('ml-lswitch-menu');
+    if (sw && sw.classList.contains('open') && !e.target.closest('.ml-lswitch')) sw.classList.remove('open');
+    var nv = document.getElementById('ml-sidenav');
+    if (nv && nv.classList.contains('open') && !e.target.closest('.ml-nav-shell')) nv.classList.remove('open');
+  });
+
   function renderDetail() {
     var d = DETAIL, tab = d.tab || 'overview', isMFL = d.league.platform === 'mfl';
-    var tabs = '<div class="ml-dtabs">' +
-      '<button class="ml-dtab' + (tab === 'overview' ? ' active' : '') + '" onclick="MLDetail.tab(\'overview\')">Overview</button>' +
-      (isMFL ? '' : '<button class="ml-dtab' + (tab === 'draft' ? ' active' : '') + '" onclick="MLDetail.tab(\'draft\')">Draft Analyzer</button>') +
-      (isMFL ? '' :
-        '<span class="ml-dtab-sep">Lineup</span>' +
-        '<button class="ml-dtab' + (tab === 'startsit' ? ' active' : '') + '" onclick="MLDetail.tab(\'startsit\')">Start / Sit</button>' +
-        '<button class="ml-dtab' + (tab === 'matchup' ? ' active' : '') + '" onclick="MLDetail.tab(\'matchup\')">Matchup</button>') +
-      '<span class="ml-dtab-sep">Trade</span>' +
-      '<button class="ml-dtab' + (tab === 'trades' ? ' active' : '') + '" onclick="MLDetail.tab(\'trades\')">Trade Finder</button>' +
-      '</div>';
+    var nav = navFor(isMFL);
     el('ml-detail').innerHTML =
       '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button>' +
-      '<h2 class="ml-detail-title">' + (d.league.name || 'League') + (isMFL ? ' <span class="ml-pill ml-pill-mfl" style="margin-left:8px;vertical-align:middle">MFL</span>' : '') + '</h2>' +
-      tabs + '<div id="ml-detail-body"></div>';
+      '<div class="ml-lswitch">' +
+        '<button class="ml-lswitch-btn" onclick="event.stopPropagation();MLDetail.toggleSwitcher()">' +
+          '<span class="ml-switch-name">' + (d.league.name || 'League') + (isMFL ? ' <span class="ml-pill ml-pill-mfl">MFL</span>' : '') + '</span>' +
+          '<i>▾</i>' +
+        '</button>' +
+        '<div class="ml-lswitch-menu" id="ml-lswitch-menu">' + switcherHTML(d.league.key) + '</div>' +
+      '</div>' +
+      '<div class="ml-detail-layout">' +
+        '<div class="ml-nav-shell">' +
+          '<button class="ml-nav-toggle" onclick="event.stopPropagation();MLDetail.toggleNav()"><span>' + navLabel(nav, tab) + '</span><i>▾</i></button>' +
+          '<nav class="ml-sidenav" id="ml-sidenav">' + navHTML(nav, tab) + '</nav>' +
+        '</div>' +
+        '<div class="ml-detail-main"><div id="ml-detail-body"></div></div>' +
+      '</div>';
     renderDetailBody();
   }
 
@@ -1291,7 +1344,16 @@
 
   function selectTeam(i) { if (DETAIL) { DETAIL.selected = i; renderDetailBody(); } }
   function closeDetail() { el('ml-detail').style.display = 'none'; el('ml-content').style.display = 'block'; }
-  window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
+  window.MLDetail = {
+    open: openDetail,
+    select: selectTeam,
+    back: closeDetail,
+    tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetail(); } },
+    chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } },
+    toggleNav: function () { var n = el('ml-sidenav'); if (n) n.classList.toggle('open'); },
+    toggleSwitcher: function () { var m = el('ml-lswitch-menu'); if (m) m.classList.toggle('open'); },
+    switchLeague: function (key) { openDetail(key); }
+  };
 
   window.MLSync = {
     openModal: function () {
