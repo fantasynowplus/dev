@@ -108,7 +108,7 @@
   .ml-txgroup { display: flex; align-items: flex-end; gap: 6px; }
   .ml-txbar-wrap { display: flex; flex-direction: column; align-items: center; }
   .ml-txbar { width: 16px; border-radius: 3px 3px 0 0; min-height: 2px; }
-  .ml-dtabs { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid #2a3450; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ml-dtabs { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid #2a3450; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .ml-dtab-sep { flex-shrink: 0; padding: 0 4px; font-size: 11px; font-weight: 700; color: #5f6c85; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
   .ml-dtab { background: none; border: none; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #8a97b3; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; font-family: inherit; flex-shrink: 0; white-space: nowrap; }
   .ml-dtab.active { color: #eef2fb; border-bottom-color: #FFA515; }
@@ -166,6 +166,7 @@
   .ml-mu-right { text-align: right; }
   .ml-mu-name { color: #c9d2e6; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ml-mu-win .ml-mu-name { color: #56d364; }
+  .ml-mu-live { color: #ff7b72; font-size: 8px; vertical-align: middle; }
   .ml-mu-sub { color: #7d8aa5; font-size: 11px; }
   .ml-mu-pts { flex-shrink: 0; width: 36px; text-align: center; font-weight: 700; font-size: 13px; color: #8a97b3; }
   .ml-mu-pts.ml-mu-win { color: #56d364; }

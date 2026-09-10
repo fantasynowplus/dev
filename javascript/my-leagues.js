@@ -26,6 +26,9 @@
   };
   var PROJ_SCALE = 700;
   var WEEK_PROJ_SCALE = 18;
+  var PROJ_POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+  var TEAM_ALIASES2 = { JAC: 'JAX', WSH: 'WAS', ARZ: 'ARI', LA: 'LAR' };
+  function teamCode(t) { var u = (t || '').toUpperCase(); return TEAM_ALIASES2[u] || u; }
   var PLAYERS = null, MFL_PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
 
   function el(id) { return document.getElementById(id); }
@@ -163,16 +166,21 @@
     var key = week + '|' + scoring;
     if (projCache[key]) return projCache[key];
     var map = {};
-    for (var i = 0; i < RANK_POS.length; i++) {
-      var pos = RANK_POS[i];
+    for (var i = 0; i < PROJ_POS.length; i++) {
+      var pos = PROJ_POS[i];
       try {
         var res = await fetch(PROJ_URL + '?position=' + pos + '&week=' + week + '&scoring=' + scoring);
         if (!res.ok) continue;
         var data = await res.json();
         var arr = (data && data.players) || [];
         for (var j = 0; j < arr.length; j++) {
-          var kk = matchKey(arr[j].name, arr[j].position || pos);
-          if (map[kk] == null) map[kk] = arr[j].points;
+          if (pos === 'DST') {
+            var tk = 'DEF|' + teamCode(arr[j].team);
+            if (map[tk] == null) map[tk] = arr[j].points;
+          } else {
+            var kk = matchKey(arr[j].name, arr[j].position || pos);
+            if (map[kk] == null) map[kk] = arr[j].points;
+          }
         }
       } catch (e) {}
     }
@@ -184,8 +192,9 @@
     var p = playersMap[pid];
     if (!p) return { id: pid, name: pid, pos: '', pts: 0 };
     var name = p.full_name || ((p.first_name || '') + ' ' + (p.last_name || ''));
-    var pts = projMap[matchKey(name, p.position)];
-    return { id: pid, name: name, pos: p.position, pts: (pts != null ? pts : 0) };
+    var isDef = (p.position || '').toUpperCase() === 'DEF';
+    var pts = projMap[isDef ? ('DEF|' + teamCode(p.team)) : matchKey(name, p.position)];
+    return { id: pid, name: isDef ? (name || (p.team ? p.team + ' Defense' : pid)) : name, pos: p.position, pts: (pts != null ? pts : 0) };
   }
 
   async function loadSheet(url, fnMap, lists) {
@@ -1066,46 +1075,50 @@
       var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
       var startingSlots = startingSlotsFor(league);
 
-      function slotRows(roster) {
-        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', pts: 0 }; }), total: 0 };
+      function slotRows(roster, matchObj, isLive) {
+        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', pts: 0, live: false }; }), total: 0 };
+        var pp = (matchObj && matchObj.players_points) || {};
         var total = 0;
         var rows = startingSlots.map(function (slot, i) {
           var pid = roster.starters && roster.starters[i];
-          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', pts: 0 };
+          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', pts: 0, live: false };
           var o = playerProj(pid, players, projMap);
-          var pts = o.pts || 0;
+          var actual = pp[pid];
+          var rowLive = !!(isLive && actual != null);
+          var pts = rowLive ? actual : (o.pts || 0);
           total += pts;
-          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', pts: pts };
+          return { slot: slot, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', pts: pts, live: rowLive };
         });
         return { rows: rows, total: total };
       }
 
-      var mine = slotRows(myRoster);
-      var theirs = slotRows(oppRoster);
-      body.innerHTML = matchupHTML(mine, theirs, oppName, week);
+      var isLive = ((myMatch && myMatch.points) || 0) > 0 || ((oppMatch && oppMatch.points) || 0) > 0;
+      var mine = slotRows(myRoster, myMatch, isLive);
+      var theirs = slotRows(oppRoster, oppMatch, isLive);
+      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
   }
 
-  function matchupHTML(mine, theirs, oppName, week) {
+  function matchupHTML(mine, theirs, oppName, week, isLive) {
     var diff = mine.total - theirs.total;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
     var rows = mine.rows.map(function (m, i) {
-      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', pts: 0 };
+      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', pts: 0, live: false };
       var mHi = m.pts > t.pts, tHi = t.pts > m.pts;
       return '<div class="ml-mu-row">' +
-        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + m.name + (m.live ? ' <span class="ml-mu-live">●</span>' : '') + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div></div>' +
         '<div class="ml-mu-pts' + (mHi ? ' ml-mu-win' : '') + '">' + (m.pts ? m.pts.toFixed(1) : '–') + '</div>' +
         '<div class="ml-mu-slotlbl">' + (SLOT_LABEL[m.slot] || m.slot).replace(/_/g, ' ') + '</div>' +
         '<div class="ml-mu-pts' + (tHi ? ' ml-mu-win' : '') + '">' + (t.pts ? t.pts.toFixed(1) : '–') + '</div>' +
-        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + (t.live ? '<span class="ml-mu-live">●</span> ' : '') + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
     }).join('');
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
         '<div class="ml-mu-team"><div class="ml-mu-tname">You</div><div class="ml-mu-tscore">' + mine.total.toFixed(1) + '</div></div>' +
-        '<div class="ml-mu-vs">Week ' + week + '<br>Projected</div>' +
+        '<div class="ml-mu-vs">Week ' + week + '<br>' + (isLive ? 'Live' : 'Projected') + '</div>' +
         '<div class="ml-mu-team"><div class="ml-mu-tname">' + oppName + '</div><div class="ml-mu-tscore">' + theirs.total.toFixed(1) + '</div></div>' +
       '</div>' +
       '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
