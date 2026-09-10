@@ -1116,9 +1116,25 @@
   window.MLDetail = { open: openDetail, select: selectTeam, back: closeDetail, tab: function (name) { if (DETAIL) { DETAIL.tab = name; renderDetailBody(); } }, chip: function (i) { if (DETAIL) { DETAIL.tradeChip = i; renderDetailBody(); } } };
 
   window.MLSync = {
+    openModal: function () {
+      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
+      var status = el('ml-sync-status');
+      if (status) {
+        status.className = 'ml-sync-status';
+        status.textContent = (auth.profile && auth.profile.sleeper_synced_at)
+          ? 'Last synced ' + new Date(auth.profile.sleeper_synced_at).toLocaleString()
+          : '';
+      }
+      el('ml-mfl-username').value = '';
+      el('ml-mfl-password').value = '';
+      el('ml-mfl-modal-status').textContent = '';
+      el('ml-sync-modal').style.display = 'flex';
+    },
+    closeModal: function () {
+      el('ml-sync-modal').style.display = 'none';
+    },
     async run() {
       var btn = el('ml-sync-btn'), status = el('ml-sync-status');
-      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
       var handle = auth.profile && auth.profile.sleeper_handle;
       if (!handle) {
         status.className = 'ml-sync-status err';
@@ -1146,16 +1162,6 @@
         btn.disabled = false;
       }
     },
-    openMFLModal: function () {
-      if (!loggedIn()) { var link = document.querySelector('.btn-login'); if (link) link.click(); return; }
-      el('ml-mfl-username').value = '';
-      el('ml-mfl-password').value = '';
-      el('ml-mfl-modal-status').textContent = '';
-      el('ml-mfl-modal').style.display = 'flex';
-    },
-    closeMFLModal: function () {
-      el('ml-mfl-modal').style.display = 'none';
-    },
     async runMFL() {
       var btn = el('ml-mfl-sync-btn');
       btn.disabled = true;
@@ -1164,12 +1170,7 @@
           usernameId: 'ml-mfl-username',
           passwordId: 'ml-mfl-password',
           statusId: 'ml-mfl-modal-status',
-          onDone: function (leagues) {
-            el('ml-mfl-sync-status').className = 'ml-sync-status ok';
-            el('ml-mfl-sync-status').textContent = 'Synced ' + leagues.length + ' MFL league' + (leagues.length === 1 ? '' : 's') + '.';
-            MLSync.closeMFLModal();
-            init();
-          }
+          onDone: function () { init(); }
         });
       } finally {
         btn.disabled = false;

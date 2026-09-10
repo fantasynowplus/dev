@@ -10,12 +10,7 @@ layout: null
     <h1>My Leagues</h1>
     <p class="ml-subtitle">Your linked Sleeper leagues, all in one place.</p>
     <div class="ml-sync-row">
-      <button id="ml-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.run()">Sync my Sleeper leagues</button>
-      <span id="ml-sync-status" class="ml-sync-status"></span>
-    </div>
-    <div class="ml-sync-row">
-      <button id="ml-mfl-open-btn" class="ml-btn ml-btn-sm" onclick="MLSync.openMFLModal()">Sync my MFL leagues</button>
-      <span id="ml-mfl-sync-status" class="ml-sync-status"></span>
+      <button id="ml-sync-open-btn" class="ml-btn ml-btn-sm" onclick="MLSync.openModal()">Sync Leagues</button>
     </div>
   </div>
 
@@ -64,14 +59,24 @@ layout: null
       <div id="ml-modal-body"></div>
     </div>
   </div>
-  <div id="ml-mfl-modal" class="ml-modal" style="display:none;" onclick="if(event.target===this)MLSync.closeMFLModal()">
+  <div id="ml-sync-modal" class="ml-modal" style="display:none;" onclick="if(event.target===this)MLSync.closeModal()">
     <div class="ml-modal-panel">
-      <button class="ml-modal-close" onclick="MLSync.closeMFLModal()">&times;</button>
-      <div class="ml-sum-title" style="margin:0 0 14px">Sync my MFL leagues</div>
-      <div class="ml-mfl-field"><label>MFL Username</label><input id="ml-mfl-username" class="ml-mfl-input" autocomplete="username"></div>
-      <div class="ml-mfl-field"><label>MFL Password</label><input id="ml-mfl-password" class="ml-mfl-input" type="password" autocomplete="current-password"></div>
-      <button id="ml-mfl-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.runMFL()">Sync</button>
-      <div id="ml-mfl-modal-status" class="ml-sync-status" style="margin-top:10px"></div>
+      <button class="ml-modal-close" onclick="MLSync.closeModal()">&times;</button>
+      <div class="ml-sum-title" style="margin:0 0 14px">Sync Leagues</div>
+
+      <div class="ml-sync-block">
+        <div class="ml-sync-block-title">Sleeper</div>
+        <button id="ml-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.run()">Sync my Sleeper leagues</button>
+        <div id="ml-sync-status" class="ml-sync-status"></div>
+      </div>
+
+      <div class="ml-sync-block">
+        <div class="ml-sync-block-title">MFL</div>
+        <div class="ml-mfl-field"><label>MFL Username</label><input id="ml-mfl-username" class="ml-mfl-input" autocomplete="username"></div>
+        <div class="ml-mfl-field"><label>MFL Password</label><input id="ml-mfl-password" class="ml-mfl-input" type="password" autocomplete="current-password"></div>
+        <button id="ml-mfl-sync-btn" class="ml-btn ml-btn-sm" onclick="MLSync.runMFL()">Sync my MFL leagues</button>
+        <div id="ml-mfl-modal-status" class="ml-sync-status"></div>
+      </div>
     </div>
   </div>
 </main>

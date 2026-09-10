@@ -9,6 +9,9 @@
   .ml-mfl-field { margin-bottom: 12px; }
   .ml-mfl-field label { display: block; font-size: 12px; color: #94a1bd; margin-bottom: 4px; }
   .ml-mfl-input { width: 100%; box-sizing: border-box; background: #161d2e; border: 1px solid #2a3450; color: #eef2fb; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
+  .ml-sync-block { margin-bottom: 20px; }
+  .ml-sync-block:last-child { margin-bottom: 0; }
+  .ml-sync-block-title { font-size: 13px; font-weight: 700; color: #8a97b3; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
   .ml-btn-sm { padding: 8px 16px; font-size: 13px; }
   .ml-btn-sm:disabled { opacity: 0.6; cursor: default; }
   .ml-sync-row { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; flex-wrap: wrap; }
