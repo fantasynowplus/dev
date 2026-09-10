@@ -1339,13 +1339,12 @@
       return '<div class="ml-mu-pts' + (mirror ? ' ml-mu-pts-mirror' : '') + '">' + (mirror ? (projSpan + actualSpan) : (actualSpan + projSpan)) + '</div>';
     }
     function rowHTML(m, t, swap) {
-      // Slot-winner highlight only once BOTH players in the pairing have really played.
       var bothPlayed = (m.actual != null) && (t.actual != null);
       var mv = (m.actual != null ? m.actual : m.proj), tv = (t.actual != null ? t.actual : t.proj);
       var mHi = bothPlayed && mv > tv, tHi = bothPlayed && tv > mv;
       var nameCell;
       if (swap) {
-        var swapVal = ((isLive ? swap.actual : swap.proj) || 0).toFixed(1);
+        var swapVal = ((swap.actual != null ? swap.actual : swap.proj) || 0).toFixed(1);
         nameCell = '<div class="ml-mu-name"><span class="ml-mu-swap-out">' + m.name + '</span> <span class="ml-mu-swap-arr">◀</span> <span class="ml-mu-swap-in">' + swap.name + ' <span class="ml-mu-swap-pts">' + swapVal + '</span></span></div>' +
           '<div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + ' \u2192 start ' + swap.pos + (swap.team ? ' · ' + swap.team : '') + '</div>';
       } else {
