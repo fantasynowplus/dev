@@ -135,7 +135,7 @@
 }
 
 .boxscore-player-meta {
-  color: var(--charcoal, #606060);
+  color: var(--charcoal, #eeeded);
   font-size: 0.72rem;
   margin-top: 2px;
 }
