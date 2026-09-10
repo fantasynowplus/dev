@@ -135,7 +135,7 @@
 }
 
 .boxscore-player-meta {
-  color: var(--charcoal, #eeeded);
+  color: var(--light-gray, #eeeded);
   font-size: 0.72rem;
   margin-top: 2px;
 }
@@ -150,7 +150,7 @@
 .boxscore-loading,
 .boxscore-empty {
   text-align: center;
-  color: var(--charcoal, #606060);
+  color: var(--light-gray, #eeeded);
   padding: 50px 0;
   font-size: 0.9rem;
 }
