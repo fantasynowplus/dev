@@ -237,6 +237,28 @@
     return map;
   }
 
+  // Set of player_ids whose game has actually been played this week (gp >= 1),
+  // from Sleeper's stats endpoint. This is independent of points, so a player who
+  // played and scored 0.0 is correctly counted as "played".
+  var playedCache = {};
+  async function playedPlayersFor(week) {
+    if (playedCache[week]) return playedCache[week];
+    var url = 'https://api.sleeper.app/stats/nfl/' + (await Sleeper.currentSeason()) + '/' + week + '?season_type=regular';
+    var set = {};
+    try {
+      var res = await fetch(url);
+      if (res.ok) {
+        var arr = await res.json();
+        (arr || []).forEach(function (row) {
+          if (!row || !row.player_id || !row.stats) return;
+          if ((row.stats.gp || 0) >= 1) set[String(row.player_id)] = true;
+        });
+      }
+    } catch (e) {}
+    playedCache[week] = set;
+    return set;
+  }
+
   async function loadSheet(url, fnMap, lists) {
     try {
       var res = await fetch(url);
@@ -1174,9 +1196,10 @@
       var projMap = await sleeperProjectionsFor(week, scoring, raw.scoring_settings);
       var fetched = await Promise.all([
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
-        Sleeper.get('/league/' + DETAIL.leagueId + '/rosters')
+        Sleeper.get('/league/' + DETAIL.leagueId + '/rosters'),
+        playedPlayersFor(week)
       ]);
-      var matchups = fetched[0] || [], rosters = fetched[1] || [];
+      var matchups = fetched[0] || [], rosters = fetched[1] || [], played = fetched[2] || {};
       var myRoster = rosters.find(function (r) { return r.owner_id === USER_SLEEPER_ID; });
       if (!myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
       var myMatch = matchups.find(function (m) { return m.roster_id === myRoster.roster_id; });
@@ -1187,42 +1210,58 @@
       var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
       var startingSlots = startingSlotsFor(league);
 
-      function slotRows(roster, matchObj, live) {
-        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', proj: 0, actual: null }; }), projTotal: 0, actualTotal: 0 };
-        var pp = (matchObj && matchObj.players_points) || {};
-        var projTotal = 0, actualTotal = 0;
-        var rows = startingSlots.map(function (slot, i) {
-          var pid = roster.starters && roster.starters[i];
-          if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', proj: 0, actual: null };
-          var o = playerProj(pid, players, projMap);
-          var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
-          var actual = (live && pp[pid] != null) ? pp[pid] : null;
-          projTotal += proj;
-          if (actual != null) actualTotal += actual;
-          return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '', proj: proj, actual: actual, inj: (players[pid] && players[pid].injury_status) || null };
-        });
-        return { rows: rows, projTotal: projTotal, actualTotal: actualTotal };
+      // A player's actual score is real once their game has been played (gp >= 1 in stats),
+      // independent of points — so a played player who scored 0.0 correctly shows 0.0.
+      function actualFor(pp, pid) {
+        if (!played[String(pid)]) return null;
+        var v = pp[pid];
+        return (v != null) ? v : 0;
       }
 
-      var myLive = ((myMatch && myMatch.points) || 0) > 0;
-      var oppLive = ((oppMatch && oppMatch.points) || 0) > 0;
-      var isLive = myLive || oppLive;
-      var mine = slotRows(myRoster, myMatch, myLive);
-      var theirs = slotRows(oppRoster, oppMatch, oppLive);
+      function rowFor(pid, slot, pp) {
+        if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', proj: 0, actual: null };
+        var o = playerProj(pid, players, projMap);
+        var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
+        return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
+          proj: proj, actual: actualFor(pp, pid), inj: (players[pid] && players[pid].injury_status) || null };
+      }
+
+      function sideData(roster, matchObj) {
+        if (!roster) return { rows: startingSlots.map(function (s) { return { slot: s, name: 'Bye', pos: '', team: '', proj: 0, actual: null }; }), bench: [], projTotal: 0, actualTotal: 0 };
+        var pp = (matchObj && matchObj.players_points) || {};
+        var projTotal = 0, actualTotal = 0;
+        var starterSet = {};
+        var rows = startingSlots.map(function (slot, i) {
+          var pid = roster.starters && roster.starters[i];
+          if (pid && pid !== '0') starterSet[pid] = true;
+          var r = rowFor(pid, slot, pp);
+          projTotal += r.proj;
+          if (r.actual != null) actualTotal += r.actual;
+          return r;
+        });
+        var bench = (roster.players || []).filter(function (pid) { return !starterSet[pid]; })
+          .map(function (pid) { return rowFor(pid, 'BN', pp); })
+          .sort(function (a, b) { return b.proj - a.proj; });
+        return { rows: rows, bench: bench, projTotal: projTotal, actualTotal: actualTotal };
+      }
+
+      var mine = sideData(myRoster, myMatch);
+      var theirs = sideData(oppRoster, oppMatch);
+      var anyActual = mine.actualTotal > 0 || theirs.actualTotal > 0;
 
       var pp = (myMatch && myMatch.players_points) || {};
       var allMine = (myRoster.players || []).map(function (pid) {
         var o = playerProj(pid, players, projMap);
         return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
           proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
-          actual: (myLive && pp[pid] != null ? pp[pid] : null) };
+          actual: actualFor(pp, pid) };
       });
-      var oppTotalNow = oppLive ? theirs.actualTotal : theirs.projTotal;
-      var optimal = optimalFromRoster(allMine, startingSlots, myLive);
+      var oppTotalNow = anyActual ? theirs.actualTotal : theirs.projTotal;
+      var optimal = optimalFromRoster(allMine, startingSlots, anyActual);
       var starterIdSet = {};
       mine.rows.forEach(function (r) { if (r.id) starterIdSet[r.id] = true; });
-      var swaps = computeSwaps(allMine, mine.rows, startingSlots, myLive, starterIdSet);
-      body.innerHTML = matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps);
+      var swaps = computeSwaps(allMine, mine.rows, startingSlots, anyActual, starterIdSet);
+      body.innerHTML = matchupHTML(mine, theirs, oppName, week, anyActual, optimal, oppTotalNow, swaps);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
@@ -1299,11 +1338,11 @@
       var actualSpan = (actual != null) ? '<span class="ml-mu-actual' + cls + '">' + actual + '</span>' : '';
       return '<div class="ml-mu-pts">' + (mirror ? (projSpan + actualSpan) : (actualSpan + projSpan)) + '</div>';
     }
-    var rows = mine.rows.map(function (m, i) {
-      var t = theirs.rows[i] || { name: 'Empty', pos: '', team: '', proj: 0, actual: null };
+    function rowHTML(m, t, swap) {
+      // Slot-winner highlight only once BOTH players in the pairing have really played.
+      var bothPlayed = (m.actual != null) && (t.actual != null);
       var mv = (m.actual != null ? m.actual : m.proj), tv = (t.actual != null ? t.actual : t.proj);
-      var mHi = mv > tv, tHi = tv > mv;
-      var swap = swaps[i];
+      var mHi = bothPlayed && mv > tv, tHi = bothPlayed && tv > mv;
       var nameCell;
       if (swap) {
         var swapVal = ((isLive ? swap.actual : swap.proj) || 0).toFixed(1);
@@ -1319,7 +1358,26 @@
         ptsCell(t, true) +
         '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '"><div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div></div>' +
         '</div>';
+    }
+    var rows = mine.rows.map(function (m, i) {
+      return rowHTML(m, theirs.rows[i] || { name: 'Empty', pos: '', team: '', proj: 0, actual: null }, swaps[i]);
     }).join('');
+    function benchHTML() {
+      var maxLen = Math.max(mine.bench.length, theirs.bench.length);
+      if (!maxLen) return '';
+      var brows = '';
+      for (var i = 0; i < maxLen; i++) {
+        var m = mine.bench[i], t = theirs.bench[i];
+        brows += '<div class="ml-mu-row ml-mu-benchrow">' +
+          '<div class="ml-mu-side">' + (m ? '<div class="ml-mu-name">' + m.name + injTag(m.inj) + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>' : '') + '</div>' +
+          (m ? ptsCell(m) : '<div class="ml-mu-pts"></div>') +
+          '<div class="ml-mu-slotlbl">BN</div>' +
+          (t ? ptsCell(t, true) : '<div class="ml-mu-pts"></div>') +
+          '<div class="ml-mu-side ml-mu-right">' + (t ? '<div class="ml-mu-name">' + t.name + injTag(t.inj) + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div>' : '') + '</div>' +
+          '</div>';
+      }
+      return '<div class="ml-panel"><div class="ml-sum-title">Bench</div>' + brows + '</div>';
+    }
     function teamScore(s) {
       return isLive
         ? '<div class="ml-mu-tscore">' + s.actualTotal.toFixed(1) + '</div><div class="ml-mu-tproj">proj ' + s.projTotal.toFixed(1) + '</div>'
@@ -1352,7 +1410,8 @@
       (isLive ? '' : '<div class="ml-mu-note">Win % based on projected totals</div>') +
       banner +
       '</div>' +
-      '<div class="ml-panel">' + rows + '</div>';
+      '<div class="ml-panel">' + rows + '</div>' +
+      benchHTML();
   }
 
   async function renderStartSit() {

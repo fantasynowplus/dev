@@ -203,6 +203,8 @@
   .ml-mu-swap-arr { color: #ffb84d; }
   .ml-mu-swap-out { color: #7d8aa5; text-decoration: line-through; }
   .ml-mu-hasswap { background: rgba(255,184,77,0.05); }
+  .ml-mu-benchrow { opacity: 0.82; }
+  .ml-mu-benchrow .ml-mu-name { font-weight: 600; }
   .ml-mu-inj { display: inline-block; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; vertical-align: middle; }
   .ml-mu-inj-q { background: rgba(255,184,77,0.18); color: #ffb84d; }
   .ml-mu-inj-d { background: rgba(229,120,75,0.2); color: #ff9d6b; }
