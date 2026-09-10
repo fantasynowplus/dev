@@ -1257,33 +1257,33 @@
           proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
           actual: actualFor(pp, pid) };
       });
-      var oppTotalNow = anyActual ? theirs.actualTotal : theirs.projTotal;
-      var optimal = optimalFromRoster(allMine, startingSlots, anyActual);
+      var oppTotalNow = anyActual ? theirs.liveTotal : theirs.projTotal;
+      var optimal = optimalFromRoster(allMine, startingSlots);
       var starterIdSet = {};
       mine.rows.forEach(function (r) { if (r.id) starterIdSet[r.id] = true; });
-      var swaps = computeSwaps(allMine, mine.rows, startingSlots, anyActual, starterIdSet);
+      var swaps = computeSwaps(allMine, mine.rows, startingSlots, starterIdSet);
       body.innerHTML = matchupHTML(mine, theirs, oppName, week, anyActual, optimal, oppTotalNow, swaps);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
   }
 
-  function computeSwaps(allPlayers, starterRows, startingSlots, useActual, starterIdSet) {
-    function val(p) { return (useActual ? p.actual : p.proj) || 0; }
+  function computeSwaps(allPlayers, starterRows, startingSlots, starterIdSet) {
+    function val(p) { return (p.actual != null ? p.actual : p.proj) || 0; }
     var benchAvail = allPlayers.filter(function (p) {
       if (starterIdSet[p.id]) return false;
-      if (useActual && p.actual == null) return false;
       return p.pos;
     });
     var usedBench = {};
     var swapByIndex = {};
     starterRows.forEach(function (row, i) {
       if (!row.id) return;
+      if (row.actual != null) return; // starter's game already played — can't swap them out
       var elig = slotEligibility(row.slot);
-      var starterVal = (useActual ? (row.actual != null ? row.actual : 0) : row.proj) || 0;
+      var starterVal = row.proj || 0;
       var best = null;
       benchAvail.forEach(function (b) {
-        if (usedBench[b.id] || elig.indexOf(b.pos) === -1) return;
+        if (usedBench[b.id] || b.actual != null || elig.indexOf(b.pos) === -1) return; // only bench players who haven't locked
         if (val(b) > starterVal && (!best || val(b) > val(best))) best = b;
       });
       if (best) { usedBench[best.id] = true; swapByIndex[i] = best; }
@@ -1291,13 +1291,12 @@
     return swapByIndex;
   }
 
-  function optimalFromRoster(allPlayers, startingSlots, useActual) {
+  function optimalFromRoster(allPlayers, startingSlots) {
+    function blend(p) { return (p.actual != null ? p.actual : p.proj) || 0; }
     var pool = allPlayers.filter(function (p) {
-      var val = useActual ? p.actual : p.proj;
-      if (useActual && p.actual == null) return false;
-      return val != null && p.pos;
+      return p.pos && (p.actual != null || p.proj != null);
     }).map(function (p) {
-      return { id: p.id, name: p.name, pos: p.pos, team: p.team, val: (useActual ? p.actual : p.proj) || 0 };
+      return { id: p.id, name: p.name, pos: p.pos, team: p.team, val: blend(p) };
     }).sort(function (a, b) { return b.val - a.val; });
 
     var slots = startingSlots.map(function (s, i) { return { slot: s, i: i }; })
