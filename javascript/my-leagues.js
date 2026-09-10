@@ -1400,16 +1400,9 @@
         (flips ? '<span class="ml-mu-adj-flip">flips to a win</span>' : '') +
         '</div>';
     }
-    var banner = '';
-    if (optimal) {
-      var verdict = '';
-      if (leftOnBench > 0.05) {
-        verdict = '<span class="ml-mu-opt-diff">+' + leftOnBench.toFixed(1) + ' left on your bench</span>';
-        if (optBeats && !youWonAlready) verdict += ' <span class="ml-mu-opt-flip">— optimal would have ' + (isLive ? 'won' : 'been favored') + '</span>';
-      } else {
-        verdict = '<span class="ml-mu-opt-perfect">You\'re starting your optimal lineup</span>';
-      }
-      banner = '<div class="ml-mu-optbar"><div><span class="ml-mu-opt-label">' + optLabel + '</span> <b>' + optTotal.toFixed(1) + '</b></div><div>' + verdict + '</div></div>';
+    var perfectLine = '';
+    if (optimal && !(optTotal > currentLive + 0.05)) {
+      perfectLine = '<div class="ml-mu-optbar"><span class="ml-mu-opt-perfect">You\'re starting your optimal lineup</span></div>';
     }
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
@@ -1421,7 +1414,7 @@
       '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
       (isLive ? '' : '<div class="ml-mu-note">Win % based on projected totals</div>') +
       adjustedLine +
-      banner +
+      perfectLine +
       '</div>' +
       '<div class="ml-panel">' + rows + '</div>' +
       benchHTML();
