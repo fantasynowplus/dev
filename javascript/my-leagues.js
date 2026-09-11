@@ -786,11 +786,10 @@
   function navFor(isMFL) {
     var nav = [{ type: 'item', id: 'overview', label: 'Overview' }];
     if (!isMFL) nav.push({ type: 'item', id: 'draft', label: 'Draft Analyzer' });
-    if (!isMFL) nav.push({
-      type: 'group', id: 'lineup', label: 'Lineup', items: [
-        { id: 'startsit', label: 'Roster Management' },
-        { id: 'matchup', label: 'Matchup' }
-      ]
+    nav.push({
+      type: 'group', id: 'lineup', label: 'Lineup', items: isMFL
+        ? [{ id: 'startsit', label: 'Roster' }]
+        : [{ id: 'startsit', label: 'Roster' }, { id: 'matchup', label: 'Matchup' }]
     });
     nav.push({ type: 'group', id: 'trade', label: 'Trade', items: [{ id: 'trades', label: 'Trade Finder' }] });
     return nav;
@@ -902,7 +901,7 @@
 
   function renderDetailBody() {
     var t = DETAIL.tab || 'overview';
-    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'startsit' || t === 'matchup')) t = DETAIL.tab = 'overview';
+    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'matchup')) t = DETAIL.tab = 'overview';
     if (t === 'draft') renderDraft();
     else if (t === 'startsit') renderStartSit();
     else if (t === 'matchup') renderMatchup();
@@ -1192,7 +1191,9 @@
           .forEach(function (t, i) { t.posRank[pos] = i + 1; });
       });
       var selIdx = teams.findIndex(function (t) { return t.ownerId === league.franchise_id; });
-      DETAIL = { league: league, leagueId: league.league_id, teams: teams, n: n, rankData: rankData, tx: {}, rosteredIds: rosteredIds, week: 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null };
+      var myFranchise = franchises.find(function (fr) { return fr.id === league.franchise_id; }) || null;
+      DETAIL = { league: league, leagueId: league.league_id, teams: teams, n: n, rankData: rankData, tx: {}, rosteredIds: rosteredIds, week: 0, selected: selIdx >= 0 ? selIdx : 0, tab: 'overview', draftAnalysis: null,
+        mflFranchises: franchises, mflMyFranchise: myFranchise, mflPlayers: playersMap };
       renderDetail();
     } catch (e) {
       detail.innerHTML = '<button class="ml-back" onclick="MLDetail.back()">← Back to leagues</button><div class="ml-empty">Could not load this league: ' + e.message + '</div>';
@@ -1583,7 +1584,92 @@
       benchHTML();
   }
 
+  async function renderMFLRoster() {
+    var body = el('ml-detail-body');
+    var fr = DETAIL.mflMyFranchise;
+    if (!fr) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
+    body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Building your roster…</div></div>';
+    try {
+      var raw = DETAIL.league.raw || {};
+      var playersMap = DETAIL.mflPlayers || await loadMFLPlayers();
+      var rankMap = DETAIL.rankData.map;
+      var week = DETAIL.week || 1;
+      var cookie = auth.profile && auth.profile.mfl_cookie;
+      var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
+
+      // Starter/bench come from weeklyResults; taxi/IR from roster status flags.
+      var starterIds = {};
+      try {
+        var wr = await MFL.weeklyResults(DETAIL.league.host, year, DETAIL.league.league_id, week, cookie);
+        var matchups = (wr && wr.matchup) || [];
+        (Array.isArray(matchups) ? matchups : [matchups]).forEach(function (m) {
+          var fs = (m.franchise && (Array.isArray(m.franchise) ? m.franchise : [m.franchise])) || [];
+          fs.forEach(function (f) {
+            if (f.id === fr.id && f.starters) String(f.starters).split(',').filter(Boolean).forEach(function (pid) { starterIds[pid] = true; });
+          });
+        });
+      } catch (e) {}
+
+      var rawPlayers = fr.player || [];
+      var list = (Array.isArray(rawPlayers) ? rawPlayers : [rawPlayers]);
+      function obj(p) {
+        var meta = playersMap[p.id] || {};
+        var name = meta.name || p.id;
+        var k = matchKey(name, meta.position);
+        var slot = 'bench';
+        if (p.status === 'TAXI_SQUAD') slot = 'taxi';
+        else if (p.status === 'INJURED_RESERVE') slot = 'ir';
+        else if (starterIds[p.id]) slot = 'starter';
+        return { id: p.id, name: name, pos: meta.position || '', team: meta.team || '', value: playerValue(meta.position, rankMap[k]), slot: slot };
+      }
+      var players = list.map(obj);
+      var starters = players.filter(function (p) { return p.slot === 'starter'; }).sort(function (a, b) { return b.value - a.value; });
+      var bench = players.filter(function (p) { return p.slot === 'bench'; }).sort(function (a, b) { return b.value - a.value; });
+      var taxi = players.filter(function (p) { return p.slot === 'taxi'; });
+      var ir = players.filter(function (p) { return p.slot === 'ir'; });
+
+      // Free agent targets: top-ranked players not rostered anywhere, at positions the league starts.
+      var startablePos = {};
+      startingSlotsFor(DETAIL.league).forEach(function (s) { slotEligibility(s).forEach(function (p) { startablePos[p] = true; }); });
+      var faPool = [];
+      Object.keys(playersMap).forEach(function (pid) {
+        if (DETAIL.rosteredIds[pid]) return;
+        var meta = playersMap[pid];
+        if (!meta || !meta.position) return;
+        if (!startablePos[meta.position]) return;
+        var k = matchKey(meta.name, meta.position);
+        var val = playerValue(meta.position, rankMap[k]);
+        if (val > 0) faPool.push({ id: pid, name: meta.name, pos: meta.position, team: meta.team || '', value: val });
+      });
+      faPool.sort(function (a, b) { return b.value - a.value; });
+      var faTargets = faPool.slice(0, 10);
+
+      body.innerHTML = mflRosterHTML(starters, bench, taxi, ir, faTargets);
+    } catch (e) {
+      body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not build your roster: ' + e.message + '</div></div>';
+    }
+  }
+
+  function mflRosterHTML(starters, bench, taxi, ir, faTargets) {
+    function pRow(o) {
+      return '<div class="ml-ss2">' +
+        '<div class="ml-ss2-box" style="background:' + boxColor(o.pos || 'DEF') + '">' + (o.pos || '–') + '</div>' +
+        '<div class="ml-ss2-main"><div class="ml-ss2-name">' + o.name + '</div><div class="ml-ss2-sub">' + (o.pos || '') + (o.team ? ' · ' + o.team : '') + '</div></div>' +
+        '<div class="ml-ss2-pts">' + (o.value ? Math.round(o.value) : '–') + '</div></div>';
+    }
+    function section(title, arr) {
+      if (!arr.length) return '';
+      return '<div class="ml-panel"><div class="ml-sum-title">' + title + '</div><div style="margin-top:10px">' + arr.map(pRow).join('') + '</div></div>';
+    }
+    var startPanel = '<div class="ml-panel"><div class="ml-sum-title">Starting Lineup</div><div style="margin-top:10px">' + (starters.length ? starters.map(pRow).join('') : '<div class="ml-empty">No starters set for this week yet.</div>') + '</div></div>';
+    var benchPanel = '<div class="ml-panel"><div class="ml-sum-title">Bench</div><div style="margin-top:10px">' + (bench.length ? bench.map(pRow).join('') : '<div class="ml-empty">No bench players.</div>') + '</div></div>';
+    return '<div class="ml-detail-grid">' + startPanel + benchPanel + '</div>' +
+      ((taxi.length || ir.length) ? '<div class="ml-detail-grid">' + section('Taxi Squad', taxi) + section('IR / Reserve', ir) + '</div>' : '') +
+      '<div class="ml-panel"><div class="ml-sum-title">Free Agent Targets</div><div style="margin-top:10px">' + (faTargets.length ? faTargets.map(pRow).join('') : '<div class="ml-empty">No available targets found.</div>') + '</div></div>';
+  }
+
   async function renderStartSit() {
+    if (DETAIL.league.platform === 'mfl') return renderMFLRoster();
     var body = el('ml-detail-body');
     if (!DETAIL.myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
     body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Building your lineup…</div></div>';
