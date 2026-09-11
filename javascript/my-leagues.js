@@ -839,9 +839,17 @@
     });
   });
 
+  function headerOffset() {
+    var h = document.querySelector('header');
+    var bottom = h ? h.getBoundingClientRect().bottom : 120;
+    return Math.max(0, Math.round(bottom));
+  }
   function renderPageSidebar(isMFL, tab, league) {
     var side = el('ml-sidebar');
     if (!side) return;
+    var top = headerOffset();
+    side.style.top = top + 'px';
+    side.style.height = 'calc(100vh - ' + top + 'px)';
     var nav = navFor(isMFL);
     side.innerHTML =
       '<div class="ml-lswitch">' +
