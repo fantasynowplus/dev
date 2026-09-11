@@ -839,36 +839,9 @@
     });
   });
 
-  function headerOffset() {
-    var bottom = 0;
-    [].forEach.call(document.querySelectorAll('body *'), function (e) {
-      var pos = getComputedStyle(e).position;
-      if (pos !== 'fixed') return;
-      var r = e.getBoundingClientRect();
-      if (r.top < 220 && r.height > 10 && r.width > 500 && r.bottom > bottom) bottom = r.bottom;
-    });
-    return bottom > 0 ? Math.round(bottom) : 184;
-  }
-  function applySidebarOffset() {
-    var side = el('ml-sidebar');
-    if (!side || !document.body.classList.contains('ml-detail-open')) return;
-    var top = headerOffset();
-    side.style.top = top + 'px';
-    side.style.height = 'calc(100vh - ' + top + 'px)';
-  }
-  var _sidebarOffsetBound = false;
-  function bindSidebarOffset() {
-    if (_sidebarOffsetBound) return;
-    _sidebarOffsetBound = true;
-    window.addEventListener('resize', applySidebarOffset);
-    // Scorebug loads asynchronously and changes height when games populate — re-measure a few times.
-    var tries = 0;
-    var iv = setInterval(function () { applySidebarOffset(); if (++tries >= 10) clearInterval(iv); }, 500);
-  }
   function renderPageSidebar(isMFL, tab, league) {
     var side = el('ml-sidebar');
     if (!side) return;
-    bindSidebarOffset();
     var nav = navFor(isMFL);
     side.innerHTML =
       '<div class="ml-lswitch">' +
@@ -879,7 +852,6 @@
         '<div class="ml-lswitch-menu" id="ml-lswitch-menu-side">' + switcherHTML(league.key) + '</div>' +
       '</div>' +
       '<nav class="ml-sidenav-desktop">' + navHTML(nav, tab, true) + '</nav>';
-    applySidebarOffset();
   }
 
   function renderDetail() {
@@ -1765,7 +1737,7 @@
       var btn = m.previousElementSibling;
       if (btn) {
         var r = btn.getBoundingClientRect();
-        m.style.top = Math.max(headerOffset(), r.bottom + 6) + 'px';
+        m.style.top = (r.bottom + 6) + 'px';
         m.style.left = r.left + 'px';
       }
       m.classList.add('open');
