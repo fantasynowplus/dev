@@ -840,13 +840,14 @@
   });
 
   function headerOffset() {
-
-    var els = [document.querySelector('#scorebug-root'), document.querySelector('header')];
     var bottom = 0;
-    els.forEach(function (e) {
-      if (e) { var b = e.getBoundingClientRect().bottom; if (b > bottom) bottom = b; }
+    [].forEach.call(document.querySelectorAll('body *'), function (e) {
+      var pos = getComputedStyle(e).position;
+      if (pos !== 'fixed') return;
+      var r = e.getBoundingClientRect();
+      if (r.top < 220 && r.height > 10 && r.width > 500 && r.bottom > bottom) bottom = r.bottom;
     });
-    return bottom > 0 ? Math.round(bottom) : 120;
+    return bottom > 0 ? Math.round(bottom) : 184;
   }
   function applySidebarOffset() {
     var side = el('ml-sidebar');
