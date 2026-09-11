@@ -75,6 +75,15 @@ const MFL = {
     });
     if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL weekly results');
     return res.json();
+  },
+  async liveScoring(host, year, leagueId, week, cookie) {
+    const res = await fetch(MFL_WORKER + '/livescoring', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, year, leagueId, week, cookie })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not load MFL live scoring');
+    return res.json();
   }
 };
 

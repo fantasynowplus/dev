@@ -217,6 +217,14 @@
   .ml-mu-tn-inj { color: #ffb84d; }
   .ml-mu-tn-flex { color: #79c0ff; }
   .ml-mu-tn-foot { color: #7d8aa5; font-size: 11px; margin-top: 6px; font-weight: 400; }
+  .ml-sb-strip { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 16px; }
+  .ml-sb-cell { flex: 0 0 auto; min-width: 140px; background: #131a29; border: 1px solid #2a3450; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-family: inherit; text-align: left; }
+  .ml-sb-cell:hover { background: #1a2236; }
+  .ml-sb-sel { border-color: #FFA515; background: rgba(255,165,21,0.08); }
+  .ml-sb-mine .ml-sb-name { color: #eef2fb; }
+  .ml-sb-team { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+  .ml-sb-name { color: #97a3ba; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px; }
+  .ml-sb-score { color: #eef2fb; font-size: 12px; font-weight: 700; }
   .ml-mu-volcell { flex-shrink: 0; min-width: 62px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
   .ml-mu-volcell-mirror { align-items: center; }
   .ml-mu-voltag { font-size: 8px; font-weight: 800; letter-spacing: 0.03em; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }

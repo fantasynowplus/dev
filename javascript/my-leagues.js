@@ -1322,14 +1322,43 @@
       if (!myRoster) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Couldn\'t find your team in this league.</div></div>'; return; }
       var myMatch = matchups.find(function (m) { return m.roster_id === myRoster.roster_id; });
       if (!myMatch || myMatch.matchup_id == null) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">No matchup found for Week ' + week + ' yet.</div></div>'; return; }
-      var oppMatch = matchups.find(function (m) { return m.matchup_id === myMatch.matchup_id && m.roster_id !== myRoster.roster_id; });
-      var oppRoster = oppMatch ? rosters.find(function (r) { return r.roster_id === oppMatch.roster_id; }) : null;
-      var oppTeam = oppRoster ? DETAIL.teams.find(function (t) { return t.rosterId === oppRoster.roster_id; }) : null;
-      var oppName = oppTeam ? oppTeam.name : (oppRoster ? 'Opponent' : 'Bye Week');
       var startingSlots = startingSlotsFor(league);
 
-      // A player's actual score is real once their game has been played (gp >= 1 in stats),
-      // independent of points — so a played player who scored 0.0 correctly shows 0.0.
+      function teamName(rid) {
+        var t = DETAIL.teams.find(function (x) { return x.rosterId === rid; });
+        return t ? t.name : 'Team';
+      }
+      function rosterById(rid) { return rosters.find(function (r) { return r.roster_id === rid; }) || null; }
+
+      var byMid = {};
+      matchups.forEach(function (m) {
+        if (m.matchup_id == null) return;
+        (byMid[m.matchup_id] = byMid[m.matchup_id] || []).push(m);
+      });
+      var pairings = Object.keys(byMid).map(function (mid) {
+        var pair = byMid[mid];
+        var a = pair[0], b = pair[1] || null;
+        return {
+          mid: mid,
+          aRid: a.roster_id, bRid: b ? b.roster_id : null,
+          aName: teamName(a.roster_id), bName: b ? teamName(b.roster_id) : 'Bye',
+          aScore: (a.points || 0), bScore: (b ? (b.points || 0) : 0),
+          mine: a.roster_id === myRoster.roster_id || (b && b.roster_id === myRoster.roster_id)
+        };
+      });
+      if (DETAIL.matchupSel == null) DETAIL.matchupSel = myMatch.matchup_id;
+      var selPair = byMid[DETAIL.matchupSel] || byMid[myMatch.matchup_id];
+      var leftMatch = selPair[0], rightMatch = selPair[1] || null;
+      if (rightMatch && leftMatch.roster_id !== myRoster.roster_id && rightMatch.roster_id === myRoster.roster_id) {
+        var tmp = leftMatch; leftMatch = rightMatch; rightMatch = tmp;
+      }
+      var isMyMatch = leftMatch.roster_id === myRoster.roster_id || (rightMatch && rightMatch.roster_id === myRoster.roster_id);
+
+      var leftRoster = rosterById(leftMatch.roster_id);
+      var rightRoster = rightMatch ? rosterById(rightMatch.roster_id) : null;
+      var leftName = isMyMatch ? 'You' : teamName(leftMatch.roster_id);
+      var rightName = rightRoster ? teamName(rightMatch.roster_id) : 'Bye Week';
+
       function actualFor(pp, pid) {
         if (!played[String(pid)]) return null;
         var v = pp[pid];
@@ -1365,26 +1394,43 @@
         return { rows: rows, bench: bench, projTotal: projTotal, actualTotal: actualTotal, liveTotal: liveTotal };
       }
 
-      var mine = sideData(myRoster, myMatch);
-      var theirs = sideData(oppRoster, oppMatch);
+      var mine = sideData(leftRoster, leftMatch);
+      var theirs = sideData(rightRoster, rightMatch);
       var anyActual = mine.actualTotal > 0 || theirs.actualTotal > 0;
+      var strip = scorebugStripHTML(pairings, DETAIL.matchupSel, false);
 
-      var pp = (myMatch && myMatch.players_points) || {};
-      var allMine = (myRoster.players || []).map(function (pid) {
-        var o = playerProj(pid, players, projMap);
-        return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
-          proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
-          actual: actualFor(pp, pid) };
-      });
-      var oppTotalNow = anyActual ? theirs.liveTotal : theirs.projTotal;
-      var optimal = optimalFromRoster(allMine, startingSlots);
-      var starterIdSet = {};
-      mine.rows.forEach(function (r) { if (r.id) starterIdSet[r.id] = true; });
-      var swaps = computeSwaps(allMine, mine.rows, startingSlots, starterIdSet);
-      body.innerHTML = matchupHTML(mine, theirs, oppName, week, anyActual, optimal, oppTotalNow, swaps);
+      if (isMyMatch && leftRoster) {
+        var pp = (leftMatch && leftMatch.players_points) || {};
+        var allMine = (leftRoster.players || []).map(function (pid) {
+          var o = playerProj(pid, players, projMap);
+          return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
+            proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
+            actual: actualFor(pp, pid) };
+        });
+        var oppTotalNow = anyActual ? theirs.liveTotal : theirs.projTotal;
+        var optimal = optimalFromRoster(allMine, startingSlots);
+        var starterIdSet = {};
+        mine.rows.forEach(function (r) { if (r.id) starterIdSet[r.id] = true; });
+        var swaps = computeSwaps(allMine, mine.rows, startingSlots, starterIdSet);
+        body.innerHTML = strip + matchupHTML(mine, theirs, rightName, week, anyActual, optimal, oppTotalNow, swaps);
+      } else {
+        body.innerHTML = strip + matchupHTML(mine, theirs, rightName, week, anyActual, null, null, {}, leftName);
+      }
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
+  }
+
+  function scorebugStripHTML(pairings, selMid, isMFL) {
+    if (!pairings || !pairings.length) return '';
+    var cells = pairings.map(function (p) {
+      var sel = String(p.mid) === String(selMid);
+      return '<button class="ml-sb-cell' + (sel ? ' ml-sb-sel' : '') + (p.mine ? ' ml-sb-mine' : '') + '" onclick="MLDetail.selectMatchup(\'' + p.mid + '\')">' +
+        '<div class="ml-sb-team"><span class="ml-sb-name">' + shortName(p.aName) + '</span><span class="ml-sb-score">' + (p.aScore != null ? p.aScore.toFixed(1) : '–') + '</span></div>' +
+        '<div class="ml-sb-team"><span class="ml-sb-name">' + shortName(p.bName) + '</span><span class="ml-sb-score">' + (p.bScore != null ? p.bScore.toFixed(1) : '–') + '</span></div>' +
+        '</button>';
+    }).join('');
+    return '<div class="ml-sb-strip">' + cells + '</div>';
   }
 
   function computeSwaps(allPlayers, starterRows, startingSlots, starterIdSet) {
@@ -1441,8 +1487,9 @@
     return ' <span class="ml-mu-inj ml-mu-inj-' + (INJ_CLASS[status] || 'q') + '" title="' + status + '">' + INJ_TAG[status] + '</span>';
   }
 
-  function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps) {
+  function matchupHTML(mine, theirs, oppName, week, isLive, optimal, oppTotalNow, swaps, leftName) {
     swaps = swaps || {};
+    leftName = leftName || 'You';
     var diff = mine.liveTotal - theirs.liveTotal;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
     var actualTotalNow = isLive ? mine.actualTotal : mine.projTotal;
@@ -1536,14 +1583,14 @@
     }
     var SLOT_ORD = ['Thu/Fri', 'Sat', 'Sun 1pm', 'Sun late', 'SNF', 'MNF'];
     var timingNotes = [];
-    mine.rows.forEach(function (r) {
+    if (optimal) mine.rows.forEach(function (r) {
       if (!r.id || !r.game || r.actual != null) return;
       if (r.inj && (r.inj === 'Questionable' || r.inj === 'Doubtful' || r.inj === 'Out') && r.game.slot >= 4) {
         timingNotes.push('<span class="ml-mu-tn-inj">' + r.name + ' (' + r.inj + ') plays ' + SLOT_ORD[r.game.slot] + ' — have a backup ready in case they sit.</span>');
       }
     });
     var flexNotes = [];
-    (function () {
+    if (optimal) (function () {
       mine.rows.forEach(function (starter) {
         if (!starter.id || !starter.game || starter.actual != null) return;
         if (slotEligibility(starter.slot).length < 2) return;
@@ -1569,7 +1616,7 @@
 
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
-        '<div class="ml-mu-team"><div class="ml-mu-tname">You</div>' + teamScore(mine) + '</div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + leftName + '</div>' + teamScore(mine) + '</div>' +
         '<div class="ml-mu-vs">Week ' + week + '<br>' + (isLive ? 'Live' : 'Projected') + '</div>' +
         '<div class="ml-mu-team"><div class="ml-mu-tname">' + oppName + '</div>' + teamScore(theirs) + '</div>' +
       '</div>' +
@@ -1857,6 +1904,7 @@
       m.classList.add('open');
     },
     toggleGroup: function (id) { NAV_EXPANDED[id] = !NAV_EXPANDED[id]; renderDetail(); },
+    selectMatchup: function (mid) { if (DETAIL) { DETAIL.matchupSel = mid; renderDetailBody(); } },
     switchLeague: function (key) { openDetail(key); }
   };
 
