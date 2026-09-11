@@ -1765,7 +1765,7 @@
       var btn = m.previousElementSibling;
       if (btn) {
         var r = btn.getBoundingClientRect();
-        m.style.top = (r.bottom + 6) + 'px';
+        m.style.top = Math.max(headerOffset(), r.bottom + 6) + 'px';
         m.style.left = r.left + 'px';
       }
       m.classList.add('open');

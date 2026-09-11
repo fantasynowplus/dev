@@ -115,7 +115,7 @@
   .ml-switch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ml-switch-plat { flex-shrink: 0; color: #5f6c85; font-size: 11px; }
   .ml-lswitch-mobile { display: none; }
-  .ml-sidebar { display: none; position: fixed; left: 0; top: 120px; height: calc(100vh - 120px); transition: top .15s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #161d2e; border-right: 1px solid #2a3450; z-index: 50; }
+  .ml-sidebar { display: none; position: fixed; left: 0; top: 184px; height: calc(100vh - 184px); transition: top .15s ease;
   body.ml-detail-open .ml-sidebar { display: flex; }
   body.ml-detail-open .ml-wrap { padding-left: 220px; }
   .ml-sidenav-desktop { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; padding-top: 16px; border-top: 1px solid #1c2438; }
