@@ -151,7 +151,7 @@
     var map = {};
     Object.keys(raw).forEach(function (id) {
       var p = raw[id];
-      map[id] = { full_name: p.name, position: p.position, team: p.team };
+      map[id] = { full_name: p.name, name: p.name, position: p.position, team: p.team };
     });
     MFL_PLAYERS = map;
     return MFL_PLAYERS;
