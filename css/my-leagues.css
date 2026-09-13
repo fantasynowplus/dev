@@ -216,7 +216,9 @@
   .ml-mu-tn { background: #131a29; border: 1px solid #2a3450; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #c9d2e6; }
   .ml-mu-tn-inj { color: #ffb84d; }
   .ml-mu-tn-flex { color: #79c0ff; }
-  .ml-mu-tn-foot { color: #7d8aa5; font-size: 11px; margin-top: 6px; font-weight: 400; }
+  .ml-mu-tn-foot { color: #7d8aa5; font-size: 11px; margin-top: 8px; font-weight: 400; }
+  .ml-mu-tn-flexhead { color: #79c0ff; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .ml-mu-tn-flexrow { color: #c9d2e6; font-size: 13px; padding: 3px 0; line-height: 1.4; }
   .ml-sb-strip { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 16px; }
   .ml-sb-cell { flex: 0 0 auto; min-width: 140px; background: #131a29; border: 1px solid #2a3450; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-family: inherit; text-align: left; }
   .ml-sb-cell:hover { background: #1a2236; }

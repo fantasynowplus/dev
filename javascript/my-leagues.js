@@ -787,9 +787,7 @@
     var nav = [{ type: 'item', id: 'overview', label: 'Overview' }];
     if (!isMFL) nav.push({ type: 'item', id: 'draft', label: 'Draft Analyzer' });
     nav.push({
-      type: 'group', id: 'lineup', label: 'Lineup', items: isMFL
-        ? [{ id: 'startsit', label: 'Roster' }]
-        : [{ id: 'startsit', label: 'Roster' }, { id: 'matchup', label: 'Matchup' }]
+      type: 'group', id: 'lineup', label: 'Lineup', items: [{ id: 'startsit', label: 'Roster' }, { id: 'matchup', label: 'Matchup' }]
     });
     nav.push({ type: 'group', id: 'trade', label: 'Trade', items: [{ id: 'trades', label: 'Trade Finder' }] });
     return nav;
@@ -901,7 +899,7 @@
 
   function renderDetailBody() {
     var t = DETAIL.tab || 'overview';
-    if (DETAIL.league.platform === 'mfl' && (t === 'draft' || t === 'matchup')) t = DETAIL.tab = 'overview';
+    if (DETAIL.league.platform === 'mfl' && (t === 'draft')) t = DETAIL.tab = 'overview';
     if (t === 'draft') renderDraft();
     else if (t === 'startsit') renderStartSit();
     else if (t === 'matchup') renderMatchup();
@@ -1302,6 +1300,7 @@
   }
 
   async function renderMatchup() {
+    if (DETAIL.league.platform === 'mfl') return renderMFLMatchup();
     var body = el('ml-detail-body');
     body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Loading matchup…</div></div>';
     try {
@@ -1431,6 +1430,127 @@
         '</button>';
     }).join('');
     return '<div class="ml-sb-strip">' + cells + '</div>';
+  }
+
+  async function renderMFLMatchup() {
+    var body = el('ml-detail-body');
+    body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Loading matchup…</div></div>';
+    try {
+      var league = DETAIL.league;
+      var week = DETAIL.week || 1;
+      var cookie = auth.profile && auth.profile.mfl_cookie;
+      var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
+      var playersMap = DETAIL.mflPlayers || await loadMFLPlayers();
+      var startingSlots = startingSlotsFor(league);
+
+      var nameMap = {};
+      var flist = (league.raw && league.raw.franchises && league.raw.franchises.franchise) || [];
+      (Array.isArray(flist) ? flist : [flist]).forEach(function (f) { nameMap[f.id] = f.name; });
+      function fName(id) { return nameMap[id] || 'Team'; }
+
+      var live = await MFL.liveScoring(league.host, year, league.league_id, week, cookie);
+      var liveMatchups = (live && live.matchup) || [];
+      liveMatchups = Array.isArray(liveMatchups) ? liveMatchups : (liveMatchups ? [liveMatchups] : []);
+
+      var liveByFr = {};
+      liveMatchups.forEach(function (m, mi) {
+        var fs = (m.franchise && (Array.isArray(m.franchise) ? m.franchise : [m.franchise])) || [];
+        fs.forEach(function (f) {
+          var pScores = {};
+          var pl = (f.players && f.players.player) || [];
+          (Array.isArray(pl) ? pl : [pl]).forEach(function (p) {
+            pScores[p.id] = { score: parseFloat(p.score) || 0, done: (parseInt(p.gameSecondsRemaining, 10) || 0) === 0 };
+          });
+          liveByFr[f.id] = { score: parseFloat(f.score) || 0, mid: mi, pScores: pScores };
+        });
+      });
+
+      var wr = await MFL.weeklyResults(league.host, year, league.league_id, week, cookie);
+      var wrMatchups = (wr && wr.matchup) || [];
+      wrMatchups = Array.isArray(wrMatchups) ? wrMatchups : (wrMatchups ? [wrMatchups] : []);
+      var lineupByFr = {};
+      wrMatchups.forEach(function (m) {
+        var fs = (m.franchise && (Array.isArray(m.franchise) ? m.franchise : [m.franchise])) || [];
+        fs.forEach(function (f) {
+          var starters = f.starters ? String(f.starters).split(',').filter(Boolean) : [];
+          var players = (f.player && (Array.isArray(f.player) ? f.player : [f.player])) || [];
+          lineupByFr[f.id] = { starters: starters, players: players.map(function (p) { return { id: p.id, status: p.status }; }) };
+        });
+      });
+
+      var pairings = liveMatchups.map(function (m, mi) {
+        var fs = (m.franchise && (Array.isArray(m.franchise) ? m.franchise : [m.franchise])) || [];
+        var a = fs[0], b = fs[1] || null;
+        return {
+          mid: String(mi),
+          aName: a ? fName(a.id) : 'Team', bName: b ? fName(b.id) : 'Bye',
+          aScore: a ? (parseFloat(a.score) || 0) : 0, bScore: b ? (parseFloat(b.score) || 0) : 0,
+          mine: (a && a.id === league.franchise_id) || (b && b.id === league.franchise_id),
+          aId: a ? a.id : null, bId: b ? b.id : null
+        };
+      });
+      if (!pairings.length) { body.innerHTML = '<div class="ml-panel"><div class="ml-empty">No matchups available for Week ' + week + ' yet.</div></div>'; return; }
+
+      if (DETAIL.matchupSel == null) {
+        var myp = pairings.find(function (p) { return p.mine; });
+        DETAIL.matchupSel = myp ? myp.mid : pairings[0].mid;
+      }
+      var sel = pairings.find(function (p) { return p.mid === String(DETAIL.matchupSel); }) || pairings[0];
+      var leftId = sel.aId, rightId = sel.bId;
+      if (rightId === league.franchise_id && leftId !== league.franchise_id) { var tmp = leftId; leftId = rightId; rightId = tmp; }
+      var isMine = leftId === league.franchise_id || rightId === league.franchise_id;
+
+      function sideRows(frId) {
+        if (!frId) return { rows: [], total: 0 };
+        var lu = lineupByFr[frId] || { starters: [], players: [] };
+        var lv = liveByFr[frId] || { pScores: {}, score: 0 };
+        var starterIds = lu.starters.length ? lu.starters : Object.keys(lv.pScores);
+        var rows = starterIds.map(function (pid, i) {
+          var meta = playersMap[pid] || {};
+          var ps = lv.pScores[pid];
+          return {
+            slot: startingSlots[i] || '',
+            id: pid, name: meta.name || pid, pos: meta.position || '', team: meta.team || '',
+            score: ps ? ps.score : 0, done: ps ? ps.done : false, played: !!ps
+          };
+        });
+        return { rows: rows, total: lv.score };
+      }
+      var left = sideRows(leftId), right = sideRows(rightId);
+      var strip = scorebugStripHTML(pairings, DETAIL.matchupSel, true);
+      body.innerHTML = strip + mflMatchupHTML(left, right, isMine ? 'You' : fName(leftId), fName(rightId), week);
+    } catch (e) {
+      body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
+    }
+  }
+
+  function mflMatchupHTML(left, right, leftName, rightName, week) {
+    var diff = left.total - right.total;
+    var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
+    var maxLen = Math.max(left.rows.length, right.rows.length);
+    var rows = '';
+    for (var i = 0; i < maxLen; i++) {
+      var m = left.rows[i], t = right.rows[i];
+      var bothDone = m && t && m.done && t.done;
+      var mHi = bothDone && m.score > t.score, tHi = bothDone && t.score > m.score;
+      rows += '<div class="ml-mu-row">' +
+        '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + (m ? '<div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>' : '') + '</div>' +
+        '<div class="ml-mu-pts">' + (m && m.played ? '<span class="ml-mu-actual">' + m.score.toFixed(1) + '</span>' : '<span class="ml-mu-proj">–</span>') + '</div>' +
+        '<div class="ml-mu-slotlbl">' + (m ? (SLOT_LABEL[m.slot] || m.slot || '').replace(/_/g, ' ') : '') + '</div>' +
+        '<div class="ml-mu-pts ml-mu-pts-mirror">' + (t && t.played ? '<span class="ml-mu-actual">' + t.score.toFixed(1) + '</span>' : '<span class="ml-mu-proj">–</span>') + '</div>' +
+        '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '">' + (t ? '<div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div>' : '') + '</div>' +
+        '</div>';
+    }
+    return '<div class="ml-panel">' +
+      '<div class="ml-mu-head">' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + leftName + '</div><div class="ml-mu-tscore">' + left.total.toFixed(1) + '</div><div class="ml-mu-tproj">live</div></div>' +
+        '<div class="ml-mu-vs">Week ' + week + '<br>Live</div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + rightName + '</div><div class="ml-mu-tscore">' + right.total.toFixed(1) + '</div><div class="ml-mu-tproj">live</div></div>' +
+      '</div>' +
+      '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
+      '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
+      '</div>' +
+      '<div class="ml-panel">' + rows + '</div>';
   }
 
   function computeSwaps(allPlayers, starterRows, startingSlots, starterIdSet) {
@@ -1608,7 +1728,9 @@
       timingHTML = '<div class="ml-mu-timing">';
       timingNotes.slice(0, 4).forEach(function (n) { timingHTML += '<div class="ml-mu-tn">🕐 ' + n + '</div>'; });
       if (flexNotes.length) {
-        timingHTML += '<div class="ml-mu-tn ml-mu-tn-flexgroup"><span class="ml-mu-tn-flex">Flex timing: ' + flexNotes.slice(0, 4).join(', ') + '</span>' +
+        timingHTML += '<div class="ml-mu-tn ml-mu-tn-flexgroup">' +
+          '<div class="ml-mu-tn-flexhead">Flex timing</div>' +
+          flexNotes.slice(0, 4).map(function (n) { return '<div class="ml-mu-tn-flexrow">' + n + '</div>'; }).join('') +
           '<div class="ml-mu-tn-foot">Slotting your later game in a flex spot lets you pivot based on how earlier games go.</div></div>';
       }
       timingHTML += '</div>';
