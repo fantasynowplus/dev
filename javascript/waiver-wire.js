@@ -1,7 +1,5 @@
 const CONFIG = {
-  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv",
-  ADDS_URL: "data/sleeper-adds.json",
-  DROPS_URL: "data/sleeper-drops.json"
+  WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
@@ -118,17 +116,53 @@ function normName(s){
   return t.split(/\s+/).filter(x=>x && NAME_SUFFIXES.indexOf(x)===-1).join(" ").trim();
 }
  
-async function loadAdds(){
-  try{
-    const res=await fetch(CONFIG.ADDS_URL+"?_="+Date.now());
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const d=await res.json();
-    ADDS=d.players||{};
-    ADDS_BY_NAME=d.by_name||{};
-  }catch(e){
-    console.warn("Sleeper adds unavailable:",e);
-    ADDS={}; ADDS_BY_NAME={};
+let SLEEPER_PLAYERS=null;
+let sleeperPlayersPromise=null;
+function sleeperPlayerMap(){
+  if(SLEEPER_PLAYERS) return Promise.resolve(SLEEPER_PLAYERS);
+  if(!sleeperPlayersPromise){
+    sleeperPlayersPromise=fetch("https://api.sleeper.app/v1/players/nfl")
+      .then(res=>{ if(!res.ok) throw new Error("HTTP "+res.status); return res.json(); })
+      .then(data=>{ SLEEPER_PLAYERS=data; return data; });
   }
+  return sleeperPlayersPromise;
+}
+
+async function loadTrending(type){
+  const out={ players:{}, by_name:{} };
+  try{
+    const [trendRes, players]=await Promise.all([
+      fetch("https://api.sleeper.app/v1/players/nfl/trending/"+type+"?lookback_hours=48&limit=300"),
+      sleeperPlayerMap()
+    ]);
+    if(!trendRes.ok) throw new Error("HTTP "+trendRes.status);
+    const trending=await trendRes.json();
+    const countKey = type==="drop" ? "drops" : "adds";
+    const rankKey  = type==="drop" ? "drop_rank" : "add_rank";
+    let rank=0;
+    trending.forEach(t=>{
+      const p=players[t.player_id];
+      if(!p || !POS_COLOR[(p.position||"").toUpperCase()]) return;
+      rank++;
+      const name=p.full_name || ((p.first_name||"")+" "+(p.last_name||""));
+      const posn=(p.position||"").toUpperCase();
+      const row={ name:name, team:p.team||"", pos:posn };
+      row[countKey]=t.count;
+      row[rankKey]=rank;
+      out.players[String(t.player_id)]=row;
+      const key=normName(name)+"|"+posn;
+      if(key.trim()!=="|") out.by_name[key]=String(t.player_id);
+    });
+  }catch(e){
+    console.warn("Sleeper "+type+" trending unavailable:",e);
+  }
+  return out;
+}
+
+async function loadAdds(){
+  const d=await loadTrending("add");
+  ADDS=d.players;
+  ADDS_BY_NAME=d.by_name;
 }
  
 function attachAdds(){
@@ -144,16 +178,9 @@ function attachAdds(){
 }
 
 async function loadDrops(){
-  try{
-    const res=await fetch(CONFIG.DROPS_URL+"?_="+Date.now());
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const d=await res.json();
-    DROPS=d.players||{};
-    DROPS_BY_NAME=d.by_name||{};
-  }catch(e){
-    console.warn("Sleeper drops unavailable:",e);
-    DROPS={}; DROPS_BY_NAME={};
-  }
+  const d=await loadTrending("drop");
+  DROPS=d.players;
+  DROPS_BY_NAME=d.by_name;
 }
 
 function attachDrops(){
