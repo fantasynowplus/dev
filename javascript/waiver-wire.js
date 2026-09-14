@@ -275,7 +275,7 @@ function setMode(m){
   document.body.classList.toggle("mode-drop", m==="drop");
 
   document.getElementById("rostLabel").textContent = m==="drop" ? "Min roster %" : "Max roster %";
-  document.getElementById("rost").value = m==="drop" ? 30 : 60;
+  document.getElementById("rost").value = m==="drop" ? 80 : 40;
 
   const sectionTitle=document.getElementById("sectionTitle");
   if(sectionTitle) sectionTitle.textContent = m==="drop" ? "Drop Candidates" : "Waiver Targets";
@@ -301,7 +301,7 @@ function defaultSort(){
 
 function resetFilters(){
   document.getElementById("q").value="";
-  document.getElementById("rost").value = MODE==="drop" ? 30 : 60;
+  document.getElementById("rost").value = MODE==="drop" ? 80 : 40;
   document.getElementById("limit").value="10";
   document.getElementById("hideBye").checked=true;
   minGP=defaultMinGP();
