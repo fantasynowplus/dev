@@ -340,3 +340,11 @@
     .ml-trade-cols { grid-template-columns: 1fr; }
     .ml-trade-shop { position: static; max-height: none; }
   }
+
+  .ml-trade-clickable { cursor: pointer; transition: border-color .1s, background .1s; }
+  .ml-trade-clickable:hover { border-color: #FFA515; background: #182134; }
+  .ml-trade-load { float: right; color: #FFA515; font-weight: 700; font-size: 12px; }
+  .ml-tc-result { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
+  .ml-tc-rval { color: #8a97b3; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .ml-tc-noresult { color: #7d8aa5; font-size: 12px; padding: 6px 8px; }
+  .ml-tc-results { max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; }  

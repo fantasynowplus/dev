@@ -1081,10 +1081,12 @@
       return '<div class="ml-trade-side"><div class="ml-trade-lbl">' + label + '</div><div class="ml-trade-stack">' + rows + '</div></div>';
     }
 
-    var rows = sel.trades.slice(0, 4).map(function (s) {
+    DETAIL._shopTrades = sel.trades.slice(0, 4);
+    var rows = sel.trades.slice(0, 4).map(function (s, si) {
       var fill = s.fills.length ? ' · fills their ' + s.fills.filter(function (v, i, a) { return a.indexOf(v) === i; }).join('/') : '';
-      return '<div class="ml-trade-card"><div class="ml-trade-head">' +
-        '<span class="ml-trade-benefit">+' + comma(s.myGain) + '</span> your lineup · <span style="color:#79c0ff">+' + comma(s.theirGain) + '</span> theirs · target <b>' + s.teamName + '</b>' + fill + '</div>' +
+      return '<div class="ml-trade-card ml-trade-clickable" onclick="MLDetail.tcLoadDeal(' + si + ')" title="Load this trade into the builder below"><div class="ml-trade-head">' +
+        '<span class="ml-trade-benefit">+' + comma(s.myGain) + '</span> your lineup · <span style="color:#79c0ff">+' + comma(s.theirGain) + '</span> theirs · target <b>' + s.teamName + '</b>' + fill +
+        '<span class="ml-trade-load">Edit ▸</span></div>' +
         '<div class="ml-trade-body">' + sideHTML('You send', s.give) +
         '<i class="fa-solid fa-right-left" style="color:#79c0ff"></i>' + sideHTML('You get', s.get) + '</div></div>';
     }).join('');
@@ -1145,7 +1147,7 @@
       : '';
     return '<div class="ml-tc-side">' +
       '<div class="ml-tc-sidehead">' + header + '<span class="ml-tc-total" id="ml-tc-total-' + side + '">0</span></div>' +
-      '<input class="ml-tc-search" id="ml-tc-search-' + side + '" placeholder="Add player…" oninput="MLDetail.tcSearch(\'' + side + '\', this.value)" autocomplete="off">' +
+      '<input class="ml-tc-search" id="ml-tc-search-' + side + '" placeholder="Search or click to browse roster…" oninput="MLDetail.tcSearch(\'' + side + '\', this.value)" onfocus="MLDetail.tcSearch(\'' + side + '\', this.value)" autocomplete="off">' +
       '<div class="ml-tc-results" id="ml-tc-results-' + side + '"></div>' +
       '<div class="ml-tc-list" id="ml-tc-list-' + side + '"></div>' +
       pickAdder +
@@ -2139,13 +2141,16 @@
       var box = el('ml-tc-results-' + side);
       if (!box) return;
       q = (q || '').toLowerCase().trim();
-      if (!q) { box.innerHTML = ''; return; }
       var chosen = {};
       (TC_STATE.sides[side] || []).forEach(function (a) { if (a.type !== 'pick') chosen[a.name] = true; });
-      var matches = tcSearchPool(side).filter(function (p) { return !chosen[p.name] && p.name.toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+      var pool = tcSearchPool(side).filter(function (p) { return !chosen[p.name]; });
+      var matches = q ? pool.filter(function (p) { return p.name.toLowerCase().indexOf(q) !== -1; }) : pool;
+      matches = matches.slice(0, q ? 8 : 30);
+      if (!matches.length) { box.innerHTML = '<div class="ml-tc-noresult">No players available.</div>'; return; }
       box.innerHTML = matches.map(function (p) {
         return '<button class="ml-tc-result" onclick="MLDetail.tcAddPlayer(\'' + side + '\', ' + JSON.stringify(p).replace(/"/g, '&quot;') + ')">' +
-          p.name + ' <span class="ml-tc-rpos">' + p.pos + (p.team ? ' · ' + p.team : '') + '</span></button>';
+          '<span>' + p.name + ' <span class="ml-tc-rpos">' + p.pos + (p.team ? ' · ' + p.team : '') + '</span></span>' +
+          '<span class="ml-tc-rval">' + comma(tcAssetValue({ type: 'player', name: p.name, pos: p.pos })) + '</span></button>';
       }).join('');
     },
     tcAddPlayer: function (side, p) {
@@ -2162,6 +2167,19 @@
       tcRenderSide(side);
     },
     tcRemove: function (side, i) { TC_STATE.sides[side].splice(i, 1); tcRenderSide(side); },
+    tcLoadDeal: function (si) {
+      var s = DETAIL._shopTrades && DETAIL._shopTrades[si];
+      if (!s) return;
+      var other = DETAIL.teams.find(function (t) { return t.name === s.teamName; });
+      if (other) TC_STATE.otherId = other.ownerId;
+      TC_STATE.sides.A = s.give.map(function (p) { return { type: 'player', name: p.name, pos: p.pos, team: p.team || '' }; });
+      TC_STATE.sides.B = s.get.map(function (p) { return { type: 'player', name: p.name, pos: p.pos, team: p.team || '' }; });
+      renderDetailBody();
+      var teamSel = el('ml-tc-team');
+      if (teamSel && other) teamSel.value = other.ownerId;
+      var panel = el('ml-tc-verdict');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
     switchLeague: function (key) { openDetail(key); }
   };
 
