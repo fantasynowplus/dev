@@ -1090,14 +1090,15 @@
     }).join('');
 
     return head +
-      '<div class="ml-panel"><div class="ml-sum-title">Players To Shop</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Click a player to see every deal built around him.</p>' +
-      '<div class="ml-chipgrid">' + tiles + '</div></div>' +
-      '<div class="ml-panel"><div class="ml-sum-title">Trades for ' + sel.player.name + '</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Both lineups improve at fair value. Sorted by what you gain.</p>' + rows + '</div>' +
+      '<div class="ml-trade-cols">' +
+        '<div class="ml-panel ml-trade-shop"><div class="ml-sum-title">Players To Shop</div>' +
+        '<p class="ml-subtitle" style="margin:6px 0 14px">Click a player to see every deal built around him.</p>' +
+        '<div class="ml-shoplist">' + tiles + '</div></div>' +
+        '<div class="ml-panel ml-trade-deals"><div class="ml-sum-title">Trades for ' + sel.player.name + '</div>' +
+        '<p class="ml-subtitle" style="margin:6px 0 14px">Both lineups improve at fair value. Sorted by what you gain.</p>' + rows + '</div>' +
+      '</div>' +
       tradeBuilderHTML();
   }
-
   function tcTeamOptions() {
     var myId = DETAIL.league.platform === 'mfl' ? DETAIL.league.franchise_id : USER_SLEEPER_ID;
     return DETAIL.teams.filter(function (t) { return t.ownerId !== myId; })

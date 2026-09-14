@@ -331,3 +331,12 @@
     .ml-tc-grid { grid-template-columns: 1fr; }
     .ml-tc-mid { padding-top: 0; transform: rotate(90deg); }
   }
+
+  .ml-trade-cols { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+  .ml-trade-shop { position: sticky; top: 200px; max-height: calc(100vh - 220px); overflow-y: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+  .ml-shoplist { display: flex; flex-direction: column; gap: 8px; }
+  .ml-shoplist .ml-chiptile { margin: 0; }
+  @media (max-width: 900px) {
+    .ml-trade-cols { grid-template-columns: 1fr; }
+    .ml-trade-shop { position: static; max-height: none; }
+  }
