@@ -173,7 +173,7 @@ function l3Label(){
 }
 function l3Note(){
   if(weeksPlayed>=3) return "";
-  if(weeksPlayed<=0) return "* No games played yet this season \u2014 sorted by Sleeper adds.";
+  if(weeksPlayed<=0) return "* No games played yet this season \u2014 sorted by Sleeper "+(MODE==="drop"?"drops":"adds")+".";
   return "* Last 3 games of the "+(season||"current")+" season \u2014 only "
        + weeksPlayed+" week"+(weeksPlayed===1?"":"s")+" played so far.";
 }
