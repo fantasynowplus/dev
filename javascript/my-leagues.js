@@ -1065,7 +1065,7 @@
     if (!data.tiles.length) return head + '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div><div class="ml-empty">No deal improves both lineups at a fair value right now.</div></div>';
 
     var sel = data.tiles[selIdx] || data.tiles[0];
-    var tiles = data.tiles.slice(0, 6).map(function (e, i) {
+    var tiles = data.tiles.slice(0, 9).map(function (e, i) {
       return '<div class="ml-chiptile' + (e === sel ? ' active' : '') + '" onclick="MLDetail.chip(' + i + ')">' +
         '<div class="ml-chiptile-bar" style="background:' + (POS_COL[e.player.pos] || '#5a6a85') + '"></div>' +
         '<div class="ml-chiptile-name">' + e.player.name + '</div>' +
