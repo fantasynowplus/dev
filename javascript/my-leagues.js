@@ -407,6 +407,21 @@
     return 0;
   }
 
+  var PICK_BASE = { 1: 90, 2: 45, 3: 20 };
+  var YEAR_DISCOUNT = [1.0, 0.7, 0.5];
+  function tcDraftYears() { var y = new Date().getFullYear() + 1; return [y, y + 1, y + 2]; }
+  function tcOrdRound(r) { return r === 1 ? '1st' : r === 2 ? '2nd' : '3rd'; }
+  function tcPickValue(a) { return Math.round((PICK_BASE[a.round] || 0) * (YEAR_DISCOUNT[a.yearIdx] || 0)); }
+  function tcAssetValue(a) {
+    if (a.type === 'pick') return tcPickValue(a);
+    var rankMap = DETAIL && DETAIL.rankData ? DETAIL.rankData.map : {};
+    return playerValue(a.pos, rankMap[matchKey(a.name, a.pos)]);
+  }
+  function tcSideTotal(side) {
+    return (TC_STATE.sides[side] || []).reduce(function (s, a) { return s + tcAssetValue(a); }, 0);
+  }
+  var TC_STATE = { sides: { A: [], B: [] } };
+
   function evalRoster(roster, playersMap, rankMap, topN) {
     var arr = [];
     (roster.players || []).forEach(function (pid) {
@@ -989,6 +1004,8 @@
     if (!me) me = teams[DETAIL.selected] || teams[0];
     if (!DETAIL.tradeData) DETAIL.tradeData = computeTrades(me, teams, startingSlots);
     el('ml-detail-body').innerHTML = tradesHTML(DETAIL.tradeData, DETAIL.tradeChip || 0);
+    tcRenderSide('A');
+    tcRenderSide('B');
   }
 
   function computeTrades(me, teams, startingSlots) {
@@ -1077,7 +1094,95 @@
       '<p class="ml-subtitle" style="margin:6px 0 14px">Click a player to see every deal built around him.</p>' +
       '<div class="ml-chipgrid">' + tiles + '</div></div>' +
       '<div class="ml-panel"><div class="ml-sum-title">Trades for ' + sel.player.name + '</div>' +
-      '<p class="ml-subtitle" style="margin:6px 0 14px">Both lineups improve at fair value. Sorted by what you gain.</p>' + rows + '</div>';
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Both lineups improve at fair value. Sorted by what you gain.</p>' + rows + '</div>' +
+      tradeBuilderHTML();
+  }
+
+  function tcTeamOptions() {
+    var myId = DETAIL.league.platform === 'mfl' ? DETAIL.league.franchise_id : USER_SLEEPER_ID;
+    return DETAIL.teams.filter(function (t) { return t.ownerId !== myId; })
+      .map(function (t) { return '<option value="' + t.ownerId + '">' + t.name + '</option>'; }).join('');
+  }
+
+  function tcRosterFor(ownerId) {
+    var t = DETAIL.teams.find(function (x) { return x.ownerId === ownerId; });
+    if (!t || !t.players) return [];
+    return t.players.map(function (p) { return { name: p.name, pos: p.pos, team: p.team || '' }; })
+      .sort(function (a, b) { return tcAssetValue(b) - tcAssetValue(a); });
+  }
+
+  function tradeBuilderHTML() {
+    var league = DETAIL.league;
+    var isDyn = league.platform === 'mfl' ? isMflDynasty(league.raw || {}) : isDynasty(league.raw || {});
+    var myId = league.platform === 'mfl' ? league.franchise_id : USER_SLEEPER_ID;
+    var myTeam = DETAIL.teams.find(function (t) { return t.ownerId === myId; });
+    var myName = myTeam ? myTeam.name : 'You';
+    if (TC_STATE.otherId == null) {
+      var firstOther = DETAIL.teams.find(function (t) { return t.ownerId !== myId; });
+      TC_STATE.otherId = firstOther ? firstOther.ownerId : null;
+    }
+    return '<div class="ml-panel"><div class="ml-sum-title">Build Your Own Trade</div>' +
+      '<p class="ml-subtitle" style="margin:6px 0 14px">Add players' + (isDyn ? ' or picks' : '') + ' to each side to check the value.</p>' +
+      '<div class="ml-tc-grid">' +
+        tcSideBuilderHTML('A', myName, false, isDyn) +
+        '<div class="ml-tc-mid"><i class="fa-solid fa-right-left" style="color:#79c0ff"></i></div>' +
+        tcSideBuilderHTML('B', null, true, isDyn) +
+      '</div>' +
+      '<div id="ml-tc-verdict" class="ml-tc-verdict"></div></div>';
+  }
+
+  function tcSideBuilderHTML(side, fixedName, isOther, isDyn) {
+    var header = isOther
+      ? '<select id="ml-tc-team" class="ml-tc-select" onchange="MLDetail.tcSetTeam(this.value)">' + tcTeamOptions() + '</select>'
+      : '<div class="ml-tc-sidename">' + fixedName + '</div>';
+    var pickAdder = isDyn
+      ? '<div class="ml-tc-pickadd">' +
+          '<select id="ml-tc-round-' + side + '" class="ml-tc-select ml-tc-select-sm"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option></select>' +
+          '<select id="ml-tc-year-' + side + '" class="ml-tc-select ml-tc-select-sm">' + tcDraftYears().map(function (y, i) { return '<option value="' + i + '">' + y + '</option>'; }).join('') + '</select>' +
+          '<button class="ml-btn ml-btn-sm" onclick="MLDetail.tcAddPick(\'' + side + '\')">+ Pick</button>' +
+        '</div>'
+      : '';
+    return '<div class="ml-tc-side">' +
+      '<div class="ml-tc-sidehead">' + header + '<span class="ml-tc-total" id="ml-tc-total-' + side + '">0</span></div>' +
+      '<input class="ml-tc-search" id="ml-tc-search-' + side + '" placeholder="Add player…" oninput="MLDetail.tcSearch(\'' + side + '\', this.value)" autocomplete="off">' +
+      '<div class="ml-tc-results" id="ml-tc-results-' + side + '"></div>' +
+      '<div class="ml-tc-list" id="ml-tc-list-' + side + '"></div>' +
+      pickAdder +
+      '</div>';
+  }
+
+  function tcRenderSide(side) {
+    var listEl = el('ml-tc-list-' + side), totEl = el('ml-tc-total-' + side);
+    if (!listEl) return;
+    var assets = TC_STATE.sides[side] || [];
+    listEl.innerHTML = assets.map(function (a, i) {
+      var label = a.type === 'pick' ? (a.year + ' ' + tcOrdRound(a.round)) : a.name;
+      var meta = a.type === 'pick' ? 'Draft pick' : (a.pos + (a.team ? ' · ' + a.team : ''));
+      return '<div class="ml-tc-asset"><div><div class="ml-tc-aname">' + label + '</div><div class="ml-tc-ameta">' + meta + '</div></div>' +
+        '<div class="ml-tc-aval">' + comma(tcAssetValue(a)) + '</div>' +
+        '<button class="ml-tc-rm" onclick="MLDetail.tcRemove(\'' + side + '\', ' + i + ')">&times;</button></div>';
+    }).join('');
+    if (totEl) totEl.textContent = comma(tcSideTotal(side));
+    tcRenderVerdict();
+  }
+
+  function tcRenderVerdict() {
+    var v = el('ml-tc-verdict');
+    if (!v) return;
+    var a = tcSideTotal('A'), b = tcSideTotal('B');
+    if (!a && !b) { v.innerHTML = ''; return; }
+    var diff = a - b, absd = Math.abs(diff);
+    var fair = absd <= Math.max(8, Math.max(a, b) * 0.08);
+    var winner = diff > 0 ? 'You give more' : diff < 0 ? 'You get more' : 'Even';
+    var cls = fair ? 'ml-tc-fair' : (diff < 0 ? 'ml-tc-good' : 'ml-tc-bad');
+    v.innerHTML = '<div class="ml-tc-vrow ' + cls + '">' +
+      '<span>' + (fair ? 'Fair trade' : winner) + '</span>' +
+      '<span class="ml-tc-vdiff">' + comma(a) + ' vs ' + comma(b) + (absd ? ' · ' + (diff < 0 ? '+' : '−') + comma(absd) + ' your way' : '') + '</span></div>';
+  }
+
+  function tcSearchPool(side) {
+    var myId = DETAIL.league.platform === 'mfl' ? DETAIL.league.franchise_id : USER_SLEEPER_ID;
+    return side === 'A' ? tcRosterFor(myId) : tcRosterFor(TC_STATE.otherId);
   }
 
   function analyzeDraft(picks, slotMap) {
@@ -1200,6 +1305,7 @@
 
   async function openDetail(key) {
     var league = LEAGUES[key]; if (!league) return;
+    TC_STATE = { sides: { A: [], B: [] } };
     el('ml-content').style.display = 'none';
     document.body.classList.add('ml-detail-open');
     var detail = el('ml-detail'); detail.style.display = 'block';
@@ -2027,6 +2133,34 @@
     },
     toggleGroup: function (id) { NAV_EXPANDED[id] = !NAV_EXPANDED[id]; renderDetail(); },
     selectMatchup: function (mid) { if (DETAIL) { DETAIL.matchupSel = mid; renderDetailBody(); } },
+    tcSetTeam: function (ownerId) { TC_STATE.otherId = (DETAIL.league.platform === 'mfl') ? ownerId : (isNaN(+ownerId) ? ownerId : +ownerId); TC_STATE.sides.B = []; tcRenderSide('B'); },
+    tcSearch: function (side, q) {
+      var box = el('ml-tc-results-' + side);
+      if (!box) return;
+      q = (q || '').toLowerCase().trim();
+      if (!q) { box.innerHTML = ''; return; }
+      var chosen = {};
+      (TC_STATE.sides[side] || []).forEach(function (a) { if (a.type !== 'pick') chosen[a.name] = true; });
+      var matches = tcSearchPool(side).filter(function (p) { return !chosen[p.name] && p.name.toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+      box.innerHTML = matches.map(function (p) {
+        return '<button class="ml-tc-result" onclick="MLDetail.tcAddPlayer(\'' + side + '\', ' + JSON.stringify(p).replace(/"/g, '&quot;') + ')">' +
+          p.name + ' <span class="ml-tc-rpos">' + p.pos + (p.team ? ' · ' + p.team : '') + '</span></button>';
+      }).join('');
+    },
+    tcAddPlayer: function (side, p) {
+      TC_STATE.sides[side].push({ type: 'player', name: p.name, pos: p.pos, team: p.team });
+      var s = el('ml-tc-search-' + side); if (s) s.value = '';
+      var box = el('ml-tc-results-' + side); if (box) box.innerHTML = '';
+      tcRenderSide(side);
+    },
+    tcAddPick: function (side) {
+      var round = parseInt(el('ml-tc-round-' + side).value, 10);
+      var yearIdx = parseInt(el('ml-tc-year-' + side).value, 10);
+      var year = tcDraftYears()[yearIdx];
+      TC_STATE.sides[side].push({ type: 'pick', round: round, yearIdx: yearIdx, year: year });
+      tcRenderSide(side);
+    },
+    tcRemove: function (side, i) { TC_STATE.sides[side].splice(i, 1); tcRenderSide(side); },
     switchLeague: function (key) { openDetail(key); }
   };
 
