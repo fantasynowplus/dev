@@ -38,7 +38,7 @@
   }
   .title .pos{color:var(--orange)}
 
-  .modebar{display:flex;justify-content:center;margin-bottom:16px}
+  .toggle-row{display:flex;align-items:center;gap:10px}
 
   .toggle{display:inline-flex;gap:6px;background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:5px}
@@ -231,6 +231,7 @@
 
   @media (max-width:640px){
     .wrap{padding:18px 12px 48px}
+    .toggle-row{flex-wrap:wrap}
     .filters{gap:16px;padding:14px}
     .search input{width:100%}
     .reset{margin-left:0}
