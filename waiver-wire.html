@@ -22,7 +22,14 @@ layout: null
         <button class="refresh" onclick="reload()">Refresh</button>
       </div>
     </div>
-    <div class="title">Waiver Targets &middot; <span class="pos" id="weekLabel">&mdash;</span></div>
+    <div class="title"><span id="sectionTitle">Waiver Targets</span> &middot; <span class="pos" id="weekLabel">&mdash;</span></div>
+  </div>
+
+  <div class="modebar">
+    <div class="toggle mode" role="tablist" aria-label="Mode">
+      <button id="mode-add" class="active" role="tab" aria-selected="true" onclick="setMode('add')">Waiver Adds</button>
+      <button id="mode-drop" role="tab" aria-selected="false" onclick="setMode('drop')">Drop Now</button>
+    </div>
   </div>
 
   <div class="filters">
@@ -44,7 +51,7 @@ layout: null
     </div>
 
     <div class="field">
-      <label for="rost">Max roster % <span class="val" id="rostVal">60%</span></label>
+      <label for="rost"><span id="rostLabel">Max roster %</span> <span class="val" id="rostVal">60%</span></label>
       <input id="rost" type="range" min="0" max="100" step="5" value="60" oninput="draw()">
     </div>
 

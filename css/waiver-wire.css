@@ -38,8 +38,16 @@
   }
   .title .pos{color:var(--orange)}
 
+  .modebar{display:flex;justify-content:center;margin-bottom:16px}
+
   .toggle{display:inline-flex;gap:6px;background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:5px}
+
+  body.mode-drop .toggle:not(.mode) button.active{background:var(--redorange)}
+  body.mode-drop thead th{border-bottom-color:var(--redorange)}
+  body.mode-drop thead th.key{color:var(--redorange)}
+  body.mode-drop tbody td.key{color:var(--redorange)}
+  body.mode-drop .title .pos{color:var(--redorange)}
   .toggle button{
     font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.08em;
     font-size:14px;color:var(--muted);background:transparent;border:0;cursor:pointer;

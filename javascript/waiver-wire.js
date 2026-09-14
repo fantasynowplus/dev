@@ -1,6 +1,7 @@
 const CONFIG = {
   WEB_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv",
-  ADDS_URL: "data/sleeper-adds.json"
+  ADDS_URL: "data/sleeper-adds.json",
+  DROPS_URL: "data/sleeper-drops.json"
 };
 
 const COL = { pos:0, player:1, team:2, bye:3, rost:4,
@@ -9,7 +10,7 @@ const COL = { pos:0, player:1, team:2, bye:3, rost:4,
 
 const POS_COLOR = { QB:"var(--pos-QB)", RB:"var(--pos-RB)", WR:"var(--pos-WR)", TE:"var(--pos-TE)" };
 
-const COLUMNS = [
+const COLUMNS_ADD = [
   { key:"pos",    label:"Pos",     cls:"pos",    type:"str" },
   { key:"player", label:"Player",  cls:"player", type:"str" },
   { key:"team",   label:"Team",    cls:"",       type:"str" },
@@ -22,6 +23,22 @@ const COLUMNS = [
   { key:"l3Rank", label:"L3 Rank", cls:"",       type:"num" },
   { key:"l3Gp",   label:"L3 GP",   cls:"",       type:"num" }
 ];
+
+const COLUMNS_DROP = [
+  { key:"pos",    label:"Pos",     cls:"pos",    type:"str" },
+  { key:"player", label:"Player",  cls:"player", type:"str" },
+  { key:"team",   label:"Team",    cls:"",       type:"str" },
+  { key:"bye",    label:"Bye",     cls:"",       type:"num" },
+  { key:"rost",   label:"Rost %",  cls:"",       type:"num" },
+  { key:"drops",  label:"Drops",   cls:"",       type:"num" },
+  { key:"lwPts",  label:"LW Pts",  cls:"",       type:"num" },
+  { key:"lwRank", label:"LW Rank", cls:"",       type:"num" },
+  { key:"l3Ppg",  label:"L3 PPG",  cls:"key",    type:"num" },
+  { key:"l3Rank", label:"L3 Rank", cls:"",       type:"num" },
+  { key:"l3Gp",   label:"L3 GP",   cls:"",       type:"num" }
+];
+
+function COLUMNS_CUR(){ return MODE==="drop" ? COLUMNS_DROP : COLUMNS_ADD; }
 
 const LOG_COLUMNS = {
   QB:[ {k:"pass_cmp",l:"C"},{k:"pass_att",l:"Att"},{k:"pass_yd",l:"Yds"},
@@ -40,12 +57,15 @@ let ALL = [];
 let upcomingWeek = null;
 let season = "";
 let pos = "ALL";
+let MODE = "add";
 let minGP = 1;
 let sort = { key:"l3Ppg", dir:-1 };
 let schedule = null;
 const logCache = {};
 let ADDS = {};
 let ADDS_BY_NAME = {};
+let DROPS = {};
+let DROPS_BY_NAME = {};
 let weeksPlayed = 0;
 
 function parseCSV(text){
@@ -67,6 +87,11 @@ function parseCSV(text){
 }
 
 function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function statCell(r){
+  const v = MODE==="drop" ? r.drops : r.adds;
+  return '<td'+(v?'':' class="dim"')+'>'+(v==null?"&ndash;":v.toLocaleString())+'</td>';
+}
 
 function num(v){
   const s=String(v==null?"":v).replace(/,/g,"").trim();
@@ -117,6 +142,31 @@ function attachAdds(){
     r.addRank = hit ? hit.add_rank : null;
   });
 }
+
+async function loadDrops(){
+  try{
+    const res=await fetch(CONFIG.DROPS_URL+"?_="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const d=await res.json();
+    DROPS=d.players||{};
+    DROPS_BY_NAME=d.by_name||{};
+  }catch(e){
+    console.warn("Sleeper drops unavailable:",e);
+    DROPS={}; DROPS_BY_NAME={};
+  }
+}
+
+function attachDrops(){
+  ALL.forEach(r=>{
+    let hit = r.sleeperId ? DROPS[r.sleeperId] : null;
+    if(!hit){
+      const id=DROPS_BY_NAME[normName(r.player)+"|"+r.pos];
+      if(id) hit=DROPS[id];
+    }
+    r.drops    = hit ? hit.drops : null;
+    r.dropRank = hit ? hit.drop_rank : null;
+  });
+}
  
 function l3Label(){
   return weeksPlayed<3 ? "L3 PPG*" : "L3 PPG";
@@ -150,7 +200,9 @@ function toRows(raw){
       week:num(r[COL.week]),
       sleeperId:(r[COL.sleeperId]||"").trim(),
       adds:null,
-      addRank:null
+      addRank:null,
+      drops:null,
+      dropRank:null
     });
   });
   out.slice().sort((a,b)=>(b.l3Ppg||0)-(a.l3Ppg||0)).forEach((r,i)=>{ r.ovr=i+1; });
@@ -159,7 +211,7 @@ function toRows(raw){
 
 function buildHead(){
   let h="";
-  COLUMNS.forEach(c=>{
+  COLUMNS_CUR().forEach(c=>{
     const on = sort.key===c.key;
     const arrow = on ? (sort.dir===1?"&#9650;":"&#9660;") : "&#9670;";
     const label = c.key==="l3Ppg" ? l3Label() : c.label;
@@ -170,7 +222,7 @@ function buildHead(){
 }
 
 function setSort(key){
-  const c=COLUMNS.find(x=>x.key===key);
+  const c=COLUMNS_CUR().find(x=>x.key===key);
   if(sort.key===key){ sort.dir=-sort.dir; }
   else { sort.key=key; sort.dir = c.type==="str" ? 1 : -1; }
   buildHead(); draw();
@@ -187,6 +239,27 @@ function setPos(p){
   draw();
 }
 
+function setMode(m){
+  MODE=m;
+  document.getElementById("mode-add").classList.toggle("active", m==="add");
+  document.getElementById("mode-add").setAttribute("aria-selected", m==="add");
+  document.getElementById("mode-drop").classList.toggle("active", m==="drop");
+  document.getElementById("mode-drop").setAttribute("aria-selected", m==="drop");
+  document.body.classList.toggle("mode-drop", m==="drop");
+
+  document.getElementById("rostLabel").textContent = m==="drop" ? "Min roster %" : "Max roster %";
+  document.getElementById("rost").value = m==="drop" ? 30 : 60;
+
+  const sectionTitle=document.getElementById("sectionTitle");
+  if(sectionTitle) sectionTitle.textContent = m==="drop" ? "Drop Candidates" : "Waiver Targets";
+
+  minGP=defaultMinGP();
+  document.getElementById("gpVal").textContent=minGP;
+  sort=defaultSort();
+  buildHead();
+  draw();
+}
+
 function bumpGP(d){
   minGP=Math.max(0,Math.min(3,minGP+d));
   document.getElementById("gpVal").textContent=minGP;
@@ -194,16 +267,19 @@ function bumpGP(d){
 }
 
 function defaultMinGP(){ return weeksPlayed>=3 ? 1 : 0; }
-function defaultSortKey(){ return weeksPlayed>=1 ? "l3Ppg" : "adds"; }
+function defaultSort(){
+  if(weeksPlayed>=1) return { key:"l3Ppg", dir: MODE==="drop" ? 1 : -1 };
+  return { key: MODE==="drop" ? "drops" : "adds", dir:-1 };
+}
 
 function resetFilters(){
   document.getElementById("q").value="";
-  document.getElementById("rost").value=60;
+  document.getElementById("rost").value = MODE==="drop" ? 30 : 60;
   document.getElementById("limit").value="10";
   document.getElementById("hideBye").checked=true;
   minGP=defaultMinGP();
   document.getElementById("gpVal").textContent=minGP;
-  sort={key:defaultSortKey(),dir:-1};
+  sort=defaultSort();
   buildHead();
   setPos("ALL");
 }
@@ -213,7 +289,7 @@ let shownRows=[];
 function draw(){
   const body=document.getElementById("body");
   if(!ALL.length){
-    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS_CUR().length+'">'
       +'The CSV loaded, but no player rows were recognized. Check that <code>Web_Data</code> '
       +'is the sheet selected in Publish to web, and that its column A reads QB / RB / WR / TE.'
       +'</td></tr>';
@@ -221,14 +297,18 @@ function draw(){
   }
 
   const q=document.getElementById("q").value.trim().toLowerCase();
-  const maxRost=parseInt(document.getElementById("rost").value,10)/100;
+  const rostLimit=parseInt(document.getElementById("rost").value,10)/100;
   const limit=parseInt(document.getElementById("limit").value,10);
   const hideBye=document.getElementById("hideBye").checked;
-  document.getElementById("rostVal").textContent=Math.round(maxRost*100)+"%";
+  document.getElementById("rostVal").textContent=Math.round(rostLimit*100)+"%";
 
   const rows=ALL.filter(r=>{
     if(pos!=="ALL" && r.pos!==pos) return false;
-    if(r.rost!=null && r.rost>maxRost) return false;
+    if(MODE==="drop"){
+      if(r.rost!=null && r.rost<rostLimit) return false;
+    }else{
+      if(r.rost!=null && r.rost>rostLimit) return false;
+    }
     if(minGP>0 && (r.l3Gp==null || r.l3Gp<minGP)) return false;
     if(hideBye && upcomingWeek!=null && r.bye!=null && r.bye===upcomingWeek) return false;
     if(q){
@@ -238,7 +318,7 @@ function draw(){
     return true;
   });
 
-  const c=COLUMNS.find(x=>x.key===sort.key);
+  const c=COLUMNS_CUR().find(x=>x.key===sort.key);
   rows.sort((a,b)=>{
     let x=a[sort.key], y=b[sort.key];
     if(c.type==="str"){
@@ -260,8 +340,9 @@ function draw(){
     + (note ? '<span class="l3note">'+note+'</span>' : "");
 
   if(!shownRows.length){
-    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
-      +'No players match these filters. Try raising <b>max roster %</b> or clearing the search.</td></tr>';
+    const hint = MODE==="drop" ? "lowering <b>min roster %</b>" : "raising <b>max roster %</b>";
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS_CUR().length+'">'
+      +'No players match these filters. Try '+hint+' or clearing the search.</td></tr>';
     return;
   }
 
@@ -277,7 +358,7 @@ function draw(){
       + '<td>'+escapeHtml(r.team)+'</td>'
       + byeCell
       + '<td>'+(r.rost==null?'<span class="dim">&ndash;</span>':(r.rost*100).toFixed(1)+"%")+'</td>'
-      + '<td'+(r.adds?'':' class="dim"')+'>'+(r.adds==null?"&ndash;":r.adds.toLocaleString())+'</td>'      
+      + statCell(r)
       + '<td'+(r.lwPts?'':' class="dim"')+'>'+(r.lwPts==null?"&ndash;":r.lwPts.toFixed(1))+'</td>'
       + '<td'+(r.lwRank?'':' class="dim"')+'>'+(r.lwRank==null?"&ndash;":r.pos+r.lwRank)+'</td>'
       + '<td class="key">'+(r.l3Ppg==null?"&ndash;":r.l3Ppg.toFixed(1))+'</td>'
@@ -459,20 +540,22 @@ async function load(force){
   const url=CONFIG.WEB_URL;
   const body=document.getElementById("body");
   if(!url || url.indexOf("PASTE_")===0){
-    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS_CUR().length+'">'
       +'Add your published-CSV link in the <b>CONFIG</b> block (<code>WEB_URL</code>) to load the board.</td></tr>';
     return;
   }
-  body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">Loading waiver board&hellip;</td></tr>';
+  body.innerHTML='<tr><td class="state" colspan="'+COLUMNS_CUR().length+'">Loading waiver board&hellip;</td></tr>';
   try{
     const [res]=await Promise.all([
       fetch(url+(url.includes("?")?"&":"?")+"_="+Date.now()),
-      loadAdds()
+      loadAdds(),
+      loadDrops()
     ]);
     if(!res.ok) throw new Error("HTTP "+res.status);
     const grid=parseCSV(await res.text());
     ALL=toRows(grid);
     attachAdds();
+    attachDrops();
     if(!ALL.length){
       console.log("Web_Data header row:", grid[0]);
       console.log("Web_Data first data row:", grid[1]);
@@ -484,7 +567,7 @@ async function load(force){
       minGP=defaultMinGP();
       const gpVal=document.getElementById("gpVal");
       if(gpVal) gpVal.textContent=minGP;
-      sort={key:defaultSortKey(),dir:-1};
+      sort=defaultSort();
       buildHead();
     }
     const wk = upcomingWeek!=null ? "Week "+upcomingWeek : "";
@@ -495,7 +578,7 @@ async function load(force){
     stamp();
     draw();
   }catch(e){
-    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS.length+'">'
+    body.innerHTML='<tr><td class="state" colspan="'+COLUMNS_CUR().length+'">'
       +'Couldn\'t load the waiver data. Check that the <b>Web_Data</b> sheet is '
       +'<b>published to the web</b> and the link in <code>WEB_URL</code> is correct.</td></tr>';
   }
