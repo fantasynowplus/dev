@@ -107,7 +107,7 @@ async function loadSleeper() {
 }
 
 async function loadRankings(season, week, rk) {
-  const type = rk.type || 'draft';
+  const type = rk.type || 'weekly';
   const out = [];
 
   for (const pos of POSITIONS) {
