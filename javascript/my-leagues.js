@@ -1065,7 +1065,7 @@
     if (!data.tiles.length) return head + '<div class="ml-panel"><div class="ml-sum-title">Suggested Trades</div><div class="ml-empty">No deal improves both lineups at a fair value right now.</div></div>';
 
     var sel = data.tiles[selIdx] || data.tiles[0];
-    var tiles = data.tiles.map(function (e, i) {
+    var tiles = data.tiles.slice(0, 6).map(function (e, i) {
       return '<div class="ml-chiptile' + (e === sel ? ' active' : '') + '" onclick="MLDetail.chip(' + i + ')">' +
         '<div class="ml-chiptile-bar" style="background:' + (POS_COL[e.player.pos] || '#5a6a85') + '"></div>' +
         '<div class="ml-chiptile-name">' + e.player.name + '</div>' +
@@ -1081,7 +1081,7 @@
       return '<div class="ml-trade-side"><div class="ml-trade-lbl">' + label + '</div><div class="ml-trade-stack">' + rows + '</div></div>';
     }
 
-    var rows = sel.trades.map(function (s) {
+    var rows = sel.trades.slice(0, 5).map(function (s) {
       var fill = s.fills.length ? ' · fills their ' + s.fills.filter(function (v, i, a) { return a.indexOf(v) === i; }).join('/') : '';
       return '<div class="ml-trade-card"><div class="ml-trade-head">' +
         '<span class="ml-trade-benefit">+' + comma(s.myGain) + '</span> your lineup · <span style="color:#79c0ff">+' + comma(s.theirGain) + '</span> theirs · target <b>' + s.teamName + '</b>' + fill + '</div>' +
