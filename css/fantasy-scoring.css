@@ -70,7 +70,7 @@
 }
 
 .fs-status {
-  color: var(--charcoal);
+  color: var(--text-light);
   font-size: 0.85rem;
   margin-bottom: 16px;
   min-height: 1.2em;
