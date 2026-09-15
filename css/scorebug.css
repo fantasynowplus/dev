@@ -15,19 +15,22 @@
 }
 
 .scorebug-top10-link {
-  flex: 0 0 84px;
+  flex: 0 0 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
+  padding: 0 4px;
   background: rgba(255, 165, 21, 0.08);
   border-right: 1px solid var(--border-dark, #14294d);
   color: var(--bright-orange, #FFA515);
   text-decoration: none;
+  text-align: center;
   font-family: var(--font-display, 'Barlow Condensed', sans-serif);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
+  line-height: 1.15;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   transition: background 0.15s ease;
@@ -216,7 +219,7 @@
   }
 
   .scorebug-top10-link {
-    flex-basis: 64px;
-    font-size: 0.62rem;
+    flex-basis: 68px;
+    font-size: 0.58rem;
   }
 }

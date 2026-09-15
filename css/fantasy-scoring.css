@@ -10,7 +10,7 @@
 }
 
 .fs-subtitle {
-  color: var(--charcoal);
+  color: var(--text-light);
   margin-bottom: 24px;
 }
 
@@ -109,7 +109,7 @@
 
 .fs-table tbody td.fs-statline {
   white-space: normal;
-  color: var(--charcoal);
+  color: var(--text-light);
   font-size: 0.8rem;
   min-width: 220px;
 }

@@ -145,7 +145,8 @@
     root.innerHTML =
       '<div class="scorebug">' +
         '<a class="scorebug-top10-link" href="fantasy-scoring">' +
-          '<span class="scorebug-top10-icon">&#127942;</span><span>Top 10</span>' +
+          '<span class="scorebug-top10-icon">&#127942;</span>' +
+          '<span class="scorebug-top10-label">Top 25<br>Scorers</span>' +
         '</a>' +
         '<div class="scorebug-scroll">' +
           '<button class="scorebug-nav scorebug-nav-prev" aria-label="Scroll left">&#8249;</button>' +
