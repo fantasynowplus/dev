@@ -110,7 +110,10 @@ function renderRankings(data, containerId) {
     .slice(0, RANK_LIMIT);
 
   if (players.length === 0) {
-    container.innerHTML = '<p style="padding: 10px;">No rankings available.</p>';
+    const message = data.week != null
+      ? `Week ${data.week} rankings coming soon!`
+      : "No rankings available.";
+    container.innerHTML = `<p style="padding: 10px;">${message}</p>`;
     return;
   }
 
