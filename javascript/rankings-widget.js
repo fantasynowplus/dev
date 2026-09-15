@@ -57,16 +57,26 @@ function getWeeklyPageConfig() {
   return weeklyPageConfigPromise;
 }
 
+let allAnalystsPromise = null;
+
+function getAllAnalysts() {
+  if (!allAnalystsPromise) {
+    allAnalystsPromise = rankingsRpc("rankings_public_analysts").then((list) => list || []);
+  }
+  return allAnalystsPromise;
+}
+
 async function fetchRankings(format, position) {
   const key = `${format}:${position}`;
   if (cache[key]) return cache[key];
 
   let data;
   if (format === "weekly") {
-    const page = await getWeeklyPageConfig();
+    const [page, analysts] = await Promise.all([getWeeklyPageConfig(), getAllAnalysts()]);
     if (!page) throw new Error("Weekly rankings page not configured");
 
     const week = Number(page.week) < 0 ? currentWeek() : page.week || 0;
+    const allIds = analysts.map((a) => a.fp_id).filter(Boolean).join(":");
     const params = new URLSearchParams({
       type: page.wtype || "ST",
       position,
@@ -74,7 +84,8 @@ async function fetchRankings(format, position) {
       year: String(page.year || 2026),
       week: String(week),
     });
-    if (page.filters) params.set("filters", page.filters);
+    if (allIds) params.set("filters", allIds);
+    else if (page.filters) params.set("filters", page.filters);
     else if (page.expert) params.set("expert", page.expert);
 
     const response = await fetch(`${WORKER_BASE}/expert-rankings?${params.toString()}`);
