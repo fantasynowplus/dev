@@ -206,7 +206,7 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="fs-rank">' + r.rank + '</td>' +
-        '<td class="fs-player-name">' + p.name + '</td>' +
+        '<td class="fs-player-name"><a class="fs-player-link" href="my-leagues?player=' + encodeURIComponent(p.name) + '&pos=' + encodeURIComponent(p.position || '') + '">' + p.name + '</a></td>' +
         '<td>' + (p.position || guessPosition(p.positions)) + '</td>' +
         '<td>' + p.team + '</td>' +
         '<td>' + p.opp + '</td>' +

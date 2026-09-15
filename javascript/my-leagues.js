@@ -600,8 +600,7 @@
           var isSel = p.id === mine.id;
           return '<div class="ml-pm-row' + (isSel ? ' ml-pm-sel' : '') + '"><span class="ml-pm-name">' + p.name + '</span>' +
             '<span class="ml-pm-team">' + (p.team || '') + '</span>' +
-            '<span class="ml-pm-statuscell"><span class="ml-pm-status ml-pm-' + ms.cls + '">' + ms.label + '</span></span>' +
-            '<span class="ml-pm-val">' + comma(p.value) + '</span></div>';
+            '<span class="ml-pm-statuscell"><span class="ml-pm-status ml-pm-' + ms.cls + '">' + ms.label + '</span></span></div>';
         }).join('');
       return '<div class="ml-pm-league"><div class="ml-pm-head"><span class="ml-pm-lname">' + e.leagueName + '</span>' +
         '<span class="ml-pill">' + (e.dynasty ? 'Dynasty' : 'Redraft') + '</span>' +
@@ -615,6 +614,25 @@
 
   function closePortfolioModal() { el('ml-modal').style.display = 'none'; }
   window.MLPort = { open: openPortfolioPlayer, close: closePortfolioModal };
+
+  function maybeOpenFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    var name = params.get('player');
+    if (!name) return;
+    var pos = params.get('pos') || '';
+    var idx = PORT.list.findIndex(function (r) { return matchKey(r.name, r.pos) === matchKey(name, pos); });
+    if (idx === -1) {
+      idx = PORT.list.findIndex(function (r) { return normName(r.name) === normName(name); });
+    }
+    if (idx !== -1) {
+      openPortfolioPlayer(idx);
+    } else {
+      el('ml-modal-body').innerHTML =
+        '<div class="ml-pm-title">' + name + '</div>' +
+        '<div class="ml-empty">You don\'t roster this player in any of your linked leagues.</div>';
+      el('ml-modal').style.display = 'flex';
+    }
+  }
 
   function renderPortfolio(entries) {
     var built = buildPortfolio(entries);
@@ -2359,7 +2377,7 @@
       render(leagues);
       if (leagues.length) {
         el('ml-chart-slot').textContent = 'Analyzing your rosters…';
-        computeInsights(leagues).catch(function (e) {
+        computeInsights(leagues).then(maybeOpenFromQuery).catch(function (e) {
           console.error('computeInsights failed:', e);
           el('ml-chart-slot').style.display = 'none';
         });

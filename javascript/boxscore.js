@@ -172,7 +172,7 @@
         html +=
           '<div class="boxscore-player-row">' +
             '<div>' +
-              '<div class="boxscore-player-name">' + p.name + ' <span class="boxscore-player-meta">' + (p.position || guessPosition(p.positions)) + '</span></div>' +
+              '<div class="boxscore-player-name"><a class="boxscore-player-link" href="my-leagues?player=' + encodeURIComponent(p.name) + '&pos=' + encodeURIComponent(p.position || '') + '">' + p.name + '</a> <span class="boxscore-player-meta">' + (p.position || guessPosition(p.positions)) + '</span></div>' +
               '<div class="boxscore-player-meta">' + statLine(p) + '</div>' +
             '</div>' +
             '<div class="boxscore-player-pts">' + fantasyPoints(p, currentScoring).toFixed(1) + '</div>' +

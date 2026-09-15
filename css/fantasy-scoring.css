@@ -131,6 +131,16 @@
   font-weight: 700;
 }
 
+.fs-player-link {
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.fs-player-link:hover {
+  color: var(--bright-orange);
+  text-decoration: underline;
+}
+
 .fs-pts {
   color: var(--bright-orange);
   font-weight: 800;

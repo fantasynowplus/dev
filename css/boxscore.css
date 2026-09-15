@@ -134,6 +134,16 @@
   font-size: 0.88rem;
 }
 
+.boxscore-player-link {
+  color: var(--text-light, #F4F4F4);
+  text-decoration: none;
+}
+
+.boxscore-player-link:hover {
+  color: var(--bright-orange, #FFA515);
+  text-decoration: underline;
+}
+
 .boxscore-player-meta {
   color: var(--off-white, #eeeded);
   font-size: 0.72rem;
