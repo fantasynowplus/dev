@@ -1,10 +1,7 @@
-// Weekly Fantasy Scoring Leaders — pulls every in-progress/final game for the
-// current NFL week, aggregates each player's stats into fantasy points across
-// Standard / Half-PPR / PPR, and renders a searchable, sortable leaderboard.
 (function () {
   var SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
   var SUMMARY = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=';
-  var TOP_N = 10;
+  var TOP_N = 25;
 
   var currentScoring = 'half';
   var allPlayers = [];
