@@ -6,6 +6,25 @@
   var currentScoring = 'half';
   var allPlayers = [];
   var searchEl, resultsEl, statusEl, toggleButtons;
+  var teamPositionCache = {};
+
+  function fetchTeamPositions(teamId) {
+    if (!teamPositionCache[teamId]) {
+      teamPositionCache[teamId] = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/' + teamId + '/roster')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          var map = {};
+          (data.athletes || []).forEach(function (group) {
+            (group.items || []).forEach(function (a) {
+              map[a.id] = a.position && a.position.abbreviation;
+            });
+          });
+          return map;
+        })
+        .catch(function () { return {}; });
+    }
+    return teamPositionCache[teamId];
+  }
 
   function statVal(group, athleteStats, label) {
     var idx = group.labels.indexOf(label);
@@ -29,12 +48,11 @@
     return Math.round(pts * 10) / 10;
   }
 
-  function positionLabel(positions) {
+  function guessPosition(positions) {
     if (positions.indexOf('QB') > -1) return 'QB';
     if (positions.indexOf('K') > -1) return 'K';
-    if (positions.indexOf('WR') > -1 && positions.indexOf('RB') > -1) return 'RB/WR';
-    if (positions.indexOf('WR') > -1) return 'WR/TE';
     if (positions.indexOf('RB') > -1) return 'RB';
+    if (positions.indexOf('WR') > -1) return 'WR';
     return '—';
   }
 
@@ -47,7 +65,7 @@
     return parts.join(' · ') || '—';
   }
 
-  function collectPlayers(teamBlock, teamAbbr, oppAbbr, gameStatus) {
+  function collectPlayers(teamBlock, teamAbbr, oppAbbr, gameStatus, positionMap) {
     var players = {};
 
     function getPlayer(athlete) {
@@ -57,6 +75,7 @@
           team: teamAbbr,
           opp: oppAbbr,
           status: gameStatus,
+          position: (positionMap && positionMap[athlete.id]) || null,
           passYds: 0, passTD: 0, passInt: 0,
           rushYds: 0, rushTD: 0,
           receptions: 0, recYds: 0, recTD: 0,
@@ -111,8 +130,13 @@
         var t0 = teams[0].team.abbreviation;
         var t1 = teams[1].team.abbreviation;
 
-        return collectPlayers(teams[0], t0, t1, game.statusText)
-          .concat(collectPlayers(teams[1], t1, t0, game.statusText));
+        return Promise.all([
+          fetchTeamPositions(teams[0].team.id),
+          fetchTeamPositions(teams[1].team.id)
+        ]).then(function (maps) {
+          return collectPlayers(teams[0], t0, t1, game.statusText, maps[0])
+            .concat(collectPlayers(teams[1], t1, t0, game.statusText, maps[1]));
+        });
       })
       .catch(function () { return []; });
   }
@@ -183,7 +207,7 @@
       tr.innerHTML =
         '<td class="fs-rank">' + r.rank + '</td>' +
         '<td class="fs-player-name">' + p.name + '</td>' +
-        '<td>' + positionLabel(p.positions) + '</td>' +
+        '<td>' + (p.position || guessPosition(p.positions)) + '</td>' +
         '<td>' + p.team + '</td>' +
         '<td>' + p.opp + '</td>' +
         '<td class="fs-statline">' + statLine(p) + '</td>' +

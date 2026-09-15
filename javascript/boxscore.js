@@ -4,6 +4,26 @@
   var backdrop, panel;
   var currentScoring = 'half';
   var lastData = null;
+  var lastPositionMaps = null;
+  var teamPositionCache = {};
+
+  function fetchTeamPositions(teamId) {
+    if (!teamPositionCache[teamId]) {
+      teamPositionCache[teamId] = fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/' + teamId + '/roster')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          var map = {};
+          (data.athletes || []).forEach(function (group) {
+            (group.items || []).forEach(function (a) {
+              map[a.id] = a.position && a.position.abbreviation;
+            });
+          });
+          return map;
+        })
+        .catch(function () { return {}; });
+    }
+    return teamPositionCache[teamId];
+  }
 
   function ensureModal() {
     if (backdrop) return;
@@ -68,13 +88,14 @@
     return Math.round(pts * 10) / 10;
   }
 
-  function collectPlayers(teamBlock) {
+  function collectPlayers(teamBlock, positionMap) {
     var players = {};
 
     function getPlayer(athlete) {
       if (!players[athlete.id]) {
         players[athlete.id] = {
           name: athlete.displayName,
+          position: (positionMap && positionMap[athlete.id]) || null,
           passYds: 0, passTD: 0, passInt: 0,
           rushYds: 0, rushTD: 0,
           receptions: 0, recYds: 0, recTD: 0,
@@ -119,13 +140,12 @@
     return Object.keys(players).map(function (id) { return players[id]; });
   }
 
-  function positionLabel(positions) {
+  function guessPosition(positions) {
     if (positions.indexOf('QB') > -1) return 'QB';
     if (positions.indexOf('K') > -1) return 'K';
-    if (positions.indexOf('WR') > -1 && positions.indexOf('RB') > -1) return 'RB/WR';
-    if (positions.indexOf('WR') > -1) return 'WR';
     if (positions.indexOf('RB') > -1) return 'RB';
-    return '';
+    if (positions.indexOf('WR') > -1) return 'WR';
+    return '—';
   }
 
   function statLine(p) {
@@ -137,8 +157,8 @@
     return parts.join(' · ');
   }
 
-  function renderTeamColumn(teamBlock) {
-    var players = collectPlayers(teamBlock).sort(function (a, b) {
+  function renderTeamColumn(teamBlock, positionMap) {
+    var players = collectPlayers(teamBlock, positionMap).sort(function (a, b) {
       return fantasyPoints(b, currentScoring) - fantasyPoints(a, currentScoring);
     });
 
@@ -152,7 +172,7 @@
         html +=
           '<div class="boxscore-player-row">' +
             '<div>' +
-              '<div class="boxscore-player-name">' + p.name + ' <span class="boxscore-player-meta">' + positionLabel(p.positions) + '</span></div>' +
+              '<div class="boxscore-player-name">' + p.name + ' <span class="boxscore-player-meta">' + (p.position || guessPosition(p.positions)) + '</span></div>' +
               '<div class="boxscore-player-meta">' + statLine(p) + '</div>' +
             '</div>' +
             '<div class="boxscore-player-pts">' + fantasyPoints(p, currentScoring).toFixed(1) + '</div>' +
@@ -166,13 +186,23 @@
 
   function render(data) {
     lastData = data;
-    var players = data.boxscore && data.boxscore.players;
+    var teamBlocks = data.boxscore && data.boxscore.players;
 
-    if (!players || !players.length) {
+    if (!teamBlocks || !teamBlocks.length) {
       panel.innerHTML = '<div class="boxscore-loading">Stats aren\'t available for this game yet.</div>';
       return;
     }
 
+    panel.innerHTML = '<div class="boxscore-loading">Loading player positions…</div>';
+
+    Promise.all(teamBlocks.map(function (tb) { return fetchTeamPositions(tb.team.id); }))
+      .then(function (maps) {
+        lastPositionMaps = maps;
+        renderContent(data, teamBlocks, maps);
+      });
+  }
+
+  function renderContent(data, teamBlocks, maps) {
     var comp = data.header && data.header.competitions && data.header.competitions[0];
     var title = comp && comp.competitors
       ? comp.competitors.map(function (c) { return c.team.abbreviation + ' ' + (c.score || ''); }).join('  @  ')
@@ -185,7 +215,9 @@
         '<button data-scoring="half">Half-PPR</button>' +
         '<button data-scoring="ppr">PPR</button>' +
       '</div>';
-    html += '<div class="boxscore-teams">' + players.map(renderTeamColumn).join('') + '</div>';
+    html += '<div class="boxscore-teams">' +
+      teamBlocks.map(function (tb, i) { return renderTeamColumn(tb, maps[i]); }).join('') +
+      '</div>';
 
     panel.innerHTML = html;
 
@@ -194,7 +226,7 @@
       btn.classList.toggle('is-active', btn.dataset.scoring === currentScoring);
       btn.addEventListener('click', function () {
         currentScoring = btn.dataset.scoring;
-        render(lastData);
+        renderContent(lastData, teamBlocks, lastPositionMaps);
       });
     });
   }
