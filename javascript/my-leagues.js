@@ -261,21 +261,29 @@
     var url = 'https://api.sleeper.app/projections/nfl/' + (await Sleeper.currentSeason()) + '/' + week +
       '?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF' +
       '&position[]=DL&position[]=LB&position[]=DB';
-    var map = {};
+    var map = {}, nameMap = {};
     try {
       var res = await fetch(url);
       if (res.ok) {
         var arr = await res.json();
         (arr || []).forEach(function (row) {
-          if (!row || !row.player_id || !row.stats) return;
+          if (!row || !row.player_id || !row.stats || !row.player) return;
           var custom = scoringSettings ? scoreStatLine(row.stats, scoringSettings) : null;
           var v = (custom != null) ? custom : row.stats[field];
-          if (v != null) map[String(row.player_id)] = Math.round(v * 100) / 100;
+          if (v == null) return;
+          var rounded = Math.round(v * 100) / 100;
+          map[String(row.player_id)] = rounded;
+          var p = row.player;
+          var fullName = p.first_name ? (p.first_name + ' ' + (p.last_name || '')).trim() : null;
+          var pos = (Array.isArray(p.fantasy_positions) ? p.fantasy_positions[0] : p.position) || p.position;
+          if (fullName && pos) nameMap[matchKey(fullName, pos)] = rounded;
+          if (pos === 'DEF' && row.team) nameMap['DEF|' + (TEAM_ALIASES2[row.team] || row.team)] = rounded;
         });
       }
     } catch (e) {}
-    sleeperProjCache[key] = map;
-    return map;
+    var result = { byId: map, byName: nameMap };
+    sleeperProjCache[key] = result;
+    return result;
   }
 
   // Set of player_ids whose game has actually been played this week (gp >= 1),
@@ -1417,7 +1425,9 @@
       var week = DETAIL.week || 1;
       var scoring = fpScoring(raw);
       var players = await loadPlayers();
-      var projMap = await sleeperProjectionsFor(week, scoring, raw.scoring_settings);
+      var projRaw = await sleeperProjectionsFor(week, scoring, raw.scoring_settings);
+      var projMap = projRaw.byName;
+      var projById = projRaw.byId;
       var fetched = await Promise.all([
         Sleeper.get('/league/' + DETAIL.leagueId + '/matchups/' + week),
         Sleeper.get('/league/' + DETAIL.leagueId + '/rosters'),
@@ -1476,7 +1486,7 @@
       function rowFor(pid, slot, pp) {
         if (!pid || pid === '0') return { slot: slot, name: 'Empty', pos: '', team: '', proj: 0, actual: null };
         var o = playerProj(pid, players, projMap);
-        var proj = (projMap[String(pid)] != null) ? projMap[String(pid)] : (o.pts || 0);
+        var proj = (projById[String(pid)] != null) ? projById[String(pid)] : (o.pts || 0);
         return { slot: slot, id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
           proj: proj, actual: actualFor(pp, pid), inj: (players[pid] && players[pid].injury_status) || null,
           vol: vol[String(pid)] || null, game: sched[teamCode((players[pid] && players[pid].team) || '')] || null };
@@ -1512,7 +1522,7 @@
         var allMine = (leftRoster.players || []).map(function (pid) {
           var o = playerProj(pid, players, projMap);
           return { id: pid, name: o.name, pos: o.pos, team: (players[pid] && players[pid].team) || '',
-            proj: (projMap[String(pid)] != null ? projMap[String(pid)] : (o.pts || 0)),
+            proj: (projById[String(pid)] != null ? projById[String(pid)] : (o.pts || 0)),
             actual: actualFor(pp, pid) };
         });
         var oppTotalNow = anyActual ? theirs.liveTotal : theirs.projTotal;
@@ -1551,6 +1561,15 @@
       var year = (auth.profile && auth.profile.mfl_cookie_year) || new Date().getFullYear();
       var playersMap = DETAIL.mflPlayers || await loadMFLPlayers();
       var startingSlots = startingSlotsFor(league);
+
+      var mflScoring = (function () {
+        var rules = league.raw && league.raw.rules;
+        if (!rules) return 'PPR';
+        var rec = Adapters.mfl.normalizeLeague(league.raw, {}, rules).scoring;
+        return rec || 'PPR';
+      })();
+      var projRaw = await sleeperProjectionsFor(week, mflScoring, league.raw && league.raw.rules);
+      var projByName = projRaw.byName;
 
       var nameMap = {};
       var flist = (league.raw && league.raw.franchises && league.raw.franchises.franchise) || [];
@@ -1610,54 +1629,78 @@
       var isMine = leftId === league.franchise_id || rightId === league.franchise_id;
 
       function sideRows(frId) {
-        if (!frId) return { rows: [], total: 0 };
+        if (!frId) return { rows: [], total: 0, projTotal: 0, liveTotal: 0 };
         var lu = lineupByFr[frId] || { starters: [], players: [] };
         var lv = liveByFr[frId] || { pScores: {}, score: 0 };
         var starterIds = lu.starters.length ? lu.starters : Object.keys(lv.pScores);
+        var projTotal = 0, liveTotal = 0;
         var rows = starterIds.map(function (pid, i) {
           var meta = playersMap[pid] || {};
           var ps = lv.pScores[pid];
+          var played = !!(ps && ps.done);
+          var actualScore = ps ? ps.score : 0;
+          var proj = projByName[matchKey(meta.name || '', meta.position || '')] || 0;
+          projTotal += proj;
+          liveTotal += played ? actualScore : proj;
           return {
             slot: startingSlots[i] || '',
             id: pid, name: meta.name || pid, pos: meta.position || '', team: meta.team || '',
-            score: ps ? ps.score : 0, done: ps ? ps.done : false, played: !!ps
+            score: actualScore, done: played, played: played, proj: proj
           };
         });
-        return { rows: rows, total: lv.score };
+        return { rows: rows, total: lv.score, projTotal: projTotal, liveTotal: liveTotal };
       }
       var left = sideRows(leftId), right = sideRows(rightId);
+      var anyPlayed = left.total > 0 || right.total > 0;
       var strip = scorebugStripHTML(pairings, DETAIL.matchupSel, true);
-      body.innerHTML = strip + mflMatchupHTML(left, right, isMine ? 'You' : fName(leftId), fName(rightId), week);
+      body.innerHTML = strip + mflMatchupHTML(left, right, isMine ? 'You' : fName(leftId), fName(rightId), week, anyPlayed);
     } catch (e) {
       body.innerHTML = '<div class="ml-panel"><div class="ml-empty">Could not load the matchup: ' + e.message + '</div></div>';
     }
   }
 
-  function mflMatchupHTML(left, right, leftName, rightName, week) {
-    var diff = left.total - right.total;
+  function mflMatchupHTML(left, right, leftName, rightName, week, anyPlayed) {
+    var leftDisp = anyPlayed ? left.liveTotal : left.projTotal;
+    var rightDisp = anyPlayed ? right.liveTotal : right.projTotal;
+    var diff = leftDisp - rightDisp;
     var winPct = Math.round(100 / (1 + Math.exp(-diff / WEEK_PROJ_SCALE)));
     var maxLen = Math.max(left.rows.length, right.rows.length);
     var rows = '';
     for (var i = 0; i < maxLen; i++) {
       var m = left.rows[i], t = right.rows[i];
       var bothDone = m && t && m.done && t.done;
-      var mHi = bothDone && m.score > t.score, tHi = bothDone && t.score > m.score;
+      var mVal = m ? (m.done ? m.score : m.proj) : 0;
+      var tVal = t ? (t.done ? t.score : t.proj) : 0;
+      var mHi = bothDone && mVal > tVal, tHi = bothDone && tVal > mVal;
+      function pCell(r, mirror) {
+        if (!r) return '<div class="ml-mu-pts' + (mirror ? ' ml-mu-pts-mirror' : '') + '"></div>';
+        var projSpan = '<span class="ml-mu-proj">' + (r.proj ? r.proj.toFixed(1) : '–') + '</span>';
+        if (!r.done) return '<div class="ml-mu-pts' + (mirror ? ' ml-mu-pts-mirror' : '') + '">' + projSpan + '</div>';
+        var cls = (r.score >= r.proj - 1) ? ' ml-mu-beat' : ' ml-mu-miss';
+        var actSpan = '<span class="ml-mu-actual' + cls + '">' + r.score.toFixed(1) + '</span>';
+        return '<div class="ml-mu-pts' + (mirror ? ' ml-mu-pts-mirror' : '') + '">' + (mirror ? projSpan + actSpan : actSpan + projSpan) + '</div>';
+      }
       rows += '<div class="ml-mu-row">' +
         '<div class="ml-mu-side' + (mHi ? ' ml-mu-win' : '') + '">' + (m ? '<div class="ml-mu-name">' + m.name + '</div><div class="ml-mu-sub">' + m.pos + (m.team ? ' · ' + m.team : '') + '</div>' : '') + '</div>' +
-        '<div class="ml-mu-pts">' + (m && m.played ? '<span class="ml-mu-actual">' + m.score.toFixed(1) + '</span>' : '<span class="ml-mu-proj">–</span>') + '</div>' +
+        pCell(m, false) +
         '<div class="ml-mu-slotlbl">' + (m ? (SLOT_LABEL[m.slot] || m.slot || '').replace(/_/g, ' ') : '') + '</div>' +
-        '<div class="ml-mu-pts ml-mu-pts-mirror">' + (t && t.played ? '<span class="ml-mu-actual">' + t.score.toFixed(1) + '</span>' : '<span class="ml-mu-proj">–</span>') + '</div>' +
+        pCell(t, true) +
         '<div class="ml-mu-side ml-mu-right' + (tHi ? ' ml-mu-win' : '') + '">' + (t ? '<div class="ml-mu-name">' + t.name + '</div><div class="ml-mu-sub">' + t.pos + (t.team ? ' · ' + t.team : '') + '</div>' : '') + '</div>' +
         '</div>';
     }
+    var lTot = anyPlayed ? left.liveTotal.toFixed(1) : left.projTotal.toFixed(1);
+    var rTot = anyPlayed ? right.liveTotal.toFixed(1) : right.projTotal.toFixed(1);
+    var lSub = anyPlayed && left.total > 0 ? 'live ' + left.total.toFixed(1) : 'projected';
+    var rSub = anyPlayed && right.total > 0 ? 'live ' + right.total.toFixed(1) : 'projected';
     return '<div class="ml-panel">' +
       '<div class="ml-mu-head">' +
-        '<div class="ml-mu-team"><div class="ml-mu-tname">' + leftName + '</div><div class="ml-mu-tscore">' + left.total.toFixed(1) + '</div><div class="ml-mu-tproj">live</div></div>' +
-        '<div class="ml-mu-vs">Week ' + week + '<br>Live</div>' +
-        '<div class="ml-mu-team"><div class="ml-mu-tname">' + rightName + '</div><div class="ml-mu-tscore">' + right.total.toFixed(1) + '</div><div class="ml-mu-tproj">live</div></div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + leftName + '</div><div class="ml-mu-tscore">' + lTot + '</div><div class="ml-mu-tproj">' + lSub + '</div></div>' +
+        '<div class="ml-mu-vs">Week ' + week + '<br>' + (anyPlayed ? 'Live' : 'Projected') + '</div>' +
+        '<div class="ml-mu-team"><div class="ml-mu-tname">' + rightName + '</div><div class="ml-mu-tscore">' + rTot + '</div><div class="ml-mu-tproj">' + rSub + '</div></div>' +
       '</div>' +
       '<div class="ml-mu-bar"><div class="ml-mu-barfill" style="width:' + winPct + '%"></div></div>' +
       '<div class="ml-mu-pct"><span>' + winPct + '%</span><span>' + (100 - winPct) + '%</span></div>' +
+      (!anyPlayed ? '<div class="ml-mu-note">Win % based on projected totals</div>' : '') +
       '</div>' +
       '<div class="ml-panel">' + rows + '</div>';
   }
