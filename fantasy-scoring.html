@@ -1,0 +1,44 @@
+---
+layout: null
+---
+{% include header.html title="Weekly Fantasy Scoring Leaders" css="fantasy-scoring" %}
+
+<main class="fs-page">
+  <div class="page-container">
+    <div class="section-eyebrow">MyTools</div>
+    <h1 class="fs-title">Weekly Fantasy Scoring Leaders</h1>
+    <p class="fs-subtitle">Live fantasy points across every game this week.</p>
+
+    <div class="fs-controls">
+      <input type="text" id="fs-search" class="fs-search-input" placeholder="Search for a player...">
+      <div class="fs-scoring-toggle">
+        <button data-scoring="standard">Standard</button>
+        <button data-scoring="half" class="is-active">Half-PPR</button>
+        <button data-scoring="ppr">PPR</button>
+      </div>
+    </div>
+
+    <div id="fs-status" class="fs-status"></div>
+
+    <div class="fs-table-wrap">
+      <table class="fs-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Pos</th>
+            <th>Team</th>
+            <th>Opp</th>
+            <th>Stat line</th>
+            <th>Status</th>
+            <th>Pts</th>
+          </tr>
+        </thead>
+        <tbody id="fs-results"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+{% include footer.html %}
+<script src="javascript/fantasy-scoring.js"></script>

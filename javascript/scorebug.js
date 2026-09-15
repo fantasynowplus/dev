@@ -144,9 +144,14 @@
 
     root.innerHTML =
       '<div class="scorebug">' +
-        '<button class="scorebug-nav scorebug-nav-prev" aria-label="Scroll left">&#8249;</button>' +
-        '<div class="scorebug-inner"></div>' +
-        '<button class="scorebug-nav scorebug-nav-next" aria-label="Scroll right">&#8250;</button>' +
+        '<a class="scorebug-top10-link" href="fantasy-scoring">' +
+          '<span class="scorebug-top10-icon">&#127942;</span><span>Top 10</span>' +
+        '</a>' +
+        '<div class="scorebug-scroll">' +
+          '<button class="scorebug-nav scorebug-nav-prev" aria-label="Scroll left">&#8249;</button>' +
+          '<div class="scorebug-inner"></div>' +
+          '<button class="scorebug-nav scorebug-nav-next" aria-label="Scroll right">&#8250;</button>' +
+        '</div>' +
       '</div>';
 
     var inner = root.querySelector('.scorebug-inner');

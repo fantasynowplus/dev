@@ -1,0 +1,150 @@
+/* Weekly Fantasy Scoring Leaders page */
+
+.fs-page {
+  padding: 40px 20px 80px;
+}
+
+.fs-title {
+  margin: 6px 0 4px;
+  font-size: 2rem;
+}
+
+.fs-subtitle {
+  color: var(--charcoal);
+  margin-bottom: 24px;
+}
+
+.fs-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.fs-search-input {
+  flex: 1 1 260px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  border-radius: 4px;
+  color: var(--text-light);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+}
+
+.fs-search-input:focus {
+  outline: none;
+  border-color: var(--bright-orange);
+}
+
+.fs-scoring-toggle {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.fs-scoring-toggle button {
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  color: var(--text-light);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.fs-scoring-toggle button:hover {
+  border-color: var(--bright-orange);
+}
+
+.fs-scoring-toggle button.is-active {
+  background: var(--bright-orange);
+  color: #000000;
+  border-color: var(--bright-orange);
+}
+
+.fs-status {
+  color: var(--charcoal);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  min-height: 1.2em;
+}
+
+.fs-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+}
+
+.fs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.fs-table thead th {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  color: var(--bright-orange);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.72rem;
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.fs-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-dark);
+  white-space: nowrap;
+}
+
+.fs-table tbody td.fs-statline {
+  white-space: normal;
+  color: var(--charcoal);
+  font-size: 0.8rem;
+  min-width: 220px;
+}
+
+.fs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fs-table tbody tr:hover {
+  background: rgba(255, 165, 21, 0.06);
+}
+
+.fs-rank {
+  color: var(--charcoal);
+  font-weight: 700;
+}
+
+.fs-player-name {
+  font-weight: 700;
+}
+
+.fs-pts {
+  color: var(--bright-orange);
+  font-weight: 800;
+  text-align: right;
+}
+
+.fs-live {
+  color: var(--bright-orange);
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .fs-table thead th:nth-child(6),
+  .fs-table tbody td:nth-child(6) {
+    display: none;
+  }
+}
