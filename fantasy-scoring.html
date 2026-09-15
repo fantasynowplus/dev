@@ -1,7 +1,7 @@
 ---
 layout: null
 ---
-{% include header.html title="Weekly Fantasy Scoring Leaders" css="fantasy-scoring" %}
+{% include header.html title="Weekly Fantasy Scoring Leaders" css="fantasy-scoring,my-leagues" %}
 
 <main class="fs-page">
   <div class="page-container">
@@ -40,5 +40,14 @@ layout: null
   </div>
 </main>
 
+<div id="ml-modal" class="ml-modal" style="display:none;" onclick="if(event.target===this)MLPort.close()">
+  <div class="ml-modal-panel">
+    <button class="ml-modal-close" onclick="MLPort.close()">&times;</button>
+    <div id="ml-modal-body"></div>
+  </div>
+</div>
+
 {% include footer.html %}
+<script src="javascript/platform-adapters.js"></script>
+<script src="javascript/my-leagues.js"></script>
 <script src="javascript/fantasy-scoring.js"></script>

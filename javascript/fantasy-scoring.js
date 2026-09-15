@@ -206,7 +206,7 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="fs-rank">' + r.rank + '</td>' +
-        '<td class="fs-player-name"><a class="fs-player-link" href="my-leagues?player=' + encodeURIComponent(p.name) + '&pos=' + encodeURIComponent(p.position || '') + '">' + p.name + '</a></td>' +
+        '<td class="fs-player-name"><a class="fs-player-link" href="my-leagues?player=' + encodeURIComponent(p.name) + '&pos=' + encodeURIComponent(p.position || '') + '" data-player="' + p.name.replace(/"/g, '&quot;') + '" data-pos="' + (p.position || '').replace(/"/g, '&quot;') + '">' + p.name + '</a></td>' +
         '<td>' + (p.position || guessPosition(p.positions)) + '</td>' +
         '<td>' + p.team + '</td>' +
         '<td>' + p.opp + '</td>' +
@@ -224,6 +224,15 @@
     toggleButtons = document.querySelectorAll('.fs-scoring-toggle button');
 
     searchEl.addEventListener('input', render);
+
+    resultsEl.addEventListener('click', function (e) {
+      var link = e.target.closest('.fs-player-link');
+      if (!link) return;
+      e.preventDefault();
+      if (window.MLPort && typeof window.MLPort.openByName === 'function') {
+        window.MLPort.openByName(link.dataset.player, link.dataset.pos);
+      }
+    });
 
     toggleButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {

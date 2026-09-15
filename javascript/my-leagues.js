@@ -615,6 +615,52 @@
   function closePortfolioModal() { el('ml-modal').style.display = 'none'; }
   window.MLPort = { open: openPortfolioPlayer, close: closePortfolioModal };
 
+  async function openPlayerFromElsewhere(name, pos) {
+    if (!el('ml-modal-body') || !el('ml-modal')) return;
+    if (!loggedIn()) {
+      el('ml-modal-body').innerHTML =
+        '<div class="ml-pm-title">' + name + '</div>' +
+        '<div class="ml-empty">Log in and link a league to see your rosters for this player.</div>';
+      el('ml-modal').style.display = 'flex';
+      return;
+    }
+    el('ml-modal-body').innerHTML = '<div class="ml-empty">Checking your leagues…</div>';
+    el('ml-modal').style.display = 'flex';
+    try {
+      var results = await Promise.all([fetchLeagues(), fetchMFLLeagues()]);
+      var leagues = results[0].concat(results[1]);
+      var portEntries = [];
+      try { USER_SLEEPER_ID = await getSleeperUserId(); } catch (e) {}
+      for (var i = 0; i < leagues.length; i++) {
+        try {
+          var ins = await insightsForLeague(leagues[i]);
+          if (ins.players && ins.roster && leagues[i].platform === 'sleeper') {
+            var lraw = leagues[i].raw || {};
+            portEntries.push({
+              players: ins.players, roster: ins.roster, dynasty: ins.dynasty,
+              leagueName: leagues[i].name || 'League',
+              slots: (lraw.roster_positions || []).filter(function (s) { return s !== 'BN' && s !== 'IR' && s !== 'TAXI'; })
+            });
+          }
+        } catch (e) { console.error('Insight failed for', leagues[i].key, e); }
+      }
+      var built = buildPortfolio(portEntries);
+      PORT.list = built.list; PORT.leagues = built.leagues; PORT.entries = portEntries;
+      var idx = PORT.list.findIndex(function (r) { return matchKey(r.name, r.pos) === matchKey(name, pos); });
+      if (idx === -1) idx = PORT.list.findIndex(function (r) { return normName(r.name) === normName(name); });
+      if (idx !== -1) {
+        openPortfolioPlayer(idx);
+      } else {
+        el('ml-modal-body').innerHTML =
+          '<div class="ml-pm-title">' + name + '</div>' +
+          '<div class="ml-empty">You don\'t roster this player in any of your linked leagues.</div>';
+      }
+    } catch (e) {
+      el('ml-modal-body').innerHTML = '<div class="ml-empty">Couldn\'t check your leagues right now.</div>';
+    }
+  }
+  window.MLPort.openByName = openPlayerFromElsewhere;
+
   function maybeOpenFromQuery() {
     var params = new URLSearchParams(window.location.search);
     var name = params.get('player');
@@ -2390,6 +2436,9 @@
     }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  function autoInit() {
+    if (el('ml-content')) init();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoInit);
+  else autoInit();
 })();
