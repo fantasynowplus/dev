@@ -1628,13 +1628,57 @@
       if (rightId === league.franchise_id && leftId !== league.franchise_id) { var tmp = leftId; leftId = rightId; rightId = tmp; }
       var isMine = leftId === league.franchise_id || rightId === league.franchise_id;
 
+      var isBestBall = (league.raw && league.raw.bestLineup === 'Yes');
+
+      function assignSlots(playerIds) {
+        // Match each player to the most specific eligible slot, preserving slot order.
+        var remaining = startingSlots.slice();
+        var assigned = {};
+        playerIds.forEach(function (pid) {
+          var pos = (playersMap[pid] && playersMap[pid].position) || '';
+          // Find the most specific (fewest eligible positions) available slot this player fits.
+          var bestIdx = -1, bestLen = 999;
+          remaining.forEach(function (slot, si) {
+            var elig = slotEligibility(slot);
+            if (elig.indexOf(pos) !== -1 && elig.length < bestLen && remaining[si] !== null) {
+              bestIdx = si; bestLen = elig.length;
+            }
+          });
+          if (bestIdx !== -1) { assigned[pid] = remaining[bestIdx]; remaining[bestIdx] = null; }
+          else assigned[pid] = '';
+        });
+        return assigned;
+      }
+
       function sideRows(frId) {
         if (!frId) return { rows: [], total: 0, projTotal: 0, liveTotal: 0 };
         var lu = lineupByFr[frId] || { starters: [], players: [] };
         var lv = liveByFr[frId] || { pScores: {}, score: 0 };
-        var starterIds = lu.starters.length ? lu.starters : Object.keys(lv.pScores);
         var projTotal = 0, liveTotal = 0;
-        var rows = starterIds.map(function (pid, i) {
+        var allIds = Object.keys(lv.pScores).length ? Object.keys(lv.pScores) : lu.starters;
+        if (isBestBall) {
+          // Best-ball: MFL auto-selects starters — show all players ranked by live/proj score.
+          var rows = allIds.map(function (pid) {
+            var meta = playersMap[pid] || {};
+            var ps = lv.pScores[pid];
+            var played = !!(ps && ps.done);
+            var actualScore = ps ? ps.score : 0;
+            var proj = projByName[matchKey(meta.name || '', meta.position || '')] || 0;
+            var val = played ? actualScore : proj;
+            projTotal += proj;
+            liveTotal += val;
+            return { slot: '', id: pid, name: meta.name || pid, pos: meta.position || '', team: meta.team || '', score: actualScore, done: played, played: played, proj: proj };
+          }).sort(function (a, b) {
+            var av = a.done ? a.score : a.proj, bv = b.done ? b.score : b.proj;
+            return bv - av;
+          });
+          return { rows: rows, total: lv.score, projTotal: projTotal, liveTotal: liveTotal };
+        }
+        var starterIds = lu.starters.length ? lu.starters : allIds;
+        var slotMap = assignSlots(starterIds);
+        var slotOrder = {};
+        startingSlots.forEach(function (s, i) { if (slotOrder[s] == null) slotOrder[s] = i; });
+        var rows = starterIds.map(function (pid) {
           var meta = playersMap[pid] || {};
           var ps = lv.pScores[pid];
           var played = !!(ps && ps.done);
@@ -1643,10 +1687,12 @@
           projTotal += proj;
           liveTotal += played ? actualScore : proj;
           return {
-            slot: startingSlots[i] || '',
+            slot: slotMap[pid] || '',
             id: pid, name: meta.name || pid, pos: meta.position || '', team: meta.team || '',
             score: actualScore, done: played, played: played, proj: proj
           };
+        }).sort(function (a, b) {
+          return (slotOrder[a.slot] != null ? slotOrder[a.slot] : 99) - (slotOrder[b.slot] != null ? slotOrder[b.slot] : 99);
         });
         return { rows: rows, total: lv.score, projTotal: projTotal, liveTotal: liveTotal };
       }
