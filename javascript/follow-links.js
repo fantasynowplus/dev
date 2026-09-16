@@ -67,7 +67,7 @@ const FOLLOW_SECTIONS = [
         name: "Website",
         handle: "fantasynowplus.com",
         url: "https://www.fantasynowplus.com/",
-        iconBg: "#FFFFFF",
+        iconBg: "transparent",
         iconImg: "assets/images/social-logo.png"
       },
       {
