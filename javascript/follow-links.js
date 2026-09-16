@@ -29,24 +29,24 @@ const FOLLOW_SECTIONS = [
         name: "FantasyNow+",
         handle: "@fantasynowplus \u00b7 main channel",
         url: "https://www.youtube.com/@fantasynowplus",
-        iconBg: "#FF0000",
-        iconSvg: YT_ICON,
+        iconBg: "transparent",
+        iconImg: "assets/images/Main.jpg",
         videoKey: "PLX9LyZ57O4HCZOz665YESxq60eiU0c6Gz"
       },
       {
         name: "FantasyNow+ Dynasty",
         handle: "@fantasynowplusdynasty",
         url: "https://www.youtube.com/@fantasynowplusdynasty",
-        iconBg: "#FF0000",
-        iconSvg: YT_ICON,
+        iconBg: "transparent",
+        iconImg: "assets/images/Dynasty.jpg",
         videoKey: "PLD17XfyD48QU"
       },
       {
         name: "Get Tilted",
         handle: "@fantasynowplusgettilted \u00b7 DFS & betting",
         url: "https://www.youtube.com/@fantasynowplusgettilted",
-        iconBg: "#FF0000",
-        iconSvg: YT_ICON,
+        iconBg: "transparent",
+        iconImg: "assets/images/GetTilted.jpg",
         videoKey: "PLeOI83uRg6RY",
         extra: [
           {
