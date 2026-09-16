@@ -113,5 +113,24 @@ const FOLLOW_SECTIONS = [
         iconSvg: TIKTOK_ICON
       }
     ]
+  },
+  {
+    title: "Our Partners",
+    links: [
+      {
+        name: "Drafters",
+        handle: "Use code FN+",
+        url: "https://drafters.com/refer/fn+",
+        iconBg: "transparent",
+        iconImg: "assets/images/drafters-logo.png"
+      },
+      {
+        name: "Underdog Fantasy",
+        handle: "Use code FNPLUS",
+        url: "https://play.underdogfantasy.com/p-fnplus",
+        iconBg: "transparent",
+        iconImg: "assets/images/underdog-logo.png"
+      }
+    ]
   }
 ];
