@@ -55,7 +55,13 @@ body {
   display: none;
   width: 84px;
   height: auto;
-  border-radius: 18px;
+}
+
+.follow-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
 }
 
 @media (max-width: 520px) {

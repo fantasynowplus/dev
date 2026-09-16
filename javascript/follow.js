@@ -24,7 +24,9 @@
     return (
       '<div class="follow-card">' +
         '<a class="follow-link-main" href="' + link.url + '" target="_blank" rel="noopener">' +
-          '<div class="follow-icon" style="background:' + link.iconBg + '">' + link.iconSvg + '</div>' +
+          '<div class="follow-icon" style="background:' + link.iconBg + '">' +
+            (link.iconImg ? '<img class="follow-icon-img" src="' + link.iconImg + '" alt="">' : link.iconSvg) +
+          '</div>' +
           '<div class="follow-label">' +
             '<p class="follow-name">' + link.name + '</p>' +
             '<p class="follow-handle">' + link.handle + '</p>' +
