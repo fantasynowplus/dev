@@ -1,0 +1,152 @@
+:root {
+  --brand-orange: #FFA515;
+  --brand-blue: #002863;
+  --brand-white: #FFFFFF;
+  --brand-black: #000000;
+  --accent-coral: #EA4E3D;
+  --accent-aqua: #42F4B0;
+  --gray-light: #F4F4F4;
+  --gray-charcoal: #606060;
+  --page-bg: #001738;
+  --card-bg: #04204d;
+  --card-border: rgba(255, 255, 255, 0.10);
+  --card-hover-bg: #062a5c;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.65);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--page-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px 64px;
+}
+
+.follow-wrap {
+  width: 100%;
+  max-width: 480px;
+}
+
+.follow-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.follow-logo {
+  display: block;
+  margin: 0 auto 18px;
+}
+
+.follow-logo-full {
+  width: 220px;
+  height: auto;
+}
+
+.follow-logo-social {
+  display: none;
+  width: 84px;
+  height: auto;
+  border-radius: 18px;
+}
+
+@media (max-width: 520px) {
+  .follow-logo-full { display: none; }
+  .follow-logo-social { display: block; }
+}
+
+.follow-tagline {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin: 0;
+}
+
+.follow-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.follow-link-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.follow-link-item:hover {
+  background: var(--card-hover-bg);
+  border-color: var(--brand-orange);
+  transform: translateY(-1px);
+}
+
+.follow-link-item:active {
+  transform: translateY(0);
+}
+
+.follow-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.follow-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.follow-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.follow-label .follow-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+
+.follow-label .follow-handle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.follow-chevron {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+.follow-footer {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 36px;
+}
+
+.follow-footer a {
+  color: var(--brand-orange);
+  text-decoration: none;
+}
