@@ -1,55 +1,57 @@
+html, body { background: var(--stream-bg); color: var(--text); margin: 0; }
+
 .wrap { max-width: 1400px; margin: 0 auto; padding: 16px 20px 40px; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand img { height: 32px; }
-.report-title { font-size: 20px; font-weight: 700; color: #fff; }
+.report-title { font-size: 20px; font-weight: 700; color: var(--text); }
 
-.toggle { display: flex; gap: 4px; background: #111c2e; border-radius: 8px; padding: 4px; }
-.toggle button { background: transparent; border: none; color: #93a3b8; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; }
-.toggle button.active { background: #1c2b45; color: #fff; }
+.toggle { display: flex; gap: 4px; background: var(--header-bg); border-radius: 8px; padding: 4px; }
+.toggle button { background: transparent; border: none; color: var(--muted); padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.toggle button.active { background: var(--panel-hi); color: var(--text); }
 
-.meta { display: flex; align-items: center; gap: 10px; color: #93a3b8; font-size: 13px; }
-.slatepick select { background: #111c2e; color: #fff; border: 1px solid #22314a; border-radius: 6px; padding: 4px 8px; }
-.refresh { background: #1c2b45; color: #fff; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.meta { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+.slatepick select { background: var(--header-bg); color: var(--text); border: 1px solid var(--panel-hi); border-radius: 6px; padding: 4px 8px; }
+.refresh { background: var(--orange); color: var(--stream-bg); border: none; border-radius: 6px; padding: 5px 12px; font-weight: 700; cursor: pointer; }
 
 .filters { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
-.field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #93a3b8; }
-.field select, .field input { background: #111c2e; color: #fff; border: 1px solid #22314a; border-radius: 6px; padding: 5px 8px; }
+.field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.field select, .field input { background: var(--header-bg); color: var(--text); border: 1px solid var(--panel-hi); border-radius: 6px; padding: 5px 8px; }
 .field.search input { width: 220px; }
-.reset { margin-left: auto; background: transparent; color: #93a3b8; border: 1px solid #22314a; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.reset { margin-left: auto; background: transparent; color: var(--muted); border: 1px solid var(--panel-hi); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
 
-.count { color: #93a3b8; font-size: 12px; margin: 0 0 6px; }
+.count { color: var(--muted); font-size: 12px; margin: 0 0 6px; }
 
 .board { display: grid; grid-template-columns: 1fr 320px; gap: 18px; align-items: start; }
 
-.playerpane .scroller { max-height: 70vh; overflow-y: auto; border: 1px solid #1c2b45; border-radius: 10px; }
+.playerpane .scroller { max-height: 70vh; overflow-y: auto; border: 1px solid var(--panel-hi); border-radius: 10px; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th { position: sticky; top: 0; background: #0c1626; color: #93a3b8; text-align: left; padding: 8px 10px; border-bottom: 1px solid #1c2b45; }
-tbody td { padding: 7px 10px; border-bottom: 1px solid #16223a; color: #d7dee8; }
+thead th { position: sticky; top: 0; background: var(--header-bg); color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--panel-hi); }
+tbody td { padding: 7px 10px; border-bottom: 1px solid var(--panel-hi); color: var(--text); }
 tbody tr { cursor: pointer; }
-tbody tr:hover { background: #101d33; }
-tbody tr.rostered { background: #14261c; }
-tbody tr.rostered:hover { background: #17301f; }
-td.state { text-align: center; color: #93a3b8; padding: 30px 0; }
+tbody tr:hover { background: var(--panel-hi); }
+tbody tr.rostered { background: rgba(66, 244, 176, .12); }
+tbody tr.rostered:hover { background: rgba(66, 244, 176, .2); }
+td.state { text-align: center; color: var(--muted); padding: 30px 0; }
 
-.postag { font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: #0b1220; }
+.postag { font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: var(--stream-bg); }
 .postag.QB { background: var(--pos-QB); }
 .postag.RB { background: var(--pos-RB); }
 .postag.WR { background: var(--pos-WR); }
 .postag.TE { background: var(--pos-TE); }
-.postag.DST { background: #8b93a1; }
+.postag.DST { background: var(--t6); }
 
-.rosterpane { background: #0c1626; border: 1px solid #1c2b45; border-radius: 10px; padding: 14px; }
+.rosterpane { background: var(--header-bg); border: 1px solid var(--panel-hi); border-radius: 10px; padding: 14px; }
 .capbar { margin-bottom: 14px; }
-.caplabel { font-size: 12px; color: #93a3b8; }
-.capnums { font-size: 18px; font-weight: 700; color: #fff; margin: 2px 0 6px; }
-.capfill { height: 6px; background: #1c2b45; border-radius: 4px; overflow: hidden; }
-#capBar { height: 100%; background: #4fd68c; width: 0%; }
-#capBar.over { background: #e5566a; }
+.caplabel { font-size: 12px; color: var(--muted); }
+.capnums { font-size: 18px; font-weight: 700; color: var(--text); margin: 2px 0 6px; }
+.capfill { height: 6px; background: var(--panel-hi); border-radius: 4px; overflow: hidden; }
+#capBar { height: 100%; background: var(--aqua); width: 0%; }
+#capBar.over { background: var(--redorange); }
 
-.slotrow { display: flex; align-items: center; justify-content: space-between; padding: 8px 6px; border-bottom: 1px solid #16223a; font-size: 13px; }
-.slotrow .slotlabel { color: #93a3b8; font-weight: 700; width: 46px; }
-.slotrow .slotname { color: #d7dee8; flex: 1; }
-.slotrow.empty .slotname { color: #566173; font-style: italic; }
-.slotrow .slotsal { color: #93a3b8; font-size: 12px; }
+.slotrow { display: flex; align-items: center; justify-content: space-between; padding: 8px 6px; border-bottom: 1px solid var(--panel-hi); font-size: 13px; }
+.slotrow .slotlabel { color: var(--muted); font-weight: 700; width: 46px; }
+.slotrow .slotname { color: var(--text); flex: 1; }
+.slotrow.empty .slotname { color: var(--muted); font-style: italic; }
+.slotrow .slotsal { color: var(--muted); font-size: 12px; }
