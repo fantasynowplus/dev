@@ -57,6 +57,18 @@
     return rows;
   }
 
+  async function removeLeague(key) {
+    var l = LEAGUES[key];
+    if (!l) return;
+    if (!window.confirm('Remove ' + (l.name || 'this league') + ' from your synced leagues?')) return;
+    var table = l.platform === 'mfl' ? 'mfl_leagues' : 'sleeper_leagues';
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?user_id=eq.' + auth.user.sub + '&league_id=eq.' + encodeURIComponent(l.league_id);
+    var res = await fetch(url, { method: 'DELETE', headers: sbHeaders() });
+    if (!res.ok) { alert('Could not remove league (' + res.status + ')'); return; }
+    delete LEAGUES[key];
+    init();
+  }
+
   function typeLabel(t) { return t === 2 ? 'Dynasty' : t === 1 ? 'Keeper' : 'Redraft'; }
   function scoringLabel(s) { const rec = s && typeof s.rec === 'number' ? s.rec : 0; return rec >= 1 ? 'PPR' : rec >= 0.5 ? '1/2 PPR' : 'Standard'; }
   function startersCount(positions) {
@@ -130,7 +142,9 @@
         '<td id="tier-' + l.key + '">' + cellTier(ins) + '</td>' +
         '<td id="rank-' + l.key + '">' + cellRank(ins) + '</td>' +
         '<td id="value-' + l.key + '">' + cellValue(ins) + '</td>' +
-        '<td>' + pills + '</td>' +
+        '<td>' + pills +
+          '<button onclick="event.stopPropagation(); MLSync.remove(\'' + l.key + '\')" title="Remove league" ' +
+          'style="margin-left:8px;background:none;border:none;color:#5f6c85;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;">&times;</button></td>' +
         '</tr>';
     }).join('');
   }
@@ -2396,7 +2410,8 @@
       } finally {
         btn.disabled = false;
       }
-    }
+    },
+    remove: removeLeague
   };
 
   async function init() {
