@@ -84,8 +84,10 @@ def fetch_draftables(draft_group_id):
 def upsert_players(draft_group_id, draftables):
     by_player = {}
     for d in draftables:
+        if d.get("isDisabled"):
+            continue
         pdk_id = d.get("playerDkId")
-        if pdk_id is None or pdk_id in by_player:
+        if pdk_id is None or d.get("salary") is None or pdk_id in by_player:
             continue
         team = d.get("teamAbbreviation")
         by_player[pdk_id] = {
