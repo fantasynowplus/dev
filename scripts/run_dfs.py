@@ -103,7 +103,12 @@ def upsert_players(draft_group_id, draftables):
     if not rows:
         return
 
-    resp = requests.post(f"{SUPABASE_URL}/rest/v1/dfs_players", headers=HEADERS, json=rows, timeout=30)
+    resp = requests.post(
+        f"{SUPABASE_URL}/rest/v1/dfs_players?on_conflict=draft_group_id,dk_player_id",
+        headers=HEADERS, json=rows, timeout=30,
+    )
+    if not resp.ok:
+        print(resp.text)
     resp.raise_for_status()
 
 
