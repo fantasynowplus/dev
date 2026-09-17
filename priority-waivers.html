@@ -1,0 +1,106 @@
+---
+layout: null
+---
+{% include header.html title="Priority Waivers | FantasyNow+" css="stream-tokens,priority-waivers" %}
+{% include back-to-myleague.html %}
+
+<div class="wrap">
+
+  <div class="pw-head">
+    <h1>Priority Waivers</h1>
+    <p class="pw-sub">Our staff's weekly waiver targets and drop candidates, ranked by recent scoring and roster trends.</p>
+  </div>
+
+  <div class="topbar">
+    <div class="toggle-row">
+      <div class="toggle" role="tablist" aria-label="Position">
+        <button id="tab-ALL" class="active" role="tab" aria-selected="true" onclick="setPos('ALL')">All</button>
+        <button id="tab-QB" role="tab" aria-selected="false" onclick="setPos('QB')">QB</button>
+        <button id="tab-RB" role="tab" aria-selected="false" onclick="setPos('RB')">RB</button>
+        <button id="tab-WR" role="tab" aria-selected="false" onclick="setPos('WR')">WR</button>
+        <button id="tab-TE" role="tab" aria-selected="false" onclick="setPos('TE')">TE</button>
+      </div>
+      <div class="toggle mode" role="tablist" aria-label="Mode">
+        <button id="mode-add" class="active" role="tab" aria-selected="true" onclick="setMode('add')">Waiver Adds</button>
+        <button id="mode-drop" role="tab" aria-selected="false" onclick="setMode('drop')">Drop Now</button>
+      </div>
+    </div>
+    <div class="title"><span id="sectionTitle">Waiver Targets</span> &middot; <span class="pos" id="weekLabel">&mdash;</span></div>
+  </div>
+
+  <div class="meta">
+    <span class="updated" id="updated"></span>
+    <button class="refresh" onclick="reload()">Refresh</button>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <label for="limit">Show</label>
+      <select class="pick" id="limit" onchange="draw()">
+        <option value="10" selected>10 players</option>
+        <option value="15">15 players</option>
+        <option value="20">20 players</option>
+        <option value="25">25 players</option>
+        <option value="50">50 players</option>
+        <option value="0">All</option>
+      </select>
+    </div>
+
+    <div class="field search">
+      <label for="q">Search</label>
+      <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
+    </div>
+
+    <div class="field">
+      <label for="rost"><span id="rostLabel">Max roster %</span> <span class="val" id="rostVal">40%</span></label>
+      <input id="rost" type="range" min="0" max="100" step="5" value="40" oninput="draw()">
+    </div>
+
+    <div class="field">
+      <label>Min games (L3)</label>
+      <div class="stepper">
+        <button type="button" onclick="bumpGP(-1)" aria-label="Decrease">&minus;</button>
+        <span id="gpVal">1</span>
+        <button type="button" onclick="bumpGP(1)" aria-label="Increase">+</button>
+      </div>
+    </div>
+
+    <label class="check" id="byeWrap">
+      <input id="hideBye" type="checkbox" checked onchange="draw()">
+      <span id="byeLabel">Hide players on bye</span>
+    </label>
+
+    <button class="reset" onclick="resetFilters()">Reset filters</button>
+  </div>
+
+  <p class="count" id="count"></p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"><tr><td class="state">Loading waiver board&hellip;</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="backdrop" id="backdrop" onclick="if(event.target===this) closeCard()">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="cardName">
+    <div class="cardtop">
+      <div class="shot" id="cardShot"></div>
+      <div class="who">
+        <h2 id="cardName">&nbsp;</h2>
+        <div class="sub" id="cardSub"></div>
+      </div>
+      <button class="closex" onclick="closeCard()" aria-label="Close">&times;</button>
+    </div>
+    <div class="ranks" id="cardRanks"></div>
+    <div class="logwrap">
+      <div class="logtitle" id="cardLogTitle">Game Log</div>
+      <div class="logscroll" id="cardLog"></div>
+    </div>
+  </div>
+</div>
+
+<script src="javascript/waiver-wire.js"></script>
+{% include footer.html %}
