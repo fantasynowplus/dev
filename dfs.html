@@ -1,0 +1,73 @@
+---
+layout: null
+---
+{% include show-header.html title="FantasyNow+ DFS Lineup Builder" css="dfs" %}
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="assets/logos/fantasynowplus.png" alt="FantasyNow+" onerror="this.remove()">
+      <span class="report-title">DFS Lineup Builder</span>
+    </div>
+    <div class="toggle" role="tablist" aria-label="Contest type">
+      <button id="type-classic" class="active" role="tab" aria-selected="true" onclick="setType('classic')">Classic</button>
+      <button id="type-showdown" role="tab" aria-selected="false" onclick="setType('showdown')">Showdown</button>
+    </div>
+    <div class="meta">
+      <label class="slatepick">Slate <select id="slateSel" onchange="onSlateChange()"></select></label>
+      <span class="updated" id="updated"></span>
+      <button class="refresh" onclick="reload()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <label for="posFilter">Position</label>
+      <select id="posFilter" onchange="draw()">
+        <option value="ALL">All</option>
+        <option value="QB">QB</option>
+        <option value="RB">RB</option>
+        <option value="WR">WR</option>
+        <option value="TE">TE</option>
+        <option value="DST">DST</option>
+      </select>
+    </div>
+    <div class="field search">
+      <label for="q">Search</label>
+      <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
+    </div>
+    <button class="reset" onclick="clearRoster()">Clear roster</button>
+  </div>
+
+  <div class="board">
+    <div class="playerpane">
+      <p class="count" id="count"></p>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos</th><th>Player</th><th>Team</th><th>Opp</th>
+              <th>Salary</th><th>Proj</th><th>Own%</th>
+            </tr>
+          </thead>
+          <tbody id="body"><tr><td class="state" colspan="7">Loading players&hellip;</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rosterpane">
+      <div class="capbar">
+        <div class="caplabel">Salary Cap</div>
+        <div class="capnums"><span id="capUsed">$0</span> / <span id="capTotal">$50,000</span></div>
+        <div class="capfill"><div id="capBar"></div></div>
+      </div>
+      <div id="rosterSlots"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="javascript/auth.js"></script>
+<script src="javascript/dfs.js"></script>
+</body>
+</html>
