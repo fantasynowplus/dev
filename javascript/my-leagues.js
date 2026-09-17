@@ -30,6 +30,8 @@
   var TEAM_ALIASES2 = { JAC: 'JAX', WSH: 'WAS', ARZ: 'ARI', LA: 'LAR' };
   function teamCode(t) { var u = (t || '').toUpperCase(); return TEAM_ALIASES2[u] || u; }
   var PLAYERS = null, MFL_PLAYERS = null, USER_SLEEPER_ID = null, rankCache = {}, LEAGUES = {}, DETAIL = null;
+  var PLATFORM_LABELS = { sleeper: 'Sleeper', mfl: 'MyFantasyLeague' };
+  function platformLabel(p) { return PLATFORM_LABELS[p] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : 'Other'); }
 
   function el(id) { return document.getElementById(id); }
   function loggedIn() { return typeof auth !== 'undefined' && auth.isAuthenticated(); }
@@ -521,7 +523,7 @@
     if (vc) vc.innerHTML = cellValue(ins);
   }
 
-  function renderSummary(totalLeagues, tierCounts, formatCounts, topTeams) {
+  function renderSummary(totalLeagues, tierCounts, formatCounts, platformCounts, topTeams) {
     var slot = el('ml-chart-slot');
     if (!totalLeagues) { slot.style.display = 'none'; return; }
     var tierTotal = TIER_ORDER.reduce(function (s, t) { return s + tierCounts[t]; }, 0);
@@ -544,6 +546,10 @@
       '<div class="ml-stat"><span>Dynasty</span><b>' + formatCounts.Dynasty + '</b></div>' +
       '<div class="ml-stat"><span>Keeper</span><b>' + formatCounts.Keeper + '</b></div>' +
       (formatCounts.BestBall ? '<div class="ml-stat"><span>Best Ball</span><b>' + formatCounts.BestBall + '</b></div>' : '') + '</div>';
+    html += '<div class="ml-sum-col"><div class="ml-sum-title">Platforms</div>' +
+      Object.keys(platformCounts).sort().map(function (p) {
+        return '<div class="ml-stat"><span>' + platformLabel(p) + '</span><b>' + platformCounts[p] + '</b></div>';
+      }).join('') + '</div>';
     if (topTeams.length) {
       var items = topTeams.map(function (tm, i) {
         return '<div class="ml-top-item"><span class="ml-top-rank">' + (i + 1) + '</span><span class="ml-top-name">' + tm.name + '</span>' +
@@ -722,6 +728,11 @@
 
   async function computeInsights(leagues) {
     var formatCounts = { Redraft: 0, Dynasty: 0, Keeper: 0, BestBall: 0 };
+    var platformCounts = {};
+    leagues.forEach(function (l) {
+      var p = l.platform || 'other';
+      platformCounts[p] = (platformCounts[p] || 0) + 1;
+    });
     leagues.forEach(function (l) {
       if (l.platform === 'mfl') {
         var mraw = l.raw || {};
@@ -762,7 +773,7 @@
       }
     }
     topTeams.sort(function (a, b) { return b.score - a.score; });
-    renderSummary(leagues.length, tierCounts, formatCounts, topTeams.slice(0, 3));
+    renderSummary(leagues.length, tierCounts, formatCounts, platformCounts, topTeams.slice(0, 3));
     renderPortfolio(portEntries);
 
     var sorted = leagues.slice().sort(function (a, b) {
