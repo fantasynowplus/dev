@@ -216,17 +216,45 @@
         var row = j[w];
         var st = row && (row.stats || row);
         if (!st || st.pts_ppr == null) return;
-        log.push({ week: Number(w), opp: (row && (row.opponent || row.opp)) || '', pts: Number(st.pts_ppr) });
+        log.push({ week: Number(w), opp: (row && (row.opponent || row.opp)) || '', pts: Number(st.pts_ppr), st: st });
       });
       log.sort(function (a, b) { return a.week - b.week; });
       return log;
     });
   }
 
+  var LOG_COLUMNS = {
+    QB: [
+      { label: 'CMP/ATT', get: function (st) { return (st.pass_cmp != null && st.pass_att != null) ? st.pass_cmp + '/' + st.pass_att : null; } },
+      { label: 'YDS', key: 'pass_yd' },
+      { label: 'TD', key: 'pass_td' },
+      { label: 'INT', key: 'pass_int' },
+      { label: 'RSH YDS', key: 'rush_yd' },
+      { label: 'RSH TD', key: 'rush_td' }
+    ],
+    RB: [
+      { label: 'ATT', key: 'rush_att' },
+      { label: 'YDS', key: 'rush_yd' },
+      { label: 'TD', key: 'rush_td' },
+      { label: 'REC', key: 'rec' },
+      { label: 'REC YDS', key: 'rec_yd' },
+      { label: 'REC TD', key: 'rec_td' }
+    ],
+    WR: [
+      { label: 'TAR', key: 'rec_tgt' },
+      { label: 'REC', key: 'rec' },
+      { label: 'YDS', key: 'rec_yd' },
+      { label: 'TD', key: 'rec_td' }
+    ]
+  };
+  LOG_COLUMNS.TE = LOG_COLUMNS.WR;
+
   function openCard(player) {
     CARD_PLAYER = player;
     var shot = el('cardShot');
     shot.style.display = '';
+    el('cardInitials').style.display = 'none';
+    shot.onerror = function () { shot.style.display = 'none'; el('cardInitials').style.display = 'block'; };
     shot.src = player.position === 'DST'
       ? 'https://sleepercdn.com/images/team_logos/nfl/' + (player.team || '').toLowerCase() + '.png'
       : (player.sleeper_id ? 'https://sleepercdn.com/content/nfl/players/thumb/' + player.sleeper_id + '.jpg' : '');
@@ -248,14 +276,23 @@
     el('backdrop').className = 'backdrop open';
     document.body.className = 'locked';
 
-    el('cardLog').innerHTML = '<tr><td class="state" colspan="3">Loading&hellip;</td></tr>';
+    var cols = LOG_COLUMNS[player.position] || [];
+    var colspan = cols.length + 3;
+    el('cardLogHead').innerHTML = '<tr><th class="wk">Wk</th><th>Opp</th>' +
+      cols.map(function (c) { return '<th>' + c.label + '</th>'; }).join('') + '<th class="pts">Pts</th></tr>';
+
+    el('cardLog').innerHTML = '<tr><td class="state" colspan="' + colspan + '">Loading&hellip;</td></tr>';
     fetchSeasonLog(player.sleeper_id).then(function (log) {
       if (!log.length) {
-        el('cardLog').innerHTML = '<tr><td class="state" colspan="3">No games logged yet this season.</td></tr>';
+        el('cardLog').innerHTML = '<tr><td class="state" colspan="' + colspan + '">No games logged yet this season.</td></tr>';
         return;
       }
       el('cardLog').innerHTML = log.map(function (g) {
-        return '<tr><td class="wk">' + g.week + '</td><td>' + esc(g.opp) + '</td>' +
+        var cells = cols.map(function (c) {
+          var v = c.get ? c.get(g.st) : g.st[c.key];
+          return '<td>' + (v == null ? '&mdash;' : v) + '</td>';
+        }).join('');
+        return '<tr><td class="wk">' + g.week + '</td><td>' + esc(g.opp) + '</td>' + cells +
           '<td class="pts">' + g.pts.toFixed(1) + '</td></tr>';
       }).join('');
     });

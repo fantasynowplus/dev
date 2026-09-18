@@ -176,7 +176,7 @@ tbody td.dim{color:#4a5c7d}
 .backdrop.open{display:flex}
 
 .card{
-  width:100%;max-width:640px;background:var(--card-bg);
+  width:100%;max-width:760px;background:var(--card-bg);
   border:1px solid var(--line);border-radius:16px;overflow:hidden;
   box-shadow:0 24px 60px rgba(0,0,0,.5);
 }
@@ -185,7 +185,7 @@ tbody td.dim{color:#4a5c7d}
 .shot{width:76px;height:76px;border-radius:12px;flex:none;overflow:hidden;
   background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;position:relative}
 .shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
-.shot .initials{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+.shot .initials{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   font-family:"Oswald";font-weight:700;font-size:26px;color:var(--muted)}
 .who{min-width:0;flex:1}
 .who h2{margin:0 0 4px;font-family:"Oswald";font-weight:700;font-size:27px;
@@ -206,7 +206,7 @@ tbody td.dim{color:#4a5c7d}
 .logwrap{padding:0}
 .logtitle{padding:4px 24px 10px;font-family:"Oswald";font-weight:600;
   text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted)}
-.logscroll{overflow-x:hidden;max-height:38vh;overflow-y:auto}
+.logscroll{overflow-x:auto;max-height:38vh;overflow-y:auto}
 table.log{border-collapse:collapse;width:100%}
 table.log th{position:sticky;top:0;z-index:2;background:#001a40;
   padding:9px 10px;font-family:"Oswald";font-weight:600;text-transform:uppercase;
@@ -218,7 +218,7 @@ table.log td{padding:8px 10px;text-align:center;font-size:14px;color:#D8E3F7;
   border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
 table.log td.wk{color:var(--muted);font-weight:600}
 
-.cardaction{padding:0 24px 24px;display:flex;justify-content:flex-end}
+.cardaction{padding:18px 24px 24px;border-top:1px solid var(--line);margin-top:4px}
 
 @media (max-width:900px){
   .board{grid-template-columns:1fr}

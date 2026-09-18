@@ -76,7 +76,7 @@ layout: null
 <div class="backdrop" id="backdrop" onclick="if(event.target===this) closeCard()">
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="cardName">
     <div class="cardtop">
-      <div class="shot"><img id="cardShot" alt="" onerror="this.style.display='none'"><span class="initials" id="cardInitials"></span></div>
+      <div class="shot"><img id="cardShot" alt=""><span class="initials" id="cardInitials"></span></div>
       <div class="who">
         <h2 id="cardName">&nbsp;</h2>
         <div class="sub" id="cardSub"></div>
@@ -87,7 +87,7 @@ layout: null
     <div class="logwrap">
       <div class="logtitle">Season Log</div>
       <div class="logscroll"><table class="log">
-        <thead><tr><th class="wk">Wk</th><th>Opp</th><th class="pts">Pts</th></tr></thead>
+        <thead id="cardLogHead"><tr><th class="wk">Wk</th><th>Opp</th><th class="pts">Pts</th></tr></thead>
         <tbody id="cardLog"><tr><td class="state" colspan="3">Loading&hellip;</td></tr></tbody>
       </table></div>
     </div>
