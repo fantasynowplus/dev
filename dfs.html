@@ -42,6 +42,13 @@ layout: null
       <label for="q">Search</label>
       <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
     </div>
+    <div class="field salary">
+      <label>Salary <span class="val" id="salVal">&mdash;</span></label>
+      <div class="dualrange">
+        <input type="range" id="salMin" oninput="onSalaryRange()">
+        <input type="range" id="salMax" oninput="onSalaryRange()">
+      </div>
+    </div>
     <button class="reset" onclick="clearRoster()">Clear roster</button>
   </div>
 

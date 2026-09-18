@@ -153,10 +153,12 @@
   window.draw = function () {
     var pos = el('posFilter').value;
     var q = el('q').value.trim().toLowerCase();
+    var salLo = Number(el('salMin').value), salHi = Number(el('salMax').value);
 
     var rows = PLAYERS.filter(function (p) {
       if (pos !== 'ALL' && p.position !== pos) return false;
       if (q && p.name.toLowerCase().indexOf(q) === -1 && (p.team || '').toLowerCase().indexOf(q) === -1) return false;
+      if (p.salary != null && (p.salary < salLo || p.salary > salHi)) return false;
       return true;
     });
 
@@ -318,11 +320,35 @@
     CARD_PLAYER = null;
   };
 
+  function setupSalaryRange() {
+    var salaries = PLAYERS.map(function (p) { return p.salary; }).filter(function (s) { return s != null; });
+    var lo = salaries.length ? Math.min.apply(null, salaries) : 0;
+    var hi = salaries.length ? Math.max.apply(null, salaries) : 10000;
+    ['salMin', 'salMax'].forEach(function (id) {
+      el(id).min = lo; el(id).max = hi; el(id).step = 100;
+    });
+    el('salMin').value = lo;
+    el('salMax').value = hi;
+    updateSalaryLabel();
+  }
+
+  function updateSalaryLabel() {
+    el('salVal').textContent = money(el('salMin').value) + ' \u2013 ' + money(el('salMax').value);
+  }
+
+  window.onSalaryRange = function () {
+    var lo = Number(el('salMin').value), hi = Number(el('salMax').value);
+    if (lo > hi) { var t = lo; lo = hi; hi = t; el('salMin').value = lo; el('salMax').value = hi; }
+    updateSalaryLabel();
+    draw();
+  };
+
   function loadPlayers(draftGroupId) {
     el('body').innerHTML = '<tr><td class="state" colspan="8">Loading players&hellip;</td></tr>';
     return sbGet('dfs_players?draft_group_id=eq.' + draftGroupId + '&order=salary.desc').then(function (rows) {
       PLAYERS = rows || [];
       el('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      setupSalaryRange();
       draw();
     });
   }
