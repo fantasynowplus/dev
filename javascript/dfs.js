@@ -71,32 +71,6 @@
     });
     draw();
   };
-  var OWN_TIERS = [
-    { key: 'chalk', label: 'CHALK', min: 25 },
-    { key: 'moderate', label: 'MOD', min: 10 },
-    { key: 'low', label: 'LOW', min: 3 },
-    { key: 'contrarian', label: 'CONTRA', min: 0 }
-  ];
-  var OWN_FILTER = 'ALL';
-  function ownershipTier(pct) {
-    if (pct == null) return null;
-    for (var i = 0; i < OWN_TIERS.length; i++) {
-      if (pct >= OWN_TIERS[i].min) return OWN_TIERS[i];
-    }
-    return null;
-  }
-  function ownBadge(pct) {
-    var tier = ownershipTier(pct);
-    if (!tier) return '';
-    return '<span class="owntag ' + tier.key + '">' + tier.label + '</span>';
-  }
-  window.setOwnFilter = function (key) {
-    OWN_FILTER = key;
-    document.querySelectorAll('.ownpills button').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-tier') === key);
-    });
-    draw();
-  };
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -334,7 +308,7 @@
       '<div class="rank"><div class="n">' + money(player.salary) + '</div><div class="l">Salary</div></div>' +
       '<div class="rank hi"><div class="n">' + (player.projected_points != null ? Number(player.projected_points).toFixed(1) : '&mdash;') + '</div><div class="l">Proj Pts</div></div>' +
       '<div class="rank"><div class="n">' + (value || '&mdash;') + '<span class="u">pts/$1k</span></div><div class="l">Value</div></div>' +
-      '<div class="rank"><div class="n">&mdash;</div><div class="l">Own %</div></div>';
+      '<div class="rank"><div class="n">' + (player.ownership_pct != null ? Number(player.ownership_pct).toFixed(1) + '%' + ownBadge(player.ownership_pct) : '&mdash;') + '</div><div class="l">Own %</div></div>';
 
     updateCardBtn();
     el('backdrop').className = 'backdrop open';
