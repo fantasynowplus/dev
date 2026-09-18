@@ -41,6 +41,7 @@ def fetch_slates():
             "slate_name": dg.get("DraftGroupTag") or f"Slate {gid}",
             "contest_type": game_type_names.get(dg.get("GameTypeId"), "classic"),
             "start_time": dg.get("StartDate"),
+            "game_count": dg.get("GameCount"),
         })
     return slates
 
