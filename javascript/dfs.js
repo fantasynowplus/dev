@@ -45,6 +45,58 @@
     if (!status || !INJ_TAG[status]) return '';
     return '<span class="injtag ' + status + '">' + INJ_TAG[status] + '</span>';
   }
+  var OWN_TIERS = [
+    { key: 'chalk', label: 'CHALK', min: 25 },
+    { key: 'moderate', label: 'MOD', min: 10 },
+    { key: 'low', label: 'LOW', min: 3 },
+    { key: 'contrarian', label: 'CONTRA', min: 0 }
+  ];
+  var OWN_FILTER = 'ALL';
+  function ownershipTier(pct) {
+    if (pct == null) return null;
+    for (var i = 0; i < OWN_TIERS.length; i++) {
+      if (pct >= OWN_TIERS[i].min) return OWN_TIERS[i];
+    }
+    return null;
+  }
+  function ownBadge(pct) {
+    var tier = ownershipTier(pct);
+    if (!tier) return '';
+    return '<span class="owntag ' + tier.key + '">' + tier.label + '</span>';
+  }
+  window.setOwnFilter = function (key) {
+    OWN_FILTER = key;
+    document.querySelectorAll('.ownpills button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tier') === key);
+    });
+    draw();
+  };
+  var OWN_TIERS = [
+    { key: 'chalk', label: 'CHALK', min: 25 },
+    { key: 'moderate', label: 'MOD', min: 10 },
+    { key: 'low', label: 'LOW', min: 3 },
+    { key: 'contrarian', label: 'CONTRA', min: 0 }
+  ];
+  var OWN_FILTER = 'ALL';
+  function ownershipTier(pct) {
+    if (pct == null) return null;
+    for (var i = 0; i < OWN_TIERS.length; i++) {
+      if (pct >= OWN_TIERS[i].min) return OWN_TIERS[i];
+    }
+    return null;
+  }
+  function ownBadge(pct) {
+    var tier = ownershipTier(pct);
+    if (!tier) return '';
+    return '<span class="owntag ' + tier.key + '">' + tier.label + '</span>';
+  }
+  window.setOwnFilter = function (key) {
+    OWN_FILTER = key;
+    document.querySelectorAll('.ownpills button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tier') === key);
+    });
+    draw();
+  };
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -164,6 +216,10 @@
       if (pos !== 'ALL' && p.position !== pos) return false;
       if (q && p.name.toLowerCase().indexOf(q) === -1 && (p.team || '').toLowerCase().indexOf(q) === -1) return false;
       if (p.salary != null && (p.salary < salLo || p.salary > salHi)) return false;
+      if (OWN_FILTER !== 'ALL') {
+        var t = ownershipTier(p.ownership_pct);
+        if (!t || t.key !== OWN_FILTER) return false;
+      }
       return true;
     });
 
@@ -179,13 +235,13 @@
       return '<tr class="row ' + (rostered ? 'rostered' : '') + '" data-id="' + p.dk_player_id + '">' +
         '<td><span class="pospill ' + p.position + '">' + p.position + '</span></td>' +
         '<td class="player">' + esc(p.name) +
-          (p.injury_status ? '<span class="injtag ' + esc(p.injury_status) + '">' + esc(p.injury_status) + '</span>' : '') +
+          injBadge(p.injury_status) +
           '</td>' +
         '<td>' + esc(p.team || '') + '</td>' +
         '<td>' + esc(p.opponent || '') + '</td>' +
         '<td>' + money(p.salary) + '</td>' +
         '<td>' + (p.projected_points != null ? Number(p.projected_points).toFixed(1) : '<span class="dim">&mdash;</span>') + '</td>' +
-        '<td>' + (p.ownership_pct != null ? Number(p.ownership_pct).toFixed(1) + '%' : '<span class="dim">&mdash;</span>') + '</td>' +
+        '<td>' + (p.ownership_pct != null ? Number(p.ownership_pct).toFixed(1) + '%' + ownBadge(p.ownership_pct) : '<span class="dim">&mdash;</span>') + '</td>' +
         '<td><button class="addbtn ' + (rostered ? 'remove' : '') + '" data-act="' + p.dk_player_id + '">' +
           (rostered ? '\u2212' : '+') + '</button></td>' +
         '</tr>';

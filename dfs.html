@@ -49,6 +49,16 @@ layout: null
         <input type="range" id="salMax" oninput="onSalaryRange()">
       </div>
     </div>
+    <div class="field ownpills">
+      <label>Ownership</label>
+      <div class="toggle" role="tablist" aria-label="Ownership tier">
+        <button data-tier="ALL" class="active" role="tab" aria-selected="true" onclick="setOwnFilter('ALL')">All</button>
+        <button data-tier="chalk" role="tab" aria-selected="false" onclick="setOwnFilter('chalk')">Chalk</button>
+        <button data-tier="moderate" role="tab" aria-selected="false" onclick="setOwnFilter('moderate')">Moderate</button>
+        <button data-tier="low" role="tab" aria-selected="false" onclick="setOwnFilter('low')">Low-Owned</button>
+        <button data-tier="contrarian" role="tab" aria-selected="false" onclick="setOwnFilter('contrarian')">Contrarian</button>
+      </div>
+    </div>
     <button class="reset" onclick="clearRoster()">Clear roster</button>
   </div>
 
