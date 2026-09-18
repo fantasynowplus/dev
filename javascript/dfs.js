@@ -40,6 +40,11 @@
   var SEASON = null;
 
   function el(id) { return document.getElementById(id); }
+  var INJ_TAG = { Questionable: 'Q', Doubtful: 'D', Out: 'O', IR: 'IR', PUP: 'PUP', Sus: 'SUS', NA: 'NA', COV: 'COV' };
+  function injBadge(status) {
+    if (!status || !INJ_TAG[status]) return '';
+    return '<span class="injtag ' + status + '">' + INJ_TAG[status] + '</span>';
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -264,7 +269,7 @@
     el('cardName').textContent = player.name;
     el('cardSub').innerHTML = player.position + '<span class="dot">&middot;</span>' +
       esc(player.team || '') + '<span class="dot">&middot;</span>' + esc(player.opponent || '') +
-      (player.injury_status ? '<span class="injtag ' + esc(player.injury_status) + '">' + esc(player.injury_status) + '</span>' : '');
+      injBadge(player.injury_status);
 
     var value = player.projected_points != null && player.salary
       ? ((player.projected_points / player.salary) * 1000).toFixed(2) : null;
