@@ -137,6 +137,16 @@ def fallback_name(rows, game_count):
     return "Slate"
 
 
+def dedupe(enriched):
+    best = {}
+    for e in enriched:
+        key = (e["contest_type"], e["start_time"], e["team_key"])
+        score = (1 if e["tag"] == "Featured" else 0, -e["draft_group_id"])
+        if key not in best or score > best[key][0]:
+            best[key] = (score, e)
+    return [v[1] for v in best.values()]
+
+
 def upsert_slate(slate):
     resp = requests.post(f"{SUPABASE_URL}/rest/v1/dfs_slates", headers=HEADERS, json=slate, timeout=20)
     resp.raise_for_status()
@@ -156,14 +166,22 @@ def upsert_players(rows):
 
 def main():
     groups = fetch_raw_groups()
-    print(f"Found {len(groups)} classic/showdown NFL draft groups")
+    print(f"Found {len(groups)} classic/showdown NFL draft groups, fetching players for each\u2026")
 
+    enriched = []
     for g in groups:
         draftables = fetch_draftables(g["draft_group_id"])
         rows = build_player_rows(g["draft_group_id"], draftables)
+        g["rows"] = rows
+        g["team_key"] = frozenset(r["team"] for r in rows if r["team"])
+        enriched.append(g)
+        time.sleep(0.3)
 
-        slate_name = g["tag"] or fallback_name(rows, g["game_count"])
+    kept = dedupe(enriched)
+    print(f"Keeping {len(kept)} distinct slates after de-duping same-game variants")
 
+    for g in kept:
+        slate_name = g["tag"] or fallback_name(g["rows"], g["game_count"])
         upsert_slate({
             "draft_group_id": g["draft_group_id"],
             "slate_name": slate_name,
@@ -172,9 +190,8 @@ def main():
             "game_count": g["game_count"],
             "week": week_number(g["start_time"]),
         })
-        upsert_players(rows)
-        print(f"{g['contest_type']:8} {slate_name!r:30} {len(rows)} players")
-        time.sleep(0.5)
+        upsert_players(g["rows"])
+        print(f"{g['contest_type']:8} {slate_name!r:30} {len(g['rows'])} players")
 
 
 if __name__ == "__main__":
