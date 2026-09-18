@@ -150,7 +150,7 @@
     });
   }
 
-  function draw() {
+  window.draw = function () {
     var pos = el('posFilter').value;
     var q = el('q').value.trim().toLowerCase();
 
