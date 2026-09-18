@@ -37,6 +37,7 @@
   var PLAYERS = [];
   var ROSTER = {};
   var CARD_PLAYER = null;
+  var SEASON = null;
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -170,7 +171,9 @@
       var rostered = isRostered(p.dk_player_id);
       return '<tr class="row ' + (rostered ? 'rostered' : '') + '" data-id="' + p.dk_player_id + '">' +
         '<td><span class="pospill ' + p.position + '">' + p.position + '</span></td>' +
-        '<td class="player">' + esc(p.name) + '</td>' +
+        '<td class="player">' + esc(p.name) +
+          (p.injury_status ? '<span class="injtag ' + esc(p.injury_status) + '">' + esc(p.injury_status) + '</span>' : '') +
+          '</td>' +
         '<td>' + esc(p.team || '') + '</td>' +
         '<td>' + esc(p.opponent || '') + '</td>' +
         '<td>' + money(p.salary) + '</td>' +
@@ -199,6 +202,27 @@
     });
   }
 
+  function fetchSeasonLog(sleeperId) {
+    if (!SEASON || !sleeperId) return Promise.resolve([]);
+    return withTimeout(
+      fetch('https://api.sleeper.app/stats/nfl/player/' + sleeperId +
+            '?season_type=regular&season=' + SEASON + '&grouping=week')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; }),
+      8000, null
+    ).then(function (j) {
+      var log = [];
+      if (j) Object.keys(j).forEach(function (w) {
+        var row = j[w];
+        var st = row && (row.stats || row);
+        if (!st || st.pts_ppr == null) return;
+        log.push({ week: Number(w), opp: (row && (row.opponent || row.opp)) || '', pts: Number(st.pts_ppr) });
+      });
+      log.sort(function (a, b) { return a.week - b.week; });
+      return log;
+    });
+  }
+
   function openCard(player) {
     CARD_PLAYER = player;
     el('cardInitials').textContent = initials(player.name);
@@ -218,6 +242,18 @@
     updateCardBtn();
     el('backdrop').className = 'backdrop open';
     document.body.className = 'locked';
+
+    el('cardLog').innerHTML = '<tr><td class="state" colspan="3">Loading&hellip;</td></tr>';
+    fetchSeasonLog(player.sleeper_id).then(function (log) {
+      if (!log.length) {
+        el('cardLog').innerHTML = '<tr><td class="state" colspan="3">No games logged yet this season.</td></tr>';
+        return;
+      }
+      el('cardLog').innerHTML = log.map(function (g) {
+        return '<tr><td class="wk">' + g.week + '</td><td>' + esc(g.opp) + '</td>' +
+          '<td class="pts">' + g.pts.toFixed(1) + '</td></tr>';
+      }).join('');
+    });
   }
 
   function updateCardBtn() {
@@ -316,6 +352,11 @@
     resetRoster();
     drawRoster();
     loadSlates();
+
+    fetch('https://api.sleeper.app/v1/state/nfl')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (s) { if (s) SEASON = s.season; })
+      .catch(function () {});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

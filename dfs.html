@@ -84,6 +84,13 @@ layout: null
       <button class="closex" onclick="closeCard()" aria-label="Close">&times;</button>
     </div>
     <div class="ranks" id="cardRanks"></div>
+    <div class="logwrap">
+      <div class="logtitle">Season Log</div>
+      <div class="logscroll"><table class="log">
+        <thead><tr><th class="wk">Wk</th><th>Opp</th><th class="pts">Pts</th></tr></thead>
+        <tbody id="cardLog"><tr><td class="state" colspan="3">Loading&hellip;</td></tr></tbody>
+      </table></div>
+    </div>
     <div class="cardaction">
       <button class="addbtn big" id="cardActionBtn" onclick="toggleFromCard()"></button>
     </div>

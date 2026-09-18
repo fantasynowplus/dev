@@ -55,6 +55,7 @@ def build_projection_maps(rows):
         if pts is None:
             continue
         pts = round(pts, 1)
+        sleeper_id = row.get("player_id")
 
         player = row["player"]
         pos = (player.get("fantasy_positions") or [player.get("position")])[0]
@@ -62,14 +63,29 @@ def build_projection_maps(rows):
         if pos == "DEF":
             team = team_code(row.get("team") or player.get("team"))
             if team:
-                by_def_team[team] = pts
+                by_def_team[team] = {"points": pts, "sleeper_id": sleeper_id}
             continue
 
         full_name = f"{player.get('first_name', '')} {player.get('last_name', '')}".strip()
         if full_name:
-            by_name[norm_name(full_name)] = pts
+            by_name[norm_name(full_name)] = {"points": pts, "sleeper_id": sleeper_id}
 
     return by_name, by_def_team
+
+
+def fetch_injury_map():
+    resp = requests.get("https://api.sleeper.app/v1/players/nfl", timeout=60)
+    resp.raise_for_status()
+    players = resp.json() or {}
+    by_name = {}
+    for p in players.values():
+        status = p.get("injury_status")
+        if not status:
+            continue
+        full_name = f"{p.get('first_name', '')} {p.get('last_name', '')}".strip()
+        if full_name:
+            by_name[norm_name(full_name)] = status
+    return by_name
 
 
 def fetch_dk_players():
@@ -84,9 +100,9 @@ def fetch_dk_players():
     return list(seen.keys())
 
 
-def patch_projection(name, team, points):
+def patch_player(name, team, fields):
     url = f"{SUPABASE_URL}/rest/v1/dfs_players?name=eq.{quote(name)}&team=eq.{quote(team)}"
-    resp = requests.patch(url, headers=HEADERS, json={"projected_points": points}, timeout=20)
+    resp = requests.patch(url, headers=HEADERS, json=fields, timeout=20)
     resp.raise_for_status()
 
 
@@ -101,21 +117,27 @@ def main():
     by_name, by_def_team = build_projection_maps(rows)
     print(f"  {len(by_name)} skill-position players, {len(by_def_team)} defenses")
 
+    injuries = fetch_injury_map()
+    print(f"  {len(injuries)} players with an active injury designation")
+
     dk_players = fetch_dk_players()
     print(f"Matching against {len(dk_players)} DK players")
 
     matched, unmatched = 0, []
     for name, team, position in dk_players:
         if position == "DST":
-            points = by_def_team.get(team_code(team))
+            entry = by_def_team.get(team_code(team))
         else:
-            points = by_name.get(norm_name(name))
+            entry = by_name.get(norm_name(name))
 
-        if points is None:
+        if entry is None:
             unmatched.append(f"{name} ({position}, {team})")
             continue
 
-        patch_projection(name, team, points)
+        fields = {"projected_points": entry["points"], "sleeper_id": entry["sleeper_id"]}
+        fields["injury_status"] = injuries.get(norm_name(name))
+
+        patch_player(name, team, fields)
         matched += 1
 
     print(f"Matched {matched} players, {len(unmatched)} unmatched")
