@@ -144,7 +144,7 @@ tbody td.dim{color:#4a5c7d}
 .addbtn:hover{border-color:var(--aqua)}
 .addbtn.remove{color:var(--redorange)}
 .addbtn.remove:hover{border-color:var(--redorange)}
-.addbtn.big{display:inline-block;width:auto;box-sizing:border-box;text-align:center;padding:12px 28px;line-height:1.2;border-radius:10px;font-family:"Oswald";
+.addbtn.big{display:inline-block;width:auto;box-sizing:border-box;text-align:center;padding:8px 20px 24px;line-height:1.2;border-radius:10px;font-family:"Oswald";
   font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:13px}
 
 .state{padding:60px 20px;text-align:center;color:var(--muted);font-size:15px}
