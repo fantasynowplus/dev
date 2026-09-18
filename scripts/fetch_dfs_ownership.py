@@ -80,19 +80,15 @@ def compute_ownership(players, contest_type):
 
 
 def upsert_ownership(draft_group_id, ownership):
-    rows = [
-        {"draft_group_id": draft_group_id, "dk_player_id": pid, "ownership_pct": pct}
-        for pid, pct in ownership.items()
-    ]
-    if not rows:
-        return
-    resp = requests.post(
-        f"{SUPABASE_URL}/rest/v1/dfs_players?on_conflict=draft_group_id,dk_player_id",
-        headers=HEADERS, json=rows, timeout=30,
-    )
-    if not resp.ok:
-        print(resp.text)
-    resp.raise_for_status()
+    for pid, pct in ownership.items():
+        resp = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/dfs_players"
+            f"?draft_group_id=eq.{draft_group_id}&dk_player_id=eq.{pid}",
+            headers=HEADERS, json={"ownership_pct": pct}, timeout=20,
+        )
+        if not resp.ok:
+            print(resp.text)
+        resp.raise_for_status()
 
 
 def main():
