@@ -86,16 +86,6 @@ def parse_opponent(competition, team_abbr):
     return name
 
 
-def parse_projection(draft_stat_attributes):
-    for attr in draft_stat_attributes or []:
-        if attr.get("id") == 90:
-            try:
-                return float(attr.get("value"))
-            except (TypeError, ValueError):
-                return None
-    return None
-
-
 def fetch_draftables(draft_group_id):
     resp = requests.get(DRAFTABLES_URL.format(draft_group_id), timeout=20)
     resp.raise_for_status()
@@ -119,7 +109,7 @@ def build_player_rows(draft_group_id, draftables):
             "team": team,
             "opponent": parse_opponent(d.get("competition"), team),
             "salary": d.get("salary"),
-            "projected_points": parse_projection(d.get("draftStatAttributes")),
+            "projected_points": None,
         }
     return list(by_player.values())
 
