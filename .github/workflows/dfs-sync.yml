@@ -14,7 +14,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: pip install pandas lxml
       - run: python scripts/run_dfs.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

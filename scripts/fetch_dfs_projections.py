@@ -1,11 +1,8 @@
 import os
 import re
-from datetime import datetime, timezone
 from urllib.parse import quote
 
 import requests
-import pandas as pd
-from io import StringIO
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
@@ -16,115 +13,63 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-SCRAPE_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; FantasyNowPlusBot/1.0)"}
-
-SEASON_START = datetime(2026, 9, 9, tzinfo=timezone.utc)
-
-TEAM_ALIASES = {
-    "JAC": "JAX", "WSH": "WAS", "LA": "LAR",
-    "GNB": "GB", "KAN": "KC", "NWE": "NE",
-    "NOR": "NO", "SFO": "SF", "TAM": "TB",
-}
-
-TEAM_NAME_TO_ABBR = {
-    "arizona cardinals": "ARI", "atlanta falcons": "ATL", "baltimore ravens": "BAL",
-    "buffalo bills": "BUF", "carolina panthers": "CAR", "chicago bears": "CHI",
-    "cincinnati bengals": "CIN", "cleveland browns": "CLE", "dallas cowboys": "DAL",
-    "denver broncos": "DEN", "detroit lions": "DET", "green bay packers": "GB",
-    "houston texans": "HOU", "indianapolis colts": "IND", "jacksonville jaguars": "JAX",
-    "kansas city chiefs": "KC", "las vegas raiders": "LV", "los angeles chargers": "LAC",
-    "los angeles rams": "LAR", "miami dolphins": "MIA", "minnesota vikings": "MIN",
-    "new england patriots": "NE", "new orleans saints": "NO", "new york giants": "NYG",
-    "new york jets": "NYJ", "philadelphia eagles": "PHI", "pittsburgh steelers": "PIT",
-    "san francisco 49ers": "SF", "seattle seahawks": "SEA", "tampa bay buccaneers": "TB",
-    "tennessee titans": "TEN", "washington commanders": "WAS",
-}
+TEAM_ALIASES = {"JAC": "JAX", "WSH": "WAS", "ARZ": "ARI", "LA": "LAR"}
 
 
-def current_week():
-    delta = (datetime.now(timezone.utc) - SEASON_START).days
-    return max(1, delta // 7 + 1)
-
-
-def norm_team(t):
-    t = (t or "").strip().upper()
-    return TEAM_ALIASES.get(t, t)
+def team_code(t):
+    u = (t or "").upper()
+    return TEAM_ALIASES.get(u, u)
 
 
 def norm_name(s):
     s = (s or "").lower()
-    s = re.sub(r"[.']", "", s)
-    s = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b", "", s)
-    s = re.sub(r"\s+", " ", s).strip()
+    s = re.sub(r"[^a-z]", "", s)
+    s = re.sub(r"(jr|sr|ii|iii|iv|v)$", "", s)
     return s
 
 
-def fetch_table(url):
-    resp = requests.get(url, headers=SCRAPE_HEADERS, timeout=20)
+def sleeper_state():
+    resp = requests.get("https://api.sleeper.app/v1/state/nfl", timeout=20)
     resp.raise_for_status()
-    tables = pd.read_html(StringIO(resp.text))
-    return max(tables, key=len)
+    return resp.json()
 
 
-def flatten_columns(df):
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = [" ".join(str(x) for x in col if "Unnamed" not in str(x)).strip()
-                      for col in df.columns]
-    return df
+def sleeper_projections(season, week):
+    url = (
+        f"https://api.sleeper.app/projections/nfl/{season}/{week}"
+        "?season_type=regular&position[]=QB&position[]=RB&position[]=WR"
+        "&position[]=TE&position[]=DEF"
+    )
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.json() or []
 
 
-def player_projections(pos, week):
-    url = f"https://www.fantasypros.com/nfl/projections/{pos}.php?week={week}"
-    df = flatten_columns(fetch_table(url))
-    df = df[df.iloc[:, 0].astype(str).str.strip() != ""]
-
-    name_col = df.columns[0]
-    fpts_col = df.columns[-1]
-    rec_col = next((c for c in df.columns if "REC" in c.upper()), None)
-
-    out = {}
-    for _, row in df.iterrows():
-        raw = str(row[name_col])
-        m = re.match(r"^(.*?)\s*([A-Z]{2,3})$", raw.strip())
-        if not m:
+def build_projection_maps(rows):
+    by_name = {}
+    by_def_team = {}
+    for row in rows:
+        if not row or not row.get("stats") or not row.get("player"):
             continue
-        name, team = m.group(1), norm_team(m.group(2))
-        try:
-            fpts = float(row[fpts_col])
-        except (TypeError, ValueError):
+        pts = row["stats"].get("pts_ppr")
+        if pts is None:
             continue
-        if rec_col is not None:
-            try:
-                fpts += float(row[rec_col])
-            except (TypeError, ValueError):
-                pass
-        out[(norm_name(name), team)] = round(fpts, 1)
-    return out
+        pts = round(pts, 1)
 
+        player = row["player"]
+        pos = (player.get("fantasy_positions") or [player.get("position")])[0]
 
-def dst_projections(week):
-    url = f"https://www.fantasypros.com/nfl/projections/dst.php?week={week}"
-    df = flatten_columns(fetch_table(url))
-    df = df[df.iloc[:, 0].astype(str).str.strip() != ""]
-
-    name_col = df.columns[0]
-    fpts_col = df.columns[-1]
-
-    out = {}
-    for _, row in df.iterrows():
-        raw = str(row[name_col]).strip().lower()
-        abbr = None
-        for full, code in TEAM_NAME_TO_ABBR.items():
-            if raw.endswith(full.split()[-1]):
-                abbr = code
-                break
-        if not abbr:
+        if pos == "DEF":
+            team = team_code(row.get("team") or player.get("team"))
+            if team:
+                by_def_team[team] = pts
             continue
-        try:
-            out[abbr] = round(float(row[fpts_col]), 1)
-        except (TypeError, ValueError):
-            continue
-    return out
+
+        full_name = f"{player.get('first_name', '')} {player.get('last_name', '')}".strip()
+        if full_name:
+            by_name[norm_name(full_name)] = pts
+
+    return by_name, by_def_team
 
 
 def fetch_dk_players():
@@ -146,28 +91,25 @@ def patch_projection(name, team, points):
 
 
 def main():
-    week = current_week()
-    print(f"Fetching FantasyPros projections for week {week}")
+    state = sleeper_state()
+    season, week = state["season"], state["week"]
+    print(f"Sleeper reports season {season}, week {week}")
 
-    proj = {}
-    for pos in ("qb", "rb", "wr", "te"):
-        proj[pos] = player_projections(pos, week)
-        print(f"  {pos}: {len(proj[pos])} players")
-    dst = dst_projections(week)
-    print(f"  dst: {len(dst)} teams")
+    rows = sleeper_projections(season, week)
+    print(f"Fetched {len(rows)} projection rows from Sleeper")
+
+    by_name, by_def_team = build_projection_maps(rows)
+    print(f"  {len(by_name)} skill-position players, {len(by_def_team)} defenses")
 
     dk_players = fetch_dk_players()
     print(f"Matching against {len(dk_players)} DK players")
 
     matched, unmatched = 0, []
     for name, team, position in dk_players:
-        pos_key = position.lower()
-        team_n = norm_team(team)
-
-        if pos_key == "dst":
-            points = dst.get(team_n)
+        if position == "DST":
+            points = by_def_team.get(team_code(team))
         else:
-            points = proj.get(pos_key, {}).get((norm_name(name), team_n))
+            points = by_name.get(norm_name(name))
 
         if points is None:
             unmatched.append(f"{name} ({position}, {team})")
@@ -178,7 +120,7 @@ def main():
 
     print(f"Matched {matched} players, {len(unmatched)} unmatched")
     if unmatched:
-        print("Sample unmatched:", unmatched[:15])
+        print("Sample unmatched:", unmatched[:20])
 
 
 if __name__ == "__main__":
