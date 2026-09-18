@@ -261,7 +261,8 @@
     el('cardInitials').textContent = initials(player.name);
     el('cardName').textContent = player.name;
     el('cardSub').innerHTML = player.position + '<span class="dot">&middot;</span>' +
-      esc(player.team || '') + '<span class="dot">&middot;</span>' + esc(player.opponent || '');
+      esc(player.team || '') + '<span class="dot">&middot;</span>' + esc(player.opponent || '') +
+      (player.injury_status ? '<span class="injtag ' + esc(player.injury_status) + '">' + esc(player.injury_status) + '</span>' : '');
 
     var value = player.projected_points != null && player.salary
       ? ((player.projected_points / player.salary) * 1000).toFixed(2) : null;
