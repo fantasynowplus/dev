@@ -76,7 +76,7 @@ layout: null
 <div class="backdrop" id="backdrop" onclick="if(event.target===this) closeCard()">
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="cardName">
     <div class="cardtop">
-      <div class="shot"><span class="initials" id="cardInitials"></span></div>
+      <div class="shot"><img id="cardShot" alt="" onerror="this.style.display='none'"><span class="initials" id="cardInitials"></span></div>
       <div class="who">
         <h2 id="cardName">&nbsp;</h2>
         <div class="sub" id="cardSub"></div>

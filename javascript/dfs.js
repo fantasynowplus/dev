@@ -225,6 +225,11 @@
 
   function openCard(player) {
     CARD_PLAYER = player;
+    var shot = el('cardShot');
+    shot.style.display = '';
+    shot.src = player.position === 'DST'
+      ? 'https://sleepercdn.com/images/team_logos/nfl/' + (player.team || '').toLowerCase() + '.png'
+      : (player.sleeper_id ? 'https://sleepercdn.com/content/nfl/players/thumb/' + player.sleeper_id + '.jpg' : '');
     el('cardInitials').textContent = initials(player.name);
     el('cardName').textContent = player.name;
     el('cardSub').innerHTML = player.position + '<span class="dot">&middot;</span>' +
