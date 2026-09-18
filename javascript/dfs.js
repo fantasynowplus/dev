@@ -185,7 +185,7 @@
         '<td>' + esc(p.opponent || '') + '</td>' +
         '<td>' + money(p.salary) + '</td>' +
         '<td>' + (p.projected_points != null ? Number(p.projected_points).toFixed(1) : '<span class="dim">&mdash;</span>') + '</td>' +
-        '<td class="dim">&mdash;</td>' +
+        '<td>' + (p.ownership_pct != null ? Number(p.ownership_pct).toFixed(1) + '%' : '<span class="dim">&mdash;</span>') + '</td>' +
         '<td><button class="addbtn ' + (rostered ? 'remove' : '') + '" data-act="' + p.dk_player_id + '">' +
           (rostered ? '\u2212' : '+') + '</button></td>' +
         '</tr>';
