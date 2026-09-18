@@ -253,7 +253,8 @@
       weekday: 'short', hour: 'numeric', minute: '2-digit'
     }) : '';
     var games = s.game_count ? s.game_count + (s.game_count === 1 ? ' Game' : ' Games') : '';
-    return [s.slate_name, games, when].filter(Boolean).join(' \u00b7 ');
+    var wk = s.week ? 'Wk ' + s.week : '';
+    return [wk, s.slate_name, games, when].filter(Boolean).join(' \u00b7 ');
   }
 
   function populateSlateSelect() {
