@@ -141,6 +141,9 @@ tbody td.player{text-align:left;padding-left:16px;font-weight:600;color:#fff}
 .owntag.moderate{background:rgba(255,165,21,.16);color:var(--orange)}
 .owntag.low{background:rgba(66,244,176,.16);color:var(--aqua)}
 .owntag.contrarian{background:rgba(61,165,234,.16);color:var(--t5)}
+.ownwrap{display:inline-flex;align-items:center}
+.ownnum{display:inline-block;min-width:44px;text-align:right}
+.owntag{width:52px;text-align:center}
 .field.ownpills .toggle button{font-size:12px;padding:7px 12px}
 tbody tr.row{cursor:pointer}
 tbody tr.row:hover td{background:rgba(255,255,255,.05)}

@@ -215,7 +215,7 @@
         '<td>' + esc(p.opponent || '') + '</td>' +
         '<td>' + money(p.salary) + '</td>' +
         '<td>' + (p.projected_points != null ? Number(p.projected_points).toFixed(1) : '<span class="dim">&mdash;</span>') + '</td>' +
-        '<td>' + (p.ownership_pct != null ? Number(p.ownership_pct).toFixed(1) + '%' + ownBadge(p.ownership_pct) : '<span class="dim">&mdash;</span>') + '</td>' +
+        '<td>' + (p.ownership_pct != null ? '<span class="ownwrap"><span class="ownnum">' + Number(p.ownership_pct).toFixed(1) + '%</span>' + ownBadge(p.ownership_pct) + '</span>' : '<span class="dim">&mdash;</span>') + '</td>' +
         '<td><button class="addbtn ' + (rostered ? 'remove' : '') + '" data-act="' + p.dk_player_id + '">' +
           (rostered ? '\u2212' : '+') + '</button></td>' +
         '</tr>';
