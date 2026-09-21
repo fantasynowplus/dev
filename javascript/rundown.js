@@ -49,22 +49,28 @@
 
     var bar = document.getElementById('rdUnderbar');
     var barText = document.getElementById('rdUnderbarText');
-    if (active) {
-      barText.textContent = active.title;
+    var bannerText = active ? (active.description || active.title) : '';
+    if (bannerText) {
+      barText.textContent = bannerText;
       bar.style.display = '';
     } else {
       bar.style.display = 'none';
     }
 
+    var img = document.getElementById('rdImage');
+    if (active && active.image_url) {
+      img.style.backgroundImage = "url('" + active.image_url.replace(/'/g, '%27') + "')";
+      img.classList.add('rd-image-on');
+    } else {
+      img.style.backgroundImage = '';
+      img.classList.remove('rd-image-on');
+    }
+
     var list = document.getElementById('rdList');
     list.innerHTML = STATE.topics.length
-      ? STATE.topics.map(function (t, i) {
+      ? STATE.topics.map(function (t) {
           return '<div class="rd-item rd-' + t.status + '">' +
-            '<div class="rd-item-n">' + (i + 1) + '</div>' +
-            '<div class="rd-item-body">' +
-              '<div class="rd-item-t">' + esc(t.title) + '</div>' +
-              (t.description ? '<div class="rd-item-d">' + esc(t.description) + '</div>' : '') +
-            '</div>' +
+            '<div class="rd-item-t">' + esc(t.title) + '</div>' +
           '</div>';
         }).join('')
       : '<div class="rd-item-empty">No topics yet</div>';
