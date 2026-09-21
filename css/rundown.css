@@ -11,26 +11,23 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 
 .rd-stage{position:relative;height:100vh}
 
-.rd-underbar{position:absolute;left:0;right:0;bottom:var(--rd-underbar-bottom);display:flex;align-items:center;gap:18px;min-height:90px;padding:14px 44px 14px 0;background:var(--orange);clip-path:polygon(2.2% 0,100% 0,100% 100%,0 100%)}
-.rd-underbar-arrow{flex:0 0 auto;width:0;height:0;margin-left:44px;border-top:17px solid transparent;border-bottom:17px solid transparent;border-left:24px solid var(--header-bg)}
-.rd-underbar-text{font-family:Oswald,sans-serif;font-size:32px;font-weight:600;color:var(--header-bg);letter-spacing:.01em;line-height:1.25}
+.rd-underbar{position:absolute;left:0;right:0;bottom:var(--rd-underbar-bottom);display:flex;align-items:center;gap:22px;min-height:110px;padding:20px 48px 20px 0;background:var(--orange);clip-path:polygon(2.2% 0,100% 0,100% 100%,0 100%)}
+.rd-underbar-arrow{flex:0 0 auto;width:22px;height:22px;margin-left:48px;border-radius:50%;background:var(--header-bg)}
+.rd-underbar-text{font-family:Oswald,sans-serif;font-size:44px;font-weight:600;color:var(--header-bg);letter-spacing:.01em;line-height:1.2}
 
 .rd-side{background:var(--header-bg);border-left:2px solid rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden}
-.rd-image{margin:24px 24px 0;aspect-ratio:16/9;background:rgba(255,255,255,.04);background-size:cover;background-position:center;border-radius:10px;border:1px solid rgba(255,255,255,.08);display:none}
+.rd-image{aspect-ratio:16/9;background:rgba(255,255,255,.04);background-size:cover;background-position:center;display:none}
 .rd-image.rd-image-on{display:block}
-.rd-clock{margin:24px 24px 0;background:rgba(0,10,30,.5);border:3px solid var(--orange);border-radius:10px;padding:10px 0;font-family:Oswald,sans-serif;font-size:46px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1;text-align:center}
+.rd-clock{background:rgba(0,10,30,.5);padding:22px 24px;font-family:Oswald,sans-serif;font-size:58px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1;text-align:left;border-bottom:3px solid var(--orange)}
 .rd-clock.rd-clock-out{color:var(--redorange);border-color:var(--redorange);animation:rd-pulse 1s ease-in-out infinite}
 @keyframes rd-pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.rd-controls{display:flex;gap:8px;padding:14px 24px 0}
-.rd-controls button{flex:1;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:13px;font-weight:600;padding:8px 0;border-radius:8px;cursor:pointer}
-.rd-controls button:hover{border-color:var(--orange);color:var(--orange)}
 
-.rd-side-head{font-family:Oswald,sans-serif;font-size:19px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff;padding:20px 24px;border-bottom:3px solid var(--orange);flex-shrink:0;margin-top:20px}
+.rd-side-head{font-family:Oswald,sans-serif;font-size:19px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff;padding:20px 24px;border-bottom:3px solid var(--orange);flex-shrink:0}
 .rd-list{flex:1;overflow-y:auto}
 
-.rd-item{padding:18px 24px;border-left:5px solid transparent;border-bottom:1px solid rgba(255,255,255,.07);transition:opacity .3s,background .3s;cursor:pointer}
+.rd-item{padding:22px 24px;border-left:5px solid transparent;border-bottom:1px solid rgba(255,255,255,.07);transition:opacity .3s,background .3s;cursor:pointer}
 .rd-item:hover{background:rgba(255,255,255,.05)}
-.rd-item-t{font-family:Oswald,sans-serif;font-size:26px;font-weight:700;text-transform:uppercase;color:#fff;line-height:1.2;letter-spacing:.01em}
+.rd-item-t{font-family:Oswald,sans-serif;font-size:34px;font-weight:700;text-transform:uppercase;color:#fff;line-height:1.2;letter-spacing:.01em}
 
 .rd-item.rd-pending{opacity:.9}
 
@@ -45,8 +42,8 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 
 @media (max-width:1100px){
   .rd-wrap{grid-template-columns:1fr 300px}
-  .rd-clock{font-size:32px}
-  .rd-underbar-text{font-size:24px}
+  .rd-clock{font-size:38px}
+  .rd-underbar-text{font-size:30px}
 }
 
 
