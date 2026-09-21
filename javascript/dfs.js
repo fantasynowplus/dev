@@ -71,6 +71,32 @@
     });
     draw();
   };
+  function playerMatchupKey(p) {
+    if (!p.opponent || !p.team) return null;
+    var opp = String(p.opponent).trim();
+    var away, home;
+    if (/^@/.test(opp)) {
+      away = p.team; home = opp.replace(/^@\s*/, '');
+    } else {
+      home = p.team; away = opp.replace(/^vs\s*/i, '');
+    }
+    if (!away || !home) return null;
+    return away + ' @ ' + home;
+  }
+  function populateGameFilter() {
+    var seen = {};
+    var games = [];
+    PLAYERS.forEach(function (p) {
+      var key = playerMatchupKey(p);
+      if (key && !seen[key]) { seen[key] = true; games.push(key); }
+    });
+    games.sort();
+    var sel = el('gameFilter');
+    var current = sel.value;
+    sel.innerHTML = '<option value="ALL">All Games</option>' +
+      games.map(function (g) { return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('');
+    sel.value = games.indexOf(current) !== -1 ? current : 'ALL';
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -185,11 +211,13 @@
     var pos = el('posFilter').value;
     var q = el('q').value.trim().toLowerCase();
     var salLo = Number(el('salMin').value), salHi = Number(el('salMax').value);
+    var game = el('gameFilter').value;
 
     var rows = PLAYERS.filter(function (p) {
       if (pos !== 'ALL' && p.position !== pos) return false;
       if (q && p.name.toLowerCase().indexOf(q) === -1 && (p.team || '').toLowerCase().indexOf(q) === -1) return false;
       if (p.salary != null && (p.salary < salLo || p.salary > salHi)) return false;
+      if (game !== 'ALL' && playerMatchupKey(p) !== game) return false;
       if (OWN_FILTER !== 'ALL') {
         var t = ownershipTier(p.ownership_pct);
         if (!t || t.key !== OWN_FILTER) return false;
@@ -384,6 +412,7 @@
       PLAYERS = rows || [];
       el('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
       setupSalaryRange();
+      populateGameFilter();
       draw();
     });
   }

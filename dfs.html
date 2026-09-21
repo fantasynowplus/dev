@@ -38,6 +38,12 @@ layout: null
         <option value="DST">DST</option>
       </select>
     </div>
+    <div class="field">
+      <label for="gameFilter">Game</label>
+      <select class="pick" id="gameFilter" onchange="draw()">
+        <option value="ALL">All Games</option>
+      </select>
+    </div>
     <div class="field search">
       <label for="q">Search</label>
       <input id="q" type="search" placeholder="Player or team" autocomplete="off" oninput="draw()">
