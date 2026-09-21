@@ -3,10 +3,11 @@ layout: null
 ---
 {% include show-header.html title="FantasyNow+ | Rundown" css="rundown" %}
 <div class="rd-wrap">
-  <div class="rd-main">
+  <div class="rd-stage">
     <div class="rd-clock" id="rdClock">1:00</div>
-    <div class="rd-current" id="rdCurrent">
-      <div class="rd-current-title rd-wait">Loading…</div>
+    <div class="rd-underbar" id="rdUnderbar" style="display:none">
+      <div class="rd-underbar-arrow"></div>
+      <div class="rd-underbar-text" id="rdUnderbarText"></div>
     </div>
   </div>
   <aside class="rd-side">
@@ -14,6 +15,7 @@ layout: null
     <div class="rd-list" id="rdList"></div>
   </aside>
 </div>
+<script src="javascript/auth.js"></script>
 <script src="javascript/rundown.js"></script>
 </body>
 </html>

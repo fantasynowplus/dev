@@ -46,22 +46,25 @@
 
   function render() {
     var active = activeTopic();
-    var cur = document.getElementById('rdCurrent');
+
+    var bar = document.getElementById('rdUnderbar');
+    var barText = document.getElementById('rdUnderbarText');
     if (active) {
-      cur.innerHTML =
-        '<div class="rd-current-k">On now</div>' +
-        '<div class="rd-current-title">' + esc(active.title) + '</div>' +
-        (active.description ? '<div class="rd-current-d">' + esc(active.description) + '</div>' : '');
+      barText.textContent = active.title;
+      bar.style.display = '';
     } else {
-      cur.innerHTML = '<div class="rd-current-title rd-wait">Coming up…</div>';
+      bar.style.display = 'none';
     }
 
     var list = document.getElementById('rdList');
     list.innerHTML = STATE.topics.length
-      ? STATE.topics.map(function (t) {
+      ? STATE.topics.map(function (t, i) {
           return '<div class="rd-item rd-' + t.status + '">' +
-            '<div class="rd-item-t">' + esc(t.title) + '</div>' +
-            (t.description ? '<div class="rd-item-d">' + esc(t.description) + '</div>' : '') +
+            '<div class="rd-item-n">' + (i + 1) + '</div>' +
+            '<div class="rd-item-body">' +
+              '<div class="rd-item-t">' + esc(t.title) + '</div>' +
+              (t.description ? '<div class="rd-item-d">' + esc(t.description) + '</div>' : '') +
+            '</div>' +
           '</div>';
         }).join('')
       : '<div class="rd-item-empty">No topics yet</div>';
@@ -94,8 +97,8 @@
       render();
       tick();
     } catch (e) {
-      document.getElementById('rdCurrent').innerHTML =
-        '<div class="rd-current-title rd-wait">Couldn\'t load the rundown.</div>';
+      var list = document.getElementById('rdList');
+      list.innerHTML = '<div class="rd-item-empty">Couldn\'t load the rundown.</div>';
     }
   }
 
@@ -107,8 +110,8 @@
   function start() {
     CFG = sbCfg();
     if (!CFG) {
-      document.getElementById('rdCurrent').innerHTML =
-        '<div class="rd-current-title rd-wait">Supabase config not loaded.</div>';
+      document.getElementById('rdList').innerHTML =
+        '<div class="rd-item-empty">Supabase config not loaded.</div>';
       return;
     }
     load();
