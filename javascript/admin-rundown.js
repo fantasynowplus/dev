@@ -157,7 +157,7 @@ function rdForm(id){
         '<div class="field"><label>Clock (seconds)</label><input type="number" min="5" step="5" id="rdf-dur" value="'+((t&&t.duration_seconds)||60)+'"></div>'+
         '<div class="field full"><label>Top image</label>'+
           '<input type="file" id="rdf-img" accept="image/*">'+
-          '<div class="rd-imgprev" id="rdf-imgprev">'+((t&&t.image_url)?'<img src="'+esc(t.image_url)+'">':'')+'</div>'+
+          '<div class="rd-imgprev" id="rdf-imgprev">'+((t&&t.image_url)?'<img src="'+esc(t.image_url)+'" style="max-width:220px;border-radius:8px;border:1px solid var(--line);display:block">':'')+'</div>'+
           '<input type="hidden" id="rdf-imgurl" value="'+esc((t&&t.image_url)||'')+'">'+
         '</div>'+
         '<div class="field full"><label>Internal notes (host-only — never shown on the broadcast page)</label>'+
@@ -175,7 +175,7 @@ function rdForm(id){
         e.target.value = '';
         if(!url) return;
         bg.querySelector('#rdf-imgurl').value = url;
-        bg.querySelector('#rdf-imgprev').innerHTML = '<img src="'+esc(url)+'">';
+        bg.querySelector('#rdf-imgprev').innerHTML = '<img src="'+esc(url)+'" style="max-width:220px;border-radius:8px;border:1px solid var(--line);display:block">';
       };
     },
     onSave: async function(bg){
@@ -204,10 +204,10 @@ function rdCropOverlay(file){
       '<div class="modal wide">'+
         '<div class="modal-head"><h3>Crop image</h3><button class="x" aria-label="Close">&times;</button></div>'+
         '<div class="modal-body">'+
-          '<div class="rd-crop-box" id="rdCropBox" style="width:'+BOX_W+'px;height:'+BOX_H+'px">'+
-            '<img id="rdCropImg" draggable="false">'+
+          '<div class="rd-crop-box" id="rdCropBox" style="position:relative;overflow:hidden;width:'+BOX_W+'px;height:'+BOX_H+'px;margin:0 auto;background:#000;border-radius:10px;cursor:grab;touch-action:none;user-select:none">'+
+            '<img id="rdCropImg" draggable="false" style="position:absolute;top:0;left:0;max-width:none;max-height:none">'+
           '</div>'+
-          '<div class="rd-crop-zoom"><label>Zoom</label><input type="range" id="rdCropZoom" min="1" max="3" step="0.01" value="1"></div>'+
+          '<div class="rd-crop-zoom" style="display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--muted)"><label>Zoom</label><input type="range" id="rdCropZoom" min="1" max="3" step="0.01" value="1" style="flex:1"></div>'+
         '</div>'+
         '<div class="modal-foot"><button class="btn btn-ghost" data-cancel>Cancel</button><button class="btn btn-primary" data-save>Use this crop</button></div>'+
       '</div>';
