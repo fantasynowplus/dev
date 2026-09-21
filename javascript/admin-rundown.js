@@ -182,7 +182,7 @@ function rdForm(id){
       var title = bg.querySelector('#rdf-title').value.trim();
       var desc = bg.querySelector('#rdf-desc').value.trim();
       if(!title) throw new Error('Give the topic a title.');
-      if(desc.length > 100) throw new Error('Keep the description to 100 characters.');
+      if(desc.length > 75) throw new Error('Keep the description to 75 characters.');
       var dur = Number(bg.querySelector('#rdf-dur').value) || 60;
       var img = bg.querySelector('#rdf-imgurl').value.trim();
       var notes = bg.querySelector('#rdf-notes').value.trim();
