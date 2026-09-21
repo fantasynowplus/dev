@@ -178,6 +178,9 @@ tbody td.dim{color:#4a5c7d}
 
 .rosterpane{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .rosterhead{padding:16px 18px;background:var(--header-bg);border-bottom:2px solid var(--orange)}
+.clearlink{float:right;background:transparent;border:0;color:var(--muted);font-family:"Inter";
+  text-transform:none;letter-spacing:0;font-size:11px;cursor:pointer;padding:0}
+.clearlink:hover{color:#fff}
 .rtitle{font-family:"Oswald";font-weight:600;text-transform:uppercase;letter-spacing:.12em;
   font-size:13px;color:var(--muted);margin-bottom:8px}
 .capnums{font-family:"Oswald";font-size:20px;font-weight:700;color:#fff}

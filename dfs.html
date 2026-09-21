@@ -65,7 +65,6 @@ layout: null
         <button data-tier="contrarian" role="tab" aria-selected="false" onclick="setOwnFilter('contrarian')">Contrarian</button>
       </div>
     </div>
-    <button class="reset" onclick="clearRoster()">Clear roster</button>
   </div>
 
   <div class="board">
@@ -86,7 +85,7 @@ layout: null
 
     <div class="rosterpane">
       <div class="rosterhead">
-        <div class="rtitle">Your Roster</div>
+        <div class="rtitle">Your Roster <button class="clearlink" onclick="clearRoster()">Clear</button></div>
         <div class="capnums"><span id="capUsed">$0</span> <span class="capof">of</span> <span id="capTotal">$50,000</span></div>
         <div class="capfill"><div id="capBar"></div></div>
       </div>

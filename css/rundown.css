@@ -11,14 +11,13 @@ body{background:var(--stream-bg);color:#fff;font-family:Inter,system-ui,sans-ser
 
 .rd-stage{position:relative;height:100vh}
 
-.rd-image{position:absolute;top:32px;left:32px;right:32px;aspect-ratio:16/9;background:rgba(255,255,255,.04);background-size:cover;background-position:center;border-radius:10px;border:1px solid rgba(255,255,255,.08);display:none}
-.rd-image.rd-image-on{display:block}
-
 .rd-underbar{position:absolute;left:0;right:0;bottom:var(--rd-underbar-bottom);display:flex;align-items:center;gap:18px;min-height:90px;padding:14px 44px 14px 0;background:var(--orange);clip-path:polygon(2.2% 0,100% 0,100% 100%,0 100%)}
 .rd-underbar-arrow{flex:0 0 auto;width:0;height:0;margin-left:44px;border-top:17px solid transparent;border-bottom:17px solid transparent;border-left:24px solid var(--header-bg)}
 .rd-underbar-text{font-family:Oswald,sans-serif;font-size:32px;font-weight:600;color:var(--header-bg);letter-spacing:.01em;line-height:1.25}
 
 .rd-side{background:var(--header-bg);border-left:2px solid rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden}
+.rd-image{margin:24px 24px 0;aspect-ratio:16/9;background:rgba(255,255,255,.04);background-size:cover;background-position:center;border-radius:10px;border:1px solid rgba(255,255,255,.08);display:none}
+.rd-image.rd-image-on{display:block}
 .rd-clock{margin:24px 24px 0;background:rgba(0,10,30,.5);border:3px solid var(--orange);border-radius:10px;padding:10px 0;font-family:Oswald,sans-serif;font-size:46px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1;text-align:center}
 .rd-clock.rd-clock-out{color:var(--redorange);border-color:var(--redorange);animation:rd-pulse 1s ease-in-out infinite}
 @keyframes rd-pulse{0%,100%{opacity:1}50%{opacity:.4}}
