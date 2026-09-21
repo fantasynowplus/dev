@@ -127,8 +127,6 @@
         '<div class="rd-item-empty">Supabase config not loaded.</div>';
       return;
     }
-    document.getElementById('rdBtnNext').onclick = function () { control('rundown_next'); };
-    document.getElementById('rdBtnStop').onclick = function () { control('rundown_stop'); };
     document.getElementById('rdList').addEventListener('click', function (e) {
       var item = e.target.closest('.rd-item[data-id]');
       if (!item) return;
