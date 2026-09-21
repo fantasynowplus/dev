@@ -9,6 +9,7 @@
   var STATE = { topics: [], clockAnchor: 0, elapsedAtAnchor: 0 };
   var POLL_MS = 5000;
   var pollTimer = null, tickTimer = null;
+  var busy = false;
 
   function sbCfg() {
     var url = (typeof SUPABASE_URL !== 'undefined') ? SUPABASE_URL : window.SUPABASE_URL;
@@ -69,11 +70,17 @@
     var list = document.getElementById('rdList');
     list.innerHTML = STATE.topics.length
       ? STATE.topics.map(function (t) {
-          return '<div class="rd-item rd-' + t.status + '">' +
+          return '<div class="rd-item rd-' + t.status + '" data-id="' + t.id + '">' +
             '<div class="rd-item-t">' + esc(t.title) + '</div>' +
           '</div>';
         }).join('')
       : '<div class="rd-item-empty">No topics yet</div>';
+  }
+
+  function control(name, args) {
+    if (busy) return;
+    busy = true;
+    rpc(name, args || {}).then(load).catch(function () {}).then(function () { busy = false; });
   }
 
   function tick() {
@@ -120,6 +127,14 @@
         '<div class="rd-item-empty">Supabase config not loaded.</div>';
       return;
     }
+    document.getElementById('rdBtnNext').onclick = function () { control('rundown_next'); };
+    document.getElementById('rdBtnStop').onclick = function () { control('rundown_stop'); };
+    document.getElementById('rdList').addEventListener('click', function (e) {
+      var item = e.target.closest('.rd-item[data-id]');
+      if (!item) return;
+      control('rundown_activate', { p_id: item.dataset.id });
+    });
+
     load();
     poll();
     clearInterval(tickTimer);
