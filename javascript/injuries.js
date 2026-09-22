@@ -1,11 +1,5 @@
-// Injury Report page — reads injury_reports directly from Supabase
-// (public read-only via RLS) and renders the season table, by-week table,
-// and the stacked-bar weekly chart.
-
-// TODO: fill in with your Supabase project URL + anon/public key
-// (same values used client-side in js/dfs.js) — NOT the service role key.
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://fckobcxprmudfpxdmswi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja29iY3hwcm11ZGZweGRtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTI5MzcsImV4cCI6MjA5OTE4ODkzN30.9wMb0SXAZs-jo1G9xRxk5M47fJIIU7-DTJTl1yFRwFk";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
