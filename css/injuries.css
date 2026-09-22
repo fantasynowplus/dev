@@ -66,6 +66,36 @@
   margin: 0 0 16px;
 }
 
+.chart-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-family: "Oswald", sans-serif;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chart-toggle:hover {
+  color: #FFA515;
+}
+
+.chart-toggle-icon {
+  font-size: 0.75rem;
+  color: #A0A0A0;
+}
+
+.chart-body {
+  margin-top: 16px;
+}
+
 /* Filters */
 .filters {
   display: flex;
@@ -171,6 +201,19 @@
 .status-ir { background: rgba(234, 78, 61, 0.15); color: #EA4E3D; }
 .status-doubtful { background: rgba(255, 165, 21, 0.15); color: #FFA515; }
 .status-questionable { background: rgba(244, 244, 244, 0.12); color: #F4F4F4; }
+
+.new-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #002863;
+  background: #42F4B0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
 
 @media (max-width: 640px) {
   .filters { flex-direction: column; }

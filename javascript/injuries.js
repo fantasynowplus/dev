@@ -147,7 +147,7 @@ function processData() {
       latestByPlayer.set(row.player_id, row);
     }
 
-    const weekKey = `${row.week}-${row.player_id}`;
+    const weekKey = `${row.season}-${row.week}-${row.player_id}`;
     const prevWeek = latestByPlayerWeek.get(weekKey);
     if (!prevWeek || row.fetched_at > prevWeek.fetched_at) {
       latestByPlayerWeek.set(weekKey, row);
@@ -158,12 +158,19 @@ function processData() {
 
   weeklyRows = new Map();
   for (const row of latestByPlayerWeek.values()) {
-    if (!weeklyRows.has(row.week)) weeklyRows.set(row.week, []);
-    weeklyRows.get(row.week).push(row);
+    const key = `${row.season}-${row.week}`;
+    if (!weeklyRows.has(key)) weeklyRows.set(key, []);
+    weeklyRows.get(key).push(row);
   }
 
-  weeks = Array.from(weeklyRows.keys()).sort((a, b) => a - b);
-  currentWeek = weeks[weeks.length - 1] ?? null;
+  weeks = Array.from(weeklyRows.keys())
+    .map((key) => {
+      const [season, week] = key.split("-").map(Number);
+      return { key, season, week };
+    })
+    .sort((a, b) => a.season - b.season || a.week - b.week);
+
+  currentWeek = weeks[weeks.length - 1]?.key ?? null;
 }
 
 function populateFilterOptions() {
@@ -189,11 +196,12 @@ function populateFilterOptions() {
 
 function populateWeekSelect() {
   const weekSelect = document.getElementById("week-select");
+  const multiSeason = new Set(weeks.map((w) => w.season)).size > 1;
   weekSelect.innerHTML = "";
-  for (const week of weeks) {
+  for (const w of weeks) {
     const opt = document.createElement("option");
-    opt.value = week;
-    opt.textContent = `Week ${week}`;
+    opt.value = w.key;
+    opt.textContent = multiSeason ? `${w.season} - Week ${w.week}` : `Week ${w.week}`;
     weekSelect.appendChild(opt);
   }
   if (currentWeek != null) weekSelect.value = currentWeek;
@@ -201,17 +209,18 @@ function populateWeekSelect() {
 
 function renderChart() {
   const ctx = document.getElementById("injury-chart");
+  const multiSeason = new Set(weeks.map((w) => w.season)).size > 1;
   const datasets = POSITIONS.map((pos) => ({
     label: pos,
     backgroundColor: POSITION_COLORS[pos],
-    data: weeks.map((week) => (weeklyRows.get(week) || []).filter((r) => r.position === pos).length),
+    data: weeks.map((w) => (weeklyRows.get(w.key) || []).filter((r) => r.position === pos).length),
   }));
 
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: weeks.map((w) => `Wk ${w}`),
+      labels: weeks.map((w) => (multiSeason ? `${w.season} Wk${w.week}` : `Wk ${w.week}`)),
       datasets,
     },
     options: {
@@ -229,6 +238,18 @@ function renderChart() {
 
 function getActiveRows() {
   return currentView === "season" ? seasonRows : (weeklyRows.get(currentWeek) || []);
+}
+
+// A player counts as "new" only in the By Week view: on the current week's
+// report but not on the prior week's (season-scoped, so it can't cross years).
+function getNewPlayerIds() {
+  if (currentView !== "week" || currentWeek == null) return new Set();
+  const [season, week] = currentWeek.split("-").map(Number);
+  const prevRows = weeklyRows.get(`${season}-${week - 1}`);
+  if (!prevRows) return new Set(); // no prior-week data to compare against
+  const prevIds = new Set(prevRows.map((r) => r.player_id));
+  const currRows = weeklyRows.get(currentWeek) || [];
+  return new Set(currRows.filter((r) => !prevIds.has(r.player_id)).map((r) => r.player_id));
 }
 
 function applyFilters(rows) {
@@ -267,6 +288,7 @@ function statusClass(status) {
 
 function render() {
   const rows = sortRows(applyFilters(getActiveRows()));
+  const newIds = getNewPlayerIds();
   const tbody = document.getElementById("injury-tbody");
 
   if (rows.length === 0) {
@@ -276,7 +298,7 @@ function render() {
 
   tbody.innerHTML = rows.map((r) => `
     <tr>
-      <td class="player-name">${r.name}</td>
+      <td class="player-name">${r.name}${newIds.has(r.player_id) ? '<span class="new-badge">NEW</span>' : ""}</td>
       <td>${r.team ?? "-"}</td>
       <td><span class="pos-badge pos-${r.position}">${r.position}</span></td>
       <td><span class="status-badge ${statusClass(r.status)}">${r.status ?? "-"}</span></td>
@@ -299,8 +321,18 @@ function initEvents() {
   });
 
   document.getElementById("week-select").addEventListener("change", (e) => {
-    currentWeek = Number(e.target.value);
+    currentWeek = e.target.value;
     render();
+  });
+
+  document.getElementById("chart-toggle").addEventListener("click", () => {
+    const body = document.getElementById("chart-body");
+    const btn = document.getElementById("chart-toggle");
+    const willShow = body.hidden;
+    body.hidden = !willShow;
+    btn.setAttribute("aria-expanded", String(willShow));
+    btn.querySelector(".chart-toggle-icon").innerHTML = willShow ? "&#9662;" : "&#9656;";
+    if (willShow && chart) chart.resize();
   });
 
   ["search-input", "team-filter", "position-filter", "status-filter"].forEach((id) => {

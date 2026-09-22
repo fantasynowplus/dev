@@ -15,11 +15,6 @@ layout: null
     <button class="pill" data-view="week" type="button">By Week</button>
   </div>
 
-  <section class="panel chart-panel">
-    <h2>Injuries by Week</h2>
-    <canvas id="injury-chart" height="90"></canvas>
-  </section>
-
   <section class="panel filters">
     <input type="text" id="search-input" placeholder="Search player..." aria-label="Search player">
 
@@ -60,6 +55,15 @@ layout: null
         <tr><td colspan="7" class="loading-row">Loading injury data...</td></tr>
       </tbody>
     </table>
+  </section>
+
+  <section class="panel chart-panel">
+    <button class="chart-toggle" id="chart-toggle" type="button" aria-expanded="false">
+      <span class="chart-toggle-icon">&#9656;</span> Weekly Injury Trend
+    </button>
+    <div class="chart-body" id="chart-body" hidden>
+      <canvas id="injury-chart" height="90"></canvas>
+    </div>
   </section>
 </main>
 
