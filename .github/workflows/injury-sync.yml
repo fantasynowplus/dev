@@ -23,7 +23,7 @@ jobs:
 
       - name: Run injury sync
         env:
-          FANTASYPROS_API_KEY: ${{ secrets.FANTASYPROS_API_KEY }}
+          FANTASYPROS_API_KEY: ${{ secrets.FP_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NFL_WEEK1_START: ${{ vars.NFL_WEEK1_START }}
