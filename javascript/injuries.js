@@ -107,7 +107,7 @@ async function loadData() {
   if (error) {
     console.error(error);
     document.getElementById("injury-tbody").innerHTML =
-      `<tr><td colspan="7" class="loading-row">Couldn't load injury data.</td></tr>`;
+      `<tr><td colspan="8" class="loading-row">Couldn't load injury data.</td></tr>`;
     return;
   }
 
@@ -118,12 +118,24 @@ async function loadData() {
     })
     .filter((row) => row.rost != null && row.rost >= MIN_ROSTER_PCT);
 
+  attachSinceDates();
   updateLastUpdated();
   processData();
   populateFilterOptions();
   populateWeekSelect();
   renderChart();
   render();
+}
+
+function attachSinceDates() {
+  const firstSeen = new Map();
+  for (const row of allRows) {
+    const prev = firstSeen.get(row.player_id);
+    if (!prev || row.fetched_at < prev) firstSeen.set(row.player_id, row.fetched_at);
+  }
+  for (const row of allRows) {
+    row.sinceDate = row.injury_start_date || (firstSeen.get(row.player_id) || "").slice(0, 10);
+  }
 }
 
 function updateLastUpdated() {
@@ -292,7 +304,7 @@ function render() {
   const tbody = document.getElementById("injury-tbody");
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="loading-row">No injuries match these filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="loading-row">No injuries match these filters.</td></tr>`;
     return;
   }
 
@@ -305,6 +317,7 @@ function render() {
       <td>${r.injury_type ?? "-"}</td>
       <td>${r.probability_of_playing != null ? Math.round(r.probability_of_playing * 100) + "%" : "-"}</td>
       <td>${r.ppg != null ? r.ppg.toFixed(1) : "-"}</td>
+      <td>${r.sinceDate || "-"}</td>
     </tr>
   `).join("");
 }

@@ -53,6 +53,36 @@ async function fpFetch(path) {
   return res.json();
 }
 
+// FantasyPros' injuries feed has no "date of injury" field -- only Sleeper's
+// bulk player dump does (injury_start_date), though it's null for a lot of
+// day-to-day Q/D designations and more reliably populated once someone hits
+// IR/PUP. We cross-reference by normalized name + position.
+const NAME_SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+function normName(s) {
+  const t = (s || "").toLowerCase()
+    .replace(/[\u2019'`.]/g, "")
+    .replace(/[^a-z\s-]/g, "");
+  return t.split(/\s+/).filter((x) => x && !NAME_SUFFIXES.has(x)).join(" ").trim();
+}
+
+export async function fetchSleeperInjuryLookup() {
+  const lookup = new Map();
+  try {
+    const res = await fetch("https://api.sleeper.app/v1/players/nfl");
+    if (!res.ok) throw new Error(`Sleeper request failed (${res.status})`);
+    const players = await res.json();
+    for (const p of Object.values(players)) {
+      if (!FANTASY_POSITIONS.has(p.position)) continue;
+      const name = p.full_name || `${p.first_name || ""} ${p.last_name || ""}`.trim();
+      if (!name) continue;
+      lookup.set(`${normName(name)}|${p.position}`, p.injury_start_date ?? null);
+    }
+  } catch (err) {
+    console.warn("Sleeper injury lookup unavailable:", err.message);
+  }
+  return lookup;
+}
+
 // Builds a player_id -> { position, team } map, restricted to skill positions.
 export async function fetchPlayerLookup() {
   const data = await fpFetch("/nfl/players");
@@ -72,7 +102,7 @@ export async function fetchInjuries(season, week) {
 
 // Fetches, filters, and inserts injury rows for a single week. Shared by the
 // scheduled sync (current week) and the manual backfill script (past weeks).
-export async function syncWeek(season, week, playerLookup) {
+export async function syncWeek(season, week, playerLookup, sleeperLookup) {
   const injuries = await fetchInjuries(season, week);
 
   const rows = [];
@@ -80,6 +110,8 @@ export async function syncWeek(season, week, playerLookup) {
     const player = playerLookup.get(inj.player_id);
     if (!player) continue; // not a fantasy-relevant (QB/RB/WR/TE) player
     if (!inj.status) continue; // healthy player pulled in only because of include_probabilities
+
+    const sleeperKey = `${normName(inj.name)}|${player.position}`;
 
     rows.push({
       season,
@@ -94,6 +126,7 @@ export async function syncWeek(season, week, playerLookup) {
       comment: inj.comment,
       probability_of_playing: inj.probability_of_playing ?? null,
       injury_update_date: inj.injury_update_date ?? null,
+      injury_start_date: sleeperLookup?.get(sleeperKey) ?? null,
     });
   }
 
@@ -114,8 +147,11 @@ async function main() {
   const { season, week } = resolveSeasonWeek();
   console.log(`Syncing injuries for season ${season}, week ${week}...`);
 
-  const playerLookup = await fetchPlayerLookup();
-  await syncWeek(season, week, playerLookup);
+  const [playerLookup, sleeperLookup] = await Promise.all([
+    fetchPlayerLookup(),
+    fetchSleeperInjuryLookup(),
+  ]);
+  await syncWeek(season, week, playerLookup, sleeperLookup);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

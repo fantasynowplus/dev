@@ -12,7 +12,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
-import { fetchPlayerLookup, syncWeek } from "./injury-sync.js";
+import { fetchPlayerLookup, fetchSleeperInjuryLookup, syncWeek } from "./injury-sync.js";
 
 const FP_API_KEY = process.env.FANTASYPROS_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -40,7 +40,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main() {
   console.log(`Backfilling season ${season}, weeks ${startWeek}-${endWeek}...`);
 
-  const playerLookup = await fetchPlayerLookup();
+  const [playerLookup, sleeperLookup] = await Promise.all([
+    fetchPlayerLookup(),
+    fetchSleeperInjuryLookup(),
+  ]);
 
   for (let week = startWeek; week <= endWeek; week++) {
     // Clear any existing rows for this season/week so re-runs don't duplicate.
@@ -51,7 +54,7 @@ async function main() {
       .eq("week", week);
     if (deleteError) throw deleteError;
 
-    await syncWeek(season, week, playerLookup);
+    await syncWeek(season, week, playerLookup, sleeperLookup);
 
     if (week < endWeek) await sleep(DELAY_MS);
   }
