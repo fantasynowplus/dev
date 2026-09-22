@@ -79,6 +79,7 @@ export async function syncWeek(season, week, playerLookup) {
   for (const inj of injuries) {
     const player = playerLookup.get(inj.player_id);
     if (!player) continue; // not a fantasy-relevant (QB/RB/WR/TE) player
+    if (!inj.status) continue; // healthy player pulled in only because of include_probabilities
 
     rows.push({
       season,
