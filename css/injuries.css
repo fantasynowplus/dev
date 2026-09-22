@@ -153,10 +153,10 @@
   letter-spacing: 0.03em;
 }
 
-.pos-QB { background: rgba(255, 165, 21, 0.15); color: #FFA515; }
-.pos-RB { background: rgba(66, 244, 176, 0.15); color: #42F4B0; }
-.pos-WR { background: rgba(234, 78, 61, 0.15); color: #EA4E3D; }
-.pos-TE { background: rgba(0, 40, 99, 0.35); color: #7FA5D8; }
+.pos-QB { background: rgba(229, 87, 138, 0.15); color: #e5578a; }
+.pos-RB { background: rgba(63, 185, 138, 0.15); color: #3fb98a; }
+.pos-WR { background: rgba(75, 143, 224, 0.15); color: #4b8fe0; }
+.pos-TE { background: rgba(224, 138, 75, 0.15); color: #e08a4b; }
 
 /* Status badges */
 .status-badge {

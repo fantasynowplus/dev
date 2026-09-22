@@ -5,11 +5,88 @@ const sb = window.supabase.createClient(INJURIES_SUPABASE_URL, INJURIES_SUPABASE
 
 const POSITIONS = ["QB", "RB", "WR", "TE"];
 const POSITION_COLORS = {
-  QB: "#FFA515",
-  RB: "#42F4B0",
-  WR: "#EA4E3D",
-  TE: "#7FA5D8",
+  QB: "#e5578a",
+  RB: "#3fb98a",
+  WR: "#4b8fe0",
+  TE: "#e08a4b",
 };
+
+// Roster % and PPG come from the same published waiver-wire CSV, matched by
+// normalized player name -- same source and matching approach as waiver-wire.js.
+const MIN_ROSTER_PCT = 0.25;
+const WAIVER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPaCNSMYNkNavyamJOZh6RZb4G7UFMRp6h-BO2KJKj3t821H0-dTWzxo6qLhr6Nrh2U9BN2OQLfwOl/pub?gid=1131935259&single=true&output=csv";
+const WAIVER_COL = { pos: 0, player: 1, team: 2, bye: 3, rost: 4, lwPts: 5, lwRank: 6, l3Ppg: 7, l3Rank: 8, l3Gp: 9, season: 10, week: 11, sleeperId: 12 };
+
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === ",") { row.push(cur); cur = ""; }
+      else if (c === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if (c !== "\r") cur += c;
+    }
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+const NAME_SUFFIXES = ["jr", "sr", "ii", "iii", "iv", "v"];
+function normName(s) {
+  const t = (s || "").toLowerCase()
+    .replace(/[\u2019'`.]/g, "")
+    .replace(/[^a-z\s-]/g, "");
+  return t.split(/\s+/).filter((x) => x && NAME_SUFFIXES.indexOf(x) === -1).join(" ").trim();
+}
+
+function num(v) {
+  const s = String(v == null ? "" : v).replace(/,/g, "").trim();
+  if (s === "") return null;
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function pct(v) {
+  const s = String(v == null ? "" : v).replace(/,/g, "").trim();
+  if (s === "") return null;
+  const hasSign = s.indexOf("%") > -1;
+  const n = parseFloat(s.replace("%", ""));
+  if (isNaN(n)) return null;
+  if (hasSign) return n / 100;
+  return n > 1 ? n / 100 : n;
+}
+
+const ROSTER_DATA = new Map(); // normName(player)+"|"+pos -> { rost, ppg }
+
+async function loadRosterData() {
+  try {
+    const res = await fetch(WAIVER_CSV_URL + (WAIVER_CSV_URL.includes("?") ? "&" : "?") + "_=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const grid = parseCSV(await res.text());
+    grid.forEach((r, i) => {
+      if (i === 0) return;
+      const player = (r[WAIVER_COL.player] || "").trim();
+      const posn = (r[WAIVER_COL.pos] || "").trim().toUpperCase();
+      if (!player || !POSITIONS.includes(posn)) return;
+      ROSTER_DATA.set(normName(player) + "|" + posn, {
+        rost: pct(r[WAIVER_COL.rost]),
+        ppg: num(r[WAIVER_COL.l3Ppg]),
+      });
+    });
+  } catch (e) {
+    console.warn("Roster/PPG CSV unavailable:", e);
+  }
+}
+
+function attachRosterData(row) {
+  const match = ROSTER_DATA.get(normName(row.name) + "|" + row.position);
+  row.rost = match ? match.rost : null;
+  row.ppg = match ? match.ppg : null;
+}
 
 let allRows = [];
 let seasonRows = [];       // one row per player: their most recent status
@@ -22,24 +99,39 @@ let sortDir = 1;
 let chart = null;
 
 async function loadData() {
-  const { data, error } = await sb
-    .from("injury_reports")
-    .select("*")
-    .order("fetched_at", { ascending: true });
+  const [{ data, error }] = await Promise.all([
+    sb.from("injury_reports").select("*").order("fetched_at", { ascending: true }),
+    loadRosterData(),
+  ]);
 
   if (error) {
     console.error(error);
     document.getElementById("injury-tbody").innerHTML =
-      `<tr><td colspan="8" class="loading-row">Couldn't load injury data.</td></tr>`;
+      `<tr><td colspan="7" class="loading-row">Couldn't load injury data.</td></tr>`;
     return;
   }
 
-  allRows = data ?? [];
+  allRows = (data ?? [])
+    .map((row) => {
+      attachRosterData(row);
+      return row;
+    })
+    .filter((row) => row.rost != null && row.rost >= MIN_ROSTER_PCT);
+
+  updateLastUpdated();
   processData();
   populateFilterOptions();
   populateWeekSelect();
   renderChart();
   render();
+}
+
+function updateLastUpdated() {
+  if (allRows.length === 0) return;
+  const latest = allRows.reduce((max, r) => (r.fetched_at > max ? r.fetched_at : max), allRows[0].fetched_at);
+  const d = new Date(latest);
+  document.getElementById("last-updated").textContent =
+    `Last updated: ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 }
 
 // Reduces raw rows (which may have several snapshots per player per day)
@@ -178,7 +270,7 @@ function render() {
   const tbody = document.getElementById("injury-tbody");
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="loading-row">No injuries match these filters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="loading-row">No injuries match these filters.</td></tr>`;
     return;
   }
 
@@ -190,8 +282,7 @@ function render() {
       <td><span class="status-badge ${statusClass(r.status)}">${r.status ?? "-"}</span></td>
       <td>${r.injury_type ?? "-"}</td>
       <td>${r.probability_of_playing != null ? Math.round(r.probability_of_playing * 100) + "%" : "-"}</td>
-      <td>${r.injury_update_date ?? "-"}</td>
-      <td class="comment-cell">${r.comment ?? ""}</td>
+      <td>${r.ppg != null ? r.ppg.toFixed(1) : "-"}</td>
     </tr>
   `).join("");
 }
