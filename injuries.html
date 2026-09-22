@@ -1,0 +1,67 @@
+{% include header.html title="Injury Report" css="injuries" %}
+
+<main class="injuries-page">
+  <div class="page-header">
+    <h1>Injury Report</h1>
+    <p class="page-sub">Season-long injury tracking for fantasy-relevant players (QB / RB / WR / TE)</p>
+  </div>
+
+  <div class="view-toggle" role="tablist">
+    <button class="pill active" data-view="season" type="button">Season</button>
+    <button class="pill" data-view="week" type="button">By Week</button>
+  </div>
+
+  <section class="panel chart-panel">
+    <h2>Injuries by Week</h2>
+    <canvas id="injury-chart" height="90"></canvas>
+  </section>
+
+  <section class="panel filters">
+    <input type="text" id="search-input" placeholder="Search player..." aria-label="Search player">
+
+    <select id="team-filter" aria-label="Filter by team">
+      <option value="">All Teams</option>
+    </select>
+
+    <select id="position-filter" aria-label="Filter by position">
+      <option value="">All Positions</option>
+      <option value="QB">QB</option>
+      <option value="RB">RB</option>
+      <option value="WR">WR</option>
+      <option value="TE">TE</option>
+    </select>
+
+    <select id="status-filter" aria-label="Filter by status">
+      <option value="">All Statuses</option>
+    </select>
+
+    <select id="week-select" class="week-only" aria-label="Select week" hidden>
+    </select>
+  </section>
+
+  <section class="panel table-panel">
+    <table id="injury-table">
+      <thead>
+        <tr>
+          <th data-sort="name">Player</th>
+          <th data-sort="team">Team</th>
+          <th data-sort="position">Pos</th>
+          <th data-sort="status">Status</th>
+          <th data-sort="injury_type">Injury</th>
+          <th data-sort="probability_of_playing">Chance to Play</th>
+          <th data-sort="injury_update_date">Updated</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody id="injury-tbody">
+        <tr><td colspan="8" class="loading-row">Loading injury data...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="javascript/injuries.js"></script>
+
+{% include footer.html %}
