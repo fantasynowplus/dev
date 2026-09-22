@@ -1,12 +1,5 @@
-// Pulls current-week NFL injury data from FantasyPros, cross-references
-// player position/team via the FantasyPros players endpoint (injuries
-// endpoint doesn't include position), filters to QB/RB/WR/TE, and inserts
-// a fresh batch of rows into Supabase's injury_reports table.
-//
-// Run via GitHub Actions (see .github/workflows/injury-sync.yml) or locally:
-//   FANTASYPROS_API_KEY=... SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/injury-sync.js
-
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 const FP_API_KEY = process.env.FANTASYPROS_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -17,7 +10,9 @@ if (!FP_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  realtime: { transport: ws },
+});
 
 const FANTASY_POSITIONS = new Set(["QB", "RB", "WR", "TE"]);
 

@@ -11,6 +11,7 @@
 //   node scripts/injury-backfill.js 2026 1 3
 
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import { fetchPlayerLookup, syncWeek } from "./injury-sync.js";
 
 const FP_API_KEY = process.env.FANTASYPROS_API_KEY;
@@ -29,7 +30,9 @@ if (!season || !startWeek || !endWeek || startWeek > endWeek) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  realtime: { transport: ws },
+});
 const DELAY_MS = 1000; // be polite to the FantasyPros API between weeks
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
