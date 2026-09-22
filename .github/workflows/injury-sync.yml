@@ -1,0 +1,30 @@
+name: Injury Report Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 3x/day CT: ~8am, 1pm, 6pm CT (UTC offsets shift with DST; adjust if needed)
+    - cron: "0 13 * * *"
+    - cron: "0 18 * * *"
+    - cron: "0 23 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Run injury sync
+        env:
+          FANTASYPROS_API_KEY: ${{ secrets.FANTASYPROS_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NFL_WEEK1_START: ${{ vars.NFL_WEEK1_START }}
+        run: node scripts/injury-sync.js
