@@ -2,7 +2,7 @@
   "season": 2026,
   "through_week": 3,
   "last_n": 3,
-  "updated": "2026-09-29T15:52:12.234Z",
+  "updated": "2026-09-30T15:55:20.852Z",
   "defense": {
     "ATL": {
       "QB": {
@@ -38,8 +38,8 @@
         "l3_rank": 25
       },
       "RB": {
-        "ppg": 21.73,
-        "l3_ppg": 21.73,
+        "ppg": 22.67,
+        "l3_ppg": 22.67,
         "rank": 10,
         "l3_rank": 10
       },
