@@ -1,838 +1,838 @@
 {
   "season": 2026,
-  "through_week": 3,
+  "through_week": 4,
   "last_n": 3,
-  "updated": "2026-10-05T18:28:22.803Z",
+  "updated": "2026-10-06T15:57:25.933Z",
   "defense": {
     "ATL": {
       "QB": {
-        "ppg": 18.57,
-        "l3_ppg": 18.57,
-        "rank": 12,
-        "l3_rank": 12
-      },
-      "RB": {
-        "ppg": 12.8,
-        "l3_ppg": 12.8,
-        "rank": 29,
-        "l3_rank": 29
-      },
-      "WR": {
-        "ppg": 38.47,
-        "l3_ppg": 38.47,
-        "rank": 6,
+        "ppg": 17.91,
+        "l3_ppg": 19.7,
+        "rank": 13,
         "l3_rank": 6
       },
+      "RB": {
+        "ppg": 16.85,
+        "l3_ppg": 17.67,
+        "rank": 27,
+        "l3_rank": 24
+      },
+      "WR": {
+        "ppg": 38.4,
+        "l3_ppg": 43.73,
+        "rank": 5,
+        "l3_rank": 3
+      },
       "TE": {
-        "ppg": 17.2,
-        "l3_ppg": 17.2,
-        "rank": 9,
-        "l3_rank": 9
+        "ppg": 15.88,
+        "l3_ppg": 14.7,
+        "rank": 12,
+        "l3_rank": 14
       }
     },
     "SF": {
       "QB": {
-        "ppg": 14.87,
-        "l3_ppg": 14.87,
-        "rank": 25,
-        "l3_rank": 25
+        "ppg": 14.54,
+        "l3_ppg": 17.21,
+        "rank": 26,
+        "l3_rank": 16
       },
       "RB": {
-        "ppg": 22.67,
-        "l3_ppg": 22.67,
-        "rank": 10,
-        "l3_rank": 10
+        "ppg": 25.6,
+        "l3_ppg": 26.03,
+        "rank": 8,
+        "l3_rank": 4
       },
       "WR": {
-        "ppg": 28.4,
-        "l3_ppg": 28.4,
-        "rank": 22,
-        "l3_rank": 22
+        "ppg": 27.2,
+        "l3_ppg": 29.67,
+        "rank": 26,
+        "l3_rank": 21
       },
       "TE": {
-        "ppg": 11.07,
-        "l3_ppg": 11.07,
-        "rank": 22,
-        "l3_rank": 22
+        "ppg": 8.7,
+        "l3_ppg": 9.9,
+        "rank": 27,
+        "l3_rank": 23
       }
     },
     "MIA": {
       "QB": {
-        "ppg": 20.34,
-        "l3_ppg": 20.34,
-        "rank": 7,
-        "l3_rank": 7
+        "ppg": 18.13,
+        "l3_ppg": 18.9,
+        "rank": 11,
+        "l3_rank": 9
       },
       "RB": {
-        "ppg": 29.3,
-        "l3_ppg": 29.3,
-        "rank": 3,
-        "l3_rank": 3
+        "ppg": 26.98,
+        "l3_ppg": 23.67,
+        "rank": 5,
+        "l3_rank": 8
       },
       "WR": {
-        "ppg": 23.3,
-        "l3_ppg": 23.3,
-        "rank": 29,
-        "l3_rank": 29
+        "ppg": 21.5,
+        "l3_ppg": 21.17,
+        "rank": 30,
+        "l3_rank": 30
       },
       "TE": {
-        "ppg": 16,
-        "l3_ppg": 16,
-        "rank": 10,
-        "l3_rank": 10
+        "ppg": 18.58,
+        "l3_ppg": 21.7,
+        "rank": 4,
+        "l3_rank": 5
       }
     },
     "TEN": {
       "QB": {
-        "ppg": 11.19,
-        "l3_ppg": 11.19,
-        "rank": 31,
-        "l3_rank": 31
+        "ppg": 14.14,
+        "l3_ppg": 15.76,
+        "rank": 27,
+        "l3_rank": 20
       },
       "RB": {
-        "ppg": 20.67,
-        "l3_ppg": 20.67,
-        "rank": 14,
-        "l3_rank": 14
+        "ppg": 20.6,
+        "l3_ppg": 19.53,
+        "rank": 19,
+        "l3_rank": 19
       },
       "WR": {
-        "ppg": 32.93,
-        "l3_ppg": 32.93,
+        "ppg": 34.1,
+        "l3_ppg": 35.93,
         "rank": 14,
-        "l3_rank": 14
+        "l3_rank": 11
       },
       "TE": {
-        "ppg": 7.37,
-        "l3_ppg": 7.37,
-        "rank": 30,
-        "l3_rank": 30
+        "ppg": 10.3,
+        "l3_ppg": 8.87,
+        "rank": 22,
+        "l3_rank": 24
       }
     },
     "DEN": {
       "QB": {
-        "ppg": 17.57,
-        "l3_ppg": 17.57,
-        "rank": 17,
-        "l3_rank": 17
+        "ppg": 18.09,
+        "l3_ppg": 16.56,
+        "rank": 12,
+        "l3_rank": 18
       },
       "RB": {
-        "ppg": 28.67,
-        "l3_ppg": 28.67,
-        "rank": 4,
-        "l3_rank": 4
+        "ppg": 25.82,
+        "l3_ppg": 20.13,
+        "rank": 7,
+        "l3_rank": 15
       },
       "WR": {
-        "ppg": 27.43,
-        "l3_ppg": 27.43,
+        "ppg": 28.27,
+        "l3_ppg": 32.8,
         "rank": 24,
-        "l3_rank": 24
+        "l3_rank": 19
       },
       "TE": {
-        "ppg": 14.97,
-        "l3_ppg": 14.97,
-        "rank": 12,
+        "ppg": 15.72,
+        "l3_ppg": 16.47,
+        "rank": 13,
         "l3_rank": 12
       }
     },
     "BAL": {
       "QB": {
-        "ppg": 17.12,
-        "l3_ppg": 17.12,
-        "rank": 21,
-        "l3_rank": 21
+        "ppg": 16.98,
+        "l3_ppg": 19.3,
+        "rank": 16,
+        "l3_rank": 8
       },
       "RB": {
-        "ppg": 20.53,
-        "l3_ppg": 20.53,
-        "rank": 15,
-        "l3_rank": 15
+        "ppg": 19.1,
+        "l3_ppg": 16.77,
+        "rank": 22,
+        "l3_rank": 28
       },
       "WR": {
-        "ppg": 36.97,
-        "l3_ppg": 36.97,
+        "ppg": 37.85,
+        "l3_ppg": 42.13,
         "rank": 7,
-        "l3_rank": 7
+        "l3_rank": 4
       },
       "TE": {
-        "ppg": 12.27,
-        "l3_ppg": 12.27,
-        "rank": 19,
+        "ppg": 10.38,
+        "l3_ppg": 10.4,
+        "rank": 21,
         "l3_rank": 19
       }
     },
     "LAR": {
       "QB": {
-        "ppg": 17.19,
-        "l3_ppg": 17.19,
+        "ppg": 16.27,
+        "l3_ppg": 14.33,
         "rank": 20,
-        "l3_rank": 20
+        "l3_rank": 28
       },
       "RB": {
-        "ppg": 17.4,
-        "l3_ppg": 17.4,
-        "rank": 22,
-        "l3_rank": 22
+        "ppg": 15.5,
+        "l3_ppg": 13.4,
+        "rank": 30,
+        "l3_rank": 31
       },
       "WR": {
-        "ppg": 30.77,
-        "l3_ppg": 30.77,
+        "ppg": 30.27,
+        "l3_ppg": 24.4,
         "rank": 18,
-        "l3_rank": 18
+        "l3_rank": 26
       },
       "TE": {
-        "ppg": 7.73,
-        "l3_ppg": 7.73,
-        "rank": 29,
+        "ppg": 6.63,
+        "l3_ppg": 6.47,
+        "rank": 31,
         "l3_rank": 29
       }
     },
     "CLE": {
       "QB": {
-        "ppg": 17.87,
-        "l3_ppg": 17.87,
-        "rank": 16,
-        "l3_rank": 16
+        "ppg": 19.4,
+        "l3_ppg": 17.26,
+        "rank": 9,
+        "l3_rank": 14
       },
       "RB": {
-        "ppg": 17.07,
-        "l3_ppg": 17.07,
-        "rank": 24,
-        "l3_rank": 24
+        "ppg": 16.67,
+        "l3_ppg": 16.8,
+        "rank": 28,
+        "l3_rank": 27
       },
       "WR": {
-        "ppg": 35.97,
-        "l3_ppg": 35.97,
-        "rank": 10,
-        "l3_rank": 10
+        "ppg": 37.27,
+        "l3_ppg": 33.53,
+        "rank": 8,
+        "l3_rank": 17
       },
       "TE": {
-        "ppg": 14.93,
-        "l3_ppg": 14.93,
-        "rank": 13,
-        "l3_rank": 13
+        "ppg": 16.8,
+        "l3_ppg": 18.33,
+        "rank": 10,
+        "l3_rank": 8
       }
     },
     "PHI": {
       "QB": {
-        "ppg": 20.72,
-        "l3_ppg": 20.72,
-        "rank": 6,
-        "l3_rank": 6
-      },
-      "RB": {
-        "ppg": 16.77,
-        "l3_ppg": 16.77,
-        "rank": 25,
-        "l3_rank": 25
-      },
-      "WR": {
-        "ppg": 36,
-        "l3_ppg": 36,
-        "rank": 9,
-        "l3_rank": 9
-      },
-      "TE": {
-        "ppg": 6.63,
-        "l3_ppg": 6.63,
-        "rank": 31,
-        "l3_rank": 31
-      }
-    },
-    "CHI": {
-      "QB": {
-        "ppg": 17.93,
-        "l3_ppg": 17.93,
-        "rank": 15,
-        "l3_rank": 15
-      },
-      "RB": {
-        "ppg": 19.67,
-        "l3_ppg": 19.67,
-        "rank": 18,
-        "l3_rank": 18
-      },
-      "WR": {
-        "ppg": 26.83,
-        "l3_ppg": 26.83,
-        "rank": 27,
-        "l3_rank": 27
-      },
-      "TE": {
-        "ppg": 8.27,
-        "l3_ppg": 8.27,
-        "rank": 26,
-        "l3_rank": 26
-      }
-    },
-    "GB": {
-      "QB": {
-        "ppg": 16.82,
-        "l3_ppg": 16.82,
-        "rank": 22,
-        "l3_rank": 22
-      },
-      "RB": {
-        "ppg": 30.67,
-        "l3_ppg": 30.67,
-        "rank": 1,
-        "l3_rank": 1
-      },
-      "WR": {
-        "ppg": 36.03,
-        "l3_ppg": 36.03,
-        "rank": 8,
-        "l3_rank": 8
-      },
-      "TE": {
-        "ppg": 11.53,
-        "l3_ppg": 11.53,
-        "rank": 21,
-        "l3_rank": 21
-      }
-    },
-    "NO": {
-      "QB": {
-        "ppg": 18.15,
-        "l3_ppg": 18.15,
-        "rank": 13,
-        "l3_rank": 13
-      },
-      "RB": {
-        "ppg": 26.53,
-        "l3_ppg": 26.53,
-        "rank": 7,
-        "l3_rank": 7
-      },
-      "WR": {
-        "ppg": 29,
-        "l3_ppg": 29,
-        "rank": 21,
-        "l3_rank": 21
-      },
-      "TE": {
-        "ppg": 20.67,
-        "l3_ppg": 20.67,
-        "rank": 4,
-        "l3_rank": 4
-      }
-    },
-    "IND": {
-      "QB": {
-        "ppg": 21.87,
-        "l3_ppg": 21.87,
-        "rank": 5,
-        "l3_rank": 5
-      },
-      "RB": {
-        "ppg": 28.1,
-        "l3_ppg": 28.1,
-        "rank": 5,
-        "l3_rank": 5
-      },
-      "WR": {
-        "ppg": 35,
-        "l3_ppg": 35,
-        "rank": 13,
-        "l3_rank": 13
-      },
-      "TE": {
-        "ppg": 17.47,
-        "l3_ppg": 17.47,
-        "rank": 7,
-        "l3_rank": 7
-      }
-    },
-    "SEA": {
-      "QB": {
-        "ppg": 13.58,
-        "l3_ppg": 13.58,
-        "rank": 27,
-        "l3_rank": 27
-      },
-      "RB": {
-        "ppg": 16.23,
-        "l3_ppg": 16.23,
-        "rank": 28,
-        "l3_rank": 28
-      },
-      "WR": {
-        "ppg": 23.83,
-        "l3_ppg": 23.83,
-        "rank": 28,
-        "l3_rank": 28
-      },
-      "TE": {
-        "ppg": 11.67,
-        "l3_ppg": 11.67,
-        "rank": 20,
-        "l3_rank": 20
-      }
-    },
-    "LAC": {
-      "QB": {
-        "ppg": 19.05,
-        "l3_ppg": 19.05,
-        "rank": 11,
-        "l3_rank": 11
-      },
-      "RB": {
-        "ppg": 20.5,
-        "l3_ppg": 20.5,
-        "rank": 16,
-        "l3_rank": 16
-      },
-      "WR": {
-        "ppg": 32.93,
-        "l3_ppg": 32.93,
-        "rank": 15,
-        "l3_rank": 15
-      },
-      "TE": {
-        "ppg": 12.4,
-        "l3_ppg": 12.4,
-        "rank": 18,
-        "l3_rank": 18
-      }
-    },
-    "NYG": {
-      "QB": {
-        "ppg": 17.94,
-        "l3_ppg": 17.94,
-        "rank": 14,
-        "l3_rank": 14
-      },
-      "RB": {
-        "ppg": 21.63,
-        "l3_ppg": 21.63,
-        "rank": 11,
-        "l3_rank": 11
-      },
-      "WR": {
-        "ppg": 35.23,
-        "l3_ppg": 35.23,
-        "rank": 12,
-        "l3_rank": 12
-      },
-      "TE": {
-        "ppg": 12.6,
-        "l3_ppg": 12.6,
-        "rank": 17,
-        "l3_rank": 17
-      }
-    },
-    "CAR": {
-      "QB": {
-        "ppg": 19.97,
-        "l3_ppg": 19.97,
+        "ppg": 18.46,
+        "l3_ppg": 18.73,
         "rank": 10,
         "l3_rank": 10
       },
       "RB": {
-        "ppg": 30.53,
-        "l3_ppg": 30.53,
+        "ppg": 22.52,
+        "l3_ppg": 23.73,
+        "rank": 12,
+        "l3_rank": 6
+      },
+      "WR": {
+        "ppg": 36.95,
+        "l3_ppg": 37.03,
+        "rank": 9,
+        "l3_rank": 10
+      },
+      "TE": {
+        "ppg": 7.9,
+        "l3_ppg": 8.23,
+        "rank": 28,
+        "l3_rank": 25
+      }
+    },
+    "CHI": {
+      "QB": {
+        "ppg": 15.63,
+        "l3_ppg": 9.23,
+        "rank": 23,
+        "l3_rank": 31
+      },
+      "RB": {
+        "ppg": 16.93,
+        "l3_ppg": 11.33,
+        "rank": 26,
+        "l3_rank": 32
+      },
+      "WR": {
+        "ppg": 25.38,
+        "l3_ppg": 19.07,
+        "rank": 29,
+        "l3_rank": 32
+      },
+      "TE": {
+        "ppg": 6.72,
+        "l3_ppg": 4.9,
+        "rank": 30,
+        "l3_rank": 31
+      }
+    },
+    "GB": {
+      "QB": {
+        "ppg": 15.97,
+        "l3_ppg": 14.68,
+        "rank": 21,
+        "l3_rank": 25
+      },
+      "RB": {
+        "ppg": 28.95,
+        "l3_ppg": 30.93,
         "rank": 2,
+        "l3_rank": 3
+      },
+      "WR": {
+        "ppg": 32.75,
+        "l3_ppg": 33.27,
+        "rank": 16,
+        "l3_rank": 18
+      },
+      "TE": {
+        "ppg": 10.58,
+        "l3_ppg": 8.17,
+        "rank": 20,
+        "l3_rank": 26
+      }
+    },
+    "NO": {
+      "QB": {
+        "ppg": 16.8,
+        "l3_ppg": 16.91,
+        "rank": 18,
+        "l3_rank": 17
+      },
+      "RB": {
+        "ppg": 33.25,
+        "l3_ppg": 32.2,
+        "rank": 1,
         "l3_rank": 2
       },
       "WR": {
-        "ppg": 22.83,
-        "l3_ppg": 22.83,
-        "rank": 30,
-        "l3_rank": 30
+        "ppg": 29.5,
+        "l3_ppg": 26.93,
+        "rank": 20,
+        "l3_rank": 25
       },
       "TE": {
-        "ppg": 14.03,
-        "l3_ppg": 14.03,
-        "rank": 15,
+        "ppg": 17.9,
+        "l3_ppg": 20.1,
+        "rank": 7,
+        "l3_rank": 6
+      }
+    },
+    "IND": {
+      "QB": {
+        "ppg": 20.75,
+        "l3_ppg": 19.35,
+        "rank": 6,
+        "l3_rank": 7
+      },
+      "RB": {
+        "ppg": 24.2,
+        "l3_ppg": 19.23,
+        "rank": 10,
+        "l3_rank": 20
+      },
+      "WR": {
+        "ppg": 34.95,
+        "l3_ppg": 33.97,
+        "rank": 12,
         "l3_rank": 15
+      },
+      "TE": {
+        "ppg": 13.73,
+        "l3_ppg": 14.1,
+        "rank": 16,
+        "l3_rank": 15
+      }
+    },
+    "SEA": {
+      "QB": {
+        "ppg": 13.08,
+        "l3_ppg": 13.16,
+        "rank": 31,
+        "l3_rank": 30
+      },
+      "RB": {
+        "ppg": 21.22,
+        "l3_ppg": 22.13,
+        "rank": 15,
+        "l3_rank": 12
+      },
+      "WR": {
+        "ppg": 21.27,
+        "l3_ppg": 21.13,
+        "rank": 31,
+        "l3_rank": 31
+      },
+      "TE": {
+        "ppg": 10.95,
+        "l3_ppg": 10.33,
+        "rank": 18,
+        "l3_rank": 21
+      }
+    },
+    "LAC": {
+      "QB": {
+        "ppg": 17.87,
+        "l3_ppg": 18.33,
+        "rank": 14,
+        "l3_rank": 11
+      },
+      "RB": {
+        "ppg": 22.88,
+        "l3_ppg": 23.17,
+        "rank": 11,
+        "l3_rank": 9
+      },
+      "WR": {
+        "ppg": 33.4,
+        "l3_ppg": 34.4,
+        "rank": 15,
+        "l3_rank": 14
+      },
+      "TE": {
+        "ppg": 9.85,
+        "l3_ppg": 4.97,
+        "rank": 25,
+        "l3_rank": 30
+      }
+    },
+    "NYG": {
+      "QB": {
+        "ppg": 16.82,
+        "l3_ppg": 17.29,
+        "rank": 17,
+        "l3_rank": 13
+      },
+      "RB": {
+        "ppg": 21.07,
+        "l3_ppg": 19.8,
+        "rank": 16,
+        "l3_rank": 17
+      },
+      "WR": {
+        "ppg": 32.6,
+        "l3_ppg": 33.73,
+        "rank": 17,
+        "l3_rank": 16
+      },
+      "TE": {
+        "ppg": 14.95,
+        "l3_ppg": 17.2,
+        "rank": 15,
+        "l3_rank": 10
+      }
+    },
+    "CAR": {
+      "QB": {
+        "ppg": 20.1,
+        "l3_ppg": 14.38,
+        "rank": 7,
+        "l3_rank": 27
+      },
+      "RB": {
+        "ppg": 28,
+        "l3_ppg": 19.73,
+        "rank": 3,
+        "l3_rank": 18
+      },
+      "WR": {
+        "ppg": 28.42,
+        "l3_ppg": 24.17,
+        "rank": 23,
+        "l3_rank": 27
+      },
+      "TE": {
+        "ppg": 16.57,
+        "l3_ppg": 18.27,
+        "rank": 11,
+        "l3_rank": 9
       }
     },
     "JAX": {
       "QB": {
-        "ppg": 12.43,
-        "l3_ppg": 12.43,
-        "rank": 30,
-        "l3_rank": 30
-      },
-      "RB": {
-        "ppg": 16.77,
-        "l3_ppg": 16.77,
-        "rank": 26,
-        "l3_rank": 26
-      },
-      "WR": {
-        "ppg": 30.15,
-        "l3_ppg": 30.15,
-        "rank": 19,
+        "ppg": 15.75,
+        "l3_ppg": 16,
+        "rank": 22,
         "l3_rank": 19
       },
+      "RB": {
+        "ppg": 17.53,
+        "l3_ppg": 19.17,
+        "rank": 23,
+        "l3_rank": 21
+      },
+      "WR": {
+        "ppg": 36.48,
+        "l3_ppg": 40.55,
+        "rank": 10,
+        "l3_rank": 8
+      },
       "TE": {
-        "ppg": 7.83,
-        "l3_ppg": 7.83,
-        "rank": 28,
-        "l3_rank": 28
+        "ppg": 9.43,
+        "l3_ppg": 10.4,
+        "rank": 26,
+        "l3_rank": 20
       }
     },
     "ARI": {
       "QB": {
-        "ppg": 22.31,
-        "l3_ppg": 22.31,
-        "rank": 4,
-        "l3_rank": 4
+        "ppg": 21.73,
+        "l3_ppg": 24.23,
+        "rank": 5,
+        "l3_rank": 2
       },
       "RB": {
-        "ppg": 16.4,
-        "l3_ppg": 16.4,
-        "rank": 27,
-        "l3_rank": 27
+        "ppg": 14.93,
+        "l3_ppg": 16.83,
+        "rank": 31,
+        "l3_rank": 26
       },
       "WR": {
-        "ppg": 39.03,
-        "l3_ppg": 39.03,
-        "rank": 4,
-        "l3_rank": 4
+        "ppg": 38.38,
+        "l3_ppg": 41.87,
+        "rank": 6,
+        "l3_rank": 5
       },
       "TE": {
-        "ppg": 17.6,
-        "l3_ppg": 17.6,
-        "rank": 6,
-        "l3_rank": 6
+        "ppg": 18.62,
+        "l3_ppg": 19.5,
+        "rank": 3,
+        "l3_rank": 7
       }
     },
     "CIN": {
       "QB": {
-        "ppg": 17.45,
-        "l3_ppg": 17.45,
+        "ppg": 16.36,
+        "l3_ppg": 17.93,
         "rank": 19,
-        "l3_rank": 19
+        "l3_rank": 12
       },
       "RB": {
-        "ppg": 18.87,
-        "l3_ppg": 18.87,
-        "rank": 20,
-        "l3_rank": 20
+        "ppg": 19.3,
+        "l3_ppg": 18.03,
+        "rank": 21,
+        "l3_rank": 23
       },
       "WR": {
-        "ppg": 31.1,
-        "l3_ppg": 31.1,
-        "rank": 17,
-        "l3_rank": 17
+        "ppg": 29.38,
+        "l3_ppg": 30.57,
+        "rank": 21,
+        "l3_rank": 20
       },
       "TE": {
-        "ppg": 17.67,
-        "l3_ppg": 17.67,
-        "rank": 5,
-        "l3_rank": 5
+        "ppg": 18,
+        "l3_ppg": 22.13,
+        "rank": 6,
+        "l3_rank": 4
       }
     },
     "NE": {
       "QB": {
-        "ppg": 13.12,
-        "l3_ppg": 13.12,
-        "rank": 28,
-        "l3_rank": 28
+        "ppg": 14.72,
+        "l3_ppg": 15.19,
+        "rank": 25,
+        "l3_rank": 22
       },
       "RB": {
-        "ppg": 20.83,
-        "l3_ppg": 20.83,
-        "rank": 13,
-        "l3_rank": 13
+        "ppg": 20.93,
+        "l3_ppg": 22.9,
+        "rank": 18,
+        "l3_rank": 10
       },
       "WR": {
-        "ppg": 32.9,
-        "l3_ppg": 32.9,
-        "rank": 16,
-        "l3_rank": 16
+        "ppg": 34.88,
+        "l3_ppg": 35.47,
+        "rank": 13,
+        "l3_rank": 12
       },
       "TE": {
-        "ppg": 6.2,
-        "l3_ppg": 6.2,
+        "ppg": 5.9,
+        "l3_ppg": 6.77,
         "rank": 32,
-        "l3_rank": 32
+        "l3_rank": 28
       }
     },
     "KC": {
       "QB": {
-        "ppg": 9.95,
-        "l3_ppg": 9.95,
-        "rank": 32,
-        "l3_rank": 32
+        "ppg": 13.36,
+        "l3_ppg": 15.67,
+        "rank": 29,
+        "l3_rank": 21
       },
       "RB": {
-        "ppg": 19.03,
-        "l3_ppg": 19.03,
-        "rank": 19,
-        "l3_rank": 19
+        "ppg": 19.98,
+        "l3_ppg": 22.73,
+        "rank": 20,
+        "l3_rank": 11
       },
       "WR": {
-        "ppg": 22.63,
-        "l3_ppg": 22.63,
+        "ppg": 20.95,
+        "l3_ppg": 23.6,
         "rank": 32,
-        "l3_rank": 32
+        "l3_rank": 28
       },
       "TE": {
-        "ppg": 14.07,
-        "l3_ppg": 14.07,
-        "rank": 14,
-        "l3_rank": 14
+        "ppg": 22.55,
+        "l3_ppg": 24.3,
+        "rank": 2,
+        "l3_rank": 2
       }
     },
     "MIN": {
       "QB": {
-        "ppg": 14.51,
-        "l3_ppg": 14.51,
-        "rank": 26,
-        "l3_rank": 26
+        "ppg": 11.51,
+        "l3_ppg": 8.52,
+        "rank": 32,
+        "l3_rank": 32
       },
       "RB": {
-        "ppg": 12.7,
-        "l3_ppg": 12.7,
-        "rank": 30,
-        "l3_rank": 30
+        "ppg": 14.2,
+        "l3_ppg": 16.73,
+        "rank": 32,
+        "l3_rank": 29
       },
       "WR": {
-        "ppg": 35.73,
-        "l3_ppg": 35.73,
-        "rank": 11,
-        "l3_rank": 11
+        "ppg": 30.13,
+        "l3_ppg": 21.77,
+        "rank": 19,
+        "l3_rank": 29
       },
       "TE": {
-        "ppg": 9.43,
-        "l3_ppg": 9.43,
-        "rank": 24,
-        "l3_rank": 24
+        "ppg": 7.7,
+        "l3_ppg": 4.77,
+        "rank": 29,
+        "l3_rank": 32
       }
     },
     "TB": {
       "QB": {
-        "ppg": 15.43,
-        "l3_ppg": 15.43,
-        "rank": 23,
-        "l3_rank": 23
+        "ppg": 15.09,
+        "l3_ppg": 15.07,
+        "rank": 24,
+        "l3_rank": 24
       },
       "RB": {
-        "ppg": 17.83,
-        "l3_ppg": 17.83,
-        "rank": 21,
-        "l3_rank": 21
+        "ppg": 17.53,
+        "l3_ppg": 14.43,
+        "rank": 24,
+        "l3_rank": 30
       },
       "WR": {
-        "ppg": 27.37,
-        "l3_ppg": 27.37,
-        "rank": 25,
-        "l3_rank": 25
+        "ppg": 25.57,
+        "l3_ppg": 27.73,
+        "rank": 28,
+        "l3_rank": 23
       },
       "TE": {
-        "ppg": 15.77,
-        "l3_ppg": 15.77,
-        "rank": 11,
-        "l3_rank": 11
+        "ppg": 17.9,
+        "l3_ppg": 15.5,
+        "rank": 8,
+        "l3_rank": 13
       }
     },
     "PIT": {
       "QB": {
-        "ppg": 13.11,
-        "l3_ppg": 13.11,
-        "rank": 29,
-        "l3_rank": 29
+        "ppg": 13.31,
+        "l3_ppg": 15.17,
+        "rank": 30,
+        "l3_rank": 23
       },
       "RB": {
-        "ppg": 21.43,
-        "l3_ppg": 21.43,
-        "rank": 12,
-        "l3_rank": 12
+        "ppg": 24.57,
+        "l3_ppg": 21.3,
+        "rank": 9,
+        "l3_rank": 13
       },
       "WR": {
-        "ppg": 27.3,
-        "l3_ppg": 27.3,
-        "rank": 26,
-        "l3_rank": 26
+        "ppg": 28.5,
+        "l3_ppg": 34.7,
+        "rank": 22,
+        "l3_rank": 13
       },
       "TE": {
-        "ppg": 9.33,
-        "l3_ppg": 9.33,
-        "rank": 25,
-        "l3_rank": 25
+        "ppg": 9.93,
+        "l3_ppg": 13.23,
+        "rank": 24,
+        "l3_rank": 16
       }
     },
     "WAS": {
       "QB": {
-        "ppg": 28.05,
-        "l3_ppg": 28.05,
-        "rank": 2,
-        "l3_rank": 2
+        "ppg": 23.27,
+        "l3_ppg": 22.78,
+        "rank": 3,
+        "l3_rank": 4
       },
       "RB": {
-        "ppg": 12.23,
-        "l3_ppg": 12.23,
-        "rank": 31,
-        "l3_rank": 31
+        "ppg": 16.05,
+        "l3_ppg": 17.57,
+        "rank": 29,
+        "l3_rank": 25
       },
       "WR": {
-        "ppg": 46.65,
-        "l3_ppg": 46.65,
-        "rank": 1,
-        "l3_rank": 1
+        "ppg": 40.31,
+        "l3_ppg": 45.05,
+        "rank": 4,
+        "l3_rank": 2
       },
       "TE": {
-        "ppg": 21.4,
-        "l3_ppg": 21.4,
-        "rank": 2,
-        "l3_rank": 2
+        "ppg": 18.32,
+        "l3_ppg": 16.53,
+        "rank": 5,
+        "l3_rank": 11
       }
     },
     "HOU": {
       "QB": {
-        "ppg": 20.25,
-        "l3_ppg": 20.25,
+        "ppg": 19.71,
+        "l3_ppg": 14.39,
         "rank": 8,
-        "l3_rank": 8
+        "l3_rank": 26
       },
       "RB": {
-        "ppg": 11.83,
-        "l3_ppg": 11.83,
-        "rank": 32,
-        "l3_rank": 32
+        "ppg": 17,
+        "l3_ppg": 19.17,
+        "rank": 25,
+        "l3_rank": 22
       },
       "WR": {
-        "ppg": 39.97,
-        "l3_ppg": 39.97,
-        "rank": 2,
-        "l3_rank": 2
+        "ppg": 44.6,
+        "l3_ppg": 45.63,
+        "rank": 1,
+        "l3_rank": 1
       },
       "TE": {
-        "ppg": 13.17,
-        "l3_ppg": 13.17,
-        "rank": 16,
-        "l3_rank": 16
+        "ppg": 10.9,
+        "l3_ppg": 7.97,
+        "rank": 19,
+        "l3_rank": 27
       }
     },
     "BUF": {
       "QB": {
-        "ppg": 19.99,
-        "l3_ppg": 19.99,
-        "rank": 9,
-        "l3_rank": 9
+        "ppg": 21.79,
+        "l3_ppg": 23.56,
+        "rank": 4,
+        "l3_rank": 3
       },
       "RB": {
-        "ppg": 27.5,
-        "l3_ppg": 27.5,
+        "ppg": 26.28,
+        "l3_ppg": 23.73,
         "rank": 6,
-        "l3_rank": 6
+        "l3_rank": 7
       },
       "WR": {
-        "ppg": 38.77,
-        "l3_ppg": 38.77,
-        "rank": 5,
-        "l3_rank": 5
+        "ppg": 41.02,
+        "l3_ppg": 41.37,
+        "rank": 3,
+        "l3_rank": 6
       },
       "TE": {
-        "ppg": 10.53,
-        "l3_ppg": 10.53,
-        "rank": 23,
-        "l3_rank": 23
+        "ppg": 11.25,
+        "l3_ppg": 10.2,
+        "rank": 17,
+        "l3_rank": 22
       }
     },
     "DET": {
       "QB": {
-        "ppg": 30.69,
-        "l3_ppg": 30.69,
+        "ppg": 28.38,
+        "l3_ppg": 29.44,
         "rank": 1,
         "l3_rank": 1
       },
       "RB": {
-        "ppg": 19.7,
-        "l3_ppg": 19.7,
-        "rank": 17,
-        "l3_rank": 17
+        "ppg": 21.68,
+        "l3_ppg": 20.57,
+        "rank": 14,
+        "l3_rank": 14
       },
       "WR": {
-        "ppg": 39.67,
-        "l3_ppg": 39.67,
-        "rank": 3,
-        "l3_rank": 3
+        "ppg": 44.02,
+        "l3_ppg": 40.17,
+        "rank": 2,
+        "l3_rank": 9
       },
       "TE": {
-        "ppg": 33.37,
-        "l3_ppg": 33.37,
+        "ppg": 28.43,
+        "l3_ppg": 28.67,
         "rank": 1,
         "l3_rank": 1
       }
     },
     "NYJ": {
       "QB": {
-        "ppg": 14.95,
-        "l3_ppg": 14.95,
-        "rank": 24,
-        "l3_rank": 24
+        "ppg": 13.67,
+        "l3_ppg": 14.33,
+        "rank": 28,
+        "l3_rank": 29
       },
       "RB": {
-        "ppg": 23.43,
-        "l3_ppg": 23.43,
-        "rank": 9,
-        "l3_rank": 9
+        "ppg": 27.25,
+        "l3_ppg": 33.4,
+        "rank": 4,
+        "l3_rank": 1
       },
       "WR": {
-        "ppg": 27.57,
-        "l3_ppg": 27.57,
-        "rank": 23,
-        "l3_rank": 23
+        "ppg": 28.03,
+        "l3_ppg": 29.23,
+        "rank": 25,
+        "l3_rank": 22
       },
       "TE": {
-        "ppg": 7.97,
-        "l3_ppg": 7.97,
-        "rank": 27,
-        "l3_rank": 27
+        "ppg": 10.18,
+        "l3_ppg": 10.73,
+        "rank": 23,
+        "l3_rank": 17
       }
     },
     "DAL": {
       "QB": {
-        "ppg": 23.51,
-        "l3_ppg": 23.51,
-        "rank": 3,
-        "l3_rank": 3
+        "ppg": 23.4,
+        "l3_ppg": 22.33,
+        "rank": 2,
+        "l3_rank": 5
       },
       "RB": {
-        "ppg": 25,
-        "l3_ppg": 25,
-        "rank": 8,
-        "l3_rank": 8
+        "ppg": 21.87,
+        "l3_ppg": 20.07,
+        "rank": 13,
+        "l3_rank": 16
       },
       "WR": {
-        "ppg": 29.6,
-        "l3_ppg": 29.6,
-        "rank": 20,
-        "l3_rank": 20
+        "ppg": 36.43,
+        "l3_ppg": 41.2,
+        "rank": 11,
+        "l3_rank": 7
       },
       "TE": {
-        "ppg": 17.27,
-        "l3_ppg": 17.27,
-        "rank": 8,
-        "l3_rank": 8
+        "ppg": 15.27,
+        "l3_ppg": 10.47,
+        "rank": 14,
+        "l3_rank": 18
       }
     },
     "LV": {
       "QB": {
-        "ppg": 17.46,
-        "l3_ppg": 17.46,
-        "rank": 18,
-        "l3_rank": 18
+        "ppg": 17.34,
+        "l3_ppg": 17.23,
+        "rank": 15,
+        "l3_rank": 15
       },
       "RB": {
-        "ppg": 17.13,
-        "l3_ppg": 17.13,
-        "rank": 23,
-        "l3_rank": 23
+        "ppg": 21.07,
+        "l3_ppg": 24.6,
+        "rank": 17,
+        "l3_rank": 5
       },
       "WR": {
-        "ppg": 22.77,
-        "l3_ppg": 22.77,
-        "rank": 31,
-        "l3_rank": 31
+        "ppg": 26.85,
+        "l3_ppg": 27.73,
+        "rank": 27,
+        "l3_rank": 24
       },
       "TE": {
-        "ppg": 21.07,
-        "l3_ppg": 21.07,
-        "rank": 3,
+        "ppg": 17.6,
+        "l3_ppg": 22.2,
+        "rank": 9,
         "l3_rank": 3
       }
     }
